@@ -43,13 +43,23 @@ export const ORG = {
   } satisfies Record<Exclude<Role, "member">, string>,
 };
 
-/** Turn a user's Google Group emails into portal roles. */
-export function rolesFromGroups(groupEmails: string[]): Role[] {
+/**
+ * The roles a user's own Google Groups grant, with no admin expansion. Use
+ * these to decide who may act (approve, pay): a portal admin is a support
+ * role and does not approve or pay anything unless also in that group.
+ */
+export function directRolesFromGroups(groupEmails: string[]): Role[] {
   const held = new Set(groupEmails.map((g) => g.toLowerCase()));
   const roles: Role[] = ["member"];
   for (const [role, group] of Object.entries(ORG.roleGroups)) {
     if (held.has(group.toLowerCase())) roles.push(role as Role);
   }
+  return roles;
+}
+
+/** Turn a user's Google Group emails into portal roles, for what they can see. */
+export function rolesFromGroups(groupEmails: string[]): Role[] {
+  const roles = directRolesFromGroups(groupEmails);
   // Admins can see every module, for support and setup.
   if (roles.includes("admins")) return [...ROLES];
   return roles;

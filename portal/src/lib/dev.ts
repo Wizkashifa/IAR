@@ -16,6 +16,8 @@ export const DEV_PERSONAS: DevPersona[] = [
   { id: "chair", name: "Sample Chair", email: "chair@dev.local", title: "Committee chair", groups: [g.chairs] },
   { id: "office", name: "Sample Office", email: "office@dev.local", title: "IAR office", groups: [g.office] },
   { id: "finance", name: "Sample Finance", email: "finance@dev.local", title: "Finance, cardholder", groups: [g.finance, g.cardholders] },
+  { id: "sw", name: "Sample S&W Chair", email: "sw@dev.local", title: "Social & Welfare chair", groups: [g.sw, g.chairs] },
+  { id: "executive", name: "Sample Executive", email: "exec@dev.local", title: "Executive approver", groups: [g.executive] },
   { id: "security", name: "Sample Security", email: "security@dev.local", title: "Security & facilities", groups: [g.security, g.facilities] },
   { id: "admin", name: "Sample Admin", email: "admin@dev.local", title: "Portal admin", groups: [g.admins] },
 ];
