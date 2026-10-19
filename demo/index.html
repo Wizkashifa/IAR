@@ -26,6 +26,9 @@
   --hold-standing: #c9d2ce;
   --hold-booking: #9fb8ad;
   --hold-request: #0d5a49;
+  --src1: #2a78d6;
+  --src2: #eb6834;
+  --src3: #1baf7a;
   --font: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --r: 8px;
@@ -35,7 +38,7 @@
     --bg: #111715; --surface: #18201d; --surface-2: #1f2925; --ink: #e6ebe8; --ink-2: #a3afa9; --ink-3: #7c8883;
     --line: #2b3632; --accent: #6cc3a5; --accent-ink: #0b1411; --accent-soft: #1b3a30;
     --ok: #74d29d; --ok-soft: #1a3526; --warn: #f0b75c; --warn-soft: #3a2e17; --bad: #f19a92; --bad-soft: #3c2220;
-    --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5;
+    --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5; --src1: #3987e5; --src2: #d95926; --src3: #199e70;
     color-scheme: dark;
   }
 }
@@ -43,7 +46,7 @@
   --bg: #111715; --surface: #18201d; --surface-2: #1f2925; --ink: #e6ebe8; --ink-2: #a3afa9; --ink-3: #7c8883;
   --line: #2b3632; --accent: #6cc3a5; --accent-ink: #0b1411; --accent-soft: #1b3a30;
   --ok: #74d29d; --ok-soft: #1a3526; --warn: #f0b75c; --warn-soft: #3a2e17; --bad: #f19a92; --bad-soft: #3c2220;
-  --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5;
+  --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5; --src1: #3987e5; --src2: #d95926; --src3: #199e70;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -125,6 +128,7 @@ h3 { font-size: 14px; margin: 0; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+td.mono { white-space: nowrap; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
@@ -217,6 +221,12 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-size: 13.5px; z-index: 20; max-width: calc(100vw - 32px); }
 
 @media (min-width: 1200px) { body.guide-open .shell { margin-right: 380px; } }
+.sankey { width: 100%; min-width: 640px; height: auto; display: block; }
+.sankey text { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.sankey .sk-l { font-size: 12px; fill: var(--ink); font-weight: 600; }
+.sankey .sk-v { font-size: 11px; fill: var(--ink-2); font-family: var(--mono); }
+.sankey .lnk:hover { fill-opacity: 0.6; }
+.tip { position: fixed; z-index: 30; background: var(--ink); color: var(--bg); font-size: 12.5px; padding: 6px 9px; border-radius: 6px; pointer-events: none; max-width: 280px; }
 .public-wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
 @media (max-width: 860px) {
@@ -252,6 +262,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 </div>
 <aside class="guide" id="guide" hidden aria-label="Demo guide"></aside>
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="tip" id="tip" hidden></div>
 
 <script>
 "use strict";
@@ -286,9 +297,10 @@ const PEOPLE = {
   hana:   { name: "Hana Siddiqui", title: "IAR office", roles: ["member", "office"], committees: ["Administration"] },
   omar:   { name: "Omar Farouk", title: "Finance office", roles: ["member", "finance", "cardholders"], committees: ["Administration"] },
   sara:   { name: "Sara Malik", title: "Marketing team", roles: ["member", "marketing"], committees: [] },
-  idris:  { name: "Idris Thompson", title: "Security, facilities & AV", roles: ["member", "security", "facilities", "av"], committees: [] },
+  idris:  { name: "Idris Thompson", title: "Security, facilities & maintenance", roles: ["member", "security", "facilities", "av"], committees: [] },
+  zaid:   { name: "Zaid Hussain", title: "IT volunteer", roles: ["member", "it"], committees: [] },
   yasir:  { name: "Dr. Yasir Ali", title: "Executive (mission review)", roles: ["member", "executive"], committees: [] },
-  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
+  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
   renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], committees: [] },
 };
 const COMMITTEES = ["Youth", "Social & Welfare", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration", "Community member (private event)"];
@@ -364,7 +376,7 @@ function seed() {
     arg: null,
     guide: false,
     step: 0,
-    seq: { EV: 1060, PO: 11060, RN: 210 },
+    seq: { EV: 1060, PO: 11060, RN: 210, TK: 510 },
     bookings: [
       { room: "mphAB", date: satSoon, s: toMin("10:00"), e: toMin("13:00"), label: "Youth Basketball League" },
       { room: "f3arabic", date: tueLater, s: toMin("18:30"), e: toMin("20:00"), label: "Adult Arabic class" },
@@ -394,6 +406,35 @@ function seed() {
     ],
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "Coach D. Ortiz", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
+    ],
+    budget: [
+      { name: "Social & Welfare", lines: [["Community aid", "don", 900000, 690000, 40000], ["Food pantry", "don", 320000, 251000, 20000], ["Zakat distribution", "don", 450000, 377000, 0], ["S&W administration", "gf", 30000, 22000, 1000]] },
+      { name: "Administration", lines: [["Salaries & benefits", "gf", 720000, 585000, 0], ["Insurance & property tax", "gf", 140000, 140000, 0], ["Office & IT", "gf", 70000, 51000, 3000]] },
+      { name: "Facilities", lines: [["Utilities", "gf", 260000, 214000, 0], ["Maintenance & repairs", "gf", 180000, 151000, 9000], ["Cleaning", "gf", 60000, 47000, 2000], ["Capital projects", "don", 400000, 120000, 210000]] },
+      { name: "Education", lines: [["Weekend school support", "prog", 140000, 102000, 8000], ["Adult classes", "prog", 40000, 26000, 2000], ["Library", "gf", 12000, 4000, 1000]] },
+      { name: "Da'wah", lines: [["Imam's office", "gf", 120000, 96000, 4000], ["Conferences & travel", "gf", 25000, 18400, 2000], ["New Muslim program", "don", 20000, 11000, 1000]] },
+      { name: "Youth", lines: [["Programs & events", "prog", 60000, 41000, 6000], ["Food & hospitality", "gf", 18000, 15200, 1000], ["Supplies", "gf", 8000, 5100, 400], ["Youth retreat", "don", 25000, 9000, 12000]] },
+      { name: "Outreach", lines: [["Community events", "gf", 35000, 22000, 4000], ["Interfaith program", "don", 15000, 6000, 3000]] },
+      { name: "Marketing", lines: [["Printing & design", "gf", 30000, 21000, 2000]] },
+      { name: "Women's Committee", lines: [["Programs", "prog", 22000, 13000, 2000]] },
+    ].map((c) => ({ name: c.name, lines: c.lines.map(([acct, source, budget, spent, committed]) => ({ acct, source, budget, spent, committed })) })),
+    tickets: [
+      { id: "TK-501", type: "maint", cat: "Heating & cooling", room: "mphAB", asset: "AS-014", urgency: "Urgent (safety or a service today)", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.", owner: "hana", assignee: "idris", status: "in_progress", log: [{ t: now(2), who: "hana", text: "Reported" }, { t: now(2), who: "idris", text: "Assigned to self" }, { t: now(1), who: "idris", text: "Called the HVAC contractor; technician coming tomorrow" }] },
+      { id: "TK-502", type: "it", cat: "Wi-Fi or network", room: "r240", asset: "AS-052", urgency: "Normal", desc: "Wi-Fi drops every few minutes in the conference room.", owner: "bilal", status: "new", log: [{ t: now(1), who: "bilal", text: "Reported" }] },
+      { id: "TK-503", type: "maint", cat: "Plumbing", room: "women", asset: "", urgency: "Normal", desc: "Wudu area faucet on the left keeps dripping.", owner: "layla", assignee: "idris", status: "assigned", log: [{ t: now(3), who: "layla", text: "Reported" }, { t: now(2), who: "idris", text: "Assigned to self" }] },
+      { id: "TK-488", type: "it", cat: "AV equipment", room: "r240", asset: "AS-031", urgency: "Normal", desc: "Projector shows no picture from HDMI.", owner: "hana", assignee: "zaid", status: "resolved", log: [{ t: now(30), who: "hana", text: "Reported" }, { t: now(29), who: "zaid", text: "Resolved: replaced the HDMI switch" }] },
+    ],
+    assets: [
+      { id: "AS-014", name: "MPH rooftop HVAC unit 2", cat: "HVAC", room: "mphAB", status: "Needs repair", bought: "2018-05-01", cost: 14800, warranty: "2023-05-01", serial: "CR-48TC-11872" },
+      { id: "AS-015", name: "Main Prayer Hall HVAC unit 1", cat: "HVAC", room: "main", status: "In use", bought: "2021-04-01", cost: 18900, warranty: addDays(TODAY, 90), serial: "CR-50XC-20931" },
+      { id: "AS-031", name: "Epson projector", cat: "AV", room: "r240", status: "In use", bought: "2022-08-01", cost: 1150, warranty: "2025-08-01", serial: "EP-X49-77310" },
+      { id: "AS-032", name: "Portable PA system", cat: "AV", room: "office", status: "Checked out", portable: true, out: { to: "Youth Committee · Family Night", due: addDays(TODAY, 10) }, bought: "2023-02-01", cost: 890, warranty: "", serial: "JBL-EON-5521" },
+      { id: "AS-033", name: "Wireless mic set (4)", cat: "AV", room: "office", status: "Available", portable: true, bought: "2024-01-01", cost: 640, warranty: addDays(TODAY, 300), serial: "SH-BLX-0433" },
+      { id: "AS-040", name: "Folding tables (60)", cat: "Furniture", room: "mphAB", status: "In use", bought: "2019-09-01", cost: 4200, warranty: "", serial: "—" },
+      { id: "AS-051", name: "Office printer", cat: "IT", room: "office", status: "In use", bought: "2023-06-01", cost: 2400, warranty: addDays(TODAY, 220), serial: "RC-IM350-1182" },
+      { id: "AS-052", name: "Wi-Fi access point, 2nd floor", cat: "IT", room: "r240", status: "In use", bought: "2021-03-01", cost: 380, warranty: "", serial: "UB-U6P-4471" },
+      { id: "AS-060", name: "Floor scrubber", cat: "Cleaning", room: "mphAB", status: "In use", bought: "2020-11-01", cost: 3100, warranty: "", serial: "TN-T3-55021" },
+      { id: "AS-070", name: "Security camera recorder", cat: "Security", room: "office", status: "In use", bought: "2022-01-01", cost: 2200, warranty: addDays(TODAY, 60), serial: "HK-NVR-77802" },
     ],
     aid: [
       { id: "SW-311", who: "Family A (case 311)", need: "Rent assistance, one month", amount: 1100, status: "Approved, check issued" },
@@ -523,7 +564,7 @@ const me = () => PEOPLE[S.me];
 const has = (r) => me().roles.includes(r);
 const nameOf = (id) => (id === "system" ? "Portal" : id.startsWith("ext:") ? id.slice(4) : PEOPLE[id]?.name || id);
 const isMine = (c) => c.owner === S.me || (S.me === "admin" && false);
-const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.rentals.find((c) => c.id === id);
+const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.rentals.find((c) => c.id === id) || S.tickets.find((c) => c.id === id);
 const TEAM_ROLE = { marketing: "marketing", av: "av", facilities: "facilities", security: "security", finance: "finance" };
 const TEAM_NAME = { marketing: "Marketing", av: "AV", facilities: "Facilities", security: "Security", finance: "Finance" };
 
@@ -574,6 +615,7 @@ function myActionItems() {
     if (has("finance") && ["finance", "to_pay"].includes(c.status)) items.push({ c, why: c.status === "finance" ? "Finance review" : "Record payment" });
   }
   if (has("office")) for (const r of S.rentals) if (r.status === "submitted") items.push({ c: r, why: "Review rental request" });
+  for (const t of S.tickets) if (canWorkTk(t) && (t.status === "new" || (t.assignee === S.me && t.status !== "resolved"))) items.push({ c: t, why: "" });
   return items;
 }
 function myTasks() {
@@ -590,9 +632,12 @@ const MODULES = [
   { id: "requests", name: "My Requests", vis: ["member"], group: "" },
   { id: "events", name: "Events & Rooms", vis: ["member"], group: "Request" },
   { id: "purchases", name: "Purchase Requests", vis: ["member"], group: "Request" },
+  { id: "tickets", name: "IT & Maintenance", vis: ["member"], group: "Request" },
   { id: "queues", name: "Team Queue", vis: ["marketing", "av", "facilities", "security", "finance", "office"], group: "Work" },
   { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
   { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
+  { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work" },
+  { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive"], group: "Finance" },
   { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
   { id: "settings", name: "Portal Settings", vis: ["admins"], group: "Admin" },
 ];
@@ -605,6 +650,9 @@ const BLURB = {
   runsheet: "One printable page of what's happening where today.",
   rentals: "Outside groups' requests for the gym and halls.",
   aid: "Private aid cases, visible only to S&W and finance.",
+  tickets: "Report a building or tech problem and follow it until it's fixed.",
+  assets: "Tagged equipment with location, warranty, checkouts and repair history.",
+  budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
   settings: "Rooms, access groups and the policy rules the portal checks.",
 };
 
@@ -619,7 +667,7 @@ function renderRail() {
   let html = "", lastGroup = null;
   for (const m of MODULES.filter(visible)) {
     if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
-    const on = S.view === m.id || (S.view === "card" && m.id === "requests") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases");
+    const on = S.view === m.id || (S.view === "card" && m.id === "requests") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
     html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
   }
   const hidden = MODULES.filter((m) => !visible(m)).length;
@@ -648,6 +696,7 @@ function vHome() {
   </div></div>`;
 }
 function itemRow(c, why) {
+  if (String(c.id).startsWith("TK-")) return tkRow(c);
   const title = c.kind === "rental" ? `Rental: ${c.org}` : c.kind === "po" ? c.desc : c.title;
   const sub = c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
   return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${statusPill(c)}</div></button>`;
@@ -788,6 +837,7 @@ function vCard() {
   if (!c) return `<div class="empty">Not found.</div>`;
   if (c.kind === "po") return vPOCard(c);
   if (c.kind === "rental") return vRentalCard(c);
+  if (String(c.id).startsWith("TK-")) return vTicketCard(c);
   const canSee = c.owner === S.me || has("office") || has("executive") || has("finance") || has("admins") || c.tasks.some((t) => has(TEAM_ROLE[t.team])) || (has("chairs") && me().committees.includes(c.committee));
   if (!canSee) return `<div class="empty">This event card isn't shared with your groups.</div>`;
   const ch = runChecks(c, c.owner);
@@ -1008,6 +1058,170 @@ function vSettings() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Budget viewer with a Sankey                                         */
+/* ------------------------------------------------------------------ */
+const SRC = { gf: { label: "Unrestricted · General Fund", color: "var(--src1)" }, prog: { label: "Restricted · Programs", color: "var(--src2)" }, don: { label: "Restricted · Donations", color: "var(--src3)" } };
+const STATUS_N = { spent: "Spent", committed: "Committed", available: "Available" };
+function budgetScopes() {
+  const all = has("finance") || has("executive") || has("admins");
+  const list = all ? S.budget.map((c) => c.name) : S.budget.map((c) => c.name).filter((n) => me().committees.includes(n));
+  return { all, list };
+}
+function sankeySvg(cols, links, opts) {
+  const W = 960, H = opts.h || 460, nw = 14, top = 8;
+  const padOf = (c) => (c.length > 6 ? 26 : 16);
+  const val = {};
+  for (const l of links) { val["o" + l.s] = (val["o" + l.s] || 0) + l.v; val["i" + l.t] = (val["i" + l.t] || 0) + l.v; }
+  const nodeV = (id) => Math.max(val["o" + id] || 0, val["i" + id] || 0);
+  const colX = cols.map((_, i) => 215 + i * ((W - 215 - 200) / (cols.length - 1)));
+  const scale = Math.min(...cols.map((c) => (H - top * 2 - padOf(c) * (c.length - 1)) / c.reduce((a, n) => a + nodeV(n.id), 0)));
+  const pos = {};
+  cols.forEach((c, ci) => { const pad = padOf(c); let y = top; const tot = c.reduce((a, n) => a + nodeV(n.id), 0) * scale + pad * (c.length - 1); y = (H - tot) / 2; for (const n of c) { const h = Math.max(2, nodeV(n.id) * scale); pos[n.id] = { x: colX[ci], y, h, out: y, in: y, ci, n }; y += h + pad; } });
+  let paths = "";
+  for (const l of links) {
+    const a = pos[l.s], b = pos[l.t]; if (!a || !b) continue; const th = Math.max(1, l.v * scale);
+    const x0 = a.x + nw, x1 = b.x, xm = (x0 + x1) / 2, y0 = a.out, y1 = b.in; a.out += th; b.in += th;
+    paths += `<path d="M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1} L${x1},${y1 + th} C${xm},${y1 + th} ${xm},${y0 + th} ${x0},${y0 + th} Z" fill="${l.color}" fill-opacity="0.38" class="lnk" data-tip="${esc(l.tip)}"/>`;
+  }
+  let nodes = "";
+  for (const p of Object.values(pos)) {
+    const left = p.ci === 0, last = p.ci === cols.length - 1;
+    const tx = left ? p.x - 8 : p.x + nw + 8, anchor = left ? "end" : "start";
+    nodes += `<rect x="${p.x}" y="${p.y}" width="${nw}" height="${p.h}" rx="3" fill="${p.n.color || "var(--ink-2)"}" data-tip="${esc(p.n.label + ": " + money(nodeV(p.n.id)))}"/>`;
+    const vtxt = kfmt(nodeV(p.n.id)) + (last && opts.total ? ` · ${Math.round((nodeV(p.n.id) / opts.total) * 100)}%` : "");
+    if (left || p.h >= 30) nodes += `<text x="${tx}" y="${p.y + p.h / 2 - 1}" text-anchor="${anchor}" class="sk-l">${esc(p.n.label)}</text><text x="${tx}" y="${p.y + p.h / 2 + 12}" text-anchor="${anchor}" class="sk-v">${vtxt}</text>`;
+    else nodes += `<text x="${tx}" y="${p.y + p.h / 2 + 4}" text-anchor="${anchor}" class="sk-l">${esc(p.n.label)} <tspan class="sk-v">${vtxt}</tspan></text>`;
+  }
+  return `<div class="tablewrap"><svg class="sankey" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.aria)}">${paths}${nodes}</svg></div>`;
+}
+const kfmt = (n) => (n >= 1e6 ? "$" + (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? "$" + Math.round(n / 1e3) + "K" : "$" + Math.round(n));
+function vBudget() {
+  const { all, list } = budgetScopes();
+  const scope = S.budScope && (S.budScope === "IAR" ? all : list.includes(S.budScope)) ? S.budScope : all ? "IAR" : list[0];
+  const mode = S.budMode || "status";
+  if (!scope) return `<h1>Budget</h1><div class="panel empty">Your groups don't include a committee budget.</div>`;
+  const comms = scope === "IAR" ? S.budget : S.budget.filter((c) => c.name === scope);
+  const lines = comms.flatMap((c) => c.lines.map((l) => ({ ...l, committee: c.name })));
+  const sum = (xs, k) => xs.reduce((a, x) => a + x[k], 0);
+  const B = sum(lines, "budget"), SP = sum(lines, "spent"), CM = sum(lines, "committed"), AV = B - SP - CM;
+  const srcIds = Object.keys(SRC).filter((s) => lines.some((l) => l.source === s));
+  const mids = scope === "IAR" ? comms.map((c) => ({ id: "m:" + c.name, label: c.name, key: c.name })) : lines.map((l) => ({ id: "m:" + l.acct, label: l.acct, key: l.acct }));
+  const midOf = (l) => "m:" + (scope === "IAR" ? l.committee : l.acct);
+  const links = [];
+  for (const s of srcIds) for (const m of mids) { const v = lines.filter((l) => l.source === s && midOf(l) === m.id).reduce((a, l) => a + l.budget, 0); if (v > 0) links.push({ s: "s:" + s, t: m.id, v, color: SRC[s].color, tip: `${SRC[s].label} → ${m.label}: ${money(v)}` }); }
+  const cols = [srcIds.map((s) => ({ id: "s:" + s, label: SRC[s].label, color: SRC[s].color })), mids.map((m) => ({ ...m, color: "var(--ink-2)" }))];
+  if (mode === "status") {
+    cols.push(["spent", "committed", "available"].map((k) => ({ id: "t:" + k, label: STATUS_N[k], color: k === "available" ? "var(--ink-3)" : "var(--ink-2)" })));
+    for (const m of mids) {
+      const ls = lines.filter((l) => midOf(l) === m.id);
+      for (const s of srcIds) {
+        const sl = ls.filter((l) => l.source === s); if (!sl.length) continue;
+        const sp = sum(sl, "spent"), cm = sum(sl, "committed"), av = sum(sl, "budget") - sp - cm;
+        for (const [k, v] of [["spent", sp], ["committed", cm], ["available", av]]) if (v > 0) links.push({ s: m.id, t: "t:" + k, v, color: SRC[s].color, tip: `${m.label} · ${SRC[s].label} → ${STATUS_N[k]}: ${money(v)}` });
+      }
+    }
+  }
+  const h = Math.max(380, mids.length * 44);
+  const rows = (scope === "IAR" ? comms.map((c) => ({ name: c.name, ls: c.lines })) : lines.map((l) => ({ name: l.acct, ls: [l] })));
+  const bySrc = (ls, s) => ls.filter((l) => l.source === s).reduce((a, l) => a + l.budget, 0);
+  return `<div class="head"><div><h1>Budget</h1><p class="lead">Where each committee's money comes from and where it stands. Sample figures for FY2026; the real numbers come from QuickBooks and the chart of accounts.</p></div></div>
+  <div class="row">
+    <label class="small muted" for="budScope">Show</label><select id="budScope" class="btn small">${all ? `<option value="IAR" ${scope === "IAR" ? "selected" : ""}>IAR as a whole</option>` : ""}${list.map((n) => `<option ${n === scope ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
+    <label class="small muted" for="budMode">Flow</label><select id="budMode" class="btn small"><option value="status" ${mode === "status" ? "selected" : ""}>Funding → ${scope === "IAR" ? "committee" : "sub-account"} → spent / committed / available</option><option value="fund" ${mode === "fund" ? "selected" : ""}>Funding → ${scope === "IAR" ? "committee" : "sub-account"} only</option></select>
+    ${!all ? '<span class="small muted">You see the committees you chair.</span>' : ""}
+  </div>
+  <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+    ${[["Budget", B], ["Spent", SP], ["Committed", CM], ["Available", AV]].map(([l, v]) => `<div class="panel panel-b"><div class="small muted">${l}</div><div style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">${kfmt(v)}</div><div class="small muted">${l === "Budget" ? `${comms.length} committee${comms.length > 1 ? "s" : ""}` : Math.round((v / B) * 100) + "% of budget"}</div></div>`).join("")}
+  </div>
+  <div class="panel"><div class="panel-h"><h2>${esc(scope === "IAR" ? "IAR" : scope)} · FY2026 budget flow</h2><div class="legend">${srcIds.map((s) => `<span><i style="background:${SRC[s].color}"></i>${SRC[s].label}</span>`).join("")}</div></div>
+    <div class="panel-b">${sankeySvg(cols, links, { h, total: B, aria: `Budget flow for ${scope}` })}<p class="small muted" style="margin:6px 0 0">Band width is dollars. Hover a band for its amount. Restricted money only flows to the purposes it was given for.</p></div></div>
+  <div class="panel"><div class="panel-h"><h2>Table</h2></div><div class="tablewrap"><table><thead><tr><th>${scope === "IAR" ? "Committee" : "Sub-account"}</th><th class="num">Unrestricted</th><th class="num">Restr. programs</th><th class="num">Restr. donations</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Committed</th><th class="num">Available</th><th class="num">Used</th></tr></thead><tbody>
+    ${rows.map((r) => { const b = sum(r.ls, "budget"), sp = sum(r.ls, "spent"), cm = sum(r.ls, "committed"); return `<tr><td>${esc(r.name)}</td><td class="num">${kfmt(bySrc(r.ls, "gf"))}</td><td class="num">${kfmt(bySrc(r.ls, "prog"))}</td><td class="num">${kfmt(bySrc(r.ls, "don"))}</td><td class="num">${kfmt(b)}</td><td class="num">${kfmt(sp)}</td><td class="num">${kfmt(cm)}</td><td class="num">${kfmt(b - sp - cm)}</td><td class="num">${Math.round(((sp + cm) / b) * 100)}%</td></tr>`; }).join("")}
+    <tr><td><strong>Total</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "gf"))}</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "prog"))}</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "don"))}</strong></td><td class="num"><strong>${kfmt(B)}</strong></td><td class="num"><strong>${kfmt(SP)}</strong></td><td class="num"><strong>${kfmt(CM)}</strong></td><td class="num"><strong>${kfmt(AV)}</strong></td><td class="num"><strong>${Math.round(((SP + CM) / B) * 100)}%</strong></td></tr>
+  </tbody></table></div></div>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* IT & maintenance tickets                                            */
+/* ------------------------------------------------------------------ */
+const TK_CATS = { it: ["Email or account", "Wi-Fi or network", "Printer", "AV equipment", "Computer or laptop", "Website or software"], maint: ["Heating & cooling", "Plumbing", "Electrical & lighting", "Doors, locks & keys", "Cleaning", "Repairs"] };
+const TK_ST = { new: ["New", "info"], assigned: ["Assigned", "info"], in_progress: ["In progress", "warn"], waiting: ["Waiting on parts or vendor", "warn"], resolved: ["Resolved", "ok"] };
+const tkTeam = (t) => (t.type === "it" ? "it" : "facilities");
+const canWorkTk = (t) => has(tkTeam(t));
+function vTickets() {
+  const teams = ["it", "facilities"].filter(has);
+  const mine = S.tickets.filter((t) => t.owner === S.me);
+  const d = S.tkDraft || (S.tkDraft = { type: "maint", cat: "Heating & cooling", room: "r240", asset: "", urgency: "Normal", desc: "" });
+  const assets = S.assets.filter((a) => a.room === d.room);
+  let html = `<div><h1>IT & Maintenance</h1><p class="lead">Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment.</p></div>
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Submit a ticket</h2></div><div class="panel-b"><form class="f" id="tkForm" autocomplete="off">
+    <div class="fld wide"><span class="lbl">What kind of problem?</span><div class="checks-inline"><label><input type="radio" name="tktype" value="maint" ${d.type === "maint" ? "checked" : ""}> Building or maintenance</label><label><input type="radio" name="tktype" value="it" ${d.type === "it" ? "checked" : ""}> IT or tech</label></div></div>
+    <div class="fld"><label for="tk_cat">Category</label><select id="tk_cat" name="cat">${TK_CATS[d.type].map((c) => `<option ${c === d.cat ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="tk_urg">Urgency</label><select id="tk_urg" name="urgency">${["Low", "Normal", "Urgent (safety or a service today)"].map((u) => `<option ${u === d.urgency ? "selected" : ""}>${esc(u)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="tk_room">Where?</label><select id="tk_room" name="room">${ROOMS.filter((r) => r.id !== "offsite").map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}</option>`).join("")}<option value="office" ${d.room === "office" ? "selected" : ""}>Admin office</option><option value="parking" ${d.room === "parking" ? "selected" : ""}>Parking lot / outside</option></select></div>
+    <div class="fld"><label for="tk_asset">Equipment (optional)</label><select id="tk_asset" name="asset"><option value="">Not sure / none</option>${assets.map((a) => `<option value="${a.id}" ${a.id === d.asset ? "selected" : ""}>${a.id} · ${esc(a.name)}</option>`).join("")}</select></div>
+    <div class="fld wide"><label for="tk_desc">What's wrong?</label><textarea id="tk_desc" name="desc" placeholder="The projector in Room 240 shows no picture from the HDMI cable.">${esc(d.desc)}</textarea></div>
+    <div class="fld wide"><span class="lbl">Photo (optional)</span><div><button class="btn small" type="button" data-tkphoto="1">${d.photo ? "photo.jpg attached" : "Add a photo"}</button></div></div>
+    <div class="actions"><button class="btn primary" type="submit">Submit ticket</button></div>
+  </form></div></div>
+  <div class="panel"><div class="panel-h"><h2>Your tickets</h2></div>${mine.length ? `<div class="list">${mine.map(tkRow).join("")}</div>` : `<div class="empty">You haven't reported anything.</div>`}</div></div>`;
+  for (const team of teams) {
+    const xs = S.tickets.filter((t) => tkTeam(t) === team);
+    const col = (sts, label) => { const ys = xs.filter((t) => sts.includes(t.status)); return `<div class="col"><h3><span>${label}</span><span class="mono">${ys.length}</span></h3>${ys.map((t) => `<button class="tcard" type="button" data-card="${t.id}" style="text-align:left;cursor:pointer"><strong>${esc(t.cat)}</strong><span class="small">${esc(t.desc)}</span><span class="small muted">${t.id} · ${esc(roomName(t.room))}${t.urgency.startsWith("Urgent") ? ' · <span class="flag">Urgent</span>' : ""}</span></button>`).join("") || '<div class="small muted">Empty</div>'}</div>`; };
+    html += `<div class="panel"><div class="panel-h"><h2>${team === "it" ? "IT" : "Maintenance"} queue</h2><span class="small muted">${xs.filter((t) => t.status !== "resolved").length} open</span></div><div class="panel-b"><div class="board">${col(["new", "assigned"], "New")}${col(["in_progress", "waiting"], "In progress")}${col(["resolved"], "Resolved")}</div></div></div>`;
+  }
+  return html;
+}
+const roomName = (id) => (id === "office" ? "Admin office" : id === "parking" ? "Parking lot / outside" : room(id).name);
+const tkRow = (t) => `<button class="item" type="button" data-card="${t.id}"><div><div class="t">${esc(t.cat)}: ${esc(t.desc)}</div><div class="s">${t.id} · ${esc(roomName(t.room))} · ${t.type === "it" ? "IT" : "Maintenance"}</div></div><div class="r"><span class="pill ${TK_ST[t.status][1]}">${TK_ST[t.status][0]}</span></div></button>`;
+function vTicketCard(t) {
+  const a = t.asset ? S.assets.find((x) => x.id === t.asset) : null;
+  const work = canWorkTk(t);
+  const steps = ["new", "assigned", "in_progress", "resolved"], at = t.status === "waiting" ? 2 : steps.indexOf(t.status);
+  let act = "";
+  if (work && t.status !== "resolved") act = `<div class="panel panel-b stack"><div class="row">
+    ${t.status === "new" ? `<button class="btn primary" data-tk="assign" type="button">Assign to me</button>` : ""}
+    ${["assigned", "waiting"].includes(t.status) ? `<button class="btn primary" data-tk="start" type="button">Start work</button>` : ""}
+    ${t.status === "in_progress" ? `<button class="btn" data-tk="wait" type="button">Waiting on parts or vendor</button><button class="btn primary" data-tk="resolve" type="button">Resolve</button>` : ""}
+    ${t.status === "waiting" ? `<button class="btn primary" data-tk="resolve" type="button">Resolve</button>` : ""}</div>
+    <div class="fld" style="max-width:520px"><label for="tkNote">Note (optional)</label><input type="text" id="tkNote" placeholder="Replaced the HDMI switch"></div></div>`;
+  return `<div class="crumb"><button type="button" data-go="tickets">IT & Maintenance</button> / <span class="mono">${t.id}</span></div>
+  <div class="head"><div><h1>${esc(t.cat)}</h1><p class="lead">${esc(roomName(t.room))} · reported by ${esc(nameOf(t.owner))} · ${t.type === "it" ? "IT" : "Maintenance"} team${t.assignee ? " · " + esc(nameOf(t.assignee)) : ""}</p></div><span class="pill ${TK_ST[t.status][1]}">${TK_ST[t.status][0]}</span></div>
+  <div class="panel panel-b"><div class="stages">${["Reported", "Assigned", "In progress", "Resolved"].map((s, i) => `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`).join("")}</div></div>
+  ${act}
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Details</h2>${t.urgency.startsWith("Urgent") ? '<span class="pill bad">Urgent</span>' : `<span class="pill">${esc(t.urgency)}</span>`}</div><div class="panel-b"><p style="margin:0 0 10px">${esc(t.desc)}</p><dl class="kv">
+    <dt>Equipment</dt><dd>${a ? `<button type="button" class="crumb" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-asset="${a.id}">${a.id} · ${esc(a.name)}</button>` : "Not specified"}</dd>${t.photo ? '<dt>Photo</dt><dd><span class="pill">photo.jpg</span></dd>' : ""}</dl></div></div>
+  <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${t.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Asset tracker                                                       */
+/* ------------------------------------------------------------------ */
+const AS_ST = { "In use": "ok", Available: "ok", "Checked out": "info", "Needs repair": "bad" };
+function vAssets() {
+  const f = S.asFilter || "All";
+  const cats = ["All", ...new Set(S.assets.map((a) => a.cat))];
+  const xs = S.assets.filter((a) => f === "All" || a.cat === f);
+  const sel = S.asSel ? S.assets.find((a) => a.id === S.asSel) : null;
+  const warrantySoon = S.assets.filter((a) => a.warranty && a.warranty >= TODAY && daysBetween(TODAY, a.warranty) < 120);
+  return `<div><h1>Asset Tracker</h1><p class="lead">Equipment with a tag, a location and a history. Repairs come from tickets, and portable items are checked out to a committee or event.</p></div>
+  <div class="row">${cats.map((c) => `<button class="btn small ${c === f ? "primary" : ""}" type="button" data-asfilter="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+  ${warrantySoon.length ? `<div class="note info">Warranty ending within 4 months: ${warrantySoon.map((a) => `${a.id} ${esc(a.name)} (${fmtDate(a.warranty)})`).join("; ")}.</div>` : ""}
+  <div class="grid2"><div class="panel"><div class="tablewrap"><table><thead><tr><th>Tag</th><th>Item</th><th>Location</th><th>Status</th></tr></thead><tbody>
+    ${xs.map((a) => `<tr><td class="mono"><button type="button" class="crumb" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent);font-family:var(--mono)" data-asset="${a.id}">${a.id}</button></td><td>${esc(a.name)}<div class="small muted">${esc(a.cat)}</div></td><td>${esc(roomName(a.room))}</td><td><span class="pill ${AS_ST[a.status] || ""}">${esc(a.status)}</span>${a.out ? `<div class="small muted">${esc(a.out.to)} · due ${a.out.due.slice(5)}</div>` : ""}</td></tr>`).join("")}
+  </tbody></table></div></div>
+  <div class="panel">${sel ? assetDetail(sel) : `<div class="empty">Pick an item to see its history.</div>`}</div></div>`;
+}
+function assetDetail(a) {
+  const tks = S.tickets.filter((t) => t.asset === a.id);
+  return `<div class="panel-h"><h2><span class="mono">${a.id}</span> · ${esc(a.name)}</h2><span class="pill ${AS_ST[a.status] || ""}">${esc(a.status)}</span></div><div class="panel-b stack">
+    <dl class="kv"><dt>Category</dt><dd>${esc(a.cat)}</dd><dt>Location</dt><dd>${esc(roomName(a.room))}</dd><dt>Purchased</dt><dd>${a.bought.slice(0, 7)} · ${money(a.cost)}</dd>
+    <dt>Warranty</dt><dd>${a.warranty ? (a.warranty < TODAY ? "Ended " : "Until ") + fmtDate(a.warranty) : "None"}</dd><dt>Serial</dt><dd class="mono">${esc(a.serial)}</dd>${a.out ? `<dt>Checked out</dt><dd>${esc(a.out.to)} · due back ${fmtDate(a.out.due)}</dd>` : ""}</dl>
+    <div class="row">${a.portable && a.status === "Available" ? `<button class="btn primary small" type="button" data-checkout="${a.id}">Check out to Youth Game Night</button>` : ""}${a.out ? `<button class="btn small" type="button" data-checkin="${a.id}">Check in</button>` : ""}<button class="btn small" type="button" data-reportasset="${a.id}">Report a problem</button></div>
+    <div><h3 style="margin-bottom:6px">Repair history</h3>${tks.length ? `<div class="list">${tks.map(tkRow).join("")}</div>` : '<div class="small muted">No tickets yet.</div>'}</div></div>`;
+}
+
+/* ------------------------------------------------------------------ */
 /* Demo guide                                                          */
 /* ------------------------------------------------------------------ */
 const STEPS = [
@@ -1021,6 +1235,11 @@ const STEPS = [
   { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
   { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: "No IAR account needed. Send the request, then switch to Hana and open Facility Rentals to review it against the same calendar." },
+  { as: "yasir", view: "budget", t: "Budget for all of IAR", p: "Money flows from the three funding sources to each committee, then to spent, committed and available. Hover a band for its amount, or switch the view to one committee to see its sub-accounts." },
+  { as: "bilal", view: "budget", t: "A chair sees only their committee", p: "Bilal chairs Youth, so his budget view is Youth only: where its money comes from and how much is left." },
+  { as: "amina", view: "tickets", t: "Report a problem", p: "Anyone can submit an IT or maintenance ticket. Pick the room and, if you know it, the equipment. It lands in the right team's queue." },
+  { as: "zaid", view: "tickets", t: "IT works its queue", p: "Zaid sees only IT tickets. Open the Wi-Fi ticket, assign it to himself, start it and resolve it. The person who reported it is notified." },
+  { as: "idris", view: "assets", t: "Track the equipment", p: "Idris keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset." },
   { as: "layla", view: "home", t: "Groups decide what people see", p: "Layla chairs Social & Welfare, so she sees S&W Aid. Amina never does. Try Portal Admin and Portal Settings: switch off a rule and watch the event checks change." },
 ];
 function renderGuide() {
@@ -1050,7 +1269,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget };
   document.getElementById("main").innerHTML = (V[S.view] || vHome)();
   renderRail();
   renderGuide();
@@ -1066,6 +1285,13 @@ document.addEventListener("click", (e) => {
   const ds = b.dataset;
   if (ds.go) { if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; return go(ds.go, ds.arg); }
   if (ds.card) return go("card", ds.card);
+  if (ds.asset) { S.asSel = ds.asset; S.asFilter = "All"; if (has("facilities") || has("it") || has("office")) return go("assets"); return; }
+  if (ds.asfilter) { S.asFilter = ds.asfilter; return render(); }
+  if (ds.tkphoto) { readTk(); S.tkDraft.photo = true; return render(); }
+  if (ds.tk) return tkAction(ds.tk);
+  if (ds.checkout) { const a = S.assets.find((x) => x.id === ds.checkout); a.status = "Checked out"; a.out = { to: "Youth Committee · Youth Game Night", due: addDays(TODAY, 30) }; toast(`${a.id} checked out`); return render(); }
+  if (ds.checkin) { const a = S.assets.find((x) => x.id === ds.checkin); a.status = "Available"; a.out = null; toast(`${a.id} checked in`); return render(); }
+  if (ds.reportasset) { const a = S.assets.find((x) => x.id === ds.reportasset); const it = ["IT", "AV"].includes(a.cat); S.tkDraft = { type: it ? "it" : "maint", cat: it ? (a.cat === "AV" ? "AV equipment" : "Computer or laptop") : "Repairs", room: a.room, asset: a.id, urgency: "Normal", desc: "" }; return go("tickets"); }
   if (ds.step) return doStep(Number(ds.step));
   if (ds.closeguide) { S.guide = false; return render(); }
   if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
@@ -1115,6 +1341,20 @@ function poAction(a) {
   if (a === "return") { c.status = "returned"; log(c, "Returned to requester: please attach the itemized receipt"); toast("Returned to " + nameOf(c.owner)); }
   render();
 }
+function readTk() {
+  const f = document.getElementById("tkForm"); if (!f || !S.tkDraft) return;
+  Object.assign(S.tkDraft, { type: (f.querySelector("input[name=tktype]:checked") || {}).value || S.tkDraft.type, cat: f.elements.cat.value, urgency: f.elements.urgency.value, room: f.elements.room.value, asset: f.elements.asset.value, desc: f.elements.desc.value });
+}
+function tkAction(a) {
+  const t = getCard(S.arg); const note = (document.getElementById("tkNote")?.value || "").trim();
+  const L = (text) => t.log.push({ t: TODAY, who: S.me, text });
+  if (a === "assign") { t.status = "assigned"; t.assignee = S.me; L("Assigned to self"); }
+  if (a === "start") { t.status = "in_progress"; L("Started work" + (note ? ": " + note : "")); }
+  if (a === "wait") { t.status = "waiting"; L("Waiting on parts or vendor" + (note ? ": " + note : "")); }
+  if (a === "resolve") { t.status = "resolved"; L("Resolved" + (note ? ": " + note : "")); const as = t.asset && S.assets.find((x) => x.id === t.asset); if (as && as.status === "Needs repair") as.status = "In use"; }
+  toast({ assign: "Assigned to you", start: "Work started", wait: "Marked waiting", resolve: `Resolved. ${nameOf(t.owner)} has been notified.` }[a]);
+  render();
+}
 function readPO() {
   const f = document.getElementById("poForm"); if (!f || !S.poDraft) return;
   const d = S.poDraft;
@@ -1127,6 +1367,9 @@ document.addEventListener("input", (e) => {
   if (e.target.closest("#poForm")) { readPO(); const s = document.getElementById("poSum"); if (s) s.textContent = money(S.poDraft.lines.reduce((a, l) => a + Number(l.amount || 0), 0)); }
 });
 document.addEventListener("change", (e) => {
+  if (e.target.closest("#tkForm")) { readTk(); if (e.target.name === "tktype") S.tkDraft.cat = TK_CATS[S.tkDraft.type][0]; if (e.target.name === "room") S.tkDraft.asset = ""; if (["tktype", "room"].includes(e.target.name)) return render(); }
+  if (e.target.id === "budScope") { S.budScope = e.target.value; return render(); }
+  if (e.target.id === "budMode") { S.budMode = e.target.value; return render(); }
   if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
   if (e.target.name === "type" && e.target.closest("#poForm")) { readPO(); if (S.poDraft.type === "card") S.poDraft.payee = "IAR card ending 4417 · " + MON[parseD(TODAY).getMonth()]; else if (S.poDraft.type === "reimburse") S.poDraft.payee = me().name; render(); }
   if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
@@ -1160,6 +1403,14 @@ document.addEventListener("submit", (e) => {
     toast("Event closed. Its costs and attendance are on record.");
     return render();
   }
+  if (e.target.id === "tkForm") {
+    readTk(); const d = S.tkDraft;
+    if (!d.desc.trim()) return toast("Say what's wrong so the team knows what to bring.");
+    const t = { id: "TK-" + ++S.seq.TK, ...d, owner: S.me, status: "new", log: [{ t: TODAY, who: S.me, text: "Reported" }] };
+    S.tickets.unshift(t); S.tkDraft = null;
+    toast(`${t.id} sent to the ${d.type === "it" ? "IT" : "maintenance"} team`);
+    return go("card", t.id);
+  }
   if (e.target.id === "rnForm") {
     const f = e.target.elements;
     const r = { kind: "rental", id: "RN-" + ++S.seq.RN, org: f.org.value, contact: f.contact.value, email: f.email.value, date: f.date.value, start: f.start.value, end: f.end.value, room: f.room.value, attendance: Number(f.attendance.value), purpose: f.purpose.value, status: "submitted", insurance: "insurance.pdf", created: TODAY };
@@ -1167,6 +1418,12 @@ document.addEventListener("submit", (e) => {
   }
 });
 
+document.addEventListener("mousemove", (e) => {
+  const tip = document.getElementById("tip"); const el = e.target.closest && e.target.closest("[data-tip]");
+  if (!el) { tip.hidden = true; return; }
+  tip.textContent = el.getAttribute("data-tip"); tip.hidden = false;
+  const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+});
 seed();
 S.guide = window.innerWidth >= 1200;
 render();
