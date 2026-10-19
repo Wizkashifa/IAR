@@ -1,0 +1,30 @@
+{
+  "name": "iar-portal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IAR Internal Tools Portal — shell",
+  "scripts": {
+    "dev": "DEV_AUTH=1 next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "7.11.6",
+    "google-auth-library": "9.15.1",
+    "next": "15.5.28",
+    "next-auth": "4.24.15",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

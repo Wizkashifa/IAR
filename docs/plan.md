@@ -215,7 +215,10 @@ The biggest risk is people, not code. The portal only works if every booking goe
 
 - [x] Connect the existing repo (`wizkashifa/iar`)
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
-- [ ] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests
+- [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
+- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation (`docs/setup.md`)
+- [ ] Purchase Requests module on the shell (design in purchase-requests-plan.md)
+- [ ] Event cards with calendar holds and rule flags
 - [ ] Create the access groups and a service account in Google Workspace
 - [ ] Pull the room list and calendar IDs from IAR's Google Calendar
 - [ ] Review the rules table and approvers with the office

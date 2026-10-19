@@ -1,0 +1,1173 @@
+<title>IAR Portal Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky top bar with role switcher; left module rail; working area; slide-in demo guide on the right. */
+:root {
+  --bg: #f2f4f3;
+  --surface: #ffffff;
+  --surface-2: #eaeeec;
+  --ink: #16201c;
+  --ink-2: #56625d;
+  --ink-3: #7d8984;
+  --line: #d9e0dc;
+  --accent: #0d5a49;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9ebe4;
+  --ok: #1c7347;
+  --ok-soft: #dcf0e3;
+  --warn: #8f5600;
+  --warn-soft: #fbedd3;
+  --bad: #a1302a;
+  --bad-soft: #f7e0dd;
+  --info: #2c5a94;
+  --info-soft: #e1eaf6;
+  --hold-standing: #c9d2ce;
+  --hold-booking: #9fb8ad;
+  --hold-request: #0d5a49;
+  --font: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111715; --surface: #18201d; --surface-2: #1f2925; --ink: #e6ebe8; --ink-2: #a3afa9; --ink-3: #7c8883;
+    --line: #2b3632; --accent: #6cc3a5; --accent-ink: #0b1411; --accent-soft: #1b3a30;
+    --ok: #74d29d; --ok-soft: #1a3526; --warn: #f0b75c; --warn-soft: #3a2e17; --bad: #f19a92; --bad-soft: #3c2220;
+    --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111715; --surface: #18201d; --surface-2: #1f2925; --ink: #e6ebe8; --ink-2: #a3afa9; --ink-3: #7c8883;
+  --line: #2b3632; --accent: #6cc3a5; --accent-ink: #0b1411; --accent-soft: #1b3a30;
+  --ok: #74d29d; --ok-soft: #1a3526; --warn: #f0b75c; --warn-soft: #3a2e17; --bad: #f19a92; --bad-soft: #3c2220;
+  --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #6cc3a5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-inner { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { font-weight: 700; letter-spacing: -0.01em; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.brand .mark { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); font-size: 12px; font-weight: 700; }
+.demo-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); background: var(--warn-soft); padding: 2px 8px; border-radius: 999px; }
+.spacer { flex: 1; }
+.who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.who label { font-size: 12px; color: var(--ink-2); }
+.who select { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 260px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 9px; font-size: 13px; }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 56px); }
+.rail { border-right: 1px solid var(--line); background: var(--surface); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.rail .group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 14px 10px 6px; }
+.rail button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--ink-2); }
+.rail button:hover { background: var(--surface-2); color: var(--ink); }
+.rail button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.rail .count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
+.rail .soon { font-size: 10.5px; color: var(--ink-3); }
+.main { min-width: 0; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.main-inner { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; text-wrap: balance; line-height: 1.25; }
+h2 { font-size: 15px; margin: 0; }
+h3 { font-size: 14px; margin: 0; }
+.lead { color: var(--ink-2); margin: 4px 0 0; max-width: 68ch; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.crumb { font-size: 12.5px; color: var(--ink-2); }
+.crumb button { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.panel-h { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.panel-b { padding: 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.muted { color: var(--ink-2); }
+.small { font-size: 12.5px; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+.tile:hover { border-color: var(--accent); }
+.tile p { margin: 0; color: var(--ink-2); font-size: 13px; }
+.tile .foot { margin-top: auto; padding-top: 6px; }
+
+.pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.info { background: var(--info-soft); color: var(--info); }
+.pill.accent { background: var(--accent-soft); color: var(--accent); }
+
+.list { display: flex; flex-direction: column; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: center; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; cursor: pointer; }
+.item:first-child { border-top: 0; }
+.item:hover { background: var(--surface-2); }
+.item .t { font-weight: 600; }
+.item .s { color: var(--ink-2); font-size: 12.5px; }
+.item .r { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.empty { padding: 28px 16px; text-align: center; color: var(--ink-2); }
+
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld.wide { grid-column: 1 / -1; }
+.fld > label, .fld > .lbl { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.fld input[type=text], .fld input[type=email], .fld input[type=number], .fld input[type=date], .fld input[type=time], .fld select, .fld textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0;
+}
+.fld textarea { min-height: 64px; resize: vertical; }
+.checks-inline { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.checks-inline label { display: flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 400; color: var(--ink); }
+.hint { font-size: 12px; color: var(--ink-3); }
+.actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.checks { display: flex; flex-direction: column; }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 9px 0; border-top: 1px solid var(--line); }
+.check:first-child { border-top: 0; padding-top: 0; }
+.check .ic { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
+.check.ok .ic { background: var(--ok-soft); color: var(--ok); }
+.check.warn .ic { background: var(--warn-soft); color: var(--warn); }
+.check.bad .ic { background: var(--bad-soft); color: var(--bad); }
+.check.info .ic { background: var(--info-soft); color: var(--info); }
+.check .rule { font-size: 11.5px; color: var(--ink-3); }
+
+.tl { position: relative; height: 34px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.tl .blk { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; font-size: 10.5px; padding: 0 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 26px; color: var(--ink); }
+.tl .blk.standing { background: var(--hold-standing); }
+.tl .blk.booking, .tl .blk.tentative { background: var(--hold-booking); }
+.tl .blk.tentative { background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,0.25) 5px 10px); }
+.tl .blk.req { background: transparent; border: 2px solid var(--hold-request); color: var(--hold-request); font-weight: 600; z-index: 2; }
+.tl-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+.stages { display: flex; gap: 0; overflow-x: auto; padding-bottom: 2px; }
+.stage { flex: 1 0 84px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--ink-3); }
+.stage .bar { height: 4px; background: var(--line); margin-right: 3px; border-radius: 2px; }
+.stage.done .bar { background: var(--accent); }
+.stage.now .bar { background: var(--warn); }
+.stage.now { color: var(--ink); font-weight: 600; }
+.stage.done { color: var(--ink-2); }
+.stage.skip { opacity: 0.45; }
+
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13.5px; }
+.kv dt { color: var(--ink-2); }
+.kv dd { margin: 0; }
+
+.task { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
+.task:first-child { border-top: 0; padding-top: 0; }
+.log { font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+.log .when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-right: 6px; }
+.note { border-radius: 6px; padding: 10px 12px; font-size: 13px; }
+.note.warn { background: var(--warn-soft); color: var(--warn); }
+.note.info { background: var(--info-soft); color: var(--info); }
+.note.ok { background: var(--ok-soft); color: var(--ok); }
+
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.col { background: var(--surface-2); border-radius: var(--r); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.col h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); display: flex; justify-content: space-between; }
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; }
+.sheet-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 4px; }
+.sheet-h h2 { font-size: 18px; }
+.sheet td { font-size: 13px; }
+.flag { color: var(--bad); font-weight: 600; }
+
+.lines td { padding: 6px; }
+.lines input, .lines select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0; }
+.lines .amt { width: 110px; text-align: right; }
+
+.toggle { position: relative; width: 34px; height: 20px; flex: none; }
+.toggle input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; }
+.toggle span { position: absolute; inset: 0; background: var(--line); border-radius: 999px; pointer-events: none; transition: background .15s; }
+.toggle span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.toggle input:checked + span { background: var(--accent); }
+.toggle input:checked + span::after { transform: translateX(14px); }
+
+.guide { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 57px); right: 0; bottom: 0; width: min(380px, 100vw); background: var(--surface); border-left: 1px solid var(--line); z-index: 6; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,0.08); padding-right: env(safe-area-inset-right, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.guide-h { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+.guide-b { overflow-y: auto; padding: 8px 16px 24px; display: flex; flex-direction: column; }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.step:first-child { border-top: 0; }
+.step .n { width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.step.cur .n { background: var(--accent); color: var(--accent-ink); }
+.step p { margin: 4px 0 8px; color: var(--ink-2); font-size: 13px; }
+.step .as { font-size: 12px; color: var(--ink-3); }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-size: 13.5px; z-index: 20; max-width: calc(100vw - 32px); }
+
+@media (min-width: 1200px) { body.guide-open .shell { margin-right: 380px; } }
+.public-wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+@media (max-width: 860px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .board { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .rail .group { display: none; }
+  .rail button { white-space: nowrap; }
+  .rail .soon { display: none; }
+  form.f { grid-template-columns: minmax(0, 1fr); }
+  .who select { max-width: 200px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="mark" aria-hidden="true">IAR</span> Portal <span class="demo-tag">Demo · sample data</span></div>
+    <div class="spacer"></div>
+    <div class="who">
+      <label for="persona">Viewing as</label>
+      <select id="persona"></select>
+    </div>
+    <button class="btn" id="guideBtn" type="button">Demo guide</button>
+  </div>
+</header>
+<div class="shell" id="shell">
+  <nav class="rail" id="rail" aria-label="Portal modules"></nav>
+  <section class="main"><div class="main-inner" id="main"></div></section>
+</div>
+<aside class="guide" id="guide" hidden aria-label="Demo guide"></aside>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------ */
+/* Dates and times                                                     */
+/* ------------------------------------------------------------------ */
+const pad = (n) => String(n).padStart(2, "0");
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseD = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d, 12); };
+const TODAY = ymd(new Date());
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return ymd(d); };
+const dow = (s) => parseD(s).getDay();
+const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 864e5);
+const nextDow = (from, target, minDays) => { let d = addDays(from, minDays); while (dow(d) !== target) d = addDays(d, 1); return d; };
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fmtDate = (s) => { const d = parseD(s); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; };
+const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const fmtT = (m) => { m = Math.max(0, Math.min(24 * 60 - 1, m)); const h = Math.floor(m / 60), mm = m % 60; const ap = h >= 12 ? "PM" : "AM"; const hh = h % 12 || 12; return `${hh}:${pad(mm)} ${ap}`; };
+const fmtRange = (a, b) => `${fmtT(a)}–${fmtT(b)}`;
+const money = (n) => "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const firstSat = (s) => { const d = parseD(s); return d.getDay() === 6 && d.getDate() <= 7; };
+
+/* ------------------------------------------------------------------ */
+/* People (fictional) and roles                                        */
+/* ------------------------------------------------------------------ */
+const PEOPLE = {
+  amina:  { name: "Amina Rahman", title: "Youth Committee member", roles: ["member"], committees: ["Youth"] },
+  bilal:  { name: "Bilal Karim", title: "Youth Committee chair", roles: ["member", "chairs"], committees: ["Youth"] },
+  layla:  { name: "Layla Nasser", title: "Social & Welfare chair", roles: ["member", "chairs", "sw"], committees: ["Social & Welfare"] },
+  hana:   { name: "Hana Siddiqui", title: "IAR office", roles: ["member", "office"], committees: ["Administration"] },
+  omar:   { name: "Omar Farouk", title: "Finance office", roles: ["member", "finance", "cardholders"], committees: ["Administration"] },
+  sara:   { name: "Sara Malik", title: "Marketing team", roles: ["member", "marketing"], committees: [] },
+  idris:  { name: "Idris Thompson", title: "Security, facilities & AV", roles: ["member", "security", "facilities", "av"], committees: [] },
+  yasir:  { name: "Dr. Yasir Ali", title: "Executive (mission review)", roles: ["member", "executive"], committees: [] },
+  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
+  renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], committees: [] },
+};
+const COMMITTEES = ["Youth", "Social & Welfare", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration", "Community member (private event)"];
+
+/* ------------------------------------------------------------------ */
+/* Rooms (from the Program Request Form) and room rules                */
+/* ------------------------------------------------------------------ */
+const ROOMS = [
+  { id: "offsite", name: "Off-site (no room needed)", cap: 0 },
+  { id: "mphA", name: "MPH A – half gym", cap: 75, food: true, mph: true, school: true },
+  { id: "mphB", name: "MPH B – half gym", cap: 75, food: true, mph: true, school: true },
+  { id: "mphAB", name: "MPH A&B – full gym", cap: 150, food: true, mph: true, school: true, jumuah: true },
+  { id: "cafe", name: "Al-Maidah Cafe", cap: 50, food: true, cafe: true },
+  { id: "main", name: "Main Prayer Hall", cap: 300, prayer: true, jumuah: true },
+  { id: "behind", name: "Room behind Main Prayer Hall", cap: 50 },
+  { id: "r220", name: "Room 220 – children's play room", cap: 20, school: true },
+  { id: "r230a", name: "Room 230A – glass room", cap: 20, school: true },
+  { id: "r230b", name: "Room 230B – glass room", cap: 20, school: true },
+  { id: "r240", name: "Room 240 – conference room", cap: 30, food: true, restricted: true },
+  { id: "r250", name: "Room 250 – An Noor meeting room", cap: 20 },
+  { id: "r280", name: "Room 280 – EC meeting room", cap: 20 },
+  { id: "women", name: "Women's Prayer Hall", cap: 100, prayer: true, jumuah: true },
+  { id: "f3arabic", name: "3rd floor – Arabic Islamic Studies", cap: 20, school: true },
+  { id: "f3lang", name: "3rd floor – Language Arts", cap: 20, school: true },
+  { id: "f3math", name: "3rd floor – Math classroom", cap: 20, school: true },
+  { id: "rbArabic", name: "Red Brick – Arabic Islamic Studies", cap: 30, school: true, pantry: true },
+  { id: "rbG1", name: "Red Brick – Grade 1 room", cap: 30, school: true, pantry: true },
+  { id: "flex", name: "Community Flex Room", cap: 40 },
+  { id: "firepit", name: "Fire Pit Area", cap: 40, firepit: true },
+];
+const room = (id) => ROOMS.find((r) => r.id === id) || ROOMS[0];
+const roomsOverlap = (a, b) => {
+  if (a === "offsite" || b === "offsite") return false;
+  if (a === b) return true;
+  const mph = ["mphA", "mphB", "mphAB"];
+  return mph.includes(a) && mph.includes(b) && (a === "mphAB" || b === "mphAB");
+};
+
+/* Policy rules. Admins can switch them off in Portal Settings. */
+const RULES = [
+  { id: "conflicts", name: "Room must be free on the IAR calendar", policy: "§2 · calendar is the source of truth", on: true },
+  { id: "school", name: "School hours: Mon–Fri 8:00–3:30 (Al-Iman, An-Noor)", policy: "§1 · Priority #1", on: true },
+  { id: "sunday", name: "Sundays until Zuhr: Al-Furqan school", policy: "§1 · Priority #1", on: true },
+  { id: "prayer", name: "Daily prayers and Jumuah in prayer halls and MPH", policy: "§1 · Essential activities", on: true },
+  { id: "pantry", name: "Food pantry: 1st Saturday mornings, Red Brick", policy: "§1 · S&W", on: true },
+  { id: "gap", name: "MPH needs a 2-hour cleaning gap", policy: "§4", on: true },
+  { id: "capacity", name: "Attendance within room capacity", policy: "Room list", on: true },
+  { id: "food", name: "Food only in MPH, Room 240 and the cafe", policy: "§8", on: true },
+  { id: "restricted", name: "Room 240: leadership, imams and chairs only", policy: "§10", on: true },
+  { id: "lead", name: "Lead time: office 1 week, marketing 3 weeks", policy: "§4 · Marketing form", on: true },
+  { id: "afterhours", name: "After-hours security (2-hour minimum)", policy: "§3", on: true },
+  { id: "fees", name: "Community MPH events: $200 fee + $100 deposit", policy: "§3", on: true },
+  { id: "mission", name: "Mission review for new programs, outside speakers, fundraisers, 150+ people or $2,500+ budget", policy: "Proposed · needs Shura approval", on: true },
+  { id: "advert", name: "No advertising until approved", policy: "§4", on: true },
+];
+const ruleOn = (id) => (RULES.find((r) => r.id === id) || { on: true }).on;
+
+/* ------------------------------------------------------------------ */
+/* Sample data                                                         */
+/* ------------------------------------------------------------------ */
+let S; // all demo state
+function seed() {
+  const satSoon = nextDow(TODAY, 6, 8);
+  const tueLater = nextDow(TODAY, 2, 17);
+  const thuSoon = nextDow(TODAY, 4, 11);
+  const sunLater = nextDow(TODAY, 0, 14);
+  const pastDay = addDays(TODAY, -3);
+  const satLater = nextDow(TODAY, 6, 26);
+  const now = (d) => addDays(TODAY, -d);
+  S = {
+    me: "amina",
+    view: "home",
+    arg: null,
+    guide: false,
+    step: 0,
+    seq: { EV: 1060, PO: 11060, RN: 210 },
+    bookings: [
+      { room: "mphAB", date: satSoon, s: toMin("10:00"), e: toMin("13:00"), label: "Youth Basketball League" },
+      { room: "f3arabic", date: tueLater, s: toMin("18:30"), e: toMin("20:00"), label: "Adult Arabic class" },
+      { room: "r280", date: thuSoon, s: toMin("19:00"), e: toMin("21:00"), label: "Shura meeting" },
+      { room: "mphB", date: sunLater, s: toMin("16:00"), e: toMin("18:00"), label: "Sisters' fitness" },
+    ],
+    cards: [
+      ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "amina", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
+        log: [[now(5), "amina", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "hana", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
+      ev({ id: "EV-1031", title: "Youth Family Night", owner: "amina", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
+        tasks: { marketing: "doing", av: "todo", facilities: "todo", security: "todo" }, linkedPOs: ["PO-11046"],
+        log: [[now(16), "amina", "Submitted"], [now(15), "hana", "Approved. Room hold confirmed on the IAR calendar"], [now(12), "sara", "Started the flyer"]] }),
+      ev({ id: "EV-0998", title: "Food drive volunteer briefing", owner: "amina", committee: "Youth", status: "closeout", date: pastDay, start: "19:00", end: "20:30", room: "r250", attendance: 18, food: true, budget: 250, created: now(24),
+        tasks: { security: "done" }, securityResult: "Room left clean, chairs returned", linkedPOs: ["PO-10977"],
+        log: [[now(24), "amina", "Submitted"], [now(22), "hana", "Approved"], [pastDay, "idris", "Room check after event: clean, chairs returned"]] }),
+      ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "ext:Maryam Haddad", committee: "Women's Committee", status: "office", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
+        log: [[now(2), "ext:Maryam Haddad", "Submitted"], [now(2), "system", "Auto checks passed"]] }),
+      ev({ id: "EV-1053", title: "Interfaith Open House", owner: "bilal", committee: "Outreach", status: "mission", date: satLater, start: "14:00", end: "17:00", setup: 60, teardown: 60, room: "main", attendance: 200, food: false, isPublic: true, triggers: { outsideSpeaker: true, newProgram: true }, budget: 1800, created: now(3),
+        log: [[now(3), "bilal", "Submitted"], [now(3), "system", "Mission review needed: new program, outside speakers, 200 expected"]] }),
+    ],
+    pos: [
+      po({ id: "PO-11045", owner: "amina", type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Halaqa snacks and supplies", lines: [["Youth – Food & Hospitality", 142.5], ["Youth – Supplies", 42]], eventId: "EV-1042", status: "chair", created: now(1) }),
+      po({ id: "PO-11046", owner: "amina", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Programs & Events", 650]], eventId: "EV-1031", status: "finance", w9: true, created: now(6) }),
+      po({ id: "PO-10977", owner: "amina", type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Pizza and water — food drive briefing", lines: [["Youth – Food & Hospitality", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
+      po({ id: "PO-11039", owner: "bilal", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Programs & Events", 1200]], status: "to_pay", w9: true, created: now(4) }),
+      po({ id: "PO-11051", owner: "hana", type: "card", committee: "Administration", payee: "IAR card ending 4417 · September", desc: "Card receipts — office card, September", lines: [["01-5003 General Fund – Administrative", 86.4, "USPS postage"], ["01-5009 General Fund – Cleaning Supplies", 214.18, "Costco cleaning supplies"], ["Marketing – Printing & Design", 129, "Canva annual plan", "refund"]], status: "finance", created: now(2) }),
+    ],
+    rentals: [
+      { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "Coach D. Ortiz", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
+    ],
+    aid: [
+      { id: "SW-311", who: "Family A (case 311)", need: "Rent assistance, one month", amount: 1100, status: "Approved, check issued" },
+      { id: "SW-318", who: "Individual B (case 318)", need: "Utility bill", amount: 240, status: "Awaiting S&W chair" },
+      { id: "SW-322", who: "Family C (case 322)", need: "Groceries via food pantry card", amount: 150, status: "Approved" },
+    ],
+  };
+}
+function ev(o) {
+  const c = Object.assign({ kind: "event", setup: 30, teardown: 30, attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, linkedPOs: [], log: [], comments: [] }, o);
+  c.tasks = buildTasks(c, o.tasks || {});
+  c.log = (o.log || []).map(([t, who, text]) => ({ t, who, text }));
+  return c;
+}
+function po(o) {
+  const c = Object.assign({ kind: "po", w9: false, log: [] }, o);
+  c.lines = o.lines.map(([acct, amount, note, flag]) => ({ acct, amount, note: note || "", flag: flag || "" }));
+  c.log = [{ t: o.created, who: o.owner, text: "Submitted" }];
+  if (o.status === "finance" && o.type !== "card") c.log.push({ t: o.created, who: "bilal", text: "Chair approved" });
+  if (o.status === "paid") c.log.push({ t: o.created, who: "omar", text: "Paid by check #20418" });
+  return c;
+}
+function buildTasks(c, states) {
+  const t = [];
+  const st = (k) => states[k] || (["approved", "closeout", "closed"].includes(c.status) ? "todo" : "locked");
+  if (c.isPublic) t.push({ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing", status: st("marketing") });
+  if (c.av) t.push({ id: "av", team: "av", title: "AV: projector, mics and sound check", status: st("av") });
+  if (c.setupNotes) t.push({ id: "facilities", team: "facilities", title: "Room setup: " + c.setupNotes, status: st("facilities") });
+  if (c.room !== "offsite") t.push({ id: "security", team: "security", title: "Room check before and after" + (afterHours(c) ? " + after-hours coverage" : ""), status: st("security") });
+  if (c.committee.startsWith("Community") && room(c.room).mph) t.push({ id: "payment", team: "finance", title: "Collect $200 fee and $100 deposit", status: st("payment") });
+  return t;
+}
+const afterHours = (c) => toMin(c.end) + (c.teardown || 0) > 22 * 60 || toMin(c.start) - (c.setup || 0) < 7 * 60;
+
+/* ------------------------------------------------------------------ */
+/* Calendar holds and the checks engine                                */
+/* ------------------------------------------------------------------ */
+function holdsOn(date, excludeId) {
+  const out = [];
+  const d = dow(date);
+  for (const r of ROOMS) {
+    if (r.school && d >= 1 && d <= 5 && ruleOn("school")) out.push({ room: r.id, s: 480, e: 930, label: "Al-Iman & An-Noor school hours", kind: "standing", rule: "school" });
+    if (r.school && d === 0 && ruleOn("sunday")) out.push({ room: r.id, s: 540, e: 810, label: "Al-Furqan weekend school (until Zuhr)", kind: "standing", rule: "sunday" });
+    if (r.jumuah && d === 5 && ruleOn("prayer")) out.push({ room: r.id, s: 750, e: 870, label: "Jumuah", kind: "standing", rule: "prayer" });
+    if (r.prayer && ruleOn("prayer")) {
+      for (const [n, s, e] of [["Zuhr", 795, 825], ["Asr", 1005, 1030], ["Maghrib", 1115, 1140], ["Isha", 1195, 1220]]) {
+        if (!(n === "Zuhr" && d === 5)) out.push({ room: r.id, s, e, label: `${n} prayer`, kind: "standing", rule: "prayer" });
+      }
+    }
+    if (r.pantry && firstSat(date) && ruleOn("pantry")) out.push({ room: r.id, s: 480, e: 720, label: "Food pantry", kind: "standing", rule: "pantry" });
+  }
+  for (const b of S.bookings) if (b.date === date) out.push({ ...b, kind: "booking" });
+  for (const c of S.cards) {
+    if (c.id === excludeId || c.date !== date || c.room === "offsite") continue;
+    if (["denied", "cancelled", "changes"].includes(c.status)) continue;
+    out.push({ room: c.room, s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, label: c.title, kind: c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "booking" : "tentative", cardId: c.id });
+  }
+  for (const r of S.rentals) {
+    if (r.date !== date || ["denied"].includes(r.status) || r.id === excludeId) continue;
+    out.push({ room: r.room, s: toMin(r.start), e: toMin(r.end), label: "Rental: " + r.org, kind: r.status === "approved" ? "booking" : "tentative", cardId: r.id });
+  }
+  return out;
+}
+const RULE_LABEL = { school: "Room policy §1 · school hours", sunday: "Room policy §1 · weekend school", prayer: "Room policy §1 · essential activities", pantry: "Room policy §1 · food pantry" };
+
+function missionReasons(e) {
+  const r = [];
+  if (e.triggers.newProgram) r.push("new program");
+  if (e.triggers.outsideSpeaker) r.push("outside speaker or group");
+  if (e.triggers.fundraiser) r.push("fundraiser");
+  if (Number(e.attendance) >= 150) r.push(`${e.attendance} expected`);
+  if (Number(e.budget) >= 2500) r.push(`budget ${money(e.budget)}`);
+  return r;
+}
+
+function runChecks(e, ownerId) {
+  const out = [];
+  const add = (sev, text, rule) => out.push({ sev, text, rule });
+  const rm = room(e.room);
+  const s = toMin(e.start), en = toMin(e.end);
+  const ws = s - Number(e.setup || 0), we = en + Number(e.teardown || 0);
+  if (!e.date) { add("bad", "Pick a date.", ""); return out; }
+  if (en <= s) add("bad", "End time must be after the start time.", "");
+  if (e.room === "offsite") add("info", "Off-site event: no room hold needed.", "");
+  else if (ruleOn("conflicts")) {
+    const seen = new Set();
+    const clashes = holdsOn(e.date, e.id).filter((h) => roomsOverlap(h.room, e.room) && h.s < we && ws < h.e).filter((h) => { const k = h.label + h.s + h.e; if (seen.has(k)) return false; seen.add(k); return true; });
+    if (clashes.length) {
+      for (const h of clashes) add("bad", `Overlaps ${h.label}, ${fmtRange(h.s, h.e)}.`, h.rule ? RULE_LABEL[h.rule] : h.kind === "tentative" ? "Pending request on the calendar" : "Booked on the IAR calendar");
+    } else add("ok", `${rm.name} is free on the IAR calendar, ${fmtRange(ws, we)} including setup and cleanup.`, "IAR Google Calendar");
+    if (rm.mph && ruleOn("gap")) {
+      const near = holdsOn(e.date, e.id).filter((h) => room(h.room).mph && roomsOverlap(h.room, e.room) && h.kind !== "standing" && ((h.e <= ws && ws - h.e < 120) || (h.s >= we && h.s - we < 120)));
+      for (const h of near) add("warn", `Less than 2 hours between this and ${h.label} (${fmtRange(h.s, h.e)}). The MPH needs a cleaning gap.`, "Room policy §4");
+    }
+  }
+  if (e.room !== "offsite" && ruleOn("capacity") && Number(e.attendance) > rm.cap) add("warn", `${e.attendance} expected but ${rm.name} holds ${rm.cap}.`, "Room capacity");
+  if (e.food && e.room !== "offsite" && !rm.food && ruleOn("food")) add("warn", `Food isn't allowed in ${rm.name}. Use the MPH, Room 240 or the cafe.`, "Room policy §8");
+  if (rm.cafe) add("info", "Al-Maidah Cafe requires a $100/hour minimum food and drink purchase.", "Program Request Form (not yet in the policy)");
+  if (rm.firepit) add("warn", "The room policy bans open fires. Fire pit use is waiting on a Shura decision.", "Room policy §9");
+  if (rm.restricted && ruleOn("restricted")) {
+    const p = PEOPLE[ownerId];
+    if (p && !p.roles.some((r) => ["chairs", "office", "executive", "admins"].includes(r))) add("warn", "Room 240 can only be booked by leadership, imams or committee chairs.", "Room policy §10");
+  }
+  if (ruleOn("lead")) {
+    const days = daysBetween(TODAY, e.date);
+    if (days < 0) add("bad", "That date has already passed.", "");
+    else if (days < 7) add("warn", `Only ${days} days away. The office confirms within a week.`, "Room policy §4");
+    else if (e.isPublic && days < 21) add("warn", `${days} days away. Marketing asks for 3 weeks to promote public events.`, "Marketing request form");
+    else add("ok", `${days} days of lead time.`, "Room policy §4");
+  }
+  if (ruleOn("afterhours") && e.room !== "offsite" && afterHours(e)) add("warn", "Runs after 10 PM. After-hours security is required (2-hour minimum, charged to the event).", "Room policy §3");
+  if (ruleOn("fees") && rm.mph && String(e.committee).startsWith("Community")) add("info", "Community MPH event: $200 non-refundable fee and $100 refundable deposit.", "Room policy §3");
+  const mr = missionReasons(e);
+  if (ruleOn("mission")) {
+    if (mr.length) add("info", `Mission review will be added: ${mr.join(", ")}.`, "Proposed rule");
+    else add("ok", "No mission review needed.", "Proposed rule");
+  }
+  if (e.isPublic && ruleOn("advert")) add("info", "Marketing unlocks after approval. No advertising before then.", "Room policy §4");
+  return out;
+}
+const worst = (checks) => (checks.some((c) => c.sev === "bad") ? "bad" : checks.some((c) => c.sev === "warn") ? "warn" : "ok");
+
+/* ------------------------------------------------------------------ */
+/* Helpers: people, roles, waiting-on                                  */
+/* ------------------------------------------------------------------ */
+const me = () => PEOPLE[S.me];
+const has = (r) => me().roles.includes(r);
+const nameOf = (id) => (id === "system" ? "Portal" : id.startsWith("ext:") ? id.slice(4) : PEOPLE[id]?.name || id);
+const isMine = (c) => c.owner === S.me || (S.me === "admin" && false);
+const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.rentals.find((c) => c.id === id);
+const TEAM_ROLE = { marketing: "marketing", av: "av", facilities: "facilities", security: "security", finance: "finance" };
+const TEAM_NAME = { marketing: "Marketing", av: "AV", facilities: "Facilities", security: "Security", finance: "Finance" };
+
+const EV_STATUS = {
+  submitted: ["Submitted", "info"], mission: ["Mission review", "info"], office: ["Office review", "info"], changes: ["Changes requested", "warn"],
+  approved: ["Approved", "ok"], denied: ["Denied", "bad"], cancelled: ["Cancelled", "bad"], closeout: ["Close-out", "warn"], closed: ["Closed", "accent"],
+};
+const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
+const RN_STATUS = { submitted: ["Office review", "info"], approved: ["Approved", "ok"], denied: ["Declined", "bad"] };
+function statusPill(c) {
+  const map = c.kind === "event" ? EV_STATUS : c.kind === "po" ? PO_STATUS : RN_STATUS;
+  const [l, k] = map[c.status] || [c.status, ""];
+  return `<span class="pill ${k}">${esc(l)}</span>`;
+}
+function waitingOn(c) {
+  if (c.kind === "event") {
+    if (c.status === "mission") return "Executive: mission review";
+    if (c.status === "office") return "IAR office: approval";
+    if (c.status === "changes") return `${nameOf(c.owner)}: make changes`;
+    if (c.status === "closeout") return `${nameOf(c.owner)}: close-out`;
+    if (c.status === "approved") {
+      const open = c.tasks.filter((t) => t.status !== "done").map((t) => TEAM_NAME[t.team]);
+      return open.length ? `Teams: ${open.join(", ")}` : "Ready for event day";
+    }
+    return "";
+  }
+  if (c.kind === "po") {
+    if (c.status === "chair") return `${c.committee} chair`;
+    if (c.status === "finance") return "Finance review";
+    if (c.status === "to_pay") return "Finance: payment";
+    if (c.status === "returned") return `${nameOf(c.owner)}: fix and resubmit`;
+    return "";
+  }
+  if (c.kind === "rental") return c.status === "submitted" ? "IAR office: review" : "";
+  return "";
+}
+function myActionItems() {
+  const items = [];
+  const p = me();
+  for (const c of S.cards) {
+    if (c.owner === S.me && ["changes", "closeout"].includes(c.status)) items.push({ c, why: c.status === "changes" ? "Make the requested changes and resubmit" : "Add attendance and close it out" });
+    if (has("office") && c.status === "office") items.push({ c, why: "Approve, request changes or deny" });
+    if (has("executive") && c.status === "mission") items.push({ c, why: "Mission review" });
+  }
+  for (const c of S.pos) {
+    if (c.owner === S.me && c.status === "returned") items.push({ c, why: "Fix and resubmit" });
+    if (has("chairs") && c.status === "chair" && p.committees.includes(c.committee) && c.owner !== S.me) items.push({ c, why: "Chair approval" });
+    if (has("finance") && ["finance", "to_pay"].includes(c.status)) items.push({ c, why: c.status === "finance" ? "Finance review" : "Record payment" });
+  }
+  if (has("office")) for (const r of S.rentals) if (r.status === "submitted") items.push({ c: r, why: "Review rental request" });
+  return items;
+}
+function myTasks() {
+  const out = [];
+  for (const c of S.cards) for (const t of c.tasks) if (has(TEAM_ROLE[t.team]) && t.status !== "locked") out.push({ c, t });
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Modules and navigation                                              */
+/* ------------------------------------------------------------------ */
+const MODULES = [
+  { id: "home", name: "Home", vis: ["member"], group: "" },
+  { id: "requests", name: "My Requests", vis: ["member"], group: "" },
+  { id: "events", name: "Events & Rooms", vis: ["member"], group: "Request" },
+  { id: "purchases", name: "Purchase Requests", vis: ["member"], group: "Request" },
+  { id: "queues", name: "Team Queue", vis: ["marketing", "av", "facilities", "security", "finance", "office"], group: "Work" },
+  { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
+  { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
+  { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
+  { id: "settings", name: "Portal Settings", vis: ["admins"], group: "Admin" },
+];
+const visible = (m) => m.vis.some(has);
+const BLURB = {
+  requests: "Everything you own, where it stands, and who it's waiting on.",
+  events: "Request a program or event. Rooms are checked against the IAR calendar as you type.",
+  purchases: "Pay a vendor, get reimbursed, or submit card receipts, split across sub-accounts.",
+  queues: "Your team's tasks across every event, unlocked when an event is approved.",
+  runsheet: "One printable page of what's happening where today.",
+  rentals: "Outside groups' requests for the gym and halls.",
+  aid: "Private aid cases, visible only to S&W and finance.",
+  settings: "Rooms, access groups and the policy rules the portal checks.",
+};
+
+function go(view, arg) { S.view = view; S.arg = arg ?? null; render(); window.scrollTo({ top: 0 }); }
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
+const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
+
+function renderRail() {
+  const rail = document.getElementById("rail");
+  if (S.me === "renter") { rail.innerHTML = `<div class="group">Public</div><button class="on" type="button">Request the gym</button>`; return; }
+  const counts = { home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length };
+  let html = "", lastGroup = null;
+  for (const m of MODULES.filter(visible)) {
+    if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
+    const on = S.view === m.id || (S.view === "card" && m.id === "requests") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases");
+    html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
+  }
+  const hidden = MODULES.filter((m) => !visible(m)).length;
+  if (hidden) html += `<div class="group">Not in your groups</div><button type="button" disabled style="cursor:default"><span class="soon">${hidden} module${hidden > 1 ? "s" : ""} hidden</span></button>`;
+  rail.innerHTML = html;
+}
+
+/* ------------------------------------------------------------------ */
+/* Views                                                               */
+/* ------------------------------------------------------------------ */
+function vHome() {
+  const p = me();
+  const items = myActionItems();
+  const tasks = myTasks().filter((x) => x.t.status !== "done");
+  const tiles = MODULES.filter((m) => m.id !== "home" && visible(m));
+  return `
+  <div><h1>Assalamu alaikum, ${esc(p.name.replace(/^Dr\. /, "").split(" ")[0])}</h1>
+  <p class="lead">Signed in as ${esc(p.title)}. What you see here comes from your Google Groups.</p></div>
+  <div class="panel"><div class="panel-h"><h2>Waiting on you</h2><span class="pill ${items.length ? "warn" : "ok"}">${items.length || "Nothing"}</span></div>
+    ${items.length ? `<div class="list">${items.map(({ c, why }) => itemRow(c, why)).join("")}</div>` : `<div class="empty">You're all caught up.</div>`}
+  </div>
+  ${tasks.length ? `<div class="panel"><div class="panel-h"><h2>Your team's open tasks</h2><button class="btn small" data-go="queues" type="button">Open queue</button></div>
+    <div class="list">${tasks.slice(0, 4).map(({ c, t }) => `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(t.title)}</div><div class="s">${esc(c.title)} · ${fmtDate(c.date)}</div></div><div class="r">${taskPill(t)}</div></button>`).join("")}</div></div>` : ""}
+  <div><h2 style="margin-bottom:10px">Your tools</h2><div class="tiles">
+    ${tiles.map((m) => `<button class="tile" type="button" data-go="${m.id}"><h3>${esc(m.name)}</h3><p>${esc(BLURB[m.id])}</p></button>`).join("")}
+  </div></div>`;
+}
+function itemRow(c, why) {
+  const title = c.kind === "rental" ? `Rental: ${c.org}` : c.kind === "po" ? c.desc : c.title;
+  const sub = c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
+  return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${statusPill(c)}</div></button>`;
+}
+const total = (c) => c.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
+function taskPill(t) {
+  const m = { locked: ["Locked until approval", ""], todo: ["To do", "info"], doing: ["In progress", "warn"], done: ["Done", "ok"] }[t.status];
+  return `<span class="pill ${m[1]}">${m[0]}</span>`;
+}
+
+function vRequests() {
+  const mine = [...S.cards.filter((c) => c.owner === S.me), ...S.pos.filter((c) => c.owner === S.me)].sort((a, b) => (b.created > a.created ? 1 : -1));
+  return `<div class="head"><div><h1>My Requests</h1><p class="lead">Events and purchases you own. Each one shows who it's waiting on.</p></div>
+    <div class="row"><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button></div></div>
+  <div class="panel">${mine.length ? `<div class="tablewrap"><table><thead><tr><th>Request</th><th>Status</th><th>Waiting on</th></tr></thead><tbody>
+    ${mine.map((c) => `<tr><td><button class="crumb" style="border:0;background:none;padding:0;cursor:pointer;text-align:left" data-card="${c.id}"><strong style="color:var(--ink)">${esc(c.kind === "po" ? c.desc : c.title)}</strong></button>
+      <div class="small muted">${c.kind === "event" ? "Event" : "Purchase"} <span class="mono">${c.id}</span> · ${esc(c.committee)}${c.kind === "event" ? " · " + fmtDate(c.date) : " · " + money(total(c))}</div></td>
+      <td>${statusPill(c)}</td><td>${esc(waitingOn(c)) || '<span class="muted">Nothing</span>'}</td></tr>`).join("")}
+  </tbody></table></div>` : `<div class="empty">You haven't submitted anything yet. Switch to Amina to see a full list.</div>`}</div>`;
+}
+
+function vEvents() {
+  const tab = S.arg || (has("office") ? "review" : "upcoming");
+  const tabs = [["upcoming", "Upcoming"], ...(has("office") || has("executive") ? [["review", "Needs review"]] : []), ["mine", "Mine"]];
+  let list;
+  if (tab === "review") list = S.cards.filter((c) => (has("office") && c.status === "office") || (has("executive") && c.status === "mission"));
+  else if (tab === "mine") list = S.cards.filter((c) => c.owner === S.me);
+  else list = S.cards.filter((c) => ["approved", "office", "mission"].includes(c.status) && c.date >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1));
+  return `<div class="head"><div><h1>Events & Rooms</h1><p class="lead">${esc(BLURB.events)}</p></div><button class="btn primary" data-go="newEvent" type="button">New event request</button></div>
+  <div class="row">${tabs.map(([k, l]) => `<button class="btn small ${k === tab ? "primary" : ""}" type="button" data-go="events" data-arg="${k}">${l}</button>`).join("")}</div>
+  <div class="panel">${list.length ? `<div class="list">${list.map((c) => itemRow(c, waitingOn(c))).join("")}</div>` : `<div class="empty">Nothing here.</div>`}</div>
+  <div class="panel"><div class="panel-h"><h2>Room calendar</h2><span class="small muted">Pick a room and date to see what's booked</span></div><div class="panel-b">${calendarPicker()}</div></div>`;
+}
+function calendarPicker() {
+  const d = S.calDate || nextDow(TODAY, 6, 8), r = S.calRoom || "mphAB";
+  return `<div class="row" style="margin-bottom:10px"><input type="date" id="calDate" value="${d}" class="btn small"><select id="calRoom" class="btn small">${ROOMS.filter((x) => x.id !== "offsite").map((x) => `<option value="${x.id}" ${x.id === r ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></div>
+    <div id="calOut">${timeline(d, r, null)}</div>`;
+}
+function timeline(date, roomId, req) {
+  const S0 = 7 * 60, S1 = 23 * 60, span = S1 - S0;
+  const pos = (m) => ((Math.max(S0, Math.min(S1, m)) - S0) / span) * 100;
+  const hs = roomId === "offsite" ? [] : holdsOn(date, req?.id).filter((h) => roomsOverlap(h.room, roomId));
+  let blks = hs.map((h) => `<div class="blk ${h.kind}" style="left:${pos(h.s)}%;width:${pos(h.e) - pos(h.s)}%" title="${esc(h.label)} ${fmtRange(h.s, h.e)}">${esc(h.label)}</div>`).join("");
+  if (req) { const a = toMin(req.start) - req.setup, b = toMin(req.end) + req.teardown; if (b > a) blks += `<div class="blk req" style="left:${pos(a)}%;width:${pos(b) - pos(a)}%" title="Your request">Your request</div>`; }
+  return `<div class="small" style="margin-bottom:6px"><strong>${esc(room(roomId).name)}</strong> · ${fmtDate(date)}</div>
+    <div class="tl">${blks}</div><div class="tl-axis"><span>7 AM</span><span>11 AM</span><span>3 PM</span><span>7 PM</span><span>11 PM</span></div>
+    <div class="legend" style="margin-top:8px"><span><i style="background:var(--hold-standing)"></i>Standing hold (policy)</span><span><i style="background:var(--hold-booking)"></i>Booked or pending</span>${req ? `<span><i style="border:2px solid var(--hold-request)"></i>Your request, with setup and cleanup</span>` : ""}</div>`;
+}
+
+function defaultDraft() {
+  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, description: "Board games, a trivia round and dinner for youth and parents." };
+}
+function vNewEvent() {
+  const d = S.draft || (S.draft = defaultDraft());
+  const p = me();
+  const committees = p.roles.includes("office") || p.roles.includes("admins") ? COMMITTEES : [...p.committees.filter((c) => COMMITTEES.includes(c)), "Community member (private event)"];
+  if (!committees.includes(d.committee)) d.committee = committees[0];
+  const editing = d.id ? getCard(d.id) : null;
+  return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / ${editing ? "Edit " + esc(d.id) : "New request"}</div>
+  <div><h1>${editing ? "Update and resubmit" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing, AV and setup. The checks on the right update as you type.</p></div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
+      <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
+      <div class="fld wide"><label for="f_description">Description</label><textarea id="f_description" name="description">${esc(d.description || "")}</textarea></div>
+      <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
+      <div class="fld"><label for="f_date">Date</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
+      <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
+      <div class="fld"><label for="f_end">Event ends</label><input type="time" id="f_end" name="end" value="${d.end}" step="900"></div>
+      <div class="fld"><label for="f_setup">Setup before (minutes)</label><input type="number" id="f_setup" name="setup" value="${d.setup}" min="0" step="15"></div>
+      <div class="fld"><label for="f_teardown">Cleanup after (minutes)</label><input type="number" id="f_teardown" name="teardown" value="${d.teardown}" min="0" step="15"></div>
+      <div class="fld wide"><label for="f_room">Room</label><select id="f_room" name="room">${ROOMS.map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}${r.cap ? ` (${r.cap})` : ""}</option>`).join("")}</select></div>
+      <div class="fld"><label for="f_attendance">Expected attendance</label><input type="number" id="f_attendance" name="attendance" value="${d.attendance}" min="1"></div>
+      <div class="fld"><label for="f_budget">Budget estimate ($)</label><input type="number" id="f_budget" name="budget" value="${d.budget}" min="0" step="50"></div>
+      <div class="fld wide"><span class="lbl">Details</span><div class="checks-inline">
+        <label><input type="checkbox" id="f_food" name="food" ${d.food ? "checked" : ""}> Food served</label>
+        <label><input type="checkbox" id="f_isPublic" name="isPublic" ${d.isPublic ? "checked" : ""}> Open to the public (needs marketing)</label>
+        <label><input type="checkbox" id="f_registration" name="registration" ${d.registration ? "checked" : ""}> Registration needed</label>
+        <label><input type="checkbox" id="f_av" name="av" ${d.av ? "checked" : ""}> AV support</label>
+      </div></div>
+      <div class="fld wide"><label for="f_setupNotes">Setup needed</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage, projector"></div>
+      <div class="fld wide"><span class="lbl">Does any of this apply?</span><div class="checks-inline">
+        <label><input type="checkbox" id="f_newProgram" name="newProgram" ${d.triggers.newProgram ? "checked" : ""}> New program</label>
+        <label><input type="checkbox" id="f_outsideSpeaker" name="outsideSpeaker" ${d.triggers.outsideSpeaker ? "checked" : ""}> Outside speaker or group</label>
+        <label><input type="checkbox" id="f_fundraiser" name="fundraiser" ${d.triggers.fundraiser ? "checked" : ""}> Fundraiser</label>
+      </div></div>
+      <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_agree" checked> I've read the room reservation policy and accept its rules and liability statement.</label></div>
+      <div class="actions"><button class="btn" type="button" data-go="events">Cancel</button><button class="btn primary" type="submit">${editing ? "Resubmit" : "Submit request"}</button></div>
+    </form></div></div>
+    <div class="stack">
+      <div class="panel"><div class="panel-h"><h2>Checks</h2><span id="checkSum"></span></div><div class="panel-b"><div class="checks" id="checks"></div></div></div>
+      <div class="panel"><div class="panel-h"><h2>IAR calendar that day</h2></div><div class="panel-b" id="evTl"></div></div>
+    </div>
+  </div>`;
+}
+function readDraft() {
+  const f = document.getElementById("evForm"); if (!f) return;
+  const v = (n) => f.elements[n].value, c = (n) => f.elements[n].checked;
+  Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
+}
+function paintChecks() {
+  const d = S.draft; if (!d || !document.getElementById("checks")) return;
+  const ch = runChecks(d, S.me);
+  document.getElementById("checks").innerHTML = checksHtml(ch);
+  const w = worst(ch);
+  document.getElementById("checkSum").innerHTML = `<span class="pill ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
+  document.getElementById("evTl").innerHTML = d.date && d.room !== "offsite" ? timeline(d.date, d.room, d) : `<div class="muted small">Off-site: nothing to check on the calendar.</div>`;
+}
+const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${{ ok: "✓", warn: "!", bad: "×", info: "i" }[c.sev]}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
+
+function submitEvent() {
+  readDraft();
+  const d = S.draft;
+  const ch = runChecks(d, S.me);
+  const mission = ruleOn("mission") && missionReasons(d).length > 0;
+  let c;
+  if (d.id) {
+    c = getCard(d.id);
+    Object.assign(c, JSON.parse(JSON.stringify(d)), { kind: "event" });
+    c.status = mission ? "mission" : "office";
+    c.tasks = buildTasks(c, {});
+    log(c, "Updated and resubmitted");
+  } else {
+    c = ev({ ...JSON.parse(JSON.stringify(d)), id: "EV-" + ++S.seq.EV, owner: S.me, status: mission ? "mission" : "office", created: TODAY });
+    log(c, "Submitted");
+    S.cards.unshift(c);
+  }
+  const flagged = ch.filter((x) => x.sev === "bad" || x.sev === "warn").length;
+  c.log.push({ t: TODAY, who: "system", text: flagged ? `Auto checks: ${flagged} flag${flagged > 1 ? "s" : ""} for the office to review` : "Auto checks passed. Room held on the IAR calendar (tentative)" });
+  if (mission) c.log.push({ t: TODAY, who: "system", text: "Mission review needed: " + missionReasons(c).join(", ") });
+  S.draft = null;
+  toast(`${c.id} submitted. ${mission ? "Sent for mission review." : "Sent to the IAR office."}`);
+  go("card", c.id);
+}
+
+/* ---- Card detail -------------------------------------------------- */
+function vCard() {
+  const c = getCard(S.arg);
+  if (!c) return `<div class="empty">Not found.</div>`;
+  if (c.kind === "po") return vPOCard(c);
+  if (c.kind === "rental") return vRentalCard(c);
+  const canSee = c.owner === S.me || has("office") || has("executive") || has("finance") || has("admins") || c.tasks.some((t) => has(TEAM_ROLE[t.team])) || (has("chairs") && me().committees.includes(c.committee));
+  if (!canSee) return `<div class="empty">This event card isn't shared with your groups.</div>`;
+  const ch = runChecks(c, c.owner);
+  const mission = missionReasons(c).length > 0 && ruleOn("mission");
+  const order = ["submitted", "checks", "mission", "office", "approved", "eventday", "closeout", "closed"];
+  const labels = { submitted: "Submitted", checks: "Auto checks", mission: "Mission review", office: "Office approval", approved: "Approved", eventday: "Event day", closeout: "Close-out", closed: "Closed" };
+  const at = { mission: 2, office: 3, changes: 3, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
+  const stages = order.map((k, i) => {
+    let cls = i < at ? "done" : i === at ? "now" : "";
+    if (k === "mission" && !mission) cls += " skip";
+    if (k === "eventday" && c.status === "approved" && c.date <= TODAY) cls = "now";
+    return `<div class="stage ${cls}"><div class="bar"></div>${labels[k]}${k === "mission" && !mission ? " (skipped)" : ""}</div>`;
+  }).join("");
+  const r = room(c.room);
+  const linked = c.linkedPOs.map(getCard).filter(Boolean);
+  const spent = linked.filter((p) => ["paid", "to_pay"].includes(p.status)).reduce((a, p) => a + total(p), 0);
+  const actions = [];
+  if (c.status === "office" && has("office")) actions.push(`<button class="btn primary" data-act="approve" type="button">Approve</button><button class="btn" data-act="changes" type="button">Request changes</button><button class="btn danger" data-act="deny" type="button">Deny</button>`);
+  if (c.status === "mission" && has("executive")) actions.push(`<button class="btn primary" data-act="missionOk" type="button">Aligned with the mission · send to office</button><button class="btn" data-act="missionAsk" type="button">Ask a question</button><button class="btn danger" data-act="missionNo" type="button">Not aligned · deny</button>`);
+  if (c.status === "changes" && c.owner === S.me) actions.push(`<button class="btn primary" data-act="edit" type="button">Edit and resubmit</button>`);
+  if (c.status === "approved" && (c.owner === S.me || has("office"))) actions.push(`<button class="btn" data-act="held" type="button">Mark event as held</button>`);
+  if (c.status === "approved" && c.owner === S.me) actions.push(`<button class="btn" data-act="linkPO" type="button">Add a purchase request</button>`);
+  const conflictNote = c.status === "office" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
+  const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question/.test(l.text));
+  return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / <span class="mono">${c.id}</span></div>
+  <div class="head"><div><h1>${esc(c.title)}</h1><p class="lead">${esc(c.committee)} · owned by ${esc(nameOf(c.owner))} · ${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))} · ${esc(r.name)}</p></div>${statusPill(c)}</div>
+  <div class="panel panel-b"><div class="stages">${stages}</div></div>
+  ${c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : ""}
+  ${actions.length ? `<div class="panel panel-b stack">${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div></div>` : ""}
+  ${c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""}
+  <div class="grid2">
+    <div class="stack">
+      <div class="panel"><div class="panel-h"><h2>Team tasks</h2><span class="small muted">${c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "Unlocked" : "Unlock on approval"}</span></div><div class="panel-b">
+        ${c.tasks.length ? c.tasks.map((t) => `<div class="task"><div><div>${esc(t.title)}</div><div class="small muted">${TEAM_NAME[t.team]}${t.result ? " · " + esc(t.result) : ""}</div></div><div class="row">${taskPill(t)}${taskButtons(c, t)}</div></div>`).join("") : `<div class="muted">No team tasks for this event.</div>`}
+      </div></div>
+      <div class="panel"><div class="panel-h"><h2>Purchases for this event</h2><span class="small muted">Budget ${money(c.budget)}</span></div><div class="panel-b">
+        ${linked.length ? `<div class="list">${linked.map((p) => itemRow(p, "")).join("")}</div>` : `<div class="muted">None linked yet.</div>`}
+        ${linked.length ? `<div class="small muted" style="margin-top:8px">Spent so far: <strong>${money(spent)}</strong> of ${money(c.budget)}</div>` : ""}
+      </div></div>
+      <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div>
+    </div>
+    <div class="stack">
+      <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch)}</div></div></div>
+      <div class="panel"><div class="panel-h"><h2>Calendar</h2></div><div class="panel-b">${c.room === "offsite" ? '<span class="muted">Off-site</span>' : timeline(c.date, c.room, c)}</div></div>
+      <div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
+        <dt>Room hold</dt><dd>${fmtRange(toMin(c.start) - c.setup, toMin(c.end) + c.teardown)} (setup ${c.setup} min, cleanup ${c.teardown} min)</dd>
+        <dt>Expected</dt><dd>${c.attendance} people</dd><dt>Food</dt><dd>${c.food ? "Yes" : "No"}</dd><dt>Public</dt><dd>${c.isPublic ? "Yes" : "Internal"}</dd>
+        <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup</dt><dd>${esc(c.setupNotes)}</dd>` : ""}
+      </dl></div></div>
+    </div>
+  </div>`;
+}
+function taskButtons(c, t) {
+  if (!has(TEAM_ROLE[t.team]) || t.status === "locked" || t.status === "done") return "";
+  if (t.status === "todo") return `<button class="btn small" type="button" data-task="${c.id}|${t.id}|doing">Start</button>`;
+  if (t.team === "security") return `<button class="btn small" type="button" data-task="${c.id}|${t.id}|done">Log room check</button>`;
+  return `<button class="btn small" type="button" data-task="${c.id}|${t.id}|done">Mark done</button>`;
+}
+function closeoutForm(c, linked, spent) {
+  const sec = c.tasks.find((t) => t.team === "security");
+  return `<div class="panel"><div class="panel-h"><h2>Close out this event</h2><span class="pill warn">Waiting on you</span></div><div class="panel-b"><form class="f" id="coForm">
+    <div class="fld"><label for="co_att">Actual attendance</label><input type="number" id="co_att" value="${c.attendance}" min="0"></div>
+    <div class="fld"><span class="lbl">Actual spend (from linked purchases)</span><div style="padding:7px 0"><strong>${money(spent)}</strong> of ${money(c.budget)} budget · ${c.budget ? Math.round((spent / c.budget) * 100) : 0}%</div></div>
+    <div class="fld wide"><span class="lbl">Room condition (from security)</span><div>${esc(c.securityResult || sec?.result || "Not logged yet")}</div></div>
+    <div class="fld wide"><label for="co_notes">What went well, what to change next time</label><textarea id="co_notes">Good turnout. Order less pizza next time.</textarea></div>
+    <div class="actions"><button class="btn primary" type="submit">Close event</button></div>
+  </form></div></div>`;
+}
+
+/* ---- Purchases ---------------------------------------------------- */
+const ACCOUNTS = ["Youth – Programs & Events", "Youth – Food & Hospitality", "Youth – Supplies", "S&W – Food Pantry", "S&W – Community Aid", "Outreach – Events", "Marketing – Printing & Design", "01-5003 General Fund – Administrative", "01-5009 General Fund – Cleaning Supplies"];
+const PO_TYPE = { vendor: "Pay a vendor or person", reimburse: "Reimburse me", card: "IAR credit card receipts" };
+function vPurchases() {
+  const queue = S.pos.filter((p) => (has("finance") && ["finance", "to_pay"].includes(p.status)) || (has("chairs") && p.status === "chair" && me().committees.includes(p.committee)));
+  const mine = S.pos.filter((p) => p.owner === S.me);
+  return `<div class="head"><div><h1>Purchase Requests</h1><p class="lead">${esc(BLURB.purchases)}</p></div><button class="btn primary" data-go="newPO" type="button">New purchase request</button></div>
+  ${queue.length ? `<div class="panel"><div class="panel-h"><h2>${has("finance") ? "Finance queue" : "Waiting for your approval"}</h2><span class="pill warn">${queue.length}</span></div><div class="list">${queue.map((p) => itemRow(p, waitingOn(p))).join("")}</div></div>` : ""}
+  <div class="panel"><div class="panel-h"><h2>Your purchase requests</h2></div>${mine.length ? `<div class="list">${mine.map((p) => itemRow(p, waitingOn(p))).join("")}</div>` : `<div class="empty">None yet.</div>`}</div>`;
+}
+function vNewPO() {
+  const d = S.poDraft || (S.poDraft = { type: "reimburse", committee: me().committees[0] || "Youth", payee: me().name, desc: "", eventId: S.arg || "", lines: [{ acct: ACCOUNTS[1], amount: "", note: "" }] });
+  const myEvents = S.cards.filter((c) => c.owner === S.me && !["denied", "cancelled", "closed"].includes(c.status));
+  const sum = d.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
+  return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / New</div>
+  <div><h1>New purchase request</h1><p class="lead">Split one request across as many sub-accounts as you need. Link it to an event so its cost shows up on the event card.</p></div>
+  <div class="panel"><div class="panel-b"><form class="f" id="poForm" autocomplete="off">
+    <div class="fld wide"><span class="lbl">Request type</span><div class="checks-inline">${Object.entries(PO_TYPE).filter(([k]) => k !== "card" || has("cardholders")).map(([k, l]) => `<label><input type="radio" name="type" value="${k}" ${d.type === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
+    <div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${[...new Set([...me().committees, "Youth", "Social & Welfare", "Outreach", "Administration"])].map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="p_payee">${d.type === "card" ? "Card and statement month" : "Pay to"}</label><input type="text" id="p_payee" name="payee" value="${esc(d.payee)}"></div>
+    <div class="fld wide"><label for="p_desc">What is it for?</label><input type="text" id="p_desc" name="desc" value="${esc(d.desc)}" placeholder="Snacks and supplies for Youth Game Night"></div>
+    <div class="fld wide"><label for="p_event">Link to an event (optional)</label><select id="p_event" name="eventId"><option value="">No event</option>${myEvents.map((c) => `<option value="${c.id}" ${c.id === d.eventId ? "selected" : ""}>${c.id} · ${esc(c.title)}</option>`).join("")}</select></div>
+    <div class="fld wide"><span class="lbl">Line items</span><div class="tablewrap"><table class="lines"><thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+      ${d.lines.map((l, i) => `<tr><td><select id="l_acct_${i}" data-line="${i}" data-k="acct">${ACCOUNTS.map((a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`).join("")}</select></td><td><input type="text" id="l_note_${i}" data-line="${i}" data-k="note" value="${esc(l.note)}" placeholder="Receipt detail"></td><td><input class="amt" type="number" id="l_amt_${i}" data-line="${i}" data-k="amount" value="${l.amount}" step="0.01" min="0" placeholder="0.00"></td><td>${d.lines.length > 1 ? `<button class="btn small" type="button" data-delline="${i}" aria-label="Remove line">×</button>` : ""}</td></tr>`).join("")}
+      <tr><td colspan="2"><button class="btn small" type="button" data-addline="1">Add a line</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td></td></tr>
+    </tbody></table></div><span class="hint">Sample accounts. The real list comes from the chart of accounts.</span></div>
+    <div class="fld wide"><span class="lbl">Receipts</span><div class="row"><span class="pill">receipt-${S.seq.PO + 1}.pdf</span><span class="hint">Uploads go to IAR's Shared Drive, filed by fiscal year</span></div></div>
+    <div class="actions"><button class="btn" type="button" data-go="purchases">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
+  </form></div></div>`;
+}
+function vPOCard(c) {
+  const canAct = (c.status === "chair" && has("chairs") && me().committees.includes(c.committee) && c.owner !== S.me) || (["finance", "to_pay"].includes(c.status) && has("finance"));
+  const evc = c.eventId ? getCard(c.eventId) : null;
+  const steps = c.type === "card" ? ["Submitted", "Finance review", "Reconciled"] : ["Submitted", "Chair approval", "Finance review", "To pay", "Paid"];
+  const at = c.type === "card" ? { finance: 1, paid: 2 }[c.status] ?? 0 : { chair: 1, finance: 2, to_pay: 3, paid: 4, returned: 0 }[c.status] ?? 0;
+  let act = "";
+  if (canAct && c.status === "chair") act = `<button class="btn primary" data-po="approveChair" type="button">Approve as chair</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${c.type === "card" ? "Mark reconciled" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "to_pay") act = `<button class="btn primary" data-po="paid" type="button">Record payment (check #20431)</button>`;
+  return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / <span class="mono">${c.id}</span></div>
+  <div class="head"><div><h1>${esc(c.desc)}</h1><p class="lead">${PO_TYPE[c.type]} · ${esc(c.committee)} · from ${esc(nameOf(c.owner))}</p></div>${statusPill(c)}</div>
+  <div class="panel panel-b"><div class="stages">${steps.map((s, i) => `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`).join("")}</div></div>
+  ${act ? `<div class="panel panel-b row">${act}</div>` : ""}
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Line items</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table><thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
+    ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}
+  </tbody></table></div></div>
+  <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
+    <dt>${c.type === "card" ? "Card" : "Pay to"}</dt><dd>${esc(c.payee)}</dd>
+    ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
+    <dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>
+    <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>
+  </dl></div></div>
+  <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div></div>`;
+}
+
+/* ---- Team queue --------------------------------------------------- */
+function vQueues() {
+  const teams = Object.keys(TEAM_ROLE).filter((t) => has(TEAM_ROLE[t]));
+  const team = S.arg && teams.includes(S.arg) ? S.arg : teams[0];
+  if (!team) return `<h1>Team Queue</h1><div class="panel empty">You're not on a team that receives tasks. Office staff see every queue below.</div>`;
+  const all = S.cards.flatMap((c) => c.tasks.filter((t) => t.team === team).map((t) => ({ c, t })));
+  const col = (st, label) => {
+    const xs = all.filter((x) => x.t.status === st);
+    return `<div class="col"><h3><span>${label}</span><span class="mono">${xs.length}</span></h3>${xs.map(({ c, t }) => `<div class="tcard"><strong>${esc(t.title)}</strong><div class="small muted">${esc(c.title)} · ${fmtDate(c.date)} · ${esc(room(c.room).name)}</div><div class="row">${taskButtons(c, t)}<button class="btn small" type="button" data-card="${c.id}">Open event</button></div></div>`).join("") || '<div class="small muted">Empty</div>'}</div>`;
+  };
+  const locked = all.filter((x) => x.t.status === "locked").length;
+  return `<div><h1>Team Queue</h1><p class="lead">${esc(BLURB.queues)}</p></div>
+  ${teams.length > 1 ? `<div class="row">${teams.map((t) => `<button class="btn small ${t === team ? "primary" : ""}" type="button" data-go="queues" data-arg="${t}">${TEAM_NAME[t]}</button>`).join("")}</div>` : ""}
+  <div class="board">${col("todo", "To do")}${col("doing", "In progress")}${col("done", "Done")}</div>
+  ${locked ? `<div class="note info">${locked} more ${TEAM_NAME[team].toLowerCase()} task${locked > 1 ? "s are" : " is"} waiting on event approval and will appear here when unlocked.</div>` : ""}`;
+}
+
+/* ---- Run sheet ---------------------------------------------------- */
+function vRunSheet() {
+  const dates = [...new Set([...S.cards.filter((c) => ["approved", "closeout"].includes(c.status)).map((c) => c.date), ...S.bookings.map((b) => b.date), ...S.rentals.filter((r) => r.status === "approved").map((r) => r.date)])].filter((d) => d >= TODAY).sort();
+  const date = S.arg || dates[0] || TODAY;
+  const rows = [
+    ...S.cards.filter((c) => c.date === date && ["approved", "closeout", "closed"].includes(c.status)).map((c) => ({ s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, ev: `${fmtRange(toMin(c.start), toMin(c.end))}`, room: room(c.room).name, title: c.title, who: `${nameOf(c.owner)} · ${c.committee}`, setup: c.setupNotes || "Standard", sec: (c.food ? "Food served. " : "") + (c.attendance >= 100 ? "Large crowd; parking help. " : "") + "Check room before and after.", after: afterHours(c), n: c.attendance })),
+    ...S.bookings.filter((b) => b.date === date).map((b) => ({ s: b.s, e: b.e, ev: fmtRange(b.s, b.e), room: room(b.room).name, title: b.label, who: "Recurring booking", setup: "Standard", sec: "Check room after.", after: b.e > 22 * 60, n: "" })),
+    ...S.rentals.filter((r) => r.date === date && r.status === "approved").map((r) => ({ s: toMin(r.start), e: toMin(r.end), ev: fmtRange(toMin(r.start), toMin(r.end)), room: room(r.room).name, title: "Rental: " + r.org, who: r.contact, setup: "Standard", sec: "Outside group: check in at the security desk.", after: false, n: r.attendance })),
+  ].sort((a, b) => a.s - b.s);
+  return `<div class="head"><div><h1>Daily Run Sheet</h1><p class="lead">Built from approved event cards and the IAR calendar. In the portal this prints on one page.</p></div>
+    <div class="row"><input type="date" id="rsDate" class="btn small" value="${date}"></div></div>
+  ${dates.length ? `<div class="row small"><span class="muted">Days with bookings:</span>${dates.slice(0, 6).map((d) => `<button class="btn small ${d === date ? "primary" : ""}" type="button" data-go="runsheet" data-arg="${d}">${fmtDate(d)}</button>`).join("")}</div>` : ""}
+  <div class="sheet"><div class="sheet-h"><h2>Main campus · ${fmtDate(date)}</h2><span class="small muted">Prayer times and school hours are standing holds and not listed</span></div>
+  ${rows.length ? `<div class="tablewrap"><table><thead><tr><th>Room hold</th><th>Event time</th><th>Room</th><th>Event</th><th>Contact</th><th class="num">People</th><th>Setup</th><th>Security notes</th></tr></thead><tbody>
+    ${rows.map((r) => `<tr><td class="mono">${fmtRange(r.s, r.e)}</td><td class="mono">${r.ev}</td><td>${esc(r.room)}</td><td><strong>${esc(r.title)}</strong></td><td>${esc(r.who)}</td><td class="num">${r.n}</td><td>${esc(r.setup)}</td><td>${esc(r.sec)}${r.after ? ' <span class="flag">After hours</span>' : ""}</td></tr>`).join("")}
+  </tbody></table></div>` : `<div class="empty">Nothing booked this day.</div>`}</div>`;
+}
+
+/* ---- Rentals ------------------------------------------------------ */
+function vRentals() {
+  return `<div><h1>Facility Rentals</h1><p class="lead">Requests from outside groups come in through a public page. They're checked against the same calendar and rules as events.</p></div>
+  <div class="panel"><div class="list">${S.rentals.map((r) => itemRow(r, waitingOn(r))).join("")}</div></div>
+  <div class="note info">Rental rates and insurance terms aren't in the room policy yet. They're on the list for the Shura's policy refresh.</div>`;
+}
+function vRentalCard(r) {
+  if (!has("office")) return `<div class="empty">Rentals are reviewed by the IAR office.</div>`;
+  const ch = runChecks({ ...r, id: r.id, setup: 0, teardown: 30, food: false, isPublic: false, committee: "Community member (private event)", triggers: {}, budget: 0 }, null);
+  return `<div class="crumb"><button type="button" data-go="rentals">Facility Rentals</button> / <span class="mono">${r.id}</span></div>
+  <div class="head"><div><h1>${esc(r.org)}</h1><p class="lead">${esc(room(r.room).name)} · ${fmtDate(r.date)}, ${fmtRange(toMin(r.start), toMin(r.end))} · ${r.attendance} people</p></div>${statusPill(r)}</div>
+  ${r.status === "submitted" ? `<div class="panel panel-b row"><button class="btn primary" data-rn="approve" type="button">Approve and send agreement</button><button class="btn danger" data-rn="deny" type="button">Decline</button></div>` : ""}
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Request</h2><span class="pill ok">Email verified</span></div><div class="panel-b"><dl class="kv">
+    <dt>Contact</dt><dd>${esc(r.contact)} · ${esc(r.email)}</dd><dt>Purpose</dt><dd>${esc(r.purpose)}</dd><dt>Insurance</dt><dd><span class="pill">${esc(r.insurance)}</span></dd>
+    <dt>Fees</dt><dd>$200 facilities fee and $100 deposit (community MPH rate). Rental rate pending policy refresh.</dd></dl></div></div>
+  <div class="stack"><div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch.filter((x) => !/Mission|Marketing|lead time|days away/i.test(x.text)))}</div></div></div>
+  <div class="panel"><div class="panel-b">${timeline(r.date, r.room, { id: r.id, start: r.start, end: r.end, setup: 0, teardown: 30 })}</div></div></div></div>`;
+}
+function vPublicRental() {
+  const d = S.rnDraft || (S.rnDraft = { org: "Raleigh Sisters Volleyball", contact: "Nadia Perez", email: "nadia@example.org", date: nextDow(TODAY, 6, 12), start: "14:00", end: "16:00", room: "mphAB", attendance: 24, purpose: "Recreational volleyball, women only" });
+  if (S.rnDone) return `<div class="public-wrap"><div class="panel panel-b stack"><h1>Request received</h1><p class="lead">Thank you. We sent a confirmation link to ${esc(S.rnDone.email)}. The IAR office will reply within a week. Your request number is <span class="mono">${S.rnDone.id}</span>.</p>
+    <div class="note info">Demo: switch to Hana Siddiqui (IAR office) to review it.</div><div><button class="btn" type="button" data-rnnew="1">Submit another</button></div></div></div>`;
+  return `<div class="public-wrap"><div><h1>Request the gym or a hall</h1><p class="lead">For groups outside IAR. No account needed: we'll confirm your email, then the IAR office reviews your request against the calendar and room policy.</p></div>
+  <div class="panel"><div class="panel-b"><form class="f" id="rnForm" autocomplete="off">
+    <div class="fld wide"><label for="r_org">Organization or group</label><input type="text" id="r_org" name="org" value="${esc(d.org)}"></div>
+    <div class="fld"><label for="r_contact">Contact name</label><input type="text" id="r_contact" name="contact" value="${esc(d.contact)}"></div>
+    <div class="fld"><label for="r_email">Email</label><input type="email" id="r_email" name="email" value="${esc(d.email)}"></div>
+    <div class="fld"><label for="r_room">Space</label><select id="r_room" name="room">${["mphAB", "mphA", "mphB", "flex"].map((id) => `<option value="${id}" ${id === d.room ? "selected" : ""}>${esc(room(id).name)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="r_date">Date</label><input type="date" id="r_date" name="date" value="${d.date}"></div>
+    <div class="fld"><label for="r_start">From</label><input type="time" id="r_start" name="start" value="${d.start}"></div>
+    <div class="fld"><label for="r_end">To</label><input type="time" id="r_end" name="end" value="${d.end}"></div>
+    <div class="fld"><label for="r_att">People</label><input type="number" id="r_att" name="attendance" value="${d.attendance}"></div>
+    <div class="fld"><span class="lbl">Insurance certificate</span><div class="row" style="padding-top:4px"><span class="pill">insurance.pdf</span></div></div>
+    <div class="fld wide"><label for="r_purpose">What's it for?</label><input type="text" id="r_purpose" name="purpose" value="${esc(d.purpose)}"></div>
+    <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="r_agree" checked> I agree to IAR's facility rules, conduct requirements and liability terms.</label></div>
+    <div class="actions"><button class="btn primary" type="submit">Send request</button></div>
+  </form></div></div></div>`;
+}
+
+/* ---- Aid and settings --------------------------------------------- */
+function vAid() {
+  return `<div><h1>Social & Welfare Aid</h1><p class="lead">Visible only to the S&W committee and finance. Everyone else sees that aid exists in the budget, not who received it.</p></div>
+  <div class="panel"><div class="tablewrap"><table><thead><tr><th>Case</th><th>Recipient</th><th>Need</th><th class="num">Amount</th><th>Status</th></tr></thead><tbody>
+  ${S.aid.map((a) => `<tr><td class="mono">${a.id}</td><td>${esc(a.who)}</td><td>${esc(a.need)}</td><td class="num">${money(a.amount)}</td><td>${esc(a.status)}</td></tr>`).join("")}
+  </tbody></table></div></div>`;
+}
+function vSettings() {
+  const groups = [["portal-committee-chairs@", "Chair approvals"], ["portal-office@", "Event review, queues, run sheet, rentals"], ["portal-finance@", "Finance review, payments, S&W aid"], ["portal-cardholders@", "Card receipts"], ["portal-marketing@", "Marketing queue"], ["portal-av@", "AV queue"], ["portal-facilities@", "Facilities queue, run sheet"], ["portal-security@", "Security queue, run sheet"], ["portal-sw@", "S&W aid"], ["portal-executive@", "Mission review, executive approvals"], ["portal-admins@", "Everything, plus these settings"]];
+  return `<div><h1>Portal Settings</h1><p class="lead">Rooms, groups and rules are settings, not code. Another masjid would change these and nothing else.</p></div>
+  <div class="panel"><div class="panel-h"><h2>Policy rules</h2><span class="small muted">Switch one off and the event form's checks change immediately</span></div><div class="panel-b"><div class="list">
+    ${RULES.map((r) => `<div class="task"><div><div>${esc(r.name)}</div><div class="small muted">${esc(r.policy)}</div></div><label class="toggle" title="Turn this rule on or off"><input type="checkbox" id="rule_${r.id}" data-rule="${r.id}" ${r.on ? "checked" : ""} aria-label="${esc(r.name)}"><span></span></label></div>`).join("")}
+  </div></div></div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-h"><h2>Rooms</h2><span class="small muted">${ROOMS.length - 1} rooms</span></div><div class="tablewrap"><table><thead><tr><th>Room</th><th class="num">Capacity</th><th>Food</th></tr></thead><tbody>
+      ${ROOMS.filter((r) => r.id !== "offsite").map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.cap}</td><td>${r.food ? "Yes" : ""}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="panel"><div class="panel-h"><h2>Google Groups</h2><span class="small muted">@islam1.org</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Unlocks</th></tr></thead><tbody>
+      ${groups.map(([g, u]) => `<tr><td class="mono">${g}</td><td>${u}</td></tr>`).join("")}</tbody></table></div></div>
+  </div>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Demo guide                                                          */
+/* ------------------------------------------------------------------ */
+const STEPS = [
+  { as: "amina", view: "newEvent", t: "Request an event", p: "Amina is a Youth Committee member. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM, then submit.", reset: () => (S.draft = null) },
+  { as: "hana", view: "events", arg: "review", t: "The office approves", p: "Hana in the IAR office sees it under Needs review, with the checks already run. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar." },
+  { as: "sara", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. Sara sees it in her queue with no new form to fill in. Start it, then mark it done." },
+  { as: "amina", view: "newPO", t: "Buy supplies for the event", p: "Back as Amina: add a purchase request linked to Game Night. Split it across two sub-accounts and submit. It goes to her chair." },
+  { as: "bilal", view: "home", t: "Chair approves", p: "Bilal, the Youth chair, has it waiting on his home page. Open it and approve. It moves to finance." },
+  { as: "omar", view: "purchases", t: "Finance pays", p: "Omar approves it for payment and records the check. The event card now shows what's been spent against its budget." },
+  { as: "idris", view: "runsheet", t: "Security's run sheet", p: "Idris sees one page of what's happening where for each day, built from approved events. His room checks get logged back to each event card." },
+  { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
+  { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
+  { as: "renter", view: "public", t: "An outside group requests the gym", p: "No IAR account needed. Send the request, then switch to Hana and open Facility Rentals to review it against the same calendar." },
+  { as: "layla", view: "home", t: "Groups decide what people see", p: "Layla chairs Social & Welfare, so she sees S&W Aid. Amina never does. Try Portal Admin and Portal Settings: switch off a rule and watch the event checks change." },
+];
+function renderGuide() {
+  const g = document.getElementById("guide");
+  g.hidden = !S.guide;
+  document.body.classList.toggle("guide-open", S.guide);
+  if (!S.guide) return;
+  g.innerHTML = `<div class="guide-h"><h2>Demo guide</h2><div class="row"><button class="btn small" type="button" data-reset="1">Reset demo</button><button class="btn small" type="button" data-closeguide="1" aria-label="Close guide">Close</button></div></div>
+  <div class="guide-b">${STEPS.map((s, i) => `<div class="step ${i === S.step ? "cur" : ""}"><span class="n">${i + 1}</span><div><strong>${esc(s.t)}</strong><div class="as">As ${esc(PEOPLE[s.as].name)} · ${esc(PEOPLE[s.as].title)}</div><p>${esc(s.p)}</p><button class="btn small ${i === S.step ? "primary" : ""}" type="button" data-step="${i}">Go to this step</button></div></div>`).join("")}</div>`;
+}
+function doStep(i) {
+  const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
+  S.me = s.as; S.poDraft = null;
+  if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "amina" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Food & Hospitality", amount: 96.4, note: "Costco snacks" }, { acct: "Youth – Supplies", amount: 38.99, note: "Trivia prizes" }] }; }
+  if (s.as === "renter") { S.rnDone = null; S.rnDraft = null; }
+  if (window.innerWidth < 900) S.guide = false;
+  go(s.view, s.arg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Render and events                                                   */
+/* ------------------------------------------------------------------ */
+function render() {
+  const sel = document.getElementById("persona");
+  sel.innerHTML = Object.entries(PEOPLE).map(([k, p]) => `<option value="${k}" ${k === S.me ? "selected" : ""}>${esc(p.name)} — ${esc(p.title)}</option>`).join("");
+  if (S.me === "renter" && S.view !== "public") S.view = "public";
+  if (S.me !== "renter" && S.view === "public") S.view = "home";
+  const mod = MODULES.find((m) => m.id === S.view);
+  if (mod && !visible(mod)) S.view = "home";
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental };
+  document.getElementById("main").innerHTML = (V[S.view] || vHome)();
+  renderRail();
+  renderGuide();
+  document.getElementById("guideBtn").textContent = S.guide ? "Hide guide" : "Demo guide";
+  if (S.view === "newEvent") paintChecks();
+}
+
+document.getElementById("persona").addEventListener("change", (e) => { S.me = e.target.value; S.draft = null; S.poDraft = null; go(S.me === "renter" ? "public" : "home"); });
+document.getElementById("guideBtn").addEventListener("click", () => { S.guide = !S.guide; render(); });
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button, [data-card]"); if (!b) return;
+  const ds = b.dataset;
+  if (ds.go) { if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; return go(ds.go, ds.arg); }
+  if (ds.card) return go("card", ds.card);
+  if (ds.step) return doStep(Number(ds.step));
+  if (ds.closeguide) { S.guide = false; return render(); }
+  if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
+  if (ds.rnnew) { S.rnDone = null; S.rnDraft = null; return render(); }
+  if (ds.addline) { readPO(); S.poDraft.lines.push({ acct: ACCOUNTS[0], amount: "", note: "" }); return render(); }
+  if (ds.delline) { readPO(); S.poDraft.lines.splice(Number(ds.delline), 1); return render(); }
+  if (ds.task) {
+    const [cid, tid, st] = ds.task.split("|"); const c = getCard(cid); const t = c.tasks.find((x) => x.id === tid);
+    t.status = st;
+    if (st === "done" && t.team === "security") { t.result = "Room left clean, chairs returned"; c.securityResult = t.result; }
+    log(c, `${TEAM_NAME[t.team]}: ${st === "doing" ? "started" : "done"} — ${t.title}`);
+    toast(st === "doing" ? "Task started" : "Task done");
+    return render();
+  }
+  if (ds.act) return eventAction(ds.act);
+  if (ds.po) return poAction(ds.po);
+  if (ds.rn) {
+    const r = getCard(S.arg); r.status = ds.rn === "approve" ? "approved" : "denied";
+    toast(ds.rn === "approve" ? "Approved. Agreement and payment link sent to the renter." : "Declined. The renter has been emailed.");
+    return render();
+  }
+});
+function eventAction(a) {
+  const c = getCard(S.arg); const note = (document.getElementById("actNote")?.value || "").trim();
+  if (a === "approve") {
+    const ch = runChecks(c, c.owner);
+    c.status = "approved"; c.tasks = buildTasks(c, {});
+    log(c, "Approved" + (worst(ch) === "bad" ? " with a recorded override of the room conflict" : "") + ". Room hold confirmed on the IAR calendar" + (note ? `. Note: ${note}` : ""));
+    toast("Approved. Team tasks unlocked and the room is confirmed.");
+  } else if (a === "changes") {
+    c.status = "changes"; log(c, "Requested changes: " + (note || "Please adjust the time or room."));
+    toast("Sent back to " + nameOf(c.owner));
+  } else if (a === "deny") { c.status = "denied"; log(c, "Denied" + (note ? `: ${note}` : "")); toast("Denied. The room hold was released."); }
+  else if (a === "missionOk") { c.status = "office"; log(c, "Mission review: aligned. Sent to the office" + (note ? `. ${note}` : "")); toast("Sent to the IAR office"); }
+  else if (a === "missionAsk") { log(c, "Question: " + (note || "Who are the outside speakers?")); toast("Question sent to " + nameOf(c.owner)); }
+  else if (a === "missionNo") { c.status = "denied"; log(c, "Mission review: not aligned" + (note ? `. ${note}` : "")); toast("Denied after mission review"); }
+  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
+  else if (a === "held") { c.status = "closeout"; log(c, "Event held. Close-out opened for the owner"); toast("Close-out opened for " + nameOf(c.owner)); }
+  else if (a === "linkPO") { S.poDraft = null; return go("newPO", c.id); }
+  render();
+}
+function poAction(a) {
+  const c = getCard(S.arg);
+  if (a === "approveChair") { c.status = "finance"; log(c, "Chair approved"); toast("Approved. Sent to finance."); }
+  if (a === "approveFin") { c.status = c.type === "card" ? "paid" : "to_pay"; log(c, c.type === "card" ? "Reconciled" : "Finance approved for payment"); toast(c.type === "card" ? "Reconciled" : "Approved for payment"); }
+  if (a === "paid") { c.status = "paid"; log(c, "Paid by check #20431. Entered in QuickBooks"); toast("Payment recorded"); }
+  if (a === "return") { c.status = "returned"; log(c, "Returned to requester: please attach the itemized receipt"); toast("Returned to " + nameOf(c.owner)); }
+  render();
+}
+function readPO() {
+  const f = document.getElementById("poForm"); if (!f || !S.poDraft) return;
+  const d = S.poDraft;
+  d.type = (f.querySelector("input[name=type]:checked") || {}).value || d.type;
+  d.committee = f.elements.committee.value; d.payee = f.elements.payee.value; d.desc = f.elements.desc.value; d.eventId = f.elements.eventId.value;
+  f.querySelectorAll("[data-line]").forEach((el) => { d.lines[Number(el.dataset.line)][el.dataset.k] = el.value; });
+}
+document.addEventListener("input", (e) => {
+  if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
+  if (e.target.closest("#poForm")) { readPO(); const s = document.getElementById("poSum"); if (s) s.textContent = money(S.poDraft.lines.reduce((a, l) => a + Number(l.amount || 0), 0)); }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
+  if (e.target.name === "type" && e.target.closest("#poForm")) { readPO(); if (S.poDraft.type === "card") S.poDraft.payee = "IAR card ending 4417 · " + MON[parseD(TODAY).getMonth()]; else if (S.poDraft.type === "reimburse") S.poDraft.payee = me().name; render(); }
+  if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
+  if (e.target.id === "rsDate") go("runsheet", e.target.value);
+  if (e.target.dataset.rule) { RULES.find((r) => r.id === e.target.dataset.rule).on = e.target.checked; toast(`Rule ${e.target.checked ? "on" : "off"}: ${RULES.find((r) => r.id === e.target.dataset.rule).name}`); }
+});
+document.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (e.target.id === "evForm") {
+    if (!document.getElementById("f_agree").checked) return toast("Please accept the room reservation policy first.");
+    if (!e.target.elements.title.value.trim()) return toast("Give the program a title.");
+    return submitEvent();
+  }
+  if (e.target.id === "poForm") {
+    readPO(); const d = S.poDraft;
+    if (!d.desc.trim()) return toast("Say what the purchase is for.");
+    const lines = d.lines.filter((l) => Number(l.amount) > 0);
+    if (!lines.length) return toast("Add at least one line with an amount.");
+    const isChair = me().roles.includes("chairs") && me().committees.includes(d.committee);
+    const c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note]), eventId: d.eventId || null, status: d.type === "card" || isChair ? "finance" : "chair", created: TODAY });
+    if (isChair && d.type !== "card") c.log.push({ t: TODAY, who: "system", text: "Requester is the chair: sent straight to finance" });
+    S.pos.unshift(c);
+    if (d.eventId) { const evc = getCard(d.eventId); evc.linkedPOs.push(c.id); log(evc, `Purchase ${c.id} linked (${money(total(c))})`); }
+    S.poDraft = null;
+    toast(`${c.id} submitted. Waiting on ${waitingOn(c)}.`);
+    return go("card", c.id);
+  }
+  if (e.target.id === "coForm") {
+    const c = getCard(S.arg); c.status = "closed"; c.attendance = Number(document.getElementById("co_att").value || c.attendance);
+    log(c, `Closed out: ${c.attendance} attended. Notes saved`);
+    toast("Event closed. Its costs and attendance are on record.");
+    return render();
+  }
+  if (e.target.id === "rnForm") {
+    const f = e.target.elements;
+    const r = { kind: "rental", id: "RN-" + ++S.seq.RN, org: f.org.value, contact: f.contact.value, email: f.email.value, date: f.date.value, start: f.start.value, end: f.end.value, room: f.room.value, attendance: Number(f.attendance.value), purpose: f.purpose.value, status: "submitted", insurance: "insurance.pdf", created: TODAY };
+    S.rentals.unshift(r); S.rnDone = r; return render();
+  }
+});
+
+seed();
+S.guide = window.innerWidth >= 1200;
+render();
+</script>
