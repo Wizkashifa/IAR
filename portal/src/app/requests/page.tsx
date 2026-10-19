@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
 import { cardStore, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
 
@@ -32,7 +33,13 @@ export default async function MyRequests() {
               {cards.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <strong>{c.title}</strong>
+                    {c.type === "purchase" ? (
+                      <Link href={`/purchases/${c.id}`}>
+                        <strong>{c.title}</strong>
+                      </Link>
+                    ) : (
+                      <strong>{c.title}</strong>
+                    )}
                     <div className="sub">
                       {TYPE_LABEL[c.type]} {c.id} · {c.committee}
                       {c.eventDate && ` · ${fmtDate(c.eventDate + "T12:00:00")}`}

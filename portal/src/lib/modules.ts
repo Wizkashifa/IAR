@@ -30,8 +30,8 @@ export const MODULES: PortalModule[] = [
     summary: "Pay a vendor, get reimbursed, or submit IAR credit card receipts.",
     visibleTo: ["member"],
     phase: 1,
-    status: "building",
-    href: "/m/purchase-requests",
+    status: "live",
+    href: "/purchases",
     plannedFeatures: [
       "Three request types: pay a vendor or person, reimburse me, card receipts",
       "Line items split across sub-accounts, picked from the chart of accounts",

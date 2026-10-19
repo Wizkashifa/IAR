@@ -2,12 +2,13 @@
   "name": "iar-portal",
   "version": "0.1.0",
   "private": true,
-  "description": "IAR Internal Tools Portal — shell",
+  "description": "IAR Internal Tools Portal \u2014 shell",
   "scripts": {
     "dev": "DEV_AUTH=1 next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/lib/purchases/purchases.test.js"
   },
   "dependencies": {
     "@google-cloud/firestore": "7.11.6",

@@ -4,7 +4,7 @@ One internal portal for the Islamic Association of Raleigh, signed into with an 
 
 Phase 1 modules: **My Requests**, **Purchase Requests** (payments, reimbursements, card receipts) and **Event cards** (room holds checked against IAR's Google Calendar, policy rules flagged automatically). Later: team queues, a daily run sheet, event close-out, gym rentals, Social & Welfare aid, and more.
 
-**Status: early build.** The portal shell (sign-in, group-based tools, My Requests) runs locally with sample data; nothing is deployed yet.
+**Status: early build.** The portal shell (sign-in, group-based tools, My Requests) and the Purchase Requests module run locally with sample data; nothing is deployed yet.
 
 ## Start here
 
@@ -12,9 +12,10 @@ Phase 1 modules: **My Requests**, **Purchase Requests** (payments, reimbursement
 - **[docs/purchase-requests-plan.md](docs/purchase-requests-plan.md)** — detailed design of the Purchase Requests module, including analysis of the PO response sheet. Live copy: [Claude doc](https://claude.ai/code/artifact/09936270-93b7-4009-942f-5ee4893ad89f). Its platform section is superseded by the portal plan's Architecture section.
 - **[docs/letter.md](docs/letter.md)** — a short write-up for the office/Shura introducing Purchase Requests. Also a [Claude doc](https://claude.ai/code/artifact/58f2fcf1-9517-4166-9d92-ffd80ec23ddf).
 - **[demo/index.html](demo/index.html)** — clickable demo of the whole portal with a role switcher and a built-in walkthrough (sample data, nothing saved). Live at https://claude.ai/artifact/Scx6GtWsFGedmz2RQzKJZK.
-- **[portal/](portal/)** — the portal app (Next.js on Cloud Run, Firestore). Run it locally with `cd portal && npm install && npm run dev`, no Google setup needed.
+- **[portal/](portal/)** — the portal app (Next.js on Cloud Run, Firestore). Run it locally with `cd portal && npm install && npm run dev`, no Google setup needed; switch sample users at `/dev`. `npm test` runs the Purchase Requests approval rules.
+  - Purchase Requests lives in `portal/src/lib/purchases/` (chart of accounts, approval workflow, form checks, settings, Drive uploads) and `portal/src/app/purchases/` (list and queues, new request, detail and actions). A purchase is a card of type `purchase` with its fields under `card.purchase`.
 - **[docs/setup.md](docs/setup.md)** — one-time Google Cloud and Workspace setup, and how to deploy.
-- **[app/index.html](app/index.html)** — the clickable Purchase Requests prototype (sample data only, nothing saved). Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
+- **[app/index.html](app/index.html)** — the original clickable Purchase Requests prototype (sample data only, nothing saved), now superseded by the module in `portal/`. Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
 
 ## Picking this up in a new chat
 

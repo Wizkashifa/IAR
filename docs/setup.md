@@ -19,12 +19,13 @@ Done once by a Workspace super admin and a Google Cloud project owner. Names bel
 ### 1. Google Cloud project
 
 1. In the Google Cloud console, create a project under the **islam1.org** organization, for example `iar-portal`, and attach billing.
-2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK.
+2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (for Purchase Requests receipts).
 
 ```
 gcloud config set project iar-portal
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com
+  firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
+  drive.googleapis.com
 ```
 
 ### 2. Firestore
@@ -38,7 +39,15 @@ gcloud firestore indexes composite create --collection-group=cards \
   --field-config=field-path=updatedAt,order=descending
 ```
 
-Cards are stored at `orgs/iar/cards/{cardId}`.
+Purchase Requests also needs this index, for the finance office's monthly card-receipts checklist:
+
+```
+gcloud firestore indexes composite create --collection-group=cards \
+  --field-config=field-path=type,order=ascending \
+  --field-config=field-path=createdAt,order=ascending
+```
+
+Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -80,22 +89,30 @@ Create these Google Groups in the Admin console. Membership decides what each pe
 | portal-committee-chairs@ | Chair approvals |
 | portal-office@ | Event review, team queues, run sheet, rentals |
 | portal-finance@ | Finance review, S&W aid (with S&W) |
-| portal-cardholders@ | Card receipts |
+| portal-cardholders@ | Marks IAR cardholders. Who can submit receipts for which card comes from the card list in Purchase Requests settings |
 | portal-marketing@, portal-av@, portal-facilities@, portal-security@ | That team's queue; facilities and security also see the run sheet |
 | portal-sw@ | Social & Welfare aid |
 | portal-executive@ | Executive approvals |
 | portal-admins@ | Everything, plus portal settings. Keep to two or three people |
 
-Group-to-role mapping lives in `portal/src/lib/org.ts`.
+Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group itself (`actingRoles` in `portal/src/lib/viewer.ts`).
 
-### 7. Deploy
+### 7. Purchase Requests
+
+1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
+2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
+3. **Approvers and cards.** Fill in `FUND_APPROVERS` (each fund's chair and a backup) and `CREDIT_CARDS` (last four digits, cardholder, fund — never the full number) in `portal/src/lib/purchases/settings.ts`, from the office's confirmed lists. Until then every request goes straight to finance review and nobody can submit card receipts. These move to Portal Settings later.
+4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
+5. Notification emails, the morning digest and reminders aren't built yet; for the pilot, approvers check "Waiting on you" on the home page.
+
+### 8. Deploy
 
 From the repo root:
 
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address> \
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id> \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 
