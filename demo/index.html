@@ -200,6 +200,12 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .lines td { padding: 6px; }
 .lines input, .lines select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0; }
 .lines .amt { width: 110px; text-align: right; }
+.lines.card-lines { min-width: 760px; }
+.lines.card-lines input[type=date] { min-width: 140px; }
+.lines.card-lines [data-k=merchant] { min-width: 150px; }
+.lines.card-lines [data-k=acct] { min-width: 190px; }
+.lines.card-lines [data-k=amount] { width: 96px; }
+.lines.card-lines [data-k=flag], .lines.card-lines [data-k=repayBy] { min-width: 150px; }
 
 .toggle { position: relative; width: 34px; height: 20px; flex: none; }
 .toggle input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; }
@@ -402,7 +408,17 @@ function seed() {
       po({ id: "PO-11046", owner: "amina", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Programs & Events", 650]], eventId: "EV-1031", status: "finance", w9: true, created: now(6) }),
       po({ id: "PO-10977", owner: "amina", type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Pizza and water — food drive briefing", lines: [["Youth – Food & Hospitality", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
       po({ id: "PO-11039", owner: "bilal", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Programs & Events", 1200]], status: "to_pay", w9: true, created: now(4) }),
-      po({ id: "PO-11051", owner: "hana", type: "card", committee: "Administration", payee: "IAR card ending 4417 · September", desc: "Card receipts — office card, September", lines: [["01-5003 General Fund – Administrative", 86.4, "USPS postage"], ["01-5009 General Fund – Cleaning Supplies", 214.18, "Costco cleaning supplies"], ["Marketing – Printing & Design", 129, "Canva annual plan", "refund"]], status: "finance", created: now(2) }),
+      cardPO({ id: "PO-11051", owner: "layla", last4: "3051", status: "finance", created: now(2), lines: [
+        { day: 3, merchant: "Food Lion — pantry restock", acct: "S&W – Food Pantry", amount: 286.4 },
+        { day: 9, merchant: "Costco — pantry staples", acct: "S&W – Food Pantry", amount: 214.18 },
+        { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Printing & Design", amount: 129, flag: "refund" },
+        { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Programs & Events", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
+        { day: 24, merchant: "Staples", acct: "S&W – Community Aid", amount: 23.5, noReceipt: true },
+      ] }),
+      cardPO({ id: "PO-11037", owner: "bilal", last4: "7720", status: "done", created: now(9), lines: [
+        { day: 6, merchant: "Costco", acct: "Youth – Food & Hospitality", amount: 188.42 },
+        { day: 20, merchant: "Target (returned items)", acct: "Youth – Supplies", amount: 41.17, flag: "refund" },
+      ] }),
     ],
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "Coach D. Ortiz", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
@@ -451,11 +467,21 @@ function ev(o) {
 }
 function po(o) {
   const c = Object.assign({ kind: "po", w9: false, log: [] }, o);
-  c.lines = o.lines.map(([acct, amount, note, flag]) => ({ acct, amount, note: note || "", flag: flag || "" }));
+  // Lines are [account, amount, note, flag] or, for card charges, objects with date and merchant.
+  c.lines = o.lines.map((l) => (Array.isArray(l) ? { acct: l[0], amount: l[1], note: l[2] || "", flag: l[3] || "" } : { note: "", flag: "", repayBy: "", noReceipt: false, resolved: false, ...l }));
   c.log = [{ t: o.created, who: o.owner, text: "Submitted" }];
   if (o.status === "finance" && o.type !== "card") c.log.push({ t: o.created, who: "bilal", text: "Chair approved" });
   if (o.status === "paid") c.log.push({ t: o.created, who: "omar", text: "Paid by check #20418" });
+  if (o.type === "card" && ["books", "done"].includes(o.status)) c.log.push({ t: o.created, who: "omar", text: "Finance reviewed the charges" });
+  if (o.status === "done") c.log.push({ t: o.created, who: "omar", text: "Entered in QuickBooks" });
   return c;
+}
+/* A card-receipts request for last month's statement on one IAR card. */
+function cardPO(o) {
+  const card = IAR_CARDS.find((k) => k.last4 === o.last4);
+  const ym = lastMonthYm();
+  return po({ ...o, type: "card", committee: card.committee, card: { last4: card.last4, month: ym }, payee: `IAR card ···${card.last4} · ${fmtYm(ym)}`, desc: `Card receipts — ${card.label}, ${fmtYm(ym)}`,
+    lines: o.lines.map(({ day, ...l }) => ({ date: `${ym}-${pad(day)}`, ...l })) });
 }
 function buildTasks(c, states) {
   const t = [];
@@ -572,7 +598,7 @@ const EV_STATUS = {
   submitted: ["Submitted", "info"], mission: ["Mission review", "info"], office: ["Office review", "info"], changes: ["Changes requested", "warn"],
   approved: ["Approved", "ok"], denied: ["Denied", "bad"], cancelled: ["Cancelled", "bad"], closeout: ["Close-out", "warn"], closed: ["Closed", "accent"],
 };
-const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
+const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], books: ["Enter in QuickBooks", "info"], done: ["Complete", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
 const RN_STATUS = { submitted: ["Office review", "info"], approved: ["Approved", "ok"], denied: ["Declined", "bad"] };
 function statusPill(c) {
   const map = c.kind === "event" ? EV_STATUS : c.kind === "po" ? PO_STATUS : RN_STATUS;
@@ -592,10 +618,13 @@ function waitingOn(c) {
     return "";
   }
   if (c.kind === "po") {
-    if (c.status === "chair") return `${c.committee} chair`;
+    if (c.status === "chair") return c.approver ? `${nameOf(c.approver)} (backup approver)` : `${c.committee} chair`;
     if (c.status === "finance") return "Finance review";
     if (c.status === "to_pay") return "Finance: payment";
+    if (c.status === "books") return "Finance: QuickBooks entry";
     if (c.status === "returned") return `${nameOf(c.owner)}: fix and resubmit`;
+    const owed = owedLines(c).length;
+    if (owed) return `Finance: ${owed} refund${owed > 1 ? "s/repayments" : "/repayment"} outstanding`;
     return "";
   }
   if (c.kind === "rental") return c.status === "submitted" ? "IAR office: review" : "";
@@ -611,8 +640,7 @@ function myActionItems() {
   }
   for (const c of S.pos) {
     if (c.owner === S.me && c.status === "returned") items.push({ c, why: "Fix and resubmit" });
-    if (has("chairs") && c.status === "chair" && p.committees.includes(c.committee) && c.owner !== S.me) items.push({ c, why: "Chair approval" });
-    if (has("finance") && ["finance", "to_pay"].includes(c.status)) items.push({ c, why: c.status === "finance" ? "Finance review" : "Record payment" });
+    if (canActPO(c)) items.push({ c, why: { chair: c.approver ? "Approve as backup approver" : "Chair approval", finance: c.type === "card" ? "Review card charges" : "Finance review", to_pay: "Record payment", books: "Enter in QuickBooks" }[c.status] });
   }
   if (has("office")) for (const r of S.rentals) if (r.status === "submitted") items.push({ c: r, why: "Review rental request" });
   for (const t of S.tickets) if (canWorkTk(t) && (t.status === "new" || (t.assignee === S.me && t.status !== "resolved"))) items.push({ c: t, why: "" });
@@ -910,53 +938,121 @@ function closeoutForm(c, linked, spent) {
 /* ---- Purchases ---------------------------------------------------- */
 const ACCOUNTS = ["Youth – Programs & Events", "Youth – Food & Hospitality", "Youth – Supplies", "S&W – Food Pantry", "S&W – Community Aid", "Outreach – Events", "Marketing – Printing & Design", "01-5003 General Fund – Administrative", "01-5009 General Fund – Cleaning Supplies"];
 const PO_TYPE = { vendor: "Pay a vendor or person", reimburse: "Reimburse me", card: "IAR credit card receipts" };
+/* IAR credit cards: each one is assigned to one person. Only the last four digits are ever stored. */
+const IAR_CARDS = [
+  { last4: "4417", holder: "hana", committee: "Administration", label: "Office card" },
+  { last4: "7720", holder: "bilal", committee: "Youth", label: "Youth card" },
+  { last4: "8890", holder: "omar", committee: "Administration", label: "Finance card" },
+  { last4: "3051", holder: "layla", committee: "Social & Welfare", label: "S&W card" },
+];
+/* Who approves a chair's own request: nobody approves their own spending. */
+const BACKUP = { Youth: "hana", "Social & Welfare": "bilal", Outreach: "hana", Administration: "bilal" };
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const myCards = () => IAR_CARDS.filter((k) => k.holder === S.me);
+const lastMonthYm = () => { const d = parseD(TODAY); d.setDate(1); d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; };
+const fmtYm = (ym) => { const [y, m] = ym.split("-").map(Number); return `${MONTHS[m - 1]} ${y}`; };
+const owedLines = (c) => c.lines.filter((l) => l.flag && !l.resolved);
+const cardBlankLine = () => ({ date: "", merchant: "", acct: ACCOUNTS[0], amount: "", note: "", flag: "", repayBy: "", noReceipt: false });
+function canActPO(c) {
+  if (c.owner === S.me) return false; // nobody approves, pays or books their own request
+  if (c.status === "chair") return c.approver ? c.approver === S.me : has("chairs") && me().committees.includes(c.committee);
+  return ["finance", "to_pay", "books"].includes(c.status) && has("finance");
+}
 function vPurchases() {
-  const queue = S.pos.filter((p) => (has("finance") && ["finance", "to_pay"].includes(p.status)) || (has("chairs") && p.status === "chair" && me().committees.includes(p.committee)));
+  const queue = S.pos.filter(canActPO);
   const mine = S.pos.filter((p) => p.owner === S.me);
   return `<div class="head"><div><h1>Purchase Requests</h1><p class="lead">${esc(BLURB.purchases)}</p></div><button class="btn primary" data-go="newPO" type="button">New purchase request</button></div>
   ${queue.length ? `<div class="panel"><div class="panel-h"><h2>${has("finance") ? "Finance queue" : "Waiting for your approval"}</h2><span class="pill warn">${queue.length}</span></div><div class="list">${queue.map((p) => itemRow(p, waitingOn(p))).join("")}</div></div>` : ""}
+  ${has("finance") ? cardChecklist() + owedPanel() : ""}
   <div class="panel"><div class="panel-h"><h2>Your purchase requests</h2></div>${mine.length ? `<div class="list">${mine.map((p) => itemRow(p, waitingOn(p))).join("")}</div>` : `<div class="empty">None yet.</div>`}</div>`;
+}
+/* Finance: which cards have sent last month's receipts. */
+function cardChecklist() {
+  const ym = lastMonthYm();
+  return `<div class="panel"><div class="panel-h"><h2>Card receipts for ${fmtYm(ym)}</h2><span class="small muted">${IAR_CARDS.length} cards</span></div><div class="tablewrap"><table><thead><tr><th>Card</th><th>Cardholder</th><th>Committee</th><th>Receipts</th></tr></thead><tbody>
+    ${IAR_CARDS.map((k) => { const sub = S.pos.find((p) => p.card && p.card.last4 === k.last4 && p.card.month === ym && p.status !== "rejected");
+      return `<tr><td class="mono">···${k.last4}</td><td>${esc(nameOf(k.holder))}</td><td>${esc(k.committee)}</td><td>${sub ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${sub.id}">${sub.id}</button> ${statusPill(sub)}` : '<span class="pill warn">Not submitted</span>'}</td></tr>`; }).join("")}
+  </tbody></table></div></div>`;
+}
+/* Finance: card charges expected back (refunds and repayments) until the money arrives. */
+function owedPanel() {
+  const rows = S.pos.flatMap((p) => owedLines(p).map((l) => ({ p, l })));
+  if (!rows.length) return "";
+  const sum = rows.reduce((a, r) => a + Number(r.l.amount), 0);
+  return `<div class="panel"><div class="panel-h"><h2>Refunds and repayments due</h2><strong>${money(sum)}</strong></div><div class="list">
+    ${rows.map(({ p, l }) => `<button class="item" type="button" data-card="${p.id}"><div><div class="t">${esc(l.merchant || l.note || l.acct)}</div><div class="s">${p.id} · card ···${p.card ? p.card.last4 : "—"} · ${l.flag === "refund" ? "refund from the merchant" : "to be repaid by " + esc(l.repayBy)}</div></div><div class="r"><strong>${money(l.amount)}</strong></div></button>`).join("")}
+  </div></div>`;
 }
 function vNewPO() {
   const d = S.poDraft || (S.poDraft = { type: "reimburse", committee: me().committees[0] || "Youth", payee: me().name, desc: "", eventId: S.arg || "", lines: [{ acct: ACCOUNTS[1], amount: "", note: "" }] });
+  if (d.type === "card" && !myCards().length) d.type = "reimburse";
+  const card = d.type === "card";
   const myEvents = S.cards.filter((c) => c.owner === S.me && !["denied", "cancelled", "closed"].includes(c.status));
   const sum = d.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
+  const acctSel = (l, i) => `<select id="l_acct_${i}" data-line="${i}" data-k="acct" aria-label="Sub-account, line ${i + 1}">${ACCOUNTS.map((a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>`;
+  const amt = (l, i) => `<input class="amt" type="number" id="l_amt_${i}" data-line="${i}" data-k="amount" value="${l.amount}" step="0.01" min="0" placeholder="0.00" aria-label="Amount, line ${i + 1}">`;
+  const del = (i) => (d.lines.length > 1 ? `<button class="btn small" type="button" data-delline="${i}" aria-label="Remove line ${i + 1}">×</button>` : "");
+  const lineRows = card
+    ? d.lines.map((l, i) => `<tr><td><input type="date" id="l_date_${i}" data-line="${i}" data-k="date" value="${esc(l.date)}" aria-label="Charge date, line ${i + 1}"></td><td><input type="text" id="l_merch_${i}" data-line="${i}" data-k="merchant" value="${esc(l.merchant)}" placeholder="Merchant" aria-label="Merchant, line ${i + 1}"></td><td>${acctSel(l, i)}</td><td>${amt(l, i)}</td>
+        <td><select id="l_flag_${i}" data-line="${i}" data-k="flag" aria-label="Expected back, line ${i + 1}"><option value="" ${!l.flag ? "selected" : ""}>No</option><option value="refund" ${l.flag === "refund" ? "selected" : ""}>Refund pending</option><option value="repay" ${l.flag === "repay" ? "selected" : ""}>To be repaid by…</option></select>${l.flag === "repay" ? `<input type="text" id="l_repay_${i}" data-line="${i}" data-k="repayBy" value="${esc(l.repayBy)}" placeholder="Who repays IAR" style="margin-top:4px" aria-label="Repaid by, line ${i + 1}">` : ""}</td>
+        <td style="text-align:center"><input type="checkbox" data-line="${i}" data-k="noReceipt" ${l.noReceipt ? "checked" : ""} aria-label="No receipt for line ${i + 1}" style="width:auto"></td><td>${del(i)}</td></tr>`).join("")
+    : d.lines.map((l, i) => `<tr><td>${acctSel(l, i)}</td><td><input type="text" id="l_note_${i}" data-line="${i}" data-k="note" value="${esc(l.note)}" placeholder="Receipt detail" aria-label="Note, line ${i + 1}"></td><td>${amt(l, i)}</td><td>${del(i)}</td></tr>`).join("");
+  const head = card ? "<th>Date</th><th>Merchant</th><th>Sub-account</th><th class=\"num\">Amount</th><th>Expected back</th><th>No receipt</th><th></th>" : "<th>Sub-account</th><th>Note</th><th class=\"num\">Amount</th><th></th>";
+  const cols = card ? 7 : 4;
   return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / New</div>
-  <div><h1>New purchase request</h1><p class="lead">Split one request across as many sub-accounts as you need. Link it to an event so its cost shows up on the event card.</p></div>
+  <div><h1>New purchase request</h1><p class="lead">${card ? "Enter each charge on your card statement with its own sub-account. Mark anything that will be refunded or repaid; finance tracks it until the money comes back." : "Split one request across as many sub-accounts as you need. Link it to an event so its cost shows up on the event card."}</p></div>
   <div class="panel"><div class="panel-b"><form class="f" id="poForm" autocomplete="off">
-    <div class="fld wide"><span class="lbl">Request type</span><div class="checks-inline">${Object.entries(PO_TYPE).filter(([k]) => k !== "card" || has("cardholders")).map(([k, l]) => `<label><input type="radio" name="type" value="${k}" ${d.type === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
-    <div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${[...new Set([...me().committees, "Youth", "Social & Welfare", "Outreach", "Administration"])].map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
-    <div class="fld"><label for="p_payee">${d.type === "card" ? "Card and statement month" : "Pay to"}</label><input type="text" id="p_payee" name="payee" value="${esc(d.payee)}"></div>
-    <div class="fld wide"><label for="p_desc">What is it for?</label><input type="text" id="p_desc" name="desc" value="${esc(d.desc)}" placeholder="Snacks and supplies for Youth Game Night"></div>
-    <div class="fld wide"><label for="p_event">Link to an event (optional)</label><select id="p_event" name="eventId"><option value="">No event</option>${myEvents.map((c) => `<option value="${c.id}" ${c.id === d.eventId ? "selected" : ""}>${c.id} · ${esc(c.title)}</option>`).join("")}</select></div>
-    <div class="fld wide"><span class="lbl">Line items</span><div class="tablewrap"><table class="lines"><thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
-      ${d.lines.map((l, i) => `<tr><td><select id="l_acct_${i}" data-line="${i}" data-k="acct">${ACCOUNTS.map((a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`).join("")}</select></td><td><input type="text" id="l_note_${i}" data-line="${i}" data-k="note" value="${esc(l.note)}" placeholder="Receipt detail"></td><td><input class="amt" type="number" id="l_amt_${i}" data-line="${i}" data-k="amount" value="${l.amount}" step="0.01" min="0" placeholder="0.00"></td><td>${d.lines.length > 1 ? `<button class="btn small" type="button" data-delline="${i}" aria-label="Remove line">×</button>` : ""}</td></tr>`).join("")}
-      <tr><td colspan="2"><button class="btn small" type="button" data-addline="1">Add a line</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td></td></tr>
+    <div class="fld wide"><span class="lbl">Request type</span><div class="checks-inline">${Object.entries(PO_TYPE).filter(([k]) => k !== "card" || myCards().length).map(([k, l]) => `<label><input type="radio" name="type" value="${k}" ${d.type === k ? "checked" : ""}> ${l}</label>`).join("")}</div>${myCards().length ? "" : '<span class="hint">Card receipts appear here for people who hold an IAR card.</span>'}</div>
+    ${card
+      ? `<div class="fld"><label for="p_card">Card</label><select id="p_card" name="card">${myCards().map((k) => `<option value="${k.last4}" ${k.last4 === d.card ? "selected" : ""}>···${k.last4} · ${esc(k.label)} (${esc(k.committee)})</option>`).join("")}</select></div>
+         <div class="fld"><label for="p_month">Statement month</label><input type="month" id="p_month" name="month" value="${esc(d.month)}"></div>`
+      : `<div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${[...new Set([...me().committees, "Youth", "Social & Welfare", "Outreach", "Administration"])].map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+         <div class="fld"><label for="p_payee">Pay to</label><input type="text" id="p_payee" name="payee" value="${esc(d.payee)}"></div>`}
+    <div class="fld wide"><label for="p_desc">What is it for?</label><input type="text" id="p_desc" name="desc" value="${esc(d.desc)}" placeholder="${card ? "Card receipts" : "Snacks and supplies for Youth Game Night"}"></div>
+    ${card ? "" : `<div class="fld wide"><label for="p_event">Link to an event (optional)</label><select id="p_event" name="eventId"><option value="">No event</option>${myEvents.map((c) => `<option value="${c.id}" ${c.id === d.eventId ? "selected" : ""}>${c.id} · ${esc(c.title)}</option>`).join("")}</select></div>`}
+    <div class="fld wide"><span class="lbl">${card ? "Charges" : "Line items"}</span><div class="tablewrap"><table class="lines${card ? " card-lines" : ""}"><thead><tr>${head}</tr></thead><tbody>
+      ${lineRows}
+      <tr><td colspan="${card ? 3 : 2}"><button class="btn small" type="button" data-addline="1">${card ? "Add a charge" : "Add a line"}</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td colspan="${cols - (card ? 4 : 3)}"></td></tr>
     </tbody></table></div><span class="hint">Sample accounts. The real list comes from the chart of accounts.</span></div>
     <div class="fld wide"><span class="lbl">Receipts</span><div class="row"><span class="pill">receipt-${S.seq.PO + 1}.pdf</span><span class="hint">Uploads go to IAR's Shared Drive, filed by fiscal year</span></div></div>
     <div class="actions"><button class="btn" type="button" data-go="purchases">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
   </form></div></div>`;
 }
 function vPOCard(c) {
-  const canAct = (c.status === "chair" && has("chairs") && me().committees.includes(c.committee) && c.owner !== S.me) || (["finance", "to_pay"].includes(c.status) && has("finance"));
+  const canAct = canActPO(c);
+  const isCard = c.type === "card";
   const evc = c.eventId ? getCard(c.eventId) : null;
-  const steps = c.type === "card" ? ["Submitted", "Finance review", "Reconciled"] : ["Submitted", "Chair approval", "Finance review", "To pay", "Paid"];
-  const at = c.type === "card" ? { finance: 1, paid: 2 }[c.status] ?? 0 : { chair: 1, finance: 2, to_pay: 3, paid: 4, returned: 0 }[c.status] ?? 0;
+  const steps = isCard ? ["Submitted", "Finance review", "QuickBooks", "Complete"] : ["Submitted", "Chair approval", "Finance review", "To pay", "Paid"];
+  const at = isCard ? { finance: 1, books: 2, done: 3 }[c.status] ?? 0 : { chair: 1, finance: 2, to_pay: 3, paid: 4, returned: 0 }[c.status] ?? 0;
   let act = "";
-  if (canAct && c.status === "chair") act = `<button class="btn primary" data-po="approveChair" type="button">Approve as chair</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
-  if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${c.type === "card" ? "Mark reconciled" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "chair") act = `<button class="btn primary" data-po="approveChair" type="button">Approve${c.approver ? " as backup approver" : " as chair"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${isCard ? "Approve the charges" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
   if (canAct && c.status === "to_pay") act = `<button class="btn primary" data-po="paid" type="button">Record payment (check #20431)</button>`;
+  if (canAct && c.status === "books") act = `<button class="btn primary" data-po="books" type="button">Mark entered in QuickBooks</button>`;
+  const why = !act && c.owner === S.me && ["chair", "finance", "to_pay", "books"].includes(c.status) && (has("finance") || has("chairs")) ? `<div class="panel panel-b small muted">You can't approve or book your own request. It's waiting on ${esc(waitingOn(c))}.</div>` : "";
+  const owed = owedLines(c);
+  const tag = (l, i) => [
+    l.noReceipt ? '<span class="pill warn">No receipt</span>' : "",
+    l.flag === "refund" ? `<span class="pill ${l.resolved ? "ok" : "info"}">${l.resolved ? "Refund received" : "Refund pending"}</span>` : "",
+    l.flag === "repay" ? `<span class="pill ${l.resolved ? "ok" : "info"}">${l.resolved ? "Repaid by " + esc(l.repayBy) : "To be repaid by " + esc(l.repayBy)}</span>` : "",
+    l.flag && !l.resolved && has("finance") && c.owner !== S.me ? `<button class="btn small" type="button" data-po="resolve:${i}">Mark received</button>` : "",
+  ].join(" ");
+  const lineTable = isCard
+    ? `<thead><tr><th>Date</th><th>Merchant / sub-account</th><th class="num">Amount</th></tr></thead><tbody>
+      ${c.lines.map((l, i) => `<tr><td class="small" style="white-space:nowrap">${l.date ? fmtDate(l.date) : ""}</td><td><strong>${esc(l.merchant)}</strong><div class="small muted">${esc(l.acct)}</div>${tag(l, i).trim() ? `<div class="row" style="margin-top:4px">${tag(l, i)}</div>` : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}
+      ${owed.length ? `<tr><td></td><td class="small muted">Expected back</td><td class="num small">${money(owed.reduce((a, l) => a + Number(l.amount), 0))}</td></tr>` : ""}</tbody>`
+    : `<thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
+      ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}</tbody>`;
+  const cardInfo = isCard && c.card ? IAR_CARDS.find((k) => k.last4 === c.card.last4) : null;
   return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / <span class="mono">${c.id}</span></div>
   <div class="head"><div><h1>${esc(c.desc)}</h1><p class="lead">${PO_TYPE[c.type]} · ${esc(c.committee)} · from ${esc(nameOf(c.owner))}</p></div>${statusPill(c)}</div>
   <div class="panel panel-b"><div class="stages">${steps.map((s, i) => `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`).join("")}</div></div>
-  ${act ? `<div class="panel panel-b row">${act}</div>` : ""}
-  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Line items</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table><thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
-    ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}
-  </tbody></table></div></div>
+  ${act ? `<div class="panel panel-b row">${act}</div>` : why}
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>${isCard ? "Charges" : "Line items"}</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table>${lineTable}</table></div></div>
   <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
-    <dt>${c.type === "card" ? "Card" : "Pay to"}</dt><dd>${esc(c.payee)}</dd>
+    ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
     ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
-    <dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>
+    ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
     <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>
   </dl></div></div>
   <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div></div>`;
@@ -1231,6 +1327,8 @@ const STEPS = [
   { as: "amina", view: "newPO", t: "Buy supplies for the event", p: "Back as Amina: add a purchase request linked to Game Night. Split it across two sub-accounts and submit. It goes to her chair." },
   { as: "bilal", view: "home", t: "Chair approves", p: "Bilal, the Youth chair, has it waiting on his home page. Open it and approve. It moves to finance." },
   { as: "omar", view: "purchases", t: "Finance pays", p: "Omar approves it for payment and records the check. The event card now shows what's been spent against its budget." },
+  { as: "hana", view: "newPO", card: true, t: "Credit card receipts", p: "Hana holds the office card. She picks the card and statement month and enters each charge with its own sub-account. One charge is marked to be repaid by the Youth Committee, one has no receipt. Submit it; it goes straight to finance." },
+  { as: "omar", view: "purchases", t: "Finance reviews card receipts", p: "Omar sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives." },
   { as: "idris", view: "runsheet", t: "Security's run sheet", p: "Idris sees one page of what's happening where for each day, built from approved events. His room checks get logged back to each event card." },
   { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
   { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
@@ -1253,7 +1351,13 @@ function renderGuide() {
 function doStep(i) {
   const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
   S.me = s.as; S.poDraft = null;
-  if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "amina" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Food & Hospitality", amount: 96.4, note: "Costco snacks" }, { acct: "Youth – Supplies", amount: 38.99, note: "Trivia prizes" }] }; }
+  if (s.view === "newPO" && s.card) { const ym = lastMonthYm(); S.poDraft = { type: "card", card: "4417", month: ym, desc: `Card receipts — office card, ${fmtYm(ym)}`, lines: [
+    { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "01-5003 General Fund – Administrative", amount: 42.18 },
+    { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "01-5009 General Fund – Cleaning Supplies", amount: 156.3 },
+    { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Supplies", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
+    { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "01-5003 General Fund – Administrative", amount: 12.4, noReceipt: true },
+  ] }; }
+  else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "amina" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: "Amina Rahman", desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Food & Hospitality", amount: 96.4, note: "Costco snacks" }, { acct: "Youth – Supplies", amount: 38.99, note: "Trivia prizes" }] }; }
   if (s.as === "renter") { S.rnDone = null; S.rnDraft = null; }
   if (window.innerWidth < 900) S.guide = false;
   go(s.view, s.arg);
@@ -1296,7 +1400,7 @@ document.addEventListener("click", (e) => {
   if (ds.closeguide) { S.guide = false; return render(); }
   if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
   if (ds.rnnew) { S.rnDone = null; S.rnDraft = null; return render(); }
-  if (ds.addline) { readPO(); S.poDraft.lines.push({ acct: ACCOUNTS[0], amount: "", note: "" }); return render(); }
+  if (ds.addline) { readPO(); S.poDraft.lines.push(S.poDraft.type === "card" ? cardBlankLine() : { acct: ACCOUNTS[0], amount: "", note: "" }); return render(); }
   if (ds.delline) { readPO(); S.poDraft.lines.splice(Number(ds.delline), 1); return render(); }
   if (ds.task) {
     const [cid, tid, st] = ds.task.split("|"); const c = getCard(cid); const t = c.tasks.find((x) => x.id === tid);
@@ -1335,8 +1439,15 @@ function eventAction(a) {
 }
 function poAction(a) {
   const c = getCard(S.arg);
-  if (a === "approveChair") { c.status = "finance"; log(c, "Chair approved"); toast("Approved. Sent to finance."); }
-  if (a === "approveFin") { c.status = c.type === "card" ? "paid" : "to_pay"; log(c, c.type === "card" ? "Reconciled" : "Finance approved for payment"); toast(c.type === "card" ? "Reconciled" : "Approved for payment"); }
+  if (!canActPO(c) && !a.startsWith("resolve")) return toast("This step is waiting on someone else.");
+  if (a === "approveChair") { log(c, c.approver ? "Backup approver approved" : "Chair approved"); c.status = "finance"; c.approver = null; toast("Approved. Sent to finance."); }
+  if (a === "approveFin") { c.status = c.type === "card" ? "books" : "to_pay"; log(c, c.type === "card" ? "Finance reviewed the charges" : "Finance approved for payment"); toast(c.type === "card" ? "Approved. Next: QuickBooks." : "Approved for payment"); }
+  if (a === "books") { c.status = "done"; log(c, "Entered in QuickBooks"); const n = owedLines(c).length; toast(n ? `Complete. ${n} refund/repayment still tracked.` : "Complete"); }
+  if (a.startsWith("resolve:")) {
+    const l = c.lines[Number(a.split(":")[1])];
+    if (!has("finance") || c.owner === S.me || !l || l.resolved) return;
+    l.resolved = true; log(c, l.flag === "refund" ? `Refund received: ${l.merchant} ${money(l.amount)}` : `Repayment received from ${l.repayBy}: ${money(l.amount)}`); toast("Recorded");
+  }
   if (a === "paid") { c.status = "paid"; log(c, "Paid by check #20431. Entered in QuickBooks"); toast("Payment recorded"); }
   if (a === "return") { c.status = "returned"; log(c, "Returned to requester: please attach the itemized receipt"); toast("Returned to " + nameOf(c.owner)); }
   render();
@@ -1359,8 +1470,14 @@ function readPO() {
   const f = document.getElementById("poForm"); if (!f || !S.poDraft) return;
   const d = S.poDraft;
   d.type = (f.querySelector("input[name=type]:checked") || {}).value || d.type;
-  d.committee = f.elements.committee.value; d.payee = f.elements.payee.value; d.desc = f.elements.desc.value; d.eventId = f.elements.eventId.value;
-  f.querySelectorAll("[data-line]").forEach((el) => { d.lines[Number(el.dataset.line)][el.dataset.k] = el.value; });
+  const el = f.elements;
+  if (el.committee) d.committee = el.committee.value;
+  if (el.payee) d.payee = el.payee.value;
+  if (el.eventId) d.eventId = el.eventId.value;
+  if (el.card) d.card = el.card.value;
+  if (el.month) d.month = el.month.value;
+  d.desc = el.desc.value;
+  f.querySelectorAll("[data-line]").forEach((x) => { const line = d.lines[Number(x.dataset.line)]; if (line) line[x.dataset.k] = x.type === "checkbox" ? x.checked : x.value; });
 }
 document.addEventListener("input", (e) => {
   if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
@@ -1371,7 +1488,13 @@ document.addEventListener("change", (e) => {
   if (e.target.id === "budScope") { S.budScope = e.target.value; return render(); }
   if (e.target.id === "budMode") { S.budMode = e.target.value; return render(); }
   if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
-  if (e.target.name === "type" && e.target.closest("#poForm")) { readPO(); if (S.poDraft.type === "card") S.poDraft.payee = "IAR card ending 4417 · " + MON[parseD(TODAY).getMonth()]; else if (S.poDraft.type === "reimburse") S.poDraft.payee = me().name; render(); }
+  if (e.target.name === "type" && e.target.closest("#poForm")) {
+    readPO(); const d = S.poDraft;
+    if (d.type === "card") { const k = myCards()[0]; d.card = d.card || k.last4; d.month = d.month || lastMonthYm(); d.desc = d.desc || `Card receipts — ${fmtYm(d.month)}`; d.lines = d.lines.map((l) => ({ ...cardBlankLine(), ...l })); d.eventId = ""; }
+    else if (d.type === "reimburse") d.payee = me().name;
+    render();
+  }
+  if (e.target.dataset && e.target.dataset.k === "flag" && e.target.closest("#poForm")) { readPO(); render(); }
   if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
   if (e.target.id === "rsDate") go("runsheet", e.target.value);
   if (e.target.dataset.rule) { RULES.find((r) => r.id === e.target.dataset.rule).on = e.target.checked; toast(`Rule ${e.target.checked ? "on" : "off"}: ${RULES.find((r) => r.id === e.target.dataset.rule).name}`); }
@@ -1388,9 +1511,23 @@ document.addEventListener("submit", (e) => {
     if (!d.desc.trim()) return toast("Say what the purchase is for.");
     const lines = d.lines.filter((l) => Number(l.amount) > 0);
     if (!lines.length) return toast("Add at least one line with an amount.");
-    const isChair = me().roles.includes("chairs") && me().committees.includes(d.committee);
-    const c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note]), eventId: d.eventId || null, status: d.type === "card" || isChair ? "finance" : "chair", created: TODAY });
-    if (isChair && d.type !== "card") c.log.push({ t: TODAY, who: "system", text: "Requester is the chair: sent straight to finance" });
+    let c;
+    if (d.type === "card") {
+      const k = myCards().find((x) => x.last4 === d.card);
+      if (!k) return toast("Choose one of your IAR cards.");
+      if (!/^\d{4}-\d{2}$/.test(d.month || "")) return toast("Choose the statement month.");
+      const bad = lines.findIndex((l) => !l.date || !String(l.merchant).trim() || (l.flag === "repay" && !String(l.repayBy).trim()));
+      if (bad >= 0) return toast(`Charge ${bad + 1}: add the date, the merchant${lines[bad].flag === "repay" ? " and who will repay it" : ""}.`);
+      const dup = S.pos.find((p) => p.card && p.card.last4 === k.last4 && p.card.month === d.month && p.status !== "rejected");
+      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: "card", committee: k.committee, card: { last4: k.last4, month: d.month }, payee: `IAR card ···${k.last4} · ${fmtYm(d.month)}`, desc: d.desc,
+        lines: lines.map((l) => ({ date: l.date, merchant: l.merchant.trim(), acct: l.acct, amount: Number(l.amount), flag: l.flag || "", repayBy: l.flag === "repay" ? l.repayBy.trim() : "", noReceipt: Boolean(l.noReceipt) })), status: "finance", created: TODAY });
+      c.log.push({ t: TODAY, who: "system", text: "Card receipts go straight to finance review" + (dup ? ` (${dup.id} already covers this card and month)` : "") });
+    } else {
+      const isChair = me().roles.includes("chairs") && me().committees.includes(d.committee);
+      const backup = isChair ? BACKUP[d.committee] : null;
+      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note]), eventId: d.eventId || null, status: isChair && !backup ? "finance" : "chair", approver: backup || null, created: TODAY });
+      if (isChair) c.log.push({ t: TODAY, who: "system", text: backup ? `Requester is the ${d.committee} chair, so it goes to the backup approver, ${nameOf(backup)}` : "Requester is the chair and no backup is set: finance reviews it" });
+    }
     S.pos.unshift(c);
     if (d.eventId) { const evc = getCard(d.eventId); evc.linkedPOs.push(c.id); log(evc, `Purchase ${c.id} linked (${money(total(c))})`); }
     S.poDraft = null;
