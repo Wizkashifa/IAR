@@ -103,7 +103,10 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
 | Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
-| Later | By group | Maintenance tickets, onboarding/offboarding checklist (groups, cards, keys, Drive), budget vs. actual for chairs, key and asset checkout, volunteer signup, event templates | 4+ |
+| IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified | 2 |
+| Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
+| Budget | Chairs (their committees), finance, executive | Sankey of funding sources (unrestricted General Fund, restricted programs, restricted donations) → committees, or a committee's sub-accounts → spent, committed and available, plus a table. IAR-wide or per committee; figures from QuickBooks and the chart of accounts | 3 |
+| Later | By group | Onboarding/offboarding checklist (groups, cards, keys, Drive), key checkout, volunteer signup, event templates | 4+ |
 
 ## Policy automation
 
