@@ -16,6 +16,7 @@ export const ROLES = [
   "security",
   "sw",
   "executive",
+  "shura",
   "admins",
 ] as const;
 export type Role = (typeof ROLES)[number];
@@ -39,6 +40,8 @@ export const ORG = {
     security: `portal-security@${domain}`,
     sw: `portal-sw@${domain}`,
     executive: `portal-executive@${domain}`,
+    /** Majlis ash-Shura and board members: dashboard and budget, read-only, plus requests to finance and the executive. */
+    shura: `portal-shura@${domain}`,
     admins: `portal-admins@${domain}`,
   } satisfies Record<Exclude<Role, "member">, string>,
 };

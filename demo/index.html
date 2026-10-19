@@ -310,7 +310,7 @@ const PEOPLE = {
   sara:   { name: "Sara Malik", title: "Marketing team", roles: ["member", "marketing"], committees: [] },
   idris:  { name: "Idris Thompson", title: "Security, facilities & maintenance", roles: ["member", "security", "facilities", "av"], committees: [] },
   zaid:   { name: "Zaid Hussain", title: "IT volunteer", roles: ["member", "it"], committees: [] },
-  khalid: { name: "Khalid Mansoor", title: "Shura member", roles: ["member", "shura"], committees: [] },
+  khalid: { name: "Khalid Mansoor", title: "Shura / board member", roles: ["member", "shura"], committees: [] },
   yasir:  { name: "Dr. Yasir Ali", title: "Executive (mission review)", roles: ["member", "executive"], committees: [] },
   admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "shura", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
   renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], committees: [] },
@@ -639,7 +639,7 @@ const MODULES = [
   { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
   { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
   { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work" },
-  { id: "shura", name: "Shura Dashboard", vis: ["shura"], group: "Finance" },
+  { id: "shura", name: "Shura / Board", vis: ["shura"], group: "Finance" },
   { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance" },
   { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
   { id: "settings", name: "Portal Settings", vis: ["admins"], group: "Admin" },
@@ -1426,7 +1426,7 @@ function vShura() {
   const held2 = [heldRow(PAGE_RD, all.filter((l) => l.site === PAGE_RD)), ...S.budget.filter((c) => c.lines.some((l) => l.site === "Own funds")).map((c) => heldRow(c.name, c.lines.filter((l) => l.site === "Own funds")))].sort((a, b) => b.bal - a.bal);
   const last = Object.entries(LAST).map(([name, [b, a, nb]]) => ({ name, b, a, nb, pct: a / b })).sort((x, y) => y.pct - x.pct);
   const lastTot = last.reduce((t, x) => ({ b: t.b + x.b, a: t.a + x.a, nb: t.nb + x.nb }), { b: 0, a: 0, nb: 0 });
-  return `<div class="head"><div><h1>Shura Dashboard</h1><p class="lead">${FY_LABEL()}, ${Math.round(pace * 100)}% of the year gone. Money figures are from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}; commitments are live from approved purchase requests.</p></div><button class="btn" type="button" data-go="budget">Open full budget flow</button></div>
+  return `<div class="head"><div><h1>Shura / Board Dashboard</h1><p class="lead">${FY_LABEL()}, ${Math.round(pace * 100)}% of the year gone. Money figures are from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}; commitments are live from approved purchase requests.</p></div><button class="btn" type="button" data-go="budget">Open full budget flow</button></div>
   <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">
     ${tile("Received this year", kfmt(R), `${Math.round((R / B) * 100)}% of ${kfmt(B)} budgeted`, `<div class="legend" style="flex-direction:column;gap:3px;margin-top:4px">${Object.keys(KIND).map((k) => `<span><i style="background:${KIND[k].color}"></i>${KIND[k].short} ${kfmt(rec[k])}</span>`).join("")}</div>`)}
     ${tile("Spent + committed", kfmt(SP + CM), `${Math.round(((SP + CM) / B) * 100)}% of budget · ${kfmt(SP)} spent`)}
@@ -1549,7 +1549,7 @@ const STEPS = [
   { as: "bilal", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: "Bilal chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself." },
   { as: "omar", view: "budget", t: "Revenue by type", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = null; }, p: "Finance sees every dollar received, sorted three ways: unrestricted gifts to IAR, donations designated to a committee (Da'wah, say) and program revenue earned by a committee (Youth, say). Page Road has its own plan: tuition, endowment and donations." },
   { as: "omar", view: "budget", t: "Import from QuickBooks", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = qbSample(); }, p: "Omar imports an export. Each row is sorted by its QuickBooks account and class. Two gifts have no committee, so choose where they go (the roof check is Facility Maintenance, the dinner is Marketing & Fundraising), then import and watch the totals change." },
-  { as: "khalid", view: "shura", t: "The Shura dashboard", reset: () => { S.shForm = false; }, p: "Khalid is on the Shura. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment." },
+  { as: "khalid", view: "shura", t: "The Shura / board dashboard", reset: () => { S.shForm = false; }, p: "Khalid is on the Shura, so he gets the Shura / Board role. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment." },
   { as: "yasir", view: "budget", t: "Executive answers the Shura", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; }, p: "Requests land with the right office: reports go to finance, amendments and spending reviews to the executive. Approve or decline at the bottom of the Budget page. The Shura member is notified." },
   { as: "amina", view: "tickets", t: "Report a problem", p: "Anyone can submit an IT or maintenance ticket. Pick the room and, if you know it, the equipment. It lands in the right team's queue." },
   { as: "zaid", view: "tickets", t: "IT works its queue", p: "Zaid sees only IT tickets. Open the Wi-Fi ticket, assign it to himself, start it and resolve it. The person who reported it is notified." },
