@@ -145,7 +145,7 @@ The 2021 policy needs a short refresh before its rules go into the software. Rul
 
 ## Architecture
 
-The recommendation is a small hosted web app with its own database, connected to IAR's Google Workspace through a service account. Linked cards, tasks, rules settings and a multi-masjid future outgrow both Apps Script and Google Sheets as a database. Hosting runs about $0–20/month. The exact stack gets confirmed when the shell is started.
+**Decided (Oct 19, 2026): Google Cloud.** The portal runs on Cloud Run with Firestore as its database, in an IAR-owned Google Cloud project under the islam1.org organization, connected to IAR's Google Workspace through a service account. Linked cards, tasks, rules settings and a multi-masjid future outgrow Apps Script and Google Sheets, while staying on Google keeps data under the same organization, admin console and sign-in IAR already secures — the concern the Purchase Requests plan raised about W-9 data leaving Workspace. Expected hosting cost at IAR's volume is near zero to low tens of dollars a month.
 
 ```
 Staff & committees ─(Google sign-in, @islam1.org)─┐
@@ -214,7 +214,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 **Next steps**
 
 - [x] Connect the existing repo (`wizkashifa/iar`)
-- [ ] Confirm the stack
+- [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [ ] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests
 - [ ] Create the access groups and a service account in Google Workspace
 - [ ] Pull the room list and calendar IDs from IAR's Google Calendar
