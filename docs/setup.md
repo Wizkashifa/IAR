@@ -93,6 +93,7 @@ Create these Google Groups in the Admin console. Membership decides what each pe
 | portal-marketing@, portal-av@, portal-facilities@, portal-security@ | That team's queue; facilities and security also see the run sheet |
 | portal-sw@ | Social & Welfare aid |
 | portal-executive@ | Executive approvals |
+| portal-shura@ | Shura / board: dashboard and budget (read-only) and requests to finance and the executive. Never approves or pays |
 | portal-admins@ | Everything, plus portal settings. Keep to two or three people |
 
 Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group itself (`actingRoles` in `portal/src/lib/viewer.ts`).

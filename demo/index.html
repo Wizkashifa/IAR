@@ -161,6 +161,17 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .tl .blk.tentative { background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,0.25) 5px 10px); }
 .tl .blk.req { background: transparent; border: 2px solid var(--hold-request); color: var(--hold-request); font-weight: 600; z-index: 2; }
 .tl-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }
+.btabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.btabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; font-weight: 500; color: var(--ink-2); margin-bottom: -1px; }
+.btabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.pace { display: grid; grid-template-columns: minmax(120px, 170px) minmax(80px, 1fr) minmax(150px, 200px); gap: 10px; align-items: center; padding: 5px 0; }
+.pbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; }
+.pbar .sp, .pbar .cm { position: absolute; top: 0; bottom: 0; }
+.pbar .sp { left: 0; background: var(--ink-2); border-radius: 5px 0 0 5px; }
+.pbar .cm { background: var(--ink-3); opacity: 0.5; }
+.pbar .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--accent); }
+@media (max-width: 720px) { .pace { grid-template-columns: 1fr; gap: 3px; } }
 .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-2); }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 
@@ -305,8 +316,9 @@ const PEOPLE = {
   sara:   { name: "Sara Malik", title: "Marketing team", roles: ["member", "marketing"], committees: [] },
   idris:  { name: "Idris Thompson", title: "Security, facilities & maintenance", roles: ["member", "security", "facilities", "av"], committees: [] },
   zaid:   { name: "Zaid Hussain", title: "IT volunteer", roles: ["member", "it"], committees: [] },
+  khalid: { name: "Khalid Mansoor", title: "Shura / board member", roles: ["member", "shura"], committees: [] },
   yasir:  { name: "Dr. Yasir Ali", title: "Executive (mission review)", roles: ["member", "executive"], committees: [] },
-  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
+  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "shura", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
   renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], committees: [] },
 };
 const COMMITTEES = ["Youth", "Social & Welfare", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration", "Community member (private event)"];
@@ -423,17 +435,6 @@ function seed() {
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "Coach D. Ortiz", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
     ],
-    budget: [
-      { name: "Social & Welfare", lines: [["Community aid", "don", 900000, 690000, 40000], ["Food pantry", "don", 320000, 251000, 20000], ["Zakat distribution", "don", 450000, 377000, 0], ["S&W administration", "gf", 30000, 22000, 1000]] },
-      { name: "Administration", lines: [["Salaries & benefits", "gf", 720000, 585000, 0], ["Insurance & property tax", "gf", 140000, 140000, 0], ["Office & IT", "gf", 70000, 51000, 3000]] },
-      { name: "Facilities", lines: [["Utilities", "gf", 260000, 214000, 0], ["Maintenance & repairs", "gf", 180000, 151000, 9000], ["Cleaning", "gf", 60000, 47000, 2000], ["Capital projects", "don", 400000, 120000, 210000]] },
-      { name: "Education", lines: [["Weekend school support", "prog", 140000, 102000, 8000], ["Adult classes", "prog", 40000, 26000, 2000], ["Library", "gf", 12000, 4000, 1000]] },
-      { name: "Da'wah", lines: [["Imam's office", "gf", 120000, 96000, 4000], ["Conferences & travel", "gf", 25000, 18400, 2000], ["New Muslim program", "don", 20000, 11000, 1000]] },
-      { name: "Youth", lines: [["Programs & events", "prog", 60000, 41000, 6000], ["Food & hospitality", "gf", 18000, 15200, 1000], ["Supplies", "gf", 8000, 5100, 400], ["Youth retreat", "don", 25000, 9000, 12000]] },
-      { name: "Outreach", lines: [["Community events", "gf", 35000, 22000, 4000], ["Interfaith program", "don", 15000, 6000, 3000]] },
-      { name: "Marketing", lines: [["Printing & design", "gf", 30000, 21000, 2000]] },
-      { name: "Women's Committee", lines: [["Programs", "prog", 22000, 13000, 2000]] },
-    ].map((c) => ({ name: c.name, lines: c.lines.map(([acct, source, budget, spent, committed]) => ({ acct, source, budget, spent, committed })) })),
     tickets: [
       { id: "TK-501", type: "maint", cat: "Heating & cooling", room: "mphAB", asset: "AS-014", urgency: "Urgent (safety or a service today)", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.", owner: "hana", assignee: "idris", status: "in_progress", log: [{ t: now(2), who: "hana", text: "Reported" }, { t: now(2), who: "idris", text: "Assigned to self" }, { t: now(1), who: "idris", text: "Called the HVAC contractor; technician coming tomorrow" }] },
       { id: "TK-502", type: "it", cat: "Wi-Fi or network", room: "r240", asset: "AS-052", urgency: "Normal", desc: "Wi-Fi drops every few minutes in the conference room.", owner: "bilal", status: "new", log: [{ t: now(1), who: "bilal", text: "Reported" }] },
@@ -458,6 +459,7 @@ function seed() {
       { id: "SW-322", who: "Family C (case 322)", need: "Groceries via food pantry card", amount: 150, status: "Approved" },
     ],
   };
+  seedMoney();
 }
 function ev(o) {
   const c = Object.assign({ kind: "event", setup: 30, teardown: 30, attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, linkedPOs: [], log: [], comments: [] }, o);
@@ -665,7 +667,8 @@ const MODULES = [
   { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
   { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
   { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work" },
-  { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive"], group: "Finance" },
+  { id: "shura", name: "Shura / Board", vis: ["shura"], group: "Finance" },
+  { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance" },
   { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
   { id: "settings", name: "Portal Settings", vis: ["admins"], group: "Admin" },
 ];
@@ -681,6 +684,7 @@ const BLURB = {
   tickets: "Report a building or tech problem and follow it until it's fixed.",
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
+  shura: "Money at a glance for the Shura, with a way to ask finance or the executive for something.",
   settings: "Rooms, access groups and the policy rules the portal checks.",
 };
 
@@ -691,7 +695,7 @@ const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 function renderRail() {
   const rail = document.getElementById("rail");
   if (S.me === "renter") { rail.innerHTML = `<div class="group">Public</div><button class="on" type="button">Request the gym</button>`; return; }
-  const counts = { home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length };
+  const counts = { budget: srOpenFor().length, home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length };
   let html = "", lastGroup = null;
   for (const m of MODULES.filter(visible)) {
     if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
@@ -1159,13 +1163,13 @@ function vSettings() {
 const SRC = { gf: { label: "Unrestricted · General Fund", color: "var(--src1)" }, prog: { label: "Restricted · Programs", color: "var(--src2)" }, don: { label: "Restricted · Donations", color: "var(--src3)" } };
 const STATUS_N = { spent: "Spent", committed: "Committed", available: "Available" };
 function budgetScopes() {
-  const all = has("finance") || has("executive") || has("admins");
+  const all = has("finance") || has("executive") || has("admins") || has("shura");
   const list = all ? S.budget.map((c) => c.name) : S.budget.map((c) => c.name).filter((n) => me().committees.includes(n));
   return { all, list };
 }
 function sankeySvg(cols, links, opts) {
-  const W = 960, H = opts.h || 460, nw = 14, top = 8;
-  const padOf = (c) => (c.length > 6 ? 26 : 16);
+  const W = 960, H = opts.h || 460, nw = 14, top = 16;
+  const padOf = (c) => (c.length > 14 ? 14 : c.length > 6 ? 26 : 16);
   const val = {};
   for (const l of links) { val["o" + l.s] = (val["o" + l.s] || 0) + l.v; val["i" + l.t] = (val["i" + l.t] || 0) + l.v; }
   const nodeV = (id) => Math.max(val["o" + id] || 0, val["i" + id] || 0);
@@ -1191,18 +1195,207 @@ function sankeySvg(cols, links, opts) {
   return `<div class="tablewrap"><svg class="sankey" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.aria)}">${paths}${nodes}</svg></div>`;
 }
 const kfmt = (n) => (n >= 1e6 ? "$" + (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? "$" + Math.round(n / 1e3) + "K" : "$" + Math.round(n));
+/* ------------------------------------------------------------------ */
+/* Money: QuickBooks revenue, budget tabs, Shura dashboard             */
+/* ------------------------------------------------------------------ */
+const KIND = {
+  gf: { label: "Unrestricted gift", short: "Unrestricted", color: "var(--src1)", help: "A gift to IAR as a whole. Goes to the General Fund and is shared across committees by the budget." },
+  don: { label: "Designated donation", short: "Restricted donation", color: "var(--src3)", help: "A gift given for one committee or purpose, such as Da'wah. Can only be spent there." },
+  prog: { label: "Program revenue", short: "Program revenue", color: "var(--src2)", help: "Fees and tuition earned by a committee's own programs, such as Youth. Stays with that committee." },
+};
+const GF_POOL = "General Fund";
+const QB_MAP = [
+  { acct: "4000 Donations:General", cls: "Any or none", kind: "gf", to: "General Fund (all of IAR)" },
+  { acct: "4100 Donations:Restricted", cls: "A committee name, e.g. Da'wah, or Page Road", kind: "don", to: "That committee or campus" },
+  { acct: "4200 Program Revenue", cls: "A committee name, e.g. Youth, or Page Road (Al-Iman tuition)", kind: "prog", to: "That committee or campus" },
+  { acct: "Anything else, or a committee class missing", cls: "", kind: null, to: "Held for finance to assign" },
+];
+function mapQB(r) {
+  const cls = [...S.budget.map((c) => c.name), PAGE_RD].find((n) => n === r.cls);
+  if (r.acct.startsWith("4000")) return { kind: "gf", who: GF_POOL };
+  if (r.acct.startsWith("4100") && cls) return { kind: "don", who: cls };
+  if (r.acct.startsWith("4200") && cls) return { kind: "prog", who: cls };
+  return null;
+}
+/* IAR's fiscal year runs July 1 to June 30 */
+const FYM = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+const fyStart = () => { const d = parseD(TODAY); return new Date(d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1, 6, 1, 12); };
+const nMonths = () => ((parseD(TODAY).getMonth() + 6) % 12) + 1;
+const yearPace = () => (parseD(TODAY) - fyStart()) / (365 * 864e5);
+const FY_LABEL = () => `FY${fyStart().getFullYear()}–${String(fyStart().getFullYear() + 1).slice(2)}`;
+const revSum = (f) => S.revenue.filter(f).reduce((a, r) => a + r.amt, 0);
+const PAGE_RD = "Page Road";
+
+/* FY2026-27 budget, from "Budget FY 2026-2027 Final". [name, IAR main General Fund, Page Road, FY25-26 budget, FY25-26 actual]
+   Administration's FY25-26 figures include utilities, insurance and fees, which FY26-27 lists separately. */
+const FY27 = [
+  ["Administration", 280000, 0], ["Utility, Insurance, Bank & Card fees", 340000, 60000], ["Imam Office", 306000, 20880],
+  ["Facility Maintenance", 200000, 25560], ["Security", 265000, 60000], ["Cleaning", 161000, 63000], ["Youth", 140000, 0],
+  ["Marketing & Fundraising", 50000, 0], ["Da'wah", 30000, 0], ["IT/Technology", 30000, 0], ["Cap Ex IAR", 10000, 0],
+  ["Special Projects (Shura)", 4000, 0], ["Health & Wellness", 2000, 0], ["Sports & Recreation", 5000, 0], ["Education", 2500, 0],
+  ["Older Adult", 1000, 0], ["Volunteer", 1000, 0], ["Eid al-Adha Prayer", 10000, 0], ["Eid al-Fitr Prayer & Khatim Night", 15000, 0],
+  ["Page Road Lease", 0, 288000], ["Page Road family days (2 a year)", 0, 10000], ["Women (self-funded)", 0, 0], ["Events (self-funded)", 0, 0],
+];
+/* Last year, General Fund: [FY25-26 budget, FY25-26 actual spent]. "Administration" covers Administration + utilities/insurance/fees. */
+const LAST = {
+  "Administration + utilities": [620000, 648147.9, 620000], "Imam Office": [226000, 212060.02, 306000], "Facility Maintenance": [225000, 281882.57, 200000],
+  "Security": [215000, 225159.25, 265000], "Cleaning": [161000, 175146.17, 161000], "Youth": [159000, 138602.22, 140000],
+  "Marketing & Fundraising": [58000, 55048.34, 50000], "Da'wah": [30000, 20466.41, 30000], "IT/Technology": [10000, 2500, 30000],
+  "Cap Ex IAR": [20000, 8922.41, 10000], "Special Projects (Shura)": [4000, 2249.53, 4000], "Sports & Recreation": [5000, 10483.88, 5000],
+  "Health & Wellness": [3500, 2279.52, 2000], "Education": [2500, 0, 2500], "Older Adult": [1000, 1087.51, 1000], "Volunteer": [2000, 0, 1000],
+  "Eid al-Adha Prayer": [10000, 17177.19, 10000], "Eid al-Fitr Prayer & Khatim Night": [20000, 16748.82, 15000],
+};
+const OPENING = { "Women (self-funded)": 7946.44, "Events (self-funded)": 32231.68 };
+/* How Page Road is meant to be paid for in FY26-27 (from the file): school tuition, endowment, donations. */
+const PR_PLAN = [{ name: "Al-Iman tuition", kind: "prog", plan: 228000 }, { name: "Endowment", kind: "don", plan: 144000 }, { name: "Donations", kind: "don", plan: 240000 }];
+const EXPECT = { gf: 1852500, prog: 228000, don: 384000 };
+
+function seedMoney() {
+  const n = nMonths(), pace = yearPace();
+  const W = { gf: [1, 1, 1.05, 0.65, 1, 1, 1.2, 2, 2, 1, 1, 1], don: [1, 0.8, 1, 0.6, 1, 1.5, 1.5, 3, 3, 1, 1, 1], prog: [0.3, 2, 1.6, 0.9, 1, 1, 1.5, 1, 1, 1, 0.5, 0.3], spend: [1, 0.95, 1, 0.6, 1, 1, 1, 1, 1, 1, 1, 1] };
+  const spread = (total, w) => { const ws = w.slice(0, n), t = ws.reduce((a, b) => a + b, 0); let left = total; return ws.map((x, i) => { const v = i === n - 1 ? left : Math.round((total * x) / t / 10) * 10; left -= v; return v; }); };
+  const rev = [];
+  const add = (kind, who, total, src) => spread(total, W[kind]).forEach((amt, m) => rev.push({ m, kind, who, amt, src }));
+  /* Sample year-to-date receipts. The real ones arrive with the first QuickBooks import. */
+  add("gf", GF_POOL, 585000, "Unrestricted gifts");
+  add("prog", PAGE_RD, 118000, "Al-Iman tuition"); add("don", PAGE_RD, 36000, "Endowment"); add("don", PAGE_RD, 52000, "Donations");
+  const own = { "Da'wah": [["don", 6500]], "Youth": [["prog", 9200]], "Sports & Recreation": [["prog", 1800]], "Health & Wellness": [["don", 900]], "Women (self-funded)": [["prog", 2100]], "Events (self-funded)": [["prog", 4800]] };
+  for (const [who, ks] of Object.entries(own)) for (const [k, v] of ks) add(k, who, v, k === "don" ? "Designated donations" : "Program revenue");
+  S.revenue = rev;
+  /* Budget lines. YTD spending is a sample: last year's run-rate applied to this year's calendar. */
+  const lastFor = (nm) => LAST[nm === "Administration" ? "Administration + utilities" : nm === "Utility, Insurance, Bank & Card fees" ? "Administration + utilities" : nm];
+  const COMMIT = { "Facility Maintenance": 14000, "Youth": 9000, "Marketing & Fundraising": 3000, "Cap Ex IAR": 4000, "IT/Technology": 6000, "Security": 6000 };
+  const r100 = (v) => Math.round(v / 100) * 100;
+  S.budget = FY27.map(([name, gf, pr]) => {
+    const lines = [];
+    const lf = lastFor(name), ratio = lf ? Math.min(1.3, Math.max(0.5, lf[1] / lf[0])) : 1;
+    if (gf) lines.push({ acct: "IAR main", site: "IAR main", source: "gf", budget: gf, spent: r100(gf * pace * ratio), committed: COMMIT[name] || 0 });
+    if (pr) {
+      const isLease = name === "Page Road Lease", sp = isLease ? 24000 * n : r100(pr * pace);
+      const shares = [["prog", 228 / 612], ["don", 384 / 612]];
+      for (const [k, sh] of shares) lines.push({ acct: "Page Road", site: PAGE_RD, source: k, budget: Math.round(pr * sh), spent: Math.round(sp * sh), committed: 0 });
+    }
+    for (const [k, v] of own[name] || []) {
+      const open = k === "prog" ? OPENING[name] || 0 : 0;
+      lines.push({ acct: "Own funds", site: "Own funds", source: k, budget: Math.round(v + open), spent: r100((v + open) * 0.3), committed: 0 });
+    }
+    return { name, lines };
+  }).filter((c) => c.lines.length);
+  S.spendM = spread(S.budget.flatMap((c) => c.lines).reduce((a, l) => a + l.spent, 0), W.spend);
+  S.imports = [
+    { id: "IMP-4", date: addDays(TODAY, -4), by: "omar", file: "qb-transactions-oct-1-to-15.csv", rows: 212, review: 3, revenue: 48210 },
+    { id: "IMP-3", date: addDays(TODAY, -22), by: "omar", file: "qb-transactions-sep.csv", rows: 388, review: 5, revenue: 171640 },
+    { id: "IMP-2", date: addDays(TODAY, -52), by: "omar", file: "qb-transactions-aug.csv", rows: 301, review: 2, revenue: 92350 },
+  ];
+  S.qb = null; S.budTab = "flow"; S.shForm = false;
+  S.shReq = [
+    { id: "SR-12", owner: "khalid", type: "report", committee: "Facility Maintenance", text: "Facility Maintenance ran 125% of budget last year. What drove it, and is the $200K for this year realistic?", status: "answered", resp: { by: "omar", t: addDays(TODAY, -6), text: "Mostly HVAC and roof repairs ($56.9K over). The FY26-27 budget is $25K lower than last year's, so I'd expect pressure again. Detail by vendor emailed to the Shura." }, created: addDays(TODAY, -9) },
+    { id: "SR-14", owner: "ext:Ibrahim Tahir (Shura)", type: "amendment", committee: "Facility Maintenance", from: "Special Projects (Shura)", amount: 2500, text: "Move $2,500 from Special Projects (Shura) to Facility Maintenance for the MPH cooling repair.", status: "open", created: addDays(TODAY, -2) },
+  ];
+  S.seq.SR = 14;
+}
+
+function qbSample() {
+  const d = (n) => addDays(TODAY, -n);
+  const po = (S.pos.find((p) => p.committee === "Youth") || {}).id || "";
+  const rows = [
+    { id: "q1", type: "in", date: d(3), desc: "Online giving – Jumuah collection", acct: "4000 Donations:General", cls: "", amt: 3420 },
+    { id: "q2", type: "in", date: d(3), desc: "Check deposit – anonymous", acct: "4000 Donations:General", cls: "", amt: 1000 },
+    { id: "q3", type: "in", date: d(3), desc: "Zelle – for the Da'wah speaker series", acct: "4100 Donations:Restricted", cls: "Da'wah", amt: 2500 },
+    { id: "q4", type: "in", date: d(2), desc: "Page Road donation – online giving", acct: "4100 Donations:Restricted", cls: "Page Road", amt: 2750 },
+    { id: "q5", type: "in", date: d(2), desc: "Game Night registrations (Eventbrite payout)", acct: "4200 Program Revenue", cls: "Youth", amt: 860 },
+    { id: "q6", type: "in", date: d(1), desc: "Al-Iman tuition – October", acct: "4200 Program Revenue", cls: "Page Road", amt: 19000 },
+    { id: "q7", type: "in", date: d(1), desc: "Sisters' halaqa fees", acct: "4200 Program Revenue", cls: "Women (self-funded)", amt: 480 },
+    { id: "q8", type: "in", date: d(1), desc: "Check – memo: \"for the new roof\"", acct: "4100 Donations:Restricted", cls: "", amt: 10000, hint: "Looks like Facility Maintenance or Cap Ex IAR" },
+    { id: "q9", type: "in", date: d(0), desc: "Venmo – fundraiser dinner proceeds", acct: "4900 Other Income", cls: "", amt: 6300, hint: "Which committee ran the dinner? Possibly Marketing & Fundraising" },
+    { id: "q10", type: "out", date: d(2), desc: "Costco – Game Night snacks, check #20431", acct: "Youth expenses", cls: "Youth", line: "IAR main", amt: 135.39, po },
+    { id: "q11", type: "out", date: d(1), desc: "Amazon – misc. supplies, card ending 4417", acct: "Administration expenses", cls: "Administration", line: "IAR main", amt: 212.77, po: "" },
+  ];
+  rows.forEach((r) => { if (r.type === "in") r.map = mapQB(r); });
+  return { file: "qb-transactions-oct-16-to-" + String(parseD(TODAY).getDate()) + ".csv", rows, pick: {} };
+}
+const qbDest = (r, q) => (r.map ? r.map : q.pick[r.id] ? { kind: q.pick[r.id].split("|")[0], who: q.pick[r.id].split("|")[1] } : null);
+function qbApply() {
+  const q = S.qb; let rev = 0, nRev = 0, nExp = 0;
+  for (const r of q.rows) {
+    if (r.type === "in") {
+      const m = qbDest(r, q); S.revenue.push({ m: nMonths() - 1, kind: m.kind, who: m.who, amt: r.amt, src: r.desc }); rev += r.amt; nRev++;
+      const c = m.who !== GF_POOL && m.who !== PAGE_RD && S.budget.find((b) => b.name === m.who);
+      if (c) { let l = c.lines.find((x) => x.site === "Own funds" && x.source === m.kind); if (!l) { l = { acct: "Own funds", site: "Own funds", source: m.kind, budget: 0, spent: 0, committed: 0 }; c.lines.push(l); } l.budget += r.amt; }
+    } else {
+      const c = S.budget.find((b) => b.name === r.cls); const l = c && c.lines.find((x) => x.site === r.line);
+      if (l) { l.spent += r.amt; S.spendM[nMonths() - 1] += r.amt; nExp++; }
+    }
+  }
+  S.imports.unshift({ id: "IMP-" + (S.imports.length + 4), date: TODAY, by: S.me, file: q.file, rows: q.rows.length, review: q.rows.filter((r) => r.type === "in" && !r.map).length, revenue: rev });
+  S.qb = null;
+  toast(`Imported ${nRev} income and ${nExp} expense rows. Budget and dashboards are up to date.`);
+}
+
+/* ---- charts ---- */
+function revBars(rows) {
+  const n = nMonths(), W = 960, H = 250, L = 52, T = 14, B = 26, pw = (W - L) / n, bw = Math.min(46, pw * 0.6);
+  const by = Array.from({ length: n }, () => ({ gf: 0, don: 0, prog: 0 }));
+  rows.forEach((r) => (by[r.m][r.kind] += r.amt));
+  const mx = Math.max(...by.map((b) => b.gf + b.don + b.prog), 1), yv = (v) => T + (H - T - B) * (1 - v / mx);
+  let s = "";
+  [0, 0.5, 1].forEach((f) => { const y = yv(mx * f); s += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L - 8}" y="${y + 4}" text-anchor="end" class="sk-v">${kfmt(mx * f)}</text>`; });
+  by.forEach((b, i) => {
+    const x = L + i * pw + (pw - bw) / 2; let acc = 0;
+    for (const k of ["gf", "don", "prog"]) {
+      if (!b[k]) continue; const y1 = yv(acc + b[k]), y0 = yv(acc);
+      s += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(1, y0 - y1)}" fill="${KIND[k].color}" stroke="var(--surface)" stroke-width="2" rx="3" data-tip="${esc(FYM[i] + " · " + KIND[k].short + ": " + money(b[k]))}"/>`;
+      acc += b[k];
+    }
+    s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="sk-v">${FYM[i]}</text>`;
+  });
+  return `<svg class="sankey" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue received by month and type">${s}</svg>`;
+}
+function cumLines() {
+  const n = nMonths(), W = 960, H = 260, L = 52, R = 150, T = 14, B = 26, pw = (W - L - R) / (n - 1 || 1);
+  const cum = (a) => { let t = 0; return a.map((v) => (t += v)); };
+  const rv = cum(Array.from({ length: n }, (_, m) => revSum((r) => r.m === m))), sp = cum(S.spendM.slice(0, n));
+  const mx = Math.max(...rv, ...sp), yv = (v) => T + (H - T - B) * (1 - v / mx), xv = (i) => L + i * pw;
+  let s = "";
+  [0, 0.5, 1].forEach((f) => { const y = yv(mx * f); s += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L - 8}" y="${y + 4}" text-anchor="end" class="sk-v">${kfmt(mx * f)}</text>`; });
+  const path = (a) => a.map((v, i) => `${i ? "L" : "M"}${xv(i)},${yv(v)}`).join(" ");
+  s += `<path d="${path(rv)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/><path d="${path(sp)}" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+  s += `<circle cx="${xv(n - 1)}" cy="${yv(rv[n - 1])}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><circle cx="${xv(n - 1)}" cy="${yv(sp[n - 1])}" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>`;
+  const ly = [yv(rv[n - 1]), yv(sp[n - 1])]; if (Math.abs(ly[0] - ly[1]) < 30) { ly[0] -= 8; ly[1] += 10; }
+  s += `<text x="${xv(n - 1) + 12}" y="${ly[0]}" class="sk-l">Received</text><text x="${xv(n - 1) + 12}" y="${ly[0] + 13}" class="sk-v">${kfmt(rv[n - 1])}</text>`;
+  s += `<text x="${xv(n - 1) + 12}" y="${ly[1]}" class="sk-l">Spent</text><text x="${xv(n - 1) + 12}" y="${ly[1] + 13}" class="sk-v">${kfmt(sp[n - 1])}</text>`;
+  for (let i = 0; i < n; i++) s += `<text x="${xv(i)}" y="${H - 8}" text-anchor="middle" class="sk-v">${FYM[i]}</text><rect x="${xv(i) - pw / 2}" y="${T}" width="${pw}" height="${H - T - B}" fill="transparent" data-tip="${esc(FYM[i] + " · received " + money(rv[i]) + " · spent " + money(sp[i]) + " (cumulative)")}"/>`;
+  return `<svg class="sankey" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative revenue received and spending by month">${s}</svg>`;
+}
+
+/* ---- Budget page ---- */
+function budgetFigures(scope) {
+  const comms = scope === "IAR" ? S.budget : S.budget.filter((c) => c.name === scope);
+  const lines = comms.flatMap((c) => c.lines.map((l) => ({ ...l, committee: c.name })));
+  return { comms, lines };
+}
 function vBudget() {
   const { all, list } = budgetScopes();
   const scope = S.budScope && (S.budScope === "IAR" ? all : list.includes(S.budScope)) ? S.budScope : all ? "IAR" : list[0];
-  const mode = S.budMode || "status";
-  if (!scope) return `<h1>Budget</h1><div class="panel empty">Your groups don't include a committee budget.</div>`;
-  const comms = scope === "IAR" ? S.budget : S.budget.filter((c) => c.name === scope);
-  const lines = comms.flatMap((c) => c.lines.map((l) => ({ ...l, committee: c.name })));
+  if (!scope) return `<h1>Budget</h1><div class="panel empty">Your committee isn't a cost center in the ${FY_LABEL()} budget file. Social &amp; Welfare is funded from restricted zakat and sadaqah and is tracked separately.</div>`;
+  const tab = S.budTab === "rev" ? "rev" : "flow", mode = S.budMode || "status";
+  return `<div class="head"><div><h1>Budget</h1><p class="lead">The FY2026–27 budget (July 1 to June 30) by committee and cost center, and where each one stands. Budgets are from the approved budget file. Year-to-date spending and receipts are sample figures until the first QuickBooks import; commitments come from purchase requests in the portal.</p></div><span class="pill info">QuickBooks data through ${esc(fmtDate(S.imports[0].date))}</span></div>
+  <div class="row">
+    <label class="small muted" for="budScope">Show</label><select id="budScope" class="btn small">${all ? `<option value="IAR" ${scope === "IAR" ? "selected" : ""}>IAR as a whole</option>` : ""}${list.map((n) => `<option ${n === scope ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
+    ${tab === "flow" ? `<label class="small muted" for="budMode">Flow</label><select id="budMode" class="btn small"><option value="status" ${mode === "status" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} → spent / committed / available</option><option value="fund" ${mode === "fund" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} only</option></select>` : ""}
+    ${!all ? '<span class="small muted">You see the committees you chair.</span>' : ""}
+  </div>
+  <div class="btabs" role="tablist">${[["flow", "Budget flow"], ["rev", "Revenue & QuickBooks"]].map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? "on" : ""}" data-budtab="${k}">${l}</button>`).join("")}</div>
+  ${tab === "rev" ? budRevenue(scope) : budFlow(scope, mode)}
+  ${reqHandlerPanel()}`;
+}
+function budFlow(scope, mode) {
+  const { comms, lines } = budgetFigures(scope);
   const sum = (xs, k) => xs.reduce((a, x) => a + x[k], 0);
   const B = sum(lines, "budget"), SP = sum(lines, "spent"), CM = sum(lines, "committed"), AV = B - SP - CM;
   const srcIds = Object.keys(SRC).filter((s) => lines.some((l) => l.source === s));
-  const mids = scope === "IAR" ? comms.map((c) => ({ id: "m:" + c.name, label: c.name, key: c.name })) : lines.map((l) => ({ id: "m:" + l.acct, label: l.acct, key: l.acct }));
-  const midOf = (l) => "m:" + (scope === "IAR" ? l.committee : l.acct);
+  const mids = scope === "IAR" ? comms.map((c) => ({ id: "m:" + c.name, label: c.name, key: c.name })) : [...new Set(lines.map((l) => l.site))].map((st) => ({ id: "m:" + st, label: st, key: st }));
+  const midOf = (l) => "m:" + (scope === "IAR" ? l.committee : l.site);
   const links = [];
   for (const s of srcIds) for (const m of mids) { const v = lines.filter((l) => l.source === s && midOf(l) === m.id).reduce((a, l) => a + l.budget, 0); if (v > 0) links.push({ s: "s:" + s, t: m.id, v, color: SRC[s].color, tip: `${SRC[s].label} → ${m.label}: ${money(v)}` }); }
   const cols = [srcIds.map((s) => ({ id: "s:" + s, label: SRC[s].label, color: SRC[s].color })), mids.map((m) => ({ ...m, color: "var(--ink-2)" }))];
@@ -1217,24 +1410,141 @@ function vBudget() {
       }
     }
   }
-  const h = Math.max(380, mids.length * 44);
-  const rows = (scope === "IAR" ? comms.map((c) => ({ name: c.name, ls: c.lines })) : lines.map((l) => ({ name: l.acct, ls: [l] })));
+  const h = Math.max(380, mids.length * 30);
+  const rows = (scope === "IAR" ? comms.map((c) => ({ name: c.name, ls: c.lines })) : mids.map((m) => ({ name: m.label, ls: lines.filter((l) => midOf(l) === m.id) })));
   const bySrc = (ls, s) => ls.filter((l) => l.source === s).reduce((a, l) => a + l.budget, 0);
-  return `<div class="head"><div><h1>Budget</h1><p class="lead">Where each committee's money comes from and where it stands. Sample figures for FY2026; the real numbers come from QuickBooks and the chart of accounts.</p></div></div>
-  <div class="row">
-    <label class="small muted" for="budScope">Show</label><select id="budScope" class="btn small">${all ? `<option value="IAR" ${scope === "IAR" ? "selected" : ""}>IAR as a whole</option>` : ""}${list.map((n) => `<option ${n === scope ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
-    <label class="small muted" for="budMode">Flow</label><select id="budMode" class="btn small"><option value="status" ${mode === "status" ? "selected" : ""}>Funding → ${scope === "IAR" ? "committee" : "sub-account"} → spent / committed / available</option><option value="fund" ${mode === "fund" ? "selected" : ""}>Funding → ${scope === "IAR" ? "committee" : "sub-account"} only</option></select>
-    ${!all ? '<span class="small muted">You see the committees you chair.</span>' : ""}
-  </div>
-  <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+  return `<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
     ${[["Budget", B], ["Spent", SP], ["Committed", CM], ["Available", AV]].map(([l, v]) => `<div class="panel panel-b"><div class="small muted">${l}</div><div style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">${kfmt(v)}</div><div class="small muted">${l === "Budget" ? `${comms.length} committee${comms.length > 1 ? "s" : ""}` : Math.round((v / B) * 100) + "% of budget"}</div></div>`).join("")}
   </div>
-  <div class="panel"><div class="panel-h"><h2>${esc(scope === "IAR" ? "IAR" : scope)} · FY2026 budget flow</h2><div class="legend">${srcIds.map((s) => `<span><i style="background:${SRC[s].color}"></i>${SRC[s].label}</span>`).join("")}</div></div>
-    <div class="panel-b">${sankeySvg(cols, links, { h, total: B, aria: `Budget flow for ${scope}` })}<p class="small muted" style="margin:6px 0 0">Band width is dollars. Hover a band for its amount. Restricted money only flows to the purposes it was given for.</p></div></div>
-  <div class="panel"><div class="panel-h"><h2>Table</h2></div><div class="tablewrap"><table><thead><tr><th>${scope === "IAR" ? "Committee" : "Sub-account"}</th><th class="num">Unrestricted</th><th class="num">Restr. programs</th><th class="num">Restr. donations</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Committed</th><th class="num">Available</th><th class="num">Used</th></tr></thead><tbody>
+  <div class="panel"><div class="panel-h"><h2>${esc(scope === "IAR" ? "IAR" : scope)} · ${FY_LABEL()} budget flow</h2><div class="legend">${srcIds.map((s) => `<span><i style="background:${SRC[s].color}"></i>${SRC[s].label}</span>`).join("")}</div></div>
+    <div class="panel-b">${sankeySvg(cols, links, { h, total: B, aria: `Budget flow for ${scope}` })}<p class="small muted" style="margin:6px 0 0">Band width is dollars. Hover a band for its amount. Restricted money only flows to the purposes it was given for. Page Road costs are shown against its three revenue streams (tuition, endowment, donations) in proportion.</p></div></div>
+  <div class="panel"><div class="panel-h"><h2>Table</h2></div><div class="tablewrap"><table><thead><tr><th>${scope === "IAR" ? "Cost center" : "Funded from"}</th><th class="num">Unrestricted</th><th class="num">Restr. programs</th><th class="num">Restr. donations</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Committed</th><th class="num">Available</th><th class="num">Used</th></tr></thead><tbody>
     ${rows.map((r) => { const b = sum(r.ls, "budget"), sp = sum(r.ls, "spent"), cm = sum(r.ls, "committed"); return `<tr><td>${esc(r.name)}</td><td class="num">${kfmt(bySrc(r.ls, "gf"))}</td><td class="num">${kfmt(bySrc(r.ls, "prog"))}</td><td class="num">${kfmt(bySrc(r.ls, "don"))}</td><td class="num">${kfmt(b)}</td><td class="num">${kfmt(sp)}</td><td class="num">${kfmt(cm)}</td><td class="num">${kfmt(b - sp - cm)}</td><td class="num">${Math.round(((sp + cm) / b) * 100)}%</td></tr>`; }).join("")}
     <tr><td><strong>Total</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "gf"))}</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "prog"))}</strong></td><td class="num"><strong>${kfmt(bySrc(lines, "don"))}</strong></td><td class="num"><strong>${kfmt(B)}</strong></td><td class="num"><strong>${kfmt(SP)}</strong></td><td class="num"><strong>${kfmt(CM)}</strong></td><td class="num"><strong>${kfmt(AV)}</strong></td><td class="num"><strong>${Math.round(((SP + CM) / B) * 100)}%</strong></td></tr>
   </tbody></table></div></div>`;
+}
+function budRevenue(scope) {
+  const canImport = has("finance") || has("admins");
+  const inScope = (r) => scope === "IAR" || r.who === scope;
+  const rows = S.revenue.filter(inScope);
+  const sums = { gf: 0, don: 0, prog: 0 }; rows.forEach((r) => (sums[r.kind] += r.amt));
+  const exp = scope === "IAR" ? { ...EXPECT } : { gf: 0, don: 0, prog: 0 };
+  const rank = (x) => (x === GF_POOL ? 0 : x === PAGE_RD ? 1 : 2);
+  const dests = [...new Set(rows.map((r) => r.who))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  const kinds = Object.keys(KIND).filter((k) => sums[k] > 0);
+  const links = []; for (const k of kinds) for (const d of dests) { const v = revSum((r) => r.kind === k && r.who === d); if (v > 0) links.push({ s: "k:" + k, t: "d:" + d, v, color: KIND[k].color, tip: `${KIND[k].label} → ${d}: ${money(v)}` }); }
+  const cols = [kinds.map((k) => ({ id: "k:" + k, label: KIND[k].label, color: KIND[k].color })), dests.map((d) => ({ id: "d:" + d, label: d === GF_POOL ? "General Fund (shared)" : d, color: "var(--ink-2)" }))];
+  const table = dests.map((d) => `<tr><td>${esc(d === GF_POOL ? "General Fund (shared by all committees)" : d)}</td>${["gf", "don", "prog"].map((k) => { const v = revSum((r) => r.kind === k && r.who === d); return `<td class="num">${v ? kfmt(v) : "–"}</td>`; }).join("")}<td class="num">${kfmt(revSum((r) => r.who === d))}</td></tr>`).join("");
+  return `<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
+    ${["gf", "don", "prog"].map((k) => `<div class="panel panel-b"><div class="small muted"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${KIND[k].color};margin-right:6px"></i>${KIND[k].label}</div><div style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">${kfmt(sums[k])}</div><div class="small muted">${exp[k] ? Math.round((sums[k] / exp[k]) * 100) + "% of the " + kfmt(exp[k]) + " expected this year" : "No target set; spendable once received"}</div></div>`).join("")}
+  </div>
+  <div class="panel"><div class="panel-h"><h2>How revenue is sorted</h2></div><div class="panel-b"><div class="grid3">${Object.entries(KIND).map(([k, v]) => `<div><strong>${esc(v.label)}</strong><p class="small muted" style="margin:2px 0 0">${esc(v.help)}</p></div>`).join("")}</div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Received this year</h2><div class="legend">${Object.keys(KIND).map((k) => `<span><i style="background:${KIND[k].color}"></i>${KIND[k].short}</span>`).join("")}</div></div><div class="panel-b">${revBars(rows)}</div></div>
+  ${scope === "IAR" ? pageRoadPanel() : ""}
+  ${scope === "IAR" ? `<div class="panel"><div class="panel-h"><h2>Where it landed</h2></div><div class="panel-b">${sankeySvg(cols, links, { h: Math.max(340, dests.length * 40), aria: "Revenue received by type and destination" })}<p class="small muted" style="margin:6px 0 0">Unrestricted gifts land in the shared General Fund. Designated donations and program revenue land with their committee or Page Road.</p></div></div>` : ""}
+  <div class="panel"><div class="panel-h"><h2>Received by ${scope === "IAR" ? "destination" : "type"}</h2></div><div class="tablewrap"><table><thead><tr><th>${scope === "IAR" ? "Destination" : "Committee"}</th><th class="num">Unrestricted</th><th class="num">Restr. donations</th><th class="num">Program revenue</th><th class="num">Total</th></tr></thead><tbody>${table}
+    <tr><td><strong>Total</strong></td><td class="num"><strong>${kfmt(sums.gf)}</strong></td><td class="num"><strong>${kfmt(sums.don)}</strong></td><td class="num"><strong>${kfmt(sums.prog)}</strong></td><td class="num"><strong>${kfmt(sums.gf + sums.don + sums.prog)}</strong></td></tr></tbody></table></div></div>
+  ${scope !== "IAR" ? `<p class="small muted">Unrestricted gifts are shared across all of IAR, so they appear under IAR as a whole rather than under a committee.</p>` : ""}
+  ${canImport ? qbPanel() : ""}`;
+}
+function pageRoadPanel() {
+  const costs = S.budget.flatMap((c) => c.lines).filter((l) => l.site === PAGE_RD), cost = costs.reduce((a, l) => a + l.budget, 0), spent = costs.reduce((a, l) => a + l.spent, 0);
+  const plan = PR_PLAN.reduce((a, p) => a + p.plan, 0);
+  const got = (p) => revSum((r) => r.who === PAGE_RD && r.src === p.name);
+  return `<div class="panel"><div class="panel-h"><h2>Page Road campus</h2><span class="small muted">Self-funded: revenue is planned to cover its costs</span></div><div class="panel-b">
+    <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${[["Planned revenue", plan], ["Planned costs", cost], ["Planned surplus", plan - cost]].map(([l, v]) => `<div><div class="small muted">${l}</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums">${money(v)}</div></div>`).join("")}</div>
+    <div style="margin-top:12px">${PR_PLAN.map((p) => { const g = got(p); return `<div class="pace"><div><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${KIND[p.kind].color};margin-right:6px"></i><strong>${esc(p.name)}</strong></div><div class="pbar" role="img" aria-label="${esc(p.name)} ${Math.round((g / p.plan) * 100)}% received"><div class="sp" style="width:${Math.min(100, (g / p.plan) * 100)}%;background:${KIND[p.kind].color}" data-tip="${esc(p.name + ": " + money(g) + " of " + money(p.plan))}"></div><i class="tick" style="left:${yearPace() * 100}%"></i></div><div class="small"><span class="mono">${kfmt(g)}</span> of ${kfmt(p.plan)} · ${Math.round((g / p.plan) * 100)}%</div></div>`; }).join("")}</div>
+    <p class="small muted" style="margin:8px 0 0">Spent at Page Road so far: ${kfmt(spent)} of ${kfmt(cost)}. The lease is $24,000 a month. Green tick = share of the year gone.</p></div></div>`;
+}
+function qbPanel() {
+  const q = S.qb;
+  const history = `<div class="tablewrap"><table><thead><tr><th>Import</th><th>Date</th><th>By</th><th>File</th><th class="num">Rows</th><th class="num">Needed review</th><th class="num">Income added</th></tr></thead><tbody>${S.imports.map((i) => `<tr><td class="mono">${i.id}</td><td class="mono">${esc(fmtDate(i.date))}</td><td>${esc(nameOf(i.by))}</td><td class="mono">${esc(i.file)}</td><td class="num">${i.rows}</td><td class="num">${i.review}</td><td class="num">${money(i.revenue)}</td></tr>`).join("")}</tbody></table></div>`;
+  let staged = "";
+  if (q) {
+    const inc = q.rows.filter((r) => r.type === "in"), exp = q.rows.filter((r) => r.type === "out");
+    const open = inc.filter((r) => !qbDest(r, q)).length;
+    const opts = (cur) => `<option value="">Choose where it goes…</option><optgroup label="Unrestricted">${`<option value="gf|${GF_POOL}" ${cur === "gf|" + GF_POOL ? "selected" : ""}>General Fund (shared)</option>`}</optgroup><optgroup label="Designated donation to…">${[PAGE_RD, ...S.budget.map((c) => c.name)].map((n) => `<option value="don|${esc(n)}" ${cur === "don|" + n ? "selected" : ""}>${esc(n)}</option>`).join("")}</optgroup><optgroup label="Program revenue for…">${[PAGE_RD, ...S.budget.map((c) => c.name)].map((n) => `<option value="prog|${esc(n)}" ${cur === "prog|" + n ? "selected" : ""}>${esc(n)}</option>`).join("")}</optgroup>`;
+    staged = `<div class="panel-b" style="border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between"><strong>Preview · ${esc(q.file)}</strong><span class="small muted">${inc.length} income rows, ${exp.length} expense rows. Nothing is saved until you import.</span></div></div>
+    <div class="tablewrap"><table><thead><tr><th>Date</th><th>QuickBooks row</th><th>Account · class</th><th class="num">Amount</th><th>Goes to</th></tr></thead><tbody>
+    ${inc.map((r) => { const m = qbDest(r, q); return `<tr><td class="mono">${esc(fmtDate(r.date))}</td><td>${esc(r.desc)}${r.hint && !m ? `<div class="small muted">${esc(r.hint)}</div>` : ""}</td><td class="small">${esc(r.acct)}${r.cls ? " · " + esc(r.cls) : ""}</td><td class="num">${money(r.amt)}</td><td>${r.map ? `<span class="pill" style="gap:6px"><i style="width:8px;height:8px;border-radius:2px;background:${KIND[r.map.kind].color}"></i>${esc(KIND[r.map.kind].short)} · ${esc(r.map.who)}</span>` : `<select data-qbrow="${r.id}" class="btn small" aria-label="Where should this go">${opts(q.pick[r.id] || "")}</select>`}</td></tr>`; }).join("")}
+    ${exp.map((r) => `<tr><td class="mono">${esc(fmtDate(r.date))}</td><td>${esc(r.desc)}</td><td class="small">${esc(r.acct)} · ${esc(r.cls)}</td><td class="num">−${money(r.amt)}</td><td>${r.po ? `<span class="pill ok">Matches ${esc(r.po)}</span>` : `<span class="pill warn">No purchase request</span>`}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="panel-b row" style="justify-content:space-between;border-top:1px solid var(--line)"><span class="small muted">${open ? `${open} income row${open > 1 ? "s need" : " needs"} a destination before you can import.` : "Everything is sorted. Expense rows without a purchase request are flagged for the office but still import."}</span><span class="row"><button class="btn" type="button" data-qbcancel="1">Cancel</button><button class="btn primary" type="button" data-qbapply="1" ${open ? "disabled" : ""}>Import into the budget</button></span></div>`;
+  }
+  return `<div class="panel"><div class="panel-h"><h2>QuickBooks import</h2>${q ? "" : `<button class="btn primary small" type="button" data-qbstart="1">Import a QuickBooks export</button>`}</div>
+    ${q ? "" : `<div class="panel-b small muted">Export <strong>Transaction Detail by Account</strong> from QuickBooks Online as a CSV and drop it here (this demo uses a sample file). Each row is sorted by its account and class. Later this can run automatically each night through the QuickBooks connection.</div>`}
+    ${staged}${q ? "" : history}</div>
+  <div class="panel"><div class="panel-h"><h2>Sorting rules</h2><span class="small muted">Set once by finance</span></div><div class="tablewrap"><table><thead><tr><th>QuickBooks account</th><th>Class</th><th>Counts as</th><th>Goes to</th></tr></thead><tbody>${QB_MAP.map((m) => `<tr><td class="mono">${esc(m.acct)}</td><td class="small">${esc(m.cls)}</td><td>${m.kind ? `<span class="pill" style="gap:6px"><i style="width:8px;height:8px;border-radius:2px;background:${KIND[m.kind].color}"></i>${esc(KIND[m.kind].label)}</span>` : `<span class="pill warn">Needs review</span>`}</td><td>${esc(m.to)}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+
+/* ---- Shura requests ---- */
+const SR_TYPES = { report: { label: "Ask for a report or explanation", to: "Finance office", by: "finance" }, amendment: { label: "Propose a budget amendment", to: "Executive", by: "executive" }, hold: { label: "Ask for a spending review", to: "Executive", by: "executive" } };
+const SR_STATUS = { open: ["Open", "info"], answered: ["Answered", "ok"], approved: ["Approved", "ok"], declined: ["Declined", "bad"] };
+const srOpenFor = () => S.shReq.filter((r) => r.status === "open" && (has("admins") || has(SR_TYPES[r.type].by)));
+function srCard(r, canAct) {
+  const st = SR_STATUS[r.status], t = SR_TYPES[r.type];
+  return `<div class="item" style="cursor:default;display:block"><div class="row" style="justify-content:space-between"><span class="t">${esc(r.id)} · ${esc(t.label)}${r.committee ? " · " + esc(r.committee) : ""}</span><span class="pill ${st[1]}">${st[0]}</span></div>
+    <div class="s">${esc(nameOf(r.owner))} · ${esc(fmtDate(r.created))} · to ${esc(t.to)}${r.type === "amendment" ? ` · ${money(r.amount)} from ${esc(r.from)} to ${esc(r.committee)}` : ""}</div>
+    <p style="margin:6px 0 0">${esc(r.text)}</p>
+    ${r.resp ? `<div class="small" style="margin-top:6px;padding:8px 10px;background:var(--surface-2);border-radius:6px"><strong>${esc(nameOf(r.resp.by))}:</strong> ${esc(r.resp.text)}</div>` : ""}
+    ${canAct && r.status === "open" ? `<div class="row" style="margin-top:8px"><input type="text" id="srNote_${r.id}" placeholder="${r.type === "report" ? "Your answer" : "Reason or note"}" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:var(--surface)" aria-label="Response">${r.type === "report" ? `<button class="btn primary small" type="button" data-srresp="${r.id}|answered">Send answer</button>` : `<button class="btn primary small" type="button" data-srresp="${r.id}|approved">Approve</button><button class="btn small" type="button" data-srresp="${r.id}|declined">Decline</button>`}</div>` : ""}</div>`;
+}
+function reqHandlerPanel() {
+  if (!(has("finance") || has("executive") || has("admins"))) return "";
+  const mine = S.shReq.filter((r) => has("admins") || has(SR_TYPES[r.type].by));
+  if (!mine.length) return "";
+  return `<div class="panel"><div class="panel-h"><h2>Requests from the Shura</h2><span class="small muted">${srOpenFor().length} waiting on you</span></div><div class="list">${mine.map((r) => srCard(r, true)).join("")}</div></div>`;
+}
+function srForm() {
+  return `<form id="shForm" class="f panel-b" style="border-top:1px solid var(--line)">
+    <div class="fld"><label for="sh_type">What do you need?</label><select id="sh_type" name="type">${Object.entries(SR_TYPES).map(([k, v]) => `<option value="${k}">${esc(v.label)} → ${esc(v.to)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="sh_com">Committee</label><select id="sh_com" name="committee">${S.budget.map((c) => `<option>${esc(c.name)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="sh_from">Move money from (amendments)</label><select id="sh_from" name="from">${S.budget.map((c) => `<option>${esc(c.name)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="sh_amt">Amount ($, amendments)</label><input type="number" id="sh_amt" name="amount" min="0" step="500" placeholder="10000"></div>
+    <div class="fld wide"><label for="sh_text">Details</label><textarea id="sh_text" name="text" placeholder="What would you like to know or change, and why?"></textarea></div>
+    <div class="actions"><button class="btn" type="button" data-shnew="1">Cancel</button><button class="btn primary" type="submit">Send request</button></div></form>`;
+}
+
+/* ---- Shura dashboard ---- */
+function vShura() {
+  const all = S.budget.flatMap((c) => c.lines.map((l) => ({ ...l, committee: c.name })));
+  const sum = (xs, k) => xs.reduce((a, x) => a + x[k], 0), pace = yearPace(), n = nMonths();
+  const rec = { gf: revSum((r) => r.kind === "gf"), don: revSum((r) => r.kind === "don"), prog: revSum((r) => r.kind === "prog") };
+  const R = rec.gf + rec.don + rec.prog, B = sum(all, "budget"), SP = sum(all, "spent"), CM = sum(all, "committed");
+  const gfL = all.filter((l) => l.source === "gf"), resL = all.filter((l) => l.source !== "gf");
+  const gfPos = rec.gf - sum(gfL, "spent"), gfAfter = gfPos - sum(gfL, "committed");
+  const openSum = Object.values(OPENING).reduce((a, b) => a + b, 0), held = rec.don + rec.prog + openSum - sum(resL, "spent"), heldAfter = held - sum(resL, "committed");
+  const open = S.shReq.filter((r) => r.status === "open").length;
+  const tile = (label, val, sub, extra) => `<div class="panel panel-b"><div class="small muted">${label}</div><div style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums">${val}</div><div class="small muted">${sub}</div>${extra || ""}</div>`;
+  const sgn = (v) => (v < 0 ? "−" : "+") + kfmt(Math.abs(v));
+  const comm = S.budget.map((c) => { const b = sum(c.lines, "budget"), sp = sum(c.lines, "spent"), cm = sum(c.lines, "committed"); return { name: c.name, b, sp, cm, used: (sp + cm) / b, spent: sp / b }; }).sort((a, b) => b.used - a.used);
+  const heldRow = (name, ls) => { const r = revSum((x) => x.who === name && x.kind !== "gf"), op = OPENING[name] || 0, sp = sum(ls, "spent"), cm = sum(ls, "committed"); return { name, r: r + op, sp, cm, bal: r + op - sp - cm }; };
+  const held2 = [heldRow(PAGE_RD, all.filter((l) => l.site === PAGE_RD)), ...S.budget.filter((c) => c.lines.some((l) => l.site === "Own funds")).map((c) => heldRow(c.name, c.lines.filter((l) => l.site === "Own funds")))].sort((a, b) => b.bal - a.bal);
+  const last = Object.entries(LAST).map(([name, [b, a, nb]]) => ({ name, b, a, nb, pct: a / b })).sort((x, y) => y.pct - x.pct);
+  const lastTot = last.reduce((t, x) => ({ b: t.b + x.b, a: t.a + x.a, nb: t.nb + x.nb }), { b: 0, a: 0, nb: 0 });
+  return `<div class="head"><div><h1>Shura / Board Dashboard</h1><p class="lead">${FY_LABEL()}, ${Math.round(pace * 100)}% of the year gone. Money figures are from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}; commitments are live from approved purchase requests.</p></div><button class="btn" type="button" data-go="budget">Open full budget flow</button></div>
+  <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">
+    ${tile("Received this year", kfmt(R), `${Math.round((R / B) * 100)}% of ${kfmt(B)} budgeted`, `<div class="legend" style="flex-direction:column;gap:3px;margin-top:4px">${Object.keys(KIND).map((k) => `<span><i style="background:${KIND[k].color}"></i>${KIND[k].short} ${kfmt(rec[k])}</span>`).join("")}</div>`)}
+    ${tile("Spent + committed", kfmt(SP + CM), `${Math.round(((SP + CM) / B) * 100)}% of budget · ${kfmt(SP)} spent`)}
+    ${tile("General Fund cushion", sgn(gfAfter), `Unrestricted received minus spent and committed. ${gfPos < 0 ? "Spending is ahead of giving." : gfAfter < 0 ? "Giving is ahead of spending, but commitments take it below zero." : "Giving is ahead of spending."}`)}
+    ${tile("Restricted money held", kfmt(heldAfter), `Designated gifts and program revenue not yet spent or committed. It can only go to its purpose.`)}
+    ${tile("Open requests", String(open), open ? "Waiting on finance or the executive" : "Nothing waiting")}
+  </div>
+  <div class="panel"><div class="panel-h"><h2>Received vs. spent, year to date</h2><div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--ink)"></i>Spent</span></div></div><div class="panel-b">${cumLines()}
+    <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">Show as table</summary><div class="tablewrap"><table><thead><tr><th>Month</th><th class="num">Received</th><th class="num">Spent</th></tr></thead><tbody>${Array.from({ length: n }, (_, m) => `<tr><td>${FYM[m]}</td><td class="num">${kfmt(revSum((r) => r.m === m))}</td><td class="num">${kfmt(S.spendM[m])}</td></tr>`).join("")}</tbody></table></div></details></div></div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-h"><h2>Committees against the calendar</h2><span class="small muted">Green tick = where ${Math.round(pace * 100)}% of the year puts spending</span></div><div class="panel-b">
+      ${comm.map((c) => `<div class="pace"><div><strong>${esc(c.name)}</strong></div><div class="pbar" role="img" aria-label="${esc(c.name)}: ${Math.round(c.spent * 100)}% spent, ${Math.round((c.used - c.spent) * 100)}% committed"><div class="sp" style="width:${Math.min(100, c.spent * 100)}%" data-tip="${esc(c.name + " spent " + money(c.sp))}"></div><div class="cm" style="left:${Math.min(100, c.spent * 100)}%;width:${Math.max(0, Math.min(100 - c.spent * 100, (c.used - c.spent) * 100))}%" data-tip="${esc(c.name + " committed " + money(c.cm))}"></div><i class="tick" style="left:${pace * 100}%"></i></div><div class="small"><span class="mono">${kfmt(c.sp + c.cm)}</span> of ${kfmt(c.b)} · ${Math.round(c.used * 100)}% ${c.used > pace + 0.05 ? '<span class="pill warn">Ahead of pace</span>' : ""}</div></div>`).join("")}
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--ink-2)"></i>Spent</span><span><i style="background:var(--ink-3);opacity:.5"></i>Committed</span></div></div></div>
+    <div class="panel"><div class="panel-h"><h2>Restricted and self-funded money</h2></div><div class="tablewrap"><table><thead><tr><th>Fund</th><th class="num">In (incl. carry-over)</th><th class="num">Spent</th><th class="num">Committed</th><th class="num">Held</th></tr></thead><tbody>${held2.map((h) => `<tr><td>${esc(h.name)}</td><td class="num">${kfmt(h.r)}</td><td class="num">${kfmt(h.sp)}</td><td class="num">${kfmt(h.cm)}</td><td class="num"><strong>${kfmt(h.bal)}</strong></td></tr>`).join("")}</tbody></table></div></div>
+  </div>
+  <div class="panel"><div class="panel-h"><h2>How last year closed</h2><span class="small muted">FY2025–26 General Fund, from the budget vs. actuals report</span></div><div class="tablewrap"><table><thead><tr><th>Cost center</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Used</th><th class="num">This year's budget</th></tr></thead><tbody>
+    ${last.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${kfmt(x.b)}</td><td class="num">${kfmt(x.a)}</td><td class="num">${Math.round(x.pct * 100)}% ${x.pct > 1.03 ? '<span class="pill bad">Over</span>' : ""}</td><td class="num">${kfmt(x.nb)}${x.nb > x.b ? " ▲" : x.nb < x.b ? " ▼" : ""}</td></tr>`).join("")}
+    <tr><td><strong>Total (excl. self-funded carry-over)</strong></td><td class="num"><strong>${kfmt(lastTot.b)}</strong></td><td class="num"><strong>${kfmt(lastTot.a)}</strong></td><td class="num"><strong>${Math.round((lastTot.a / lastTot.b) * 100)}%</strong></td><td class="num"><strong>${kfmt(lastTot.nb)}</strong></td></tr>
+  </tbody></table></div></div>
+  <div class="panel"><div class="panel-h"><h2>Shura requests</h2><button class="btn primary small" type="button" data-shnew="1">${S.shForm ? "Close form" : "New request"}</button></div>
+    ${S.shForm ? srForm() : ""}
+    <div class="list">${S.shReq.length ? S.shReq.map((r) => srCard(r, false)).join("") : '<div class="empty">No requests yet.</div>'}</div></div>`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1333,8 +1643,12 @@ const STEPS = [
   { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
   { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: "No IAR account needed. Send the request, then switch to Hana and open Facility Rentals to review it against the same calendar." },
-  { as: "yasir", view: "budget", t: "Budget for all of IAR", p: "Money flows from the three funding sources to each committee, then to spent, committed and available. Hover a band for its amount, or switch the view to one committee to see its sub-accounts." },
-  { as: "bilal", view: "budget", t: "A chair sees only their committee", p: "Bilal chairs Youth, so his budget view is Youth only: where its money comes from and how much is left." },
+  { as: "yasir", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
+  { as: "bilal", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: "Bilal chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself." },
+  { as: "omar", view: "budget", t: "Revenue by type", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = null; }, p: "Finance sees every dollar received, sorted three ways: unrestricted gifts to IAR, donations designated to a committee (Da'wah, say) and program revenue earned by a committee (Youth, say). Page Road has its own plan: tuition, endowment and donations." },
+  { as: "omar", view: "budget", t: "Import from QuickBooks", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = qbSample(); }, p: "Omar imports an export. Each row is sorted by its QuickBooks account and class. Two gifts have no committee, so choose where they go (the roof check is Facility Maintenance, the dinner is Marketing & Fundraising), then import and watch the totals change." },
+  { as: "khalid", view: "shura", t: "The Shura / board dashboard", reset: () => { S.shForm = false; }, p: "Khalid is on the Shura, so he gets the Shura / Board role. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment." },
+  { as: "yasir", view: "budget", t: "Executive answers the Shura", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; }, p: "Requests land with the right office: reports go to finance, amendments and spending reviews to the executive. Approve or decline at the bottom of the Budget page. The Shura member is notified." },
   { as: "amina", view: "tickets", t: "Report a problem", p: "Anyone can submit an IT or maintenance ticket. Pick the room and, if you know it, the equipment. It lands in the right team's queue." },
   { as: "zaid", view: "tickets", t: "IT works its queue", p: "Zaid sees only IT tickets. Open the Wi-Fi ticket, assign it to himself, start it and resolve it. The person who reported it is notified." },
   { as: "idris", view: "assets", t: "Track the equipment", p: "Idris keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset." },
@@ -1373,7 +1687,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura };
   document.getElementById("main").innerHTML = (V[S.view] || vHome)();
   renderRail();
   renderGuide();
@@ -1396,6 +1710,16 @@ document.addEventListener("click", (e) => {
   if (ds.checkout) { const a = S.assets.find((x) => x.id === ds.checkout); a.status = "Checked out"; a.out = { to: "Youth Committee · Youth Game Night", due: addDays(TODAY, 30) }; toast(`${a.id} checked out`); return render(); }
   if (ds.checkin) { const a = S.assets.find((x) => x.id === ds.checkin); a.status = "Available"; a.out = null; toast(`${a.id} checked in`); return render(); }
   if (ds.reportasset) { const a = S.assets.find((x) => x.id === ds.reportasset); const it = ["IT", "AV"].includes(a.cat); S.tkDraft = { type: it ? "it" : "maint", cat: it ? (a.cat === "AV" ? "AV equipment" : "Computer or laptop") : "Repairs", room: a.room, asset: a.id, urgency: "Normal", desc: "" }; return go("tickets"); }
+  if (ds.budtab) { S.budTab = ds.budtab; return render(); }
+  if (ds.qbstart) { S.qb = qbSample(); return render(); }
+  if (ds.qbcancel) { S.qb = null; return render(); }
+  if (ds.qbapply) { qbApply(); return render(); }
+  if (ds.shnew) { S.shForm = !S.shForm; return render(); }
+  if (ds.srresp) {
+    const [id, st] = ds.srresp.split("|"); const r = S.shReq.find((x) => x.id === id); const note = (document.getElementById("srNote_" + id)?.value || "").trim();
+    r.status = st; r.resp = { by: S.me, t: TODAY, text: note || (st === "answered" ? "Sent." : st === "approved" ? "Approved. Finance will update the budget in QuickBooks and re-import." : "Declined.") };
+    toast(`${r.id} ${st}. ${nameOf(r.owner)} is notified.`); return render();
+  }
   if (ds.step) return doStep(Number(ds.step));
   if (ds.closeguide) { S.guide = false; return render(); }
   if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
@@ -1485,6 +1809,7 @@ document.addEventListener("input", (e) => {
 });
 document.addEventListener("change", (e) => {
   if (e.target.closest("#tkForm")) { readTk(); if (e.target.name === "tktype") S.tkDraft.cat = TK_CATS[S.tkDraft.type][0]; if (e.target.name === "room") S.tkDraft.asset = ""; if (["tktype", "room"].includes(e.target.name)) return render(); }
+  if (e.target.dataset.qbrow) { S.qb.pick[e.target.dataset.qbrow] = e.target.value; return render(); }
   if (e.target.id === "budScope") { S.budScope = e.target.value; return render(); }
   if (e.target.id === "budMode") { S.budMode = e.target.value; return render(); }
   if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
@@ -1540,6 +1865,14 @@ document.addEventListener("submit", (e) => {
     toast("Event closed. Its costs and attendance are on record.");
     return render();
   }
+  if (e.target.id === "shForm") {
+    const f = e.target.elements, type = f.type.value;
+    if (!f.text.value.trim()) return toast("Say what you need so finance knows what to look at.");
+    if (type === "amendment" && (!Number(f.amount.value) || f.from.value === f.committee.value)) return toast("An amendment needs an amount and two different cost centers.");
+    const r = { id: "SR-" + ++S.seq.SR, owner: S.me, type, committee: f.committee.value, text: f.text.value.trim(), status: "open", created: TODAY };
+    if (type === "amendment") { r.from = f.from.value; r.amount = Number(f.amount.value); }
+    S.shReq.unshift(r); S.shForm = false; toast(`${r.id} sent to the ${SR_TYPES[type].to}`); return render();
+  }
   if (e.target.id === "tkForm") {
     readTk(); const d = S.tkDraft;
     if (!d.desc.trim()) return toast("Say what's wrong so the team knows what to bring.");
@@ -1565,3 +1898,5 @@ seed();
 S.guide = window.innerWidth >= 1200;
 render();
 </script>
+
+</body></html>
