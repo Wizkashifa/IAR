@@ -105,6 +105,9 @@ h3 { font-size: 14px; margin: 0; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
 .tile:hover { border-color: var(--accent); }
+.tile.locked { opacity: .65; cursor: default; background: var(--surface-2); }
+.tile.locked:hover { border-color: var(--line); }
+.lk { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--accent); font: inherit; font-weight: 600; }
 .tile p { margin: 0; color: var(--ink-2); font-size: 13px; }
 .tile .foot { margin-top: auto; padding-top: 6px; }
 
@@ -591,6 +594,8 @@ function seed() {
   };
   seedMoney();
   tkSeed();
+  S.extra = {};
+  libSeed();
 }
 function ev(o) {
   const c = Object.assign({ kind: "event", setup: 30, teardown: 30, attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, linkedPOs: [], log: [], comments: [] }, o);
@@ -720,7 +725,7 @@ const worst = (checks) => (checks.some((c) => c.sev === "bad") ? "bad" : checks.
 /* Helpers: people, roles, waiting-on                                  */
 /* ------------------------------------------------------------------ */
 const me = () => PEOPLE[S.me];
-const has = (r) => me().roles.includes(r);
+const has = (r) => me().roles.includes(r) || (S.extra[S.me] || []).includes(r);
 const nameOf = (id) => (id === "system" ? "Portal" : id.startsWith("ext:") ? id.slice(4) : PEOPLE[id]?.name || id);
 const isMine = (c) => c.owner === S.me || (S.me === "admin" && false);
 const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.rentals.find((c) => c.id === id) || S.tickets.find((c) => c.id === id);
@@ -788,6 +793,157 @@ function myTasks() {
   return out;
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Library: shared drives whose access follows Google Groups           */
+/* ------------------------------------------------------------------ */
+const slug = (t) => t.toLowerCase().replace(/[^a-z]+/g, "");
+const COMMITTEE_DRIVES = ["Youth", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration"];
+const LIB_CATS = ["Policy", "Minutes", "Resolution", "Budget", "Contract", "Form", "Case file", "Receipt", "Plan", "Draft", "Other"];
+const LIB_DRIVES = [
+  { id: "policies", kind: "Everyone", name: "Policies", tokens: ["member"], role: "Viewer", blurb: "Approved IAR policies. Everyone can read them; the Shura and executive edit.", folders: ["Rooms and rentals", "Purchasing", "People"] },
+  { id: "ops", kind: "Everyone", name: "Operations", tokens: ["office", "facilities", "security", "av", "it"], role: "Contributor", blurb: "Run sheets, contracts and setup diagrams for the teams that run the buildings.", folders: ["Contracts", "Run sheets"] },
+  ...COMMITTEE_DRIVES.map((c) => ({ id: "c-" + slug(c), kind: "Committees", name: c === "Women's Committee" || c === "Administration" ? c : c + " Committee", tokens: ["c:" + c], role: "Contributor", blurb: `${c === "Administration" ? "Office" : c} files, plans and event material.`, folders: ["Planning", "Events"] })),
+  { id: "shura", kind: "Restricted", name: "IAR Shura", tokens: ["shura"], role: "Content manager", blurb: "Minutes, resolutions, board packets and approved budgets.", folders: ["Minutes", "Resolutions", "Board packets", "Budget"] },
+  { id: "sw", kind: "Restricted", name: "Social & Welfare", tokens: ["sw"], role: "Contributor", blurb: "Case files and aid records. The most restricted drive: no sharing, download off for viewers.", folders: ["Case files", "Guidelines"] },
+  { id: "finance", kind: "Restricted", name: "Finance", tokens: ["finance"], role: "Content manager", blurb: "W-9s, receipts, card statements and QuickBooks exports.", folders: ["W-9s", "Receipts", "Card statements", "QuickBooks exports"] },
+];
+const groupOf = (t) => (t === "member" ? "portal-staff@" : t.startsWith("c:") ? `portal-${slug(t.slice(2))}@` : `portal-${t}@`);
+const GROUP_TOKENS = ["shura", "sw", "finance", "office", "facilities", "security", "av", "it", ...COMMITTEE_DRIVES.map((c) => "c:" + c)];
+const personIn = (k, t) => PEOPLE[k].roles.includes(t) || (t.startsWith("c:") && PEOPLE[k].committees.includes(t.slice(2))) || (S.extra[k] || []).includes(t);
+const libCanOpen = (d) => d.tokens.some((t) => personIn(S.me, t));
+const libDrive = (id) => LIB_DRIVES.find((d) => d.id === id);
+
+function libSeed() {
+  const n = (d) => addDays(TODAY, d);
+  let q = 0;
+  const f = (drive, folder, name, cat, owner, age, o = {}) => ({ id: "F-" + ++q, drive, folder, name, cat, owner, updated: n(-age), review: o.review || "", link: o.link || [] });
+  S.lib = { drive: null, folder: null, sel: null, q: "", tab: "files", seq: q, files: [
+    f("policies", "Rooms and rentals", "Room use policy.docx", "Policy", "hana", 210, { review: n(-20), link: ["EV-1031"] }),
+    f("policies", "Rooms and rentals", "Facility rental terms (draft for Shura).docx", "Draft", "hana", 6, { review: n(30) }),
+    f("policies", "Rooms and rentals", "Food and catering rules.pdf", "Policy", "hana", 140, { review: n(10) }),
+    f("policies", "Purchasing", "Purchasing and reimbursement policy.pdf", "Policy", "omar", 95, { review: n(90), link: ["PO-11045", "PO-11046"] }),
+    f("policies", "People", "Volunteer code of conduct.pdf", "Policy", "hana", 300, { review: n(200) }),
+    f("ops", "Run sheets", "Daily run sheet template.xlsx", "Form", "hana", 40),
+    f("ops", "Contracts", "Security patrol contract.pdf", "Contract", "idris", 120),
+    f("ops", "Contracts", "HVAC maintenance contract.pdf", "Contract", "idris", 75),
+    f("ops", "Run sheets", "Setup diagrams — Multipurpose Hall.pdf", "Plan", "yusuf", 33),
+    f("c-youth", "Events", "Youth Family Night — flyer.png", "Other", "bilal", 9, { link: ["EV-1031"] }),
+    f("c-youth", "Planning", "Halaqa winter series outline.docx", "Plan", "amina", 4, { link: ["EV-1042"] }),
+    f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "Plan", "bilal", 18, { link: ["PO-11039"] }),
+    f("c-outreach", "Events", "Interfaith Open House — speaker list.docx", "Plan", "bilal", 7, { link: ["EV-1053"] }),
+    f("c-outreach", "Planning", "Invitation list.xlsx", "Other", "bilal", 12),
+    f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "Plan", "hana", 50),
+    f("c-education", "Planning", "Teacher roster.xlsx", "Other", "hana", 22),
+    f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "Plan", "hana", 8, { link: ["EV-1050"] }),
+    f("c-dawah", "Planning", "New Muslim guide.pdf", "Other", "hana", 70),
+    f("c-dawah", "Planning", "Booklet print order.pdf", "Receipt", "hana", 35),
+    f("c-administration", "Planning", "Office procedures manual.docx", "Policy", "hana", 160, { review: n(45) }),
+    f("c-administration", "Planning", "Key and lock log.xlsx", "Other", "hana", 3),
+    f("shura", "Minutes", "Shura minutes — September meeting.docx", "Minutes", "khalid", 25),
+    f("shura", "Minutes", "Shura minutes — August meeting.docx", "Minutes", "khalid", 56),
+    f("shura", "Resolutions", "Resolution 2026-04: gym rental terms.pdf", "Resolution", "khalid", 40),
+    f("shura", "Board packets", "Board packet — October.pdf", "Other", "khalid", 5),
+    f("shura", "Budget", "FY26-27 approved budget.xlsx", "Budget", "omar", 110),
+    f("shura", "Budget", "Budget amendment request — Youth.pdf", "Budget", "bilal", 14),
+    f("sw", "Case files", "Case 311 — intake and approval.pdf", "Case file", "layla", 30),
+    f("sw", "Case files", "Case 318 — documents.pdf", "Case file", "layla", 9),
+    f("sw", "Guidelines", "Zakat distribution guidelines.pdf", "Policy", "layla", 180, { review: n(-5) }),
+    f("finance", "W-9s", "W-9 — Triangle Sound & Stage.pdf", "Form", "omar", 20, { link: ["PO-11046"] }),
+    f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "Form", "omar", 60, { link: ["PO-11039"] }),
+    f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "Receipt", "amina", 3, { link: ["PO-11045"] }),
+    f("finance", "Card statements", "Card 3051 — September statement.pdf", "Receipt", "omar", 12, { link: ["PO-11051"] }),
+    f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "Other", "omar", 15),
+  ] };
+  S.lib.seq = q;
+}
+function libReset(drive, q) { Object.assign(S.lib, { drive: drive || null, folder: null, sel: null, q: q || "", tab: "files" }); }
+function reviewPill(f) {
+  if (!f.review) return "";
+  const d = daysBetween(TODAY, f.review);
+  return d < 0 ? `<span class="pill bad">Review overdue ${-d} d</span>` : d <= 30 ? `<span class="pill warn">Review in ${d} d</span>` : `<span class="pill ok">Review ${fmtDate(f.review)}</span>`;
+}
+function vLibrary() {
+  const L = S.lib;
+  if (L.tab === "access" && !has("admins")) L.tab = "files";
+  const tabs = has("admins") ? `<div class="row">${[["files", "Files"], ["access", "Access (admin)"]].map(([k, l]) => `<button class="btn small ${L.tab === k ? "primary" : ""}" type="button" data-libtab="${k}">${l}</button>`).join("")}</div>` : "";
+  return `<div class="head"><div><h1>Library</h1><p class="lead">${esc(BLURB.library)}</p></div></div>${tabs}
+  ${L.tab === "access" ? libAccess() : `<input id="libQ" type="search" placeholder="Search every file you can open" value="${esc(L.q)}" style="width:100%;max-width:520px" aria-label="Search the library"><div id="libBody">${libBody()}</div>`}`;
+}
+function libBody() {
+  const L = S.lib, open = LIB_DRIVES.filter(libCanOpen);
+  if (L.drive && !libCanOpen(libDrive(L.drive))) { L.drive = null; L.folder = null; L.sel = null; }
+  const q = L.q.trim().toLowerCase();
+  if (q) {
+    const hits = L.files.filter((x) => open.some((d) => d.id === x.drive) && (x.name.toLowerCase().includes(q) || x.cat.toLowerCase().includes(q) || nameOf(x.owner).toLowerCase().includes(q)));
+    return `<div class="panel">${hits.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Drive</th><th>Category</th><th>Updated</th></tr></thead><tbody>
+      ${hits.map((x) => `<tr><td><button class="lk" type="button" data-libgo="${x.id}">${esc(x.name)}</button></td><td>${esc(libDrive(x.drive).name)}</td><td><span class="pill">${esc(x.cat)}</span></td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files match. Search only covers the drives you can open.</div>`}</div>`;
+  }
+  if (L.drive) return libDriveView(libDrive(L.drive));
+  const sections = ["Everyone", "Committees", "Restricted"];
+  const heads = { Everyone: "Shared with everyone", Committees: "Committee drives", Restricted: "Restricted drives" };
+  return sections.map((k) => `<div><h2 style="margin:18px 0 10px">${heads[k]}</h2><div class="tiles">${LIB_DRIVES.filter((d) => d.kind === k).map((d) => libCanOpen(d)
+    ? `<button class="tile" type="button" data-libdrive="${d.id}"><h3>${esc(d.name)}</h3><p>${esc(d.blurb)}</p><div class="foot"><span class="pill ok">Open</span> <span class="pill">${L.files.filter((x) => x.drive === d.id).length} files</span></div></button>`
+    : `<div class="tile locked"><h3>${esc(d.name)}</h3><p>Restricted. Access comes from <span class="mono">${esc(d.tokens.map(groupOf).join(", "))}</span>.</p><div class="foot"><span class="pill">Not in your groups</span></div></div>`).join("")}</div></div>`).join("");
+}
+function libDriveView(d) {
+  const L = S.lib;
+  const all = L.files.filter((x) => x.drive === d.id);
+  const xs = all.filter((x) => !L.folder || x.folder === L.folder);
+  const sel = L.sel ? L.files.find((x) => x.id === L.sel && x.drive === d.id) : null;
+  return `<div class="row" style="margin-top:14px"><button class="btn small" type="button" data-libdrive="">All drives</button><strong>${esc(d.name)}</strong><span class="pill">${esc(d.role)}</span><span class="small muted mono">${esc(d.tokens.map(groupOf).join(", "))}</span></div>
+  <div class="row">${["", ...d.folders].map((fo) => `<button class="btn small ${(L.folder || "") === fo ? "primary" : ""}" type="button" data-libfolder="${esc(fo)}">${fo ? esc(fo) : "All folders"}</button>`).join("")}</div>
+  <div class="grid2"><div class="panel">${xs.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Category</th><th>Owner</th><th>Updated</th></tr></thead><tbody>
+    ${xs.map((x) => `<tr><td><button class="lk" type="button" data-libfile="${x.id}">${esc(x.name)}</button><div class="small muted">${esc(x.folder)} ${reviewPill(x)}</div></td><td><span class="pill">${esc(x.cat)}</span></td><td>${esc(nameOf(x.owner))}</td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files in this folder yet.</div>`}
+    <div class="panel-b"><div class="small muted" style="margin-bottom:6px">Upload to ${esc(L.folder || d.folders[0])}</div><div class="row"><input id="libUpName" placeholder="File name, e.g. Event budget.xlsx" style="flex:1;min-width:160px"><select id="libUpCat">${LIB_CATS.map((c) => `<option>${c}</option>`).join("")}</select><button class="btn small primary" type="button" data-libupload="${d.id}">Upload</button></div></div></div>
+  <div class="panel">${sel ? libFileDetail(sel, d) : `<div class="empty">Pick a file to see its details.</div>`}</div></div>`;
+}
+function libFileDetail(x, d) {
+  const links = x.link.map((id) => getCard(id)).filter(Boolean);
+  return `<div class="panel-h"><h2 style="overflow-wrap:anywhere">${esc(x.name)}</h2></div><div class="panel-b">
+    <dl class="kv"><dt>Drive</dt><dd>${esc(d.name)} / ${esc(x.folder)}</dd><dt>Category</dt><dd><span class="pill">${esc(x.cat)}</span></dd><dt>Owner</dt><dd>${esc(nameOf(x.owner))}</dd><dt>Updated</dt><dd>${fmtDate(x.updated)}</dd>${x.review ? `<dt>Policy review</dt><dd>${reviewPill(x)}</dd>` : ""}</dl><h3 style="margin:14px 0 6px">Linked requests</h3>${links.length ? `<div class="list">${links.map((c) => itemRow(c, "")).join("")}</div>` : `<div class="small muted">Not linked to any request.</div>`}
+    <div class="row" style="margin-top:14px"><button class="btn small" type="button" data-libopen="1">Open in Google Drive</button></div>
+    <p class="small muted" style="margin-top:10px">The portal stores only this file's Drive ID, category and review date. Drive decides who can open it, using the drive's Google Group.</p></div>`;
+}
+function libAccess() {
+  const people = Object.keys(PEOPLE).filter((k) => !["renter", "admin"].includes(k));
+  const rows = GROUP_TOKENS.map((t) => {
+    const mem = people.filter((k) => personIn(k, t));
+    const opens = LIB_DRIVES.filter((d) => d.tokens.includes(t)).map((d) => d.name);
+    return `<tr><td class="mono">${groupOf(t)}</td><td>${esc(opens.join(", ") || "Portal module only")}</td><td>${mem.map((k) => `<span class="pill" style="margin:0 4px 4px 0">${esc(PEOPLE[k].name)}${(S.extra[k] || []).includes(t) ? ` <button class="lk" type="button" data-libremove="${k}|${esc(t)}" title="Remove from group" aria-label="Remove ${esc(PEOPLE[k].name)} from ${groupOf(t)}">×</button>` : ""}</span>`).join("") || '<span class="muted">Nobody</span>'}</td></tr>`;
+  }).join("");
+  return `<div class="note info">Groups add up. Someone can belong to any number of them: a Shura member who is also on Social & Welfare is in both <span class="mono">portal-shura@</span> and <span class="mono">portal-sw@</span>, and sees both drives and both portal modules. People with × were added by hand; the rest come from their role or committee.</div>
+  <div class="panel"><div class="panel-h"><h2>Add someone to a group</h2></div><div class="panel-b"><div class="row">
+    <select id="libPerson" aria-label="Person">${people.map((k) => `<option value="${k}">${esc(PEOPLE[k].name)} — ${esc(PEOPLE[k].title)}</option>`).join("")}</select>
+    <select id="libGroup" aria-label="Group">${GROUP_TOKENS.map((t) => `<option value="${esc(t)}">${groupOf(t)}</option>`).join("")}</select>
+    <button class="btn primary" type="button" data-libadd="1">Add to group</button></div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Groups</h2><span class="small muted">Each group is a member of its shared drive(s) in Google</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Opens</th><th>Members</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+document.addEventListener("input", (e) => { if (e.target.id === "libQ") { S.lib.q = e.target.value; document.getElementById("libBody").innerHTML = libBody(); } });
+function libClick(ds) {
+  const L = S.lib;
+  if ("libdrive" in ds) { Object.assign(L, { drive: ds.libdrive || null, folder: null, sel: null, q: "" }); return render(), true; }
+  if ("libfolder" in ds) { L.folder = ds.libfolder || null; L.sel = null; return render(), true; }
+  if (ds.libfile) { L.sel = ds.libfile; return render(), true; }
+  if (ds.libgo) { const x = L.files.find((y) => y.id === ds.libgo); Object.assign(L, { drive: x.drive, folder: null, sel: x.id, q: "" }); return render(), true; }
+  if (ds.libtab) { L.tab = ds.libtab; return render(), true; }
+  if (ds.libopen) { toast("In production this opens the file in Drive, which checks your access again."); return true; }
+  if (ds.libadd) {
+    const k = document.getElementById("libPerson").value, t = document.getElementById("libGroup").value;
+    if (personIn(k, t)) toast(`${PEOPLE[k].name} is already in ${groupOf(t)}`);
+    else { (S.extra[k] = S.extra[k] || []).push(t); toast(`${PEOPLE[k].name} added to ${groupOf(t)}. Switch to them to see what opened up.`); }
+    return render(), true;
+  }
+  if (ds.libremove) { const [k, t] = ds.libremove.split("|"); S.extra[k] = (S.extra[k] || []).filter((x) => x !== t); toast(`Removed from ${groupOf(t)}`); return render(), true; }
+  if (ds.libupload) {
+    const name = document.getElementById("libUpName").value.trim(); if (!name) { toast("Enter a file name"); return true; }
+    const d = libDrive(ds.libupload);
+    L.files.unshift({ id: "F-" + ++L.seq, drive: d.id, folder: L.folder || d.folders[0], name, cat: document.getElementById("libUpCat").value, owner: S.me, updated: TODAY, review: "", link: [] });
+    toast("Uploaded to " + d.name); return render(), true;
+  }
+  return false;
+}
+
 /* ------------------------------------------------------------------ */
 /* Modules and navigation                                              */
 /* ------------------------------------------------------------------ */
@@ -801,6 +957,7 @@ const MODULES = [
   { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
   { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
   { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work" },
+  { id: "library", name: "Library", vis: ["member"], group: "Files" },
   { id: "shura", name: "Shura / Board", vis: ["shura"], group: "Finance" },
   { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance" },
   { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
@@ -819,10 +976,11 @@ const BLURB = {
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
   shura: "Money at a glance for the Shura, with a way to ask finance or the executive for something.",
+  library: "Policies, Shura documents and each committee's files, in shared drives that follow your Google Groups.",
   settings: "Rooms, access groups and the policy rules the portal checks.",
 };
 
-function go(view, arg) { S.view = view; S.arg = arg ?? null; if (S.tk) S.tk.modal = null; render(); window.scrollTo({ top: 0 }); }
+function go(view, arg) { if (view === "library" && S.view !== "library") { S.lib.q = ""; S.lib.drive = null; S.lib.folder = null; S.lib.sel = null; } S.view = view; S.arg = arg ?? null; if (S.tk) S.tk.modal = null; render(); window.scrollTo({ top: 0 }); }
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
 const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 
@@ -2694,6 +2852,11 @@ const STEPS = [
   { as: "idris", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
   { as: "admin", view: "tickets", t: "Reports and calendar", reset: () => { S.tk.tab = "reports"; S.tk.modal = null; }, p: "Switch the team to see every issue. Reports show created vs. resolved, workload, SLA compliance and the equipment with the most tickets; Calendar shows due dates; Timeline shows epics and sprints." },
   { as: "idris", view: "assets", t: "Track the equipment", p: "Idris keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset." },
+  { as: "khalid", view: "library", t: "Shura documents", reset: () => libReset("shura"), p: "Khalid is on the Shura, so portal-shura@ opens the IAR Shura drive: minutes, resolutions, board packets and the approved budget. Open a file to see its details. The portal keeps only the file's category and review date; Drive holds the file and checks access." },
+  { as: "amina", view: "library", t: "Restricted drives stay closed", reset: () => libReset(null, "budget"), p: "Amina sees Policies and the Youth drive, and the restricted drives show as locked. The search for 'budget' finds nothing, because the approved budget lives in the Shura drive and search only covers drives she can open. Clear the box and try 'policy'." },
+  { as: "omar", view: "library", t: "Finance files link to requests", reset: () => libReset("finance"), p: "Omar's finance group opens the Finance drive. Open the W-9 for Triangle Sound & Stage: it is linked to the purchase request that needed it. Click the request to jump to the card." },
+  { as: "hana", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Every policy has an owner and a review date. The room use policy is overdue and the catering rules are due soon. In production the owner gets a reminder." },
+  { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: "The Access tab shows each group and who is in it. Add Khalid (Shura) to portal-sw@, then switch to Khalid: he now has Social & Welfare as well as the Shura drive, and S&W Aid appears in his sidebar. Remove him with the × to undo." },
   { as: "layla", view: "home", t: "Groups decide what people see", p: "Layla chairs Social & Welfare, so she sees S&W Aid. Amina never does. Try Portal Admin and Portal Settings: switch off a rule and watch the event checks change." },
 ];
 function renderGuide() {
@@ -2729,7 +2892,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary };
   document.getElementById("main").innerHTML = (V[S.view] || vHome)();
   renderRail();
   renderGuide();
@@ -2763,6 +2926,7 @@ document.addEventListener("click", (e) => {
     r.status = st; r.resp = { by: S.me, t: TODAY, text: note || (st === "answered" ? "Sent." : st === "approved" ? "Approved. Finance will update the budget in QuickBooks and re-import." : "Declined.") };
     toast(`${r.id} ${st}. ${nameOf(r.owner)} is notified.`); return render();
   }
+  if (libClick(ds)) return;
   if (ds.step) return doStep(Number(ds.step));
   if (ds.closeguide) { S.guide = false; return render(); }
   if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
