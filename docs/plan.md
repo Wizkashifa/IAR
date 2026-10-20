@@ -116,15 +116,24 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 
 **Principle: Drive enforces access, the portal presents it.** A Google Group can be a member of a shared drive with a role, so the groups that already decide which portal modules a person sees can also decide which drives they can open. The portal calls Drive with the signed-in user's own token, so browse and search only return what that person can already open. The portal keeps no file permissions of its own to get wrong.
 
-| Shared drive | Who has access (group → role) | Contents |
+| Shared drive | Who has access (group → role) | Folders (**year** = filed by fiscal year) |
 | --- | --- | --- |
-| IAR Shura | `portal-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
-| IAR Social & Welfare | `portal-sw@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
-| IAR Policies | All staff group → Viewer; Shura and executive → Contributor | Approved policies: rooms, purchasing, rentals, volunteer, HR |
-| IAR Finance | `portal-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
-| IAR Operations (and per-team drives if needed) | Each team's group → Contributor | Run sheets, contracts, event files, templates |
+| IAR Shura | `portal-shura@` → Content manager or Viewer by need | Minutes, Resolutions, Board packets, Budget (all **year**) |
+| IAR Social & Welfare | `portal-sw@` → Contributor; a few named managers | Case files (**year**); Guidelines. Most restricted drive |
+| IAR Policies | All staff group → Viewer; Shura and executive → Contributor | Rooms and rentals, Purchasing, People, Drafts, Archive (none by year) |
+| IAR Finance | `portal-finance@` → Content manager | Receipts, Card statements, QuickBooks exports (**year**); W-9s |
+| IAR Operations | Office, facilities, security, AV and IT groups → Contributor | Contracts (**year**); Run sheets |
+| One drive per committee | That committee's group → Contributor | Events (**year**); Planning |
 
 Exact drives and role levels are open (see questions below).
+
+**Folders and fiscal years.** What used to be "category" is a folder. Each drive has a folder template, and each folder is either filed by fiscal year or evergreen:
+- IAR's fiscal year runs July 1 to June 30, so year folders are named `FY26-27`. Minutes, receipts, card statements, QuickBooks exports, budgets, board packets, contracts, case files and committee events are filed this way: `Minutes / FY26-27 / 2026-09 Shura minutes.docx`.
+- Policies, forms, W-9s, plans and drafts are evergreen: no year folders. A new version of a policy replaces the file and Drive's version history keeps the old one. A retired policy moves to `Archive`. The review date in the portal, not a year folder, is what flags a policy as stale.
+- A file's year comes from its document date, not the upload date, so a June receipt uploaded in July still lands in the right year. The date defaults to today and can be changed on upload.
+- The portal creates the new year folder the first time something is filed in it, so nobody builds `FY27-28` by hand each July.
+- The Library shows the current fiscal year by default, with earlier years behind a "show earlier years" link. Search covers every year.
+- The folder template (names and year setting per folder) is a portal setting, so another masjid can change it. The folders themselves are real Drive folders.
 
 **Setup in the Workspace admin console**
 - Add each group as a drive member with its role (Drive API: `permissions.create`, type `group`, `supportsAllDrives=true`). Nested groups work.
@@ -134,20 +143,19 @@ Exact drives and role levels are open (see questions below).
 
 **What the portal adds on top of Drive**
 - A Library module that lists drives grouped by team and searches across everything the user can open.
-- Tags and categories (policy, minutes, contract, form) stored in the portal database against the Drive file ID, since Drive has no good way to do this itself.
-- Policy documents with an owner and a review date, with a reminder when one is stale. Useful for the Shura's policy refresh.
+- Policy review dates and owners stored in the portal database against the Drive file ID, with a reminder when one is stale. Drive can't do this itself. Optional tags can be added the same way.
 - Links between cards and files, so an approved budget or policy can be linked from the requests that rely on it. The link stores the Drive file ID, never a copy.
-- Upload into the right drive and folder, with the folder structure created automatically.
+- Upload into the right drive and folder, with the year folder created automatically.
 
 **Technical notes**
 - Sign-in requests the Drive scope so the portal can act as the user. A service account (already planned) is used only for setup tasks such as creating folders and attaching card files.
-- The database holds file IDs, tags, owners and review dates, never file contents. W-9s and other tax-ID documents stay only in the restricted drive, as before.
+- The database holds file IDs, review dates, owners and request links, never file contents or a folder tree of its own. W-9s and other tax-ID documents stay only in the restricted drive, as before.
 - Reusing `portal-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
 
 **Risks**
 - Group-based access is only as good as group hygiene. Review membership of restricted groups each quarter and on every offboarding (ties into the onboarding/offboarding checklist in Later).
 - Someone with Contributor access can still copy a file's content elsewhere. Drive permissions limit access, not what a person does with what they read.
-- A general library invites clutter. Give each drive an owner and require a category on upload.
+- A general library invites clutter. Give each drive an owner, and have uploads choose a folder rather than leave files at the top level.
 
 ## Policy automation
 
@@ -258,6 +266,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Library: who owns each drive and each policy, and the review cadence for policies
 - [ ] Library: does Social & Welfare need download/copy blocked, and who are its named managers?
 - [ ] Library: migrate existing Shura and policy files from current Drive folders, or start fresh?
+- [ ] Library: W-9s are evergreen for now (one per vendor); should they be filed by year instead?
 
 **Next steps**
 
