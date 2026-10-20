@@ -393,8 +393,8 @@ body.modal-open { overflow: hidden; }
   .board { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .rail { align-self: start; align-items: center; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px max(16px, env(safe-area-inset-left, 0px)); }
   .rail .group { display: none; }
   .rail button { white-space: nowrap; }
   .rail .soon { display: none; }
