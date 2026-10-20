@@ -226,6 +226,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .toggle input:checked + span::after { transform: translateX(14px); }
 
 .guide { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 57px); right: 0; bottom: 0; width: min(380px, 100vw); background: var(--surface); border-left: 1px solid var(--line); z-index: 6; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,0.08); padding-right: env(safe-area-inset-right, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.guide[hidden], [hidden] { display: none !important; }
 .guide-h { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
 .guide-b { overflow-y: auto; padding: 8px 16px 24px; display: flex; flex-direction: column; }
 .step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -245,6 +246,137 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .sankey .lnk:hover { fill-opacity: 0.6; }
 .tip { position: fixed; z-index: 30; background: var(--ink); color: var(--bg); font-size: 12.5px; padding: 6px 9px; border-radius: 6px; pointer-events: none; max-width: 280px; }
 .public-wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+/* IT & Maintenance tracker */
+.main-inner.wide { max-width: 1320px; }
+.btabs.tkt { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.btabs.tkt.small { border-bottom: 0; }
+.btabs.tkt button { white-space: nowrap; }
+select, input[type=search], input[type=date], input[type=number], input[type=text].mini { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; min-width: 0; max-width: 100%; }
+.srch { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-width: 180px; }
+.srch.wide { flex: 1 1 320px; }
+.ta { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.lnk { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-align: left; font: inherit; }
+.lnk:hover { text-decoration: underline; }
+.lnk.strong { font-weight: 600; color: var(--ink); }
+.lnk.small { font-size: 12.5px; }
+.x { border: 0; background: none; cursor: pointer; color: var(--ink-3); padding: 0 2px; font-size: 14px; line-height: 1; }
+.x:hover { color: var(--bad); }
+.count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; cursor: pointer; }
+.chip:hover { border-color: var(--ink-3); }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chipx { display: inline-flex; align-items: center; gap: 2px; }
+.tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; padding: 0 7px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); max-width: 100%; }
+.tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
+.tag.flag { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+.tag.epic { background: var(--accent-soft); color: var(--accent); }
+.ti { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 4px; font-size: 11px; font-weight: 700; flex: none; vertical-align: -3px; }
+.ti.bad { background: var(--bad-soft); color: var(--bad); } .ti.info { background: var(--info-soft); color: var(--info); } .ti.accent { background: var(--accent-soft); color: var(--accent); } .ti.ok { background: var(--ok-soft); color: var(--ok); } .ti.warn { background: var(--warn-soft); color: var(--warn); }
+.pri { font-size: 10.5px; font-weight: 700; letter-spacing: -1px; }
+.pri.bad { color: var(--bad); } .pri.warn { color: var(--warn); } .pri.info { color: var(--info); }
+.av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 700; flex: none; }
+.av.big { width: 30px; height: 30px; font-size: 12px; }
+.av.none { background: transparent; border: 1px dashed var(--ink-3); color: var(--ink-3); }
+.due { font-size: 12px; color: var(--ink-2); }
+.due.late { color: var(--bad); font-weight: 600; }
+.key { color: var(--ink-2); }
+.mention { background: var(--info-soft); color: var(--info); border-radius: 4px; padding: 0 3px; font-weight: 600; }
+
+.kb { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(210px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.kcol { background: var(--surface-2); border-radius: var(--r); padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 140px; border: 2px solid transparent; }
+.kcol.over, [data-drop-sprint].over { border-color: var(--accent); background: var(--accent-soft); }
+.kcol h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); display: flex; justify-content: space-between; padding: 2px 2px 0; }
+.kempty { padding: 14px 6px; text-align: center; }
+.kc { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; box-shadow: 0 1px 0 rgba(0,0,0,.03); }
+.kc:hover { border-color: var(--ink-3); }
+.kc.hot { border-left: 3px solid var(--bad); }
+.kc.flag { background: var(--warn-soft); }
+.kc.dragging { opacity: .45; }
+.kc-t { font-size: 13.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.kc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.kc-f { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12px; }
+.sub { color: var(--ink-2); font-size: 12px; }
+.lane { display: flex; flex-direction: column; gap: 6px; }
+.lane-h { font-size: 13px; display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.hint { font-size: 12px; color: var(--ink-3); }
+
+.bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; background: var(--accent-soft); border-radius: var(--r); }
+.tkl tr.sel td { background: var(--accent-soft); }
+.thb { border: 0; background: none; padding: 0; font: inherit; text-transform: inherit; letter-spacing: inherit; color: inherit; cursor: pointer; font-weight: 600; }
+.brow { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; background: var(--surface); }
+.brow.dragging { opacity: .4; }
+.brow .bt { flex: 1 1 200px; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+.brow .grip { color: var(--ink-3); cursor: grab; letter-spacing: -2px; }
+.brow .mv { max-width: 130px; }
+.blist .empty { padding: 14px; }
+.bar2 { height: 6px; background: var(--surface-2); margin: 0 16px 8px; border-radius: 3px; overflow: hidden; }
+.bar2 span { display: block; height: 100%; background: var(--ok); }
+.bar2.slim { margin: 0; }
+.bar2 span.over { background: var(--bad); }
+
+.calg { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.calg .dh { background: var(--surface-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; padding: 5px 8px; color: var(--ink-2); }
+.cal { background: var(--surface); min-height: 92px; padding: 4px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cal.off { background: var(--surface-2); }
+.cal.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal .dn { font-size: 12px; color: var(--ink-2); }
+.ce { border: 0; text-align: left; font-size: 11.5px; padding: 1px 5px; border-radius: 3px; background: var(--info-soft); color: var(--info); cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ce.late { background: var(--bad-soft); color: var(--bad); } .ce.done { background: var(--ok-soft); color: var(--ok); text-decoration: line-through; } .ce.pm { background: var(--surface-2); color: var(--ink-2); border: 1px dashed var(--ink-3); cursor: default; }
+
+.tl2 { overflow-x: auto; }
+.tlax { position: relative; height: 18px; margin-left: 200px; min-width: 520px; font-size: 11px; color: var(--ink-3); font-family: var(--mono); }
+.tlax span { position: absolute; transform: translateX(-30%); }
+.tlrow { display: flex; align-items: stretch; border-top: 1px solid var(--line); min-height: 46px; }
+.tll { width: 200px; flex: none; padding: 6px 10px 6px 0; font-size: 13px; min-width: 0; }
+.tlt { position: relative; flex: 1; min-width: 520px; }
+.tlb { position: absolute; top: 9px; height: 26px; border-radius: 5px; background: var(--info-soft); border: 1px solid var(--info); overflow: hidden; }
+.tlb.sp.active { background: var(--ok-soft); border-color: var(--ok); } .tlb.sp.done { background: var(--surface-2); border-color: var(--line); } .tlb.sp.planned { background: var(--info-soft); border-color: var(--info); }
+.tlb.ep { background: var(--accent-soft); border-color: var(--accent); cursor: pointer; }
+.tlb .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); opacity: .35; }
+.tlnow { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bad); opacity: .7; }
+.tlsep { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); padding: 12px 0 4px; }
+
+.tiles2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.tile2 { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.tile2 .big { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.big.bad { color: var(--bad); } .big.warn { color: var(--warn); } .big.ok { color: var(--ok); }
+.hb { display: grid; grid-template-columns: minmax(80px, 150px) minmax(0, 1fr) 34px; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; }
+.hl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ht { background: var(--surface-2); height: 10px; border-radius: 5px; overflow: hidden; display: block; }
+.ht span { display: block; height: 100%; background: var(--accent); border-radius: 5px; }
+.ht span.bad { background: var(--bad); } .ht span.warn { background: var(--warn); } .ht span.info { background: var(--info); } .ht span.ok { background: var(--ok); } .ht span.accent { background: var(--accent); }
+.hv { text-align: right; }
+.chart { width: 100%; height: auto; display: block; }
+.chart .ax { font-size: 10px; fill: var(--ink-3); font-family: var(--mono); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.rule { display: flex; gap: 12px; align-items: flex-start; }
+
+.issue { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.ih { display: block; overflow-wrap: anywhere; }
+.kvr input[type=text], .kvr input[type=number], .kvr input[type=date], input.mini { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+.side { position: sticky; top: 72px; }
+.kvl { display: flex; flex-direction: column; gap: 8px; }
+.kvr { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 13px; }
+.kvr > label, .kvr > .l { color: var(--ink-2); font-size: 12.5px; }
+.kvr select, .kvr input { width: 100%; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chips select, .chips input { width: auto; }
+.ctext { overflow-wrap: anywhere; }
+.acts { display: flex; flex-direction: column; gap: 12px; }
+.act { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; }
+.act .ab { min-width: 0; flex: 1; }
+.act.int .ab { background: var(--warn-soft); border-radius: 6px; padding: 6px 10px; }
+.item.unread .t { font-weight: 700; }
+
+body.modal-open { overflow: hidden; }
+.ov { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; overflow-y: auto; }
+.dlg { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; width: min(520px, 100%); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.dlg.w { width: min(720px, 100%); }
+.dlg-h { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.dlg-b { padding: 16px 18px 18px; }
+@media (max-width: 1000px) { .issue { grid-template-columns: minmax(0, 1fr); } .side { position: static; } }
+@media (max-width: 720px) { .kvr { grid-template-columns: 1fr; gap: 3px; } .cal { min-height: 64px; } .brow .mv { max-width: none; } }
 
 @media (max-width: 860px) {
   .grid2 { grid-template-columns: minmax(0, 1fr); }
@@ -279,6 +411,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 </div>
 <aside class="guide" id="guide" hidden aria-label="Demo guide"></aside>
 <div class="toast" id="toast" hidden role="status"></div>
+<div id="tkModal"></div>
 <div class="tip" id="tip" hidden></div>
 
 <script>
@@ -315,6 +448,8 @@ const PEOPLE = {
   omar:   { name: "Omar Farouk", title: "Finance office", roles: ["member", "finance", "cardholders"], committees: ["Administration"] },
   sara:   { name: "Sara Malik", title: "Marketing team", roles: ["member", "marketing"], committees: [] },
   idris:  { name: "Idris Thompson", title: "Security, facilities & maintenance", roles: ["member", "security", "facilities", "av"], committees: [] },
+  yusuf:  { name: "Yusuf Demir", title: "Facilities volunteer", roles: ["member", "facilities"], committees: [] },
+  maryam: { name: "Maryam Qureshi", title: "IT volunteer", roles: ["member", "it"], committees: [] },
   zaid:   { name: "Zaid Hussain", title: "IT volunteer", roles: ["member", "it"], committees: [] },
   khalid: { name: "Khalid Mansoor", title: "Shura / board member", roles: ["member", "shura"], committees: [] },
   yasir:  { name: "Dr. Yasir Ali", title: "Executive (mission review)", roles: ["member", "executive"], committees: [] },
@@ -394,7 +529,7 @@ function seed() {
     arg: null,
     guide: false,
     step: 0,
-    seq: { EV: 1060, PO: 11060, RN: 210, TK: 510 },
+    seq: { EV: 1060, PO: 11060, RN: 210, TK: 530 },
     bookings: [
       { room: "mphAB", date: satSoon, s: toMin("10:00"), e: toMin("13:00"), label: "Youth Basketball League" },
       { room: "f3arabic", date: tueLater, s: toMin("18:30"), e: toMin("20:00"), label: "Adult Arabic class" },
@@ -435,12 +570,7 @@ function seed() {
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "Coach D. Ortiz", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
     ],
-    tickets: [
-      { id: "TK-501", type: "maint", cat: "Heating & cooling", room: "mphAB", asset: "AS-014", urgency: "Urgent (safety or a service today)", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.", owner: "hana", assignee: "idris", status: "in_progress", log: [{ t: now(2), who: "hana", text: "Reported" }, { t: now(2), who: "idris", text: "Assigned to self" }, { t: now(1), who: "idris", text: "Called the HVAC contractor; technician coming tomorrow" }] },
-      { id: "TK-502", type: "it", cat: "Wi-Fi or network", room: "r240", asset: "AS-052", urgency: "Normal", desc: "Wi-Fi drops every few minutes in the conference room.", owner: "bilal", status: "new", log: [{ t: now(1), who: "bilal", text: "Reported" }] },
-      { id: "TK-503", type: "maint", cat: "Plumbing", room: "women", asset: "", urgency: "Normal", desc: "Wudu area faucet on the left keeps dripping.", owner: "layla", assignee: "idris", status: "assigned", log: [{ t: now(3), who: "layla", text: "Reported" }, { t: now(2), who: "idris", text: "Assigned to self" }] },
-      { id: "TK-488", type: "it", cat: "AV equipment", room: "r240", asset: "AS-031", urgency: "Normal", desc: "Projector shows no picture from HDMI.", owner: "hana", assignee: "zaid", status: "resolved", log: [{ t: now(30), who: "hana", text: "Reported" }, { t: now(29), who: "zaid", text: "Resolved: replaced the HDMI switch" }] },
-    ],
+    tickets: [],
     assets: [
       { id: "AS-014", name: "MPH rooftop HVAC unit 2", cat: "HVAC", room: "mphAB", status: "Needs repair", bought: "2018-05-01", cost: 14800, warranty: "2023-05-01", serial: "CR-48TC-11872" },
       { id: "AS-015", name: "Main Prayer Hall HVAC unit 1", cat: "HVAC", room: "main", status: "In use", bought: "2021-04-01", cost: 18900, warranty: addDays(TODAY, 90), serial: "CR-50XC-20931" },
@@ -460,6 +590,7 @@ function seed() {
     ],
   };
   seedMoney();
+  tkSeed();
 }
 function ev(o) {
   const c = Object.assign({ kind: "event", setup: 30, teardown: 30, attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, linkedPOs: [], log: [], comments: [] }, o);
@@ -645,7 +776,10 @@ function myActionItems() {
     if (canActPO(c)) items.push({ c, why: { chair: c.approver ? "Approve as backup approver" : "Chair approval", finance: c.type === "card" ? "Review card charges" : "Finance review", to_pay: "Record payment", books: "Enter in QuickBooks" }[c.status] });
   }
   if (has("office")) for (const r of S.rentals) if (r.status === "submitted") items.push({ c: r, why: "Review rental request" });
-  for (const t of S.tickets) if (canWorkTk(t) && (t.status === "new" || (t.assignee === S.me && t.status !== "resolved"))) items.push({ c: t, why: "" });
+  for (const t of S.tickets) {
+    if (canWorkTk(t) && !isDone(t) && t.itype !== "Epic" && (t.assignee === S.me || (!t.assignee && (t.status === "open" || t.status === "reopened")))) items.push({ c: t, why: t.assignee === S.me ? "Assigned to you" : "Unassigned: pick it up" });
+    else if (t.owner === S.me && t.status === "resolved") items.push({ c: t, why: "Resolved: confirm it's fixed" });
+  }
   return items;
 }
 function myTasks() {
@@ -681,25 +815,25 @@ const BLURB = {
   runsheet: "One printable page of what's happening where today.",
   rentals: "Outside groups' requests for the gym and halls.",
   aid: "Private aid cases, visible only to S&W and finance.",
-  tickets: "Report a building or tech problem and follow it until it's fixed.",
+  tickets: "Report a building or tech problem, or run the team's board, backlog, sprints and reports.",
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
   shura: "Money at a glance for the Shura, with a way to ask finance or the executive for something.",
   settings: "Rooms, access groups and the policy rules the portal checks.",
 };
 
-function go(view, arg) { S.view = view; S.arg = arg ?? null; render(); window.scrollTo({ top: 0 }); }
+function go(view, arg) { S.view = view; S.arg = arg ?? null; if (S.tk) S.tk.modal = null; render(); window.scrollTo({ top: 0 }); }
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
 const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 
 function renderRail() {
   const rail = document.getElementById("rail");
   if (S.me === "renter") { rail.innerHTML = `<div class="group">Public</div><button class="on" type="button">Request the gym</button>`; return; }
-  const counts = { budget: srOpenFor().length, home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length };
+  const counts = { budget: srOpenFor().length, home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length, tickets: S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length };
   let html = "", lastGroup = null;
   for (const m of MODULES.filter(visible)) {
     if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
-    const on = S.view === m.id || (S.view === "card" && m.id === "requests") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
+    const on = S.view === m.id || (S.view === "card" && m.id === "requests" && !String(S.arg).startsWith("TK-")) || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
     html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
   }
   const hidden = MODULES.filter((m) => !visible(m)).length;
@@ -1548,57 +1682,960 @@ function vShura() {
 }
 
 /* ------------------------------------------------------------------ */
-/* IT & maintenance tickets                                            */
+/* IT & Maintenance: a Jira-style issue tracker                         */
+/* Workflow, board, list + JQL, backlog + sprints, epics, sub-tasks,    */
+/* links, SLAs, work logs, watchers, notifications, automation,         */
+/* preventive-maintenance schedules, reports and project settings.      */
 /* ------------------------------------------------------------------ */
-const TK_CATS = { it: ["Email or account", "Wi-Fi or network", "Printer", "AV equipment", "Computer or laptop", "Website or software"], maint: ["Heating & cooling", "Plumbing", "Electrical & lighting", "Doors, locks & keys", "Cleaning", "Repairs"] };
-const TK_ST = { new: ["New", "info"], assigned: ["Assigned", "info"], in_progress: ["In progress", "warn"], waiting: ["Waiting on parts or vendor", "warn"], resolved: ["Resolved", "ok"] };
+const tsOf = (d) => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const tsNow = () => tsOf(new Date());
+const hoursAgo = (h) => tsOf(new Date(Date.now() - h * 36e5));
+const tsMs = (s) => new Date(s.length === 10 ? s + "T12:00" : s).getTime();
+const fmtTs = (s) => { if (!s) return "—"; const d = new Date(tsMs(s)); const h = d.getHours() % 12 || 12; return `${MON[d.getMonth()]} ${d.getDate()}, ${h}:${pad(d.getMinutes())} ${d.getHours() >= 12 ? "PM" : "AM"}`; };
+const ago = (s) => { const m = Math.max(0, Math.round((Date.now() - tsMs(s)) / 6e4)); if (m < 2) return "just now"; if (m < 90) return m + "m ago"; if (m < 36 * 60) return Math.round(m / 60) + "h ago"; return Math.round(m / 1440) + "d ago"; };
+const fmtH = (h) => { h = Math.abs(h); if (h < 1) return Math.max(1, Math.round(h * 60)) + "m"; if (h < 48) return (Math.round(h * 10) / 10) + "h"; return Math.round(h / 24) + "d"; };
+const initials = (id) => (nameOf(id).replace(/^Dr\. /, "").split(/\s+/).map((w) => w[0]).slice(0, 2).join("") || "?").toUpperCase();
+
+const TK_PRI = ["Highest", "High", "Medium", "Low", "Lowest"];
+const TK_PRI_ICON = { Highest: ["▲▲", "bad"], High: ["▲", "bad"], Medium: ["◆", "warn"], Low: ["▼", "info"], Lowest: ["▼▼", "info"] };
+const TK_SLA = { Highest: [2, 24], High: [8, 72], Medium: [24, 168], Low: [72, 336], Lowest: [168, 720] }; // hours to first response, hours to resolve
+const TK_TYPES = { Problem: ["!", "bad"], Request: ["?", "info"], Task: ["✓", "accent"], Preventive: ["⟳", "ok"], Epic: ["⚡", "warn"], "Sub-task": ["↳", "info"] };
+const TK_RESOLUTIONS = ["Fixed", "Done", "Won't fix", "Duplicate", "Cannot reproduce", "Withdrawn by reporter"];
+const TK_ST = {
+  open: { n: "Open", c: "todo", cls: "info" }, reopened: { n: "Reopened", c: "todo", cls: "bad" },
+  inprogress: { n: "In Progress", c: "prog", cls: "warn" }, waiting: { n: "Waiting", c: "prog", cls: "warn" }, review: { n: "In Review", c: "prog", cls: "accent" },
+  resolved: { n: "Resolved", c: "done", cls: "ok" }, closed: { n: "Closed", c: "done", cls: "ok" },
+};
+const TK_FLOW = { open: ["inprogress", "waiting", "resolved", "closed"], reopened: ["inprogress", "waiting", "resolved", "closed"], inprogress: ["open", "waiting", "review", "resolved"], waiting: ["inprogress", "resolved", "closed"], review: ["inprogress", "resolved"], resolved: ["closed", "reopened"], closed: ["reopened"] };
+const TK_TRANS = { open: "Back to Open", inprogress: "Start progress", waiting: "Waiting on parts or vendor", review: "Send for review", resolved: "Resolve", closed: "Close", reopened: "Reopen" };
+const TK_COLS = [{ id: "open", n: "Open", sts: ["open", "reopened"] }, { id: "inprogress", n: "In Progress", sts: ["inprogress"] }, { id: "waiting", n: "Waiting", sts: ["waiting"] }, { id: "review", n: "In Review", sts: ["review"] }, { id: "done", n: "Done", sts: ["resolved", "closed"] }];
+const TK_INV = { blocks: "is blocked by", "is blocked by": "blocks", duplicates: "is duplicated by", "is duplicated by": "duplicates", "relates to": "relates to", causes: "is caused by", "is caused by": "causes" };
+const TK_TEAM = { it: { name: "IT" }, facilities: { name: "Maintenance" } };
+const TK_FREQ = { weekly: 7, monthly: 30, quarterly: 91, "every 6 months": 182, yearly: 365 };
+
+const catOf = (t) => TK_ST[t.status].c;
+const isDone = (t) => catOf(t) === "done";
 const tkTeam = (t) => (t.type === "it" ? "it" : "facilities");
 const canWorkTk = (t) => has(tkTeam(t));
-function vTickets() {
-  const teams = ["it", "facilities"].filter(has);
-  const mine = S.tickets.filter((t) => t.owner === S.me);
-  const d = S.tkDraft || (S.tkDraft = { type: "maint", cat: "Heating & cooling", room: "r240", asset: "", urgency: "Normal", desc: "" });
-  const assets = S.assets.filter((a) => a.room === d.room);
-  let html = `<div><h1>IT & Maintenance</h1><p class="lead">Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment.</p></div>
-  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Submit a ticket</h2></div><div class="panel-b"><form class="f" id="tkForm" autocomplete="off">
-    <div class="fld wide"><span class="lbl">What kind of problem?</span><div class="checks-inline"><label><input type="radio" name="tktype" value="maint" ${d.type === "maint" ? "checked" : ""}> Building or maintenance</label><label><input type="radio" name="tktype" value="it" ${d.type === "it" ? "checked" : ""}> IT or tech</label></div></div>
-    <div class="fld"><label for="tk_cat">Category</label><select id="tk_cat" name="cat">${TK_CATS[d.type].map((c) => `<option ${c === d.cat ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
-    <div class="fld"><label for="tk_urg">Urgency</label><select id="tk_urg" name="urgency">${["Low", "Normal", "Urgent (safety or a service today)"].map((u) => `<option ${u === d.urgency ? "selected" : ""}>${esc(u)}</option>`).join("")}</select></div>
-    <div class="fld"><label for="tk_room">Where?</label><select id="tk_room" name="room">${ROOMS.filter((r) => r.id !== "offsite").map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}</option>`).join("")}<option value="office" ${d.room === "office" ? "selected" : ""}>Admin office</option><option value="parking" ${d.room === "parking" ? "selected" : ""}>Parking lot / outside</option></select></div>
-    <div class="fld"><label for="tk_asset">Equipment (optional)</label><select id="tk_asset" name="asset"><option value="">Not sure / none</option>${assets.map((a) => `<option value="${a.id}" ${a.id === d.asset ? "selected" : ""}>${a.id} · ${esc(a.name)}</option>`).join("")}</select></div>
-    <div class="fld wide"><label for="tk_desc">What's wrong?</label><textarea id="tk_desc" name="desc" placeholder="The projector in Room 240 shows no picture from the HDMI cable.">${esc(d.desc)}</textarea></div>
-    <div class="fld wide"><span class="lbl">Photo (optional)</span><div><button class="btn small" type="button" data-tkphoto="1">${d.photo ? "photo.jpg attached" : "Add a photo"}</button></div></div>
-    <div class="actions"><button class="btn primary" type="submit">Submit ticket</button></div>
-  </form></div></div>
-  <div class="panel"><div class="panel-h"><h2>Your tickets</h2></div>${mine.length ? `<div class="list">${mine.map(tkRow).join("")}</div>` : `<div class="empty">You haven't reported anything.</div>`}</div></div>`;
-  for (const team of teams) {
-    const xs = S.tickets.filter((t) => tkTeam(t) === team);
-    const col = (sts, label) => { const ys = xs.filter((t) => sts.includes(t.status)); return `<div class="col"><h3><span>${label}</span><span class="mono">${ys.length}</span></h3>${ys.map((t) => `<button class="tcard" type="button" data-card="${t.id}" style="text-align:left;cursor:pointer"><strong>${esc(t.cat)}</strong><span class="small">${esc(t.desc)}</span><span class="small muted">${t.id} · ${esc(roomName(t.room))}${t.urgency.startsWith("Urgent") ? ' · <span class="flag">Urgent</span>' : ""}</span></button>`).join("") || '<div class="small muted">Empty</div>'}</div>`; };
-    html += `<div class="panel"><div class="panel-h"><h2>${team === "it" ? "IT" : "Maintenance"} queue</h2><span class="small muted">${xs.filter((t) => t.status !== "resolved").length} open</span></div><div class="panel-b"><div class="board">${col(["new", "assigned"], "New")}${col(["in_progress", "waiting"], "In progress")}${col(["resolved"], "Resolved")}</div></div></div>`;
+const anyWorker = () => has("it") || has("facilities");
+const myTeams = () => ["it", "facilities"].filter(has);
+const canSeeTk = (t) => canWorkTk(t) || t.owner === S.me || (t.watchers || []).includes(S.me);
+const tkGet = (id) => S.tickets.find((t) => t.id === id);
+const tkPeople = (team) => Object.entries(PEOPLE).filter(([k, p]) => k !== "admin" && p.roles.includes(team)).map(([k]) => k);
+const tkKids = (t) => S.tickets.filter((x) => x.parent === t.id);
+const tkEpicKids = (t) => S.tickets.filter((x) => x.epic === t.id);
+const roomName = (id) => (id === "office" ? "Admin office" : id === "parking" ? "Parking lot / outside" : id ? room(id).name : "—");
+const tkSprint = (id) => (S.tkx.sprints.find((s) => s.id === id));
+const tkBlocked = (t) => !isDone(t) && (t.links || []).some((l) => l.rel === "is blocked by" && tkGet(l.id) && !isDone(tkGet(l.id)));
+const tkOverdue = (t) => !!t.due && !isDone(t) && t.due < TODAY;
+
+/* ---- SLA: calendar hours; the resolution clock pauses while Waiting ---- */
+function tkSla(t) {
+  const [rh, xh] = TK_SLA[t.priority] || TK_SLA.Medium, born = tsMs(t.created), now = Date.now();
+  const resp = (() => {
+    const due = born + rh * 36e5;
+    if (t.firstResponse) { const at = tsMs(t.firstResponse); return { state: at <= due ? "met" : "breach", text: at <= due ? "Responded in time" : "Responded late" }; }
+    const left = (due - now) / 36e5;
+    return { state: left < 0 ? "breach" : left < rh * 0.25 ? "warn" : "ok", text: left < 0 ? `Response overdue ${fmtH(left)}` : `Respond within ${fmtH(left)}` };
+  })();
+  const end = t.resolvedAt ? tsMs(t.resolvedAt) : now;
+  const paused = (t.paused || 0) + (t.pausedAt ? end - tsMs(t.pausedAt) : 0);
+  const used = (end - born - paused) / 36e5, left = xh - used;
+  const res = t.resolvedAt ? { state: used <= xh ? "met" : "breach", text: used <= xh ? "Resolved in time" : "Resolved late" }
+    : t.pausedAt ? { state: "paused", text: `Paused · ${fmtH(left)} left` }
+    : { state: left < 0 ? "breach" : left < xh * 0.25 ? "warn" : "ok", text: left < 0 ? `Resolution overdue ${fmtH(left)}` : `${fmtH(left)} left to resolve` };
+  return { resp, res, used, target: xh };
+}
+const tkHasSla = (t) => t.itype === "Problem" || t.itype === "Request";
+const slaPill = (s) => `<span class="pill ${({ met: "ok", ok: "ok", warn: "warn", breach: "bad", paused: "" })[s.state]}">${esc(s.text)}</span>`;
+
+/* ---- history, notifications, mutation helpers ---- */
+function tkLog(t, e) { const at = tsNow(); t.log.push({ t: at, who: S.me, ...e }); t.updated = at; }
+function tkNotify(t, text, opts = {}) {
+  const to = new Set([t.owner, t.assignee, ...(t.watchers || []), ...(opts.also || [])].filter(Boolean));
+  to.delete(S.me);
+  for (const u of to) { if (!PEOPLE[u] || (opts.internal && !canWorkTkFor(u, t))) continue; S.tkx.notifs.unshift({ id: ++S.tkx.seq.N, to: u, t: tsNow(), ticket: t.id, text, read: false, by: S.me }); }
+}
+const canWorkTkFor = (u, t) => PEOPLE[u].roles.includes(tkTeam(t));
+function tkWatch(t, u) { t.watchers = t.watchers || []; if (u && u !== "system" && !t.watchers.includes(u)) t.watchers.push(u); }
+function tkFirstResponse(t) { if (!t.firstResponse && S.me !== t.owner && canWorkTk(t)) t.firstResponse = tsNow(); }
+function tkNextId() { return "TK-" + ++S.seq.TK; }
+function tkNew(o) {
+  const at = tsNow();
+  const t = Object.assign({ itype: "Problem", priority: "Medium", labels: [], comps: [], watchers: [], links: [], attach: [], assignee: "", resolution: "", room: "office", asset: "", due: "", est: 0, spent: 0, cost: 0, vendor: "", sprint: "", epic: "", parent: "", status: "open", flagged: false, created: at, updated: at, log: [], paused: 0 }, o);
+  if (!t.id) t.id = tkNextId();
+  t.log.push({ t: t.created, who: t.owner, k: "created" });
+  tkWatch(t, t.owner); tkWatch(t, t.assignee);
+  return t;
+}
+const TK_FIELD_LABEL = { assignee: "Assignee", priority: "Priority", title: "Summary", desc: "Description", due: "Due date", est: "Original estimate (h)", cost: "Cost ($)", vendor: "Vendor", room: "Location", asset: "Equipment", epic: "Epic", sprint: "Sprint", itype: "Issue type", type: "Team", parent: "Parent" };
+function tkDisplay(f, v) {
+  if (v === "" || v == null || v === 0 && f !== "cost") return "None";
+  if (f === "desc" || f === "title") return v.length > 60 ? v.slice(0, 57) + "…" : v;
+  if (f === "assignee") return nameOf(v);
+  if (f === "room") return roomName(v);
+  if (f === "asset") { const a = S.assets.find((x) => x.id === v); return a ? `${a.id} ${a.name}` : v; }
+  if (f === "sprint") return tkSprint(v)?.name || v;
+  if (f === "epic" || f === "parent") return `${v} ${tkGet(v)?.title || ""}`.trim();
+  if (f === "type") return TK_TEAM[v === "it" ? "it" : "facilities"].name;
+  return String(v);
+}
+function tkSet(t, f, v) {
+  const old = t[f];
+  if (String(old ?? "") === String(v ?? "")) return;
+  if (["est", "cost"].includes(f)) v = Number(v) || 0;
+  t[f] = v;
+  if (f === "type") { t.comps = []; t.assignee = ""; }
+  tkLog(t, { k: "change", f: TK_FIELD_LABEL[f] || f, from: tkDisplay(f, old), to: tkDisplay(f, v) });
+  if (f === "assignee") {
+    if (v) { tkWatch(t, v); tkFirstResponse(t); tkNotify(t, `${nameOf(S.me)} assigned ${t.id} to ${v === S.me ? "themselves" : nameOf(v)}`, { also: [v] }); }
+  } else if (f === "priority") {
+    if (v === "Highest" && S.tkx.auto.find((r) => r.id === "urgent")?.on) { tkNotify(t, `${t.id} is now Highest priority`, { also: tkPeople(tkTeam(t)) }); }
+  } else tkNotify(t, `${nameOf(S.me)} changed ${TK_FIELD_LABEL[f] || f} on ${t.id}`);
+}
+function tkAddLabel(t, l) { l = l.trim().toLowerCase().replace(/\s+/g, "-"); if (!l || t.labels.includes(l)) return; t.labels.push(l); tkLog(t, { k: "change", f: "Labels", from: "", to: "+" + l }); }
+function tkComment(t, text, internal) {
+  text = text.trim(); if (!text) return false;
+  const id = ++S.tkx.seq.C;
+  tkLog(t, { k: "comment", id, text, internal: !!internal });
+  tkWatch(t, S.me);
+  if (!internal) tkFirstResponse(t);
+  const mentioned = [...text.matchAll(/@([a-z][a-z.]*)/gi)].map((m) => tkResolveMention(m[1])).filter(Boolean);
+  mentioned.forEach((u) => { if (!internal || canWorkTkFor(u, t)) tkWatch(t, u); });
+  const note = `${nameOf(S.me)} ${internal ? "left an internal note on" : "commented on"} ${t.id}`;
+  if (internal) tkNotify(t, note, { internal: true, also: mentioned });
+  else tkNotify(t, note, { also: mentioned });
+  mentioned.filter((u) => u !== S.me).forEach((u) => S.tkx.notifs.unshift({ id: ++S.tkx.seq.N, to: u, t: tsNow(), ticket: t.id, text: `${nameOf(S.me)} mentioned you on ${t.id}`, read: false, by: S.me }));
+  return true;
+}
+function tkResolveMention(w) { w = w.toLowerCase(); return Object.keys(PEOPLE).find((k) => k === w || PEOPLE[k].name.toLowerCase().split(" ")[0].replace(/^dr\.?/, "") === w || (k !== "admin" && k !== "renter" && PEOPLE[k].name.toLowerCase().replace(/^dr\. /, "").split(" ")[0] === w)); }
+const tkMentionHtml = (s) => esc(s).replace(/@([a-z][a-z.]*)/gi, (m, w) => (tkResolveMention(w) ? `<span class="mention">@${nameOf(tkResolveMention(w)).replace(/^Dr\. /, "").split(" ")[0]}</span>` : m)).replace(/\b(TK-\d+)\b/g, '<button type="button" class="lnk" data-tk2="open|$1">$1</button>').replace(/\n/g, "<br>");
+
+/* ---- workflow engine ---- */
+function tkCan(t, to) {
+  if (!(TK_FLOW[t.status] || []).includes(to)) return false;
+  if (canWorkTk(t)) return true;
+  if (t.owner !== S.me) return false;
+  return to === "reopened" || (to === "closed" && !isDone(t) && ["open", "reopened", "waiting"].includes(t.status));
+}
+const tkNeedsResolution = (t, to) => (to === "resolved" || to === "closed") && !isDone(t);
+function tkMove(t, to, o = {}) {
+  if (!tkCan(t, to)) { toast(`${TK_ST[t.status].n} → ${TK_ST[to].n} isn't allowed by the workflow.`); return false; }
+  const from = t.status, now = tsNow();
+  if (from === "waiting" && t.pausedAt) { t.paused = (t.paused || 0) + (tsMs(now) - tsMs(t.pausedAt)); t.pausedAt = ""; }
+  if (to === "waiting") t.pausedAt = now;
+  t.status = to;
+  if (isDone(t)) { if (!t.resolvedAt) t.resolvedAt = now; if (o.resolution) t.resolution = o.resolution; }
+  else { t.resolvedAt = ""; t.resolution = ""; }
+  if (to === "inprogress" && !t.assignee && canWorkTk(t) && S.tkx.auto.find((r) => r.id === "self")?.on) { t.assignee = S.me; tkLog(t, { k: "change", f: "Assignee", from: "None", to: nameOf(S.me) + " (automation)" }); }
+  tkWatch(t, S.me); tkFirstResponse(t);
+  if (o.hours) { t.spent = Math.round((Number(t.spent || 0) + Number(o.hours)) * 100) / 100; tkLog(t, { k: "work", hours: Number(o.hours), text: o.comment || "" }); }
+  tkLog(t, { k: "change", f: "Status", from: TK_ST[from].n, to: TK_ST[to].n + (t.resolution && isDone(t) ? ` (${t.resolution})` : "") });
+  if (o.comment) tkComment(t, o.comment, false);
+  if (isDone(t)) {
+    const as = t.asset && S.assets.find((x) => x.id === t.asset);
+    if (as && as.status === "Needs repair" && ["Fixed", "Done"].includes(t.resolution)) { as.status = "In use"; tkLog(t, { k: "change", f: "Equipment status", from: "Needs repair", to: "In use" }); }
   }
-  return html;
+  tkNotify(t, `${t.id} moved to ${TK_ST[to].n}${isDone(t) && t.resolution ? " · " + t.resolution : ""}`);
+  return true;
 }
-const roomName = (id) => (id === "office" ? "Admin office" : id === "parking" ? "Parking lot / outside" : room(id).name);
-const tkRow = (t) => `<button class="item" type="button" data-card="${t.id}"><div><div class="t">${esc(t.cat)}: ${esc(t.desc)}</div><div class="s">${t.id} · ${esc(roomName(t.room))} · ${t.type === "it" ? "IT" : "Maintenance"}</div></div><div class="r"><span class="pill ${TK_ST[t.status][1]}">${TK_ST[t.status][0]}</span></div></button>`;
+
+/* ---- automation (each rule can be switched off in Settings) ---- */
+function tkApplyCreateRules(t) {
+  if (!t.assignee && S.tkx.auto.find((r) => r.id === "component")?.on) {
+    const c = S.tkx.comps.find((x) => t.comps.includes(x.name) && x.team === tkTeam(t) && x.lead);
+    if (c) { t.assignee = c.lead; tkWatch(t, c.lead); t.log.push({ t: t.created, who: "system", k: "change", f: "Assignee", from: "None", to: nameOf(c.lead) + ` (component ${c.name})` }); }
+  }
+  if (t.priority === "Highest" && S.tkx.auto.find((r) => r.id === "urgent")?.on) tkNotify(t, `Highest-priority ${t.id}: ${t.title}`, { also: tkPeople(tkTeam(t)) });
+}
+function tkRunAutomation() {
+  let closed = 0, reminded = 0; const rules = (id) => S.tkx.auto.find((r) => r.id === id)?.on;
+  for (const t of S.tickets) {
+    if (rules("close") && t.status === "resolved" && t.resolvedAt && Date.now() - tsMs(t.resolvedAt) > 7 * 864e5) {
+      t.status = "closed"; t.updated = tsNow(); t.log.push({ t: tsNow(), who: "system", k: "change", f: "Status", from: "Resolved", to: "Closed (automation: resolved over 7 days)" }); closed++;
+    }
+    if (rules("remind") && t.due === addDays(TODAY, 1) && !isDone(t) && t.assignee && t.assignee !== "system" && !t.reminded) {
+      t.reminded = true; S.tkx.notifs.unshift({ id: ++S.tkx.seq.N, to: t.assignee, t: tsNow(), ticket: t.id, text: `${t.id} is due tomorrow`, read: false, by: "system" }); reminded++;
+    }
+  }
+  return { closed, reminded };
+}
+
+/* ---- preventive-maintenance schedules ---- */
+function tkFromSchedule(sc) {
+  const t = tkNew({ type: sc.team, itype: "Preventive", title: `${sc.name} – ${fmtDate(sc.next)}`, desc: sc.desc || "", priority: sc.priority || "Medium", owner: "system", assignee: sc.assignee, room: sc.room, asset: sc.asset, comps: sc.comp ? [sc.comp] : [], labels: ["preventive"], due: sc.next, est: sc.est || 0, sched: sc.id });
+  S.tickets.unshift(t);
+  (sc.checklist || []).forEach((c) => S.tickets.unshift(tkNew({ type: sc.team, itype: "Sub-task", title: c, parent: t.id, owner: "system", assignee: sc.assignee, room: sc.room, asset: sc.asset, priority: t.priority, due: sc.next })));
+  sc.last = TODAY; sc.next = addDays(sc.next, TK_FREQ[sc.freq]);
+  if (t.assignee) tkNotify(t, `${t.id} was created from the "${sc.name}" schedule`, { also: [t.assignee] });
+  return t;
+}
+
+/* ---- seed data ---- */
+function tkSeed() {
+  const P = (id, team, name, lead) => ({ name, team, lead });
+  S.tk = { tab: "board", team: "all", qf: {}, bq: "", scope: "sprint", swim: "none", epicF: "", q: "", sort: { f: "updated", dir: -1 }, sel: [], cal: TODAY.slice(0, 7), modal: null, act: "all", cdraft: {}, editing: null };
+  S.tkx = {
+    seq: { N: 0, C: 0, SP: 3, SCH: 5, F: 6 },
+    comps: [P(0, "it", "Wi-Fi & network", "zaid"), P(0, "it", "AV equipment", "zaid"), P(0, "it", "Printers", "maryam"), P(0, "it", "Accounts & email", "maryam"), P(0, "it", "Website & software", "zaid"), P(0, "it", "Computers", "maryam"),
+      P(0, "facilities", "HVAC", "idris"), P(0, "facilities", "Plumbing", "yusuf"), P(0, "facilities", "Electrical & lighting", "yusuf"), P(0, "facilities", "Doors, locks & keys", "idris"), P(0, "facilities", "Cleaning", "yusuf"), P(0, "facilities", "Grounds & parking", "yusuf"), P(0, "facilities", "Structure & roof", "idris")],
+    sprints: [
+      { id: "SP-0", name: "Sprint 0 · Summer fixes", goal: "Clear the summer backlog.", start: addDays(TODAY, -28), end: addDays(TODAY, -15), state: "done" },
+      { id: "SP-1", name: "Sprint 1 · Pre-Family Night", goal: "Cooling and AV working before Family Night.", start: addDays(TODAY, -5), end: addDays(TODAY, 9), state: "active" },
+      { id: "SP-2", name: "Sprint 2 · Ramadan readiness", goal: "Wi-Fi coverage and equipment for the gym.", start: addDays(TODAY, 10), end: addDays(TODAY, 24), state: "planned" },
+    ],
+    filters: [
+      { id: "F-1", name: "My open issues", q: "assignee = me AND statusCategory != Done ORDER BY priority DESC" },
+      { id: "F-2", name: "Unassigned", q: "assignee is EMPTY AND statusCategory != Done" },
+      { id: "F-3", name: "Overdue", q: "due < now() AND statusCategory != Done ORDER BY due ASC" },
+      { id: "F-4", name: "Urgent & unresolved", q: "priority >= High AND statusCategory != Done ORDER BY priority DESC, created ASC" },
+      { id: "F-5", name: "Waiting on parts or vendor", q: "status = Waiting" },
+      { id: "F-6", name: "Resolved this week", q: "resolved >= -7d ORDER BY resolved DESC" },
+    ],
+    notifs: [],
+    auto: [
+      { id: "component", name: "Auto-assign by component", desc: "New tickets go to the component's lead.", on: true },
+      { id: "self", name: "Assign to whoever starts work", desc: "Moving an unassigned ticket to In Progress assigns it to the person who did it.", on: true },
+      { id: "urgent", name: "Alert the team on Highest priority", desc: "Notify everyone on the team when a ticket is Highest priority.", on: true },
+      { id: "close", name: "Close resolved tickets after 7 days", desc: "Resolved tickets nobody reopens are closed.", on: true },
+      { id: "remind", name: "Remind assignees the day before a due date", desc: "One notification per ticket.", on: true },
+    ],
+    schedules: [
+      { id: "PM-1", name: "HVAC filter check", team: "facilities", freq: "monthly", next: addDays(TODAY, 4), last: addDays(TODAY, -26), asset: "AS-015", room: "main", assignee: "yusuf", comp: "HVAC", priority: "Medium", est: 2, on: true, desc: "Monthly filter inspection for the rooftop units.", checklist: ["Inspect and replace filters, unit 1", "Inspect and replace filters, unit 2", "Log temperatures in the Main Prayer Hall"] },
+      { id: "PM-2", name: "Fire extinguisher and alarm inspection", team: "facilities", freq: "every 6 months", next: addDays(TODAY, 21), last: addDays(TODAY, -161), asset: "", room: "office", assignee: "idris", comp: "Structure & roof", priority: "High", est: 4, on: true, desc: "Check every extinguisher tag and test pull stations.", checklist: ["Check extinguisher tags, all floors", "Test alarm pull stations"] },
+      { id: "PM-3", name: "Printer toner and paper check", team: "it", freq: "weekly", next: addDays(TODAY, 2), last: addDays(TODAY, -5), asset: "AS-051", room: "office", assignee: "maryam", comp: "Printers", priority: "Low", est: 0.5, on: true, desc: "", checklist: [] },
+      { id: "PM-4", name: "Wi-Fi access point firmware update", team: "it", freq: "quarterly", next: addDays(TODAY, 33), last: addDays(TODAY, -58), asset: "AS-052", room: "r240", assignee: "zaid", comp: "Wi-Fi & network", priority: "Medium", est: 2, on: true, desc: "", checklist: ["Back up controller settings", "Update access points one floor at a time"] },
+      { id: "PM-5", name: "Security camera recorder health check", team: "it", freq: "monthly", next: addDays(TODAY, -2), last: addDays(TODAY, -32), asset: "AS-070", room: "office", assignee: "zaid", comp: "Computers", priority: "Medium", est: 1, on: true, desc: "Confirm every camera is recording and the disk has space.", checklist: [] },
+    ],
+  };
+  const mk = (o, entries = []) => {
+    const t = tkNew(o);
+    t.log = [{ t: o.created, who: o.owner, k: "created" }, ...entries.map((e) => ({ ...e, t: hoursAgo(e.h) }))];
+    t.updated = entries.length ? hoursAgo(Math.min(...entries.map((e) => e.h))) : o.created;
+    return t;
+  };
+  const c = (h, who, text, internal) => ({ h, who, k: "comment", id: ++S.tkx.seq.C, text, internal: !!internal });
+  const ch = (h, who, f, from, to) => ({ h, who, k: "change", f, from, to });
+  S.tickets = [
+    mk({ id: "TK-480", type: "facilities", itype: "Epic", title: "Replace MPH rooftop HVAC unit 2", desc: "Unit 2 is past its warranty and failing every summer. Get quotes, get Shura approval, schedule the install outside Ramadan.", priority: "High", owner: "idris", assignee: "idris", status: "inprogress", comps: ["HVAC"], labels: ["capex"], start: addDays(TODAY, -10), due: addDays(TODAY, 60), room: "mphAB", asset: "AS-014", created: hoursAgo(240), watchers: ["omar", "khalid"] }),
+    mk({ id: "TK-481", type: "it", itype: "Epic", title: "Ramadan AV & Wi-Fi readiness", desc: "Everything IT needs done before taraweeh crowds arrive.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "inprogress", comps: ["AV equipment", "Wi-Fi & network"], start: addDays(TODAY, -3), due: addDays(TODAY, 45), created: hoursAgo(100) }),
+    mk({ id: "TK-501", type: "facilities", itype: "Problem", title: "MPH is not cooling before Family Night", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.\nUnit 2 compressor sounds like it is struggling.", priority: "Highest", owner: "hana", assignee: "idris", status: "inprogress", comps: ["HVAC"], labels: ["hvac", "family-night"], room: "mphAB", asset: "AS-014", epic: "TK-480", sprint: "SP-1", due: addDays(TODAY, 2), est: 6, spent: 2.5, vendor: "Carolina Air Systems", watchers: ["hana", "bilal"], attach: ["thermostat-84F.jpg"], firstResponse: hoursAgo(51), created: hoursAgo(52) },
+      [ch(50, "idris", "Assignee", "None", "Idris Thompson"), c(49, "idris", "Called the HVAC contractor; technician coming tomorrow morning."), c(40, "idris", "Contractor quote for a compressor swap is $1,850. Shura approval needed above $1,500.", true), ch(30, "idris", "Status", "Open", "In Progress"), c(28, "hana", "@idris thanks! Family Night is Saturday at 6, can you confirm cooling by Friday?"), { h: 26, who: "idris", k: "work", hours: 2.5, text: "Diagnosed on site with the technician" }]),
+    mk({ id: "TK-503", type: "facilities", itype: "Problem", title: "Wudu area faucet on the left keeps dripping", desc: "The left faucet drips constantly, even when fully closed.", priority: "Medium", owner: "layla", assignee: "yusuf", status: "open", comps: ["Plumbing"], labels: ["wudu"], room: "women", sprint: "SP-1", due: addDays(TODAY, 3), est: 1, firstResponse: hoursAgo(60), created: hoursAgo(70) }, [ch(60, "yusuf", "Assignee", "None", "Yusuf Demir (component Plumbing)")]),
+    mk({ id: "TK-504", type: "facilities", itype: "Request", title: "Replace burnt-out lights in the parking lot", desc: "Two poles by the east entrance are dark after Isha.", priority: "Low", owner: "bilal", status: "open", comps: ["Electrical & lighting"], labels: ["safety"], room: "parking", created: hoursAgo(20) }),
+    mk({ id: "TK-505", type: "facilities", itype: "Problem", title: "Main hall side door does not latch", desc: "Needs a new strike plate; door swings open in wind.", priority: "High", owner: "amina", assignee: "idris", status: "waiting", comps: ["Doors, locks & keys"], labels: ["security"], room: "main", sprint: "SP-1", vendor: "Triangle Locksmith", spent: 1, est: 2, flagged: true, firstResponse: hoursAgo(118), pausedAt: hoursAgo(90), created: hoursAgo(120), links: [{ rel: "relates to", id: "TK-503" }] },
+      [ch(118, "idris", "Assignee", "None", "Idris Thompson"), ch(95, "idris", "Status", "Open", "In Progress"), ch(90, "idris", "Status", "In Progress", "Waiting"), c(90, "idris", "Strike plate is on order from the locksmith, ETA Thursday. Door is chained shut meanwhile.")]),
+    mk({ id: "TK-506", type: "facilities", itype: "Task", title: "Get three quotes for HVAC unit replacement", desc: "Same capacity (15 ton). Ask for installation dates outside Ramadan.", priority: "High", owner: "idris", assignee: "idris", status: "inprogress", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 7), est: 5, spent: 1.5, vendor: "", labels: ["capex"], created: hoursAgo(200), firstResponse: hoursAgo(199) }),
+    mk({ id: "TK-507", type: "facilities", itype: "Task", title: "Shura approval for HVAC purchase", desc: "Submit a purchase request once quotes are in.", priority: "Medium", owner: "idris", assignee: "idris", status: "open", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 20), created: hoursAgo(190), links: [{ rel: "is blocked by", id: "TK-506" }] }),
+    mk({ id: "TK-508", type: "facilities", itype: "Preventive", title: "HVAC filter check – last month", desc: "Monthly filter inspection for the rooftop units.", priority: "Medium", owner: "system", assignee: "yusuf", status: "review", comps: ["HVAC"], labels: ["preventive"], room: "main", asset: "AS-015", sched: "PM-1", sprint: "SP-1", due: addDays(TODAY, -1), est: 2, spent: 2, created: hoursAgo(200), firstResponse: hoursAgo(190) }),
+    mk({ id: "TK-509", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 1", parent: "TK-508", priority: "Medium", owner: "system", assignee: "yusuf", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(30), room: "main", asset: "AS-015", created: hoursAgo(200) }),
+    mk({ id: "TK-510", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 2", parent: "TK-508", priority: "Medium", owner: "system", assignee: "yusuf", status: "inprogress", room: "main", asset: "AS-015", created: hoursAgo(200) }),
+    mk({ id: "TK-502", type: "it", itype: "Problem", title: "Wi-Fi drops every few minutes in the conference room", desc: "Wi-Fi drops every few minutes in the conference room, mostly during video calls.", priority: "Medium", owner: "bilal", status: "open", comps: ["Wi-Fi & network"], labels: ["wifi"], room: "r240", asset: "AS-052", created: hoursAgo(26), links: [{ rel: "relates to", id: "TK-521" }] }),
+    mk({ id: "TK-515", type: "it", itype: "Request", title: "New laptop for the Youth coordinator", desc: "Current laptop is 7 years old and cannot run the registration software.", priority: "Low", owner: "bilal", assignee: "maryam", status: "open", comps: ["Computers"], labels: ["hardware", "procurement"], sprint: "SP-2", due: addDays(TODAY, 14), est: 3, cost: 900, firstResponse: hoursAgo(60), created: hoursAgo(80) }),
+    mk({ id: "TK-516", type: "it", itype: "Problem", title: "Office printer jams on tray 2", desc: "Paper jams roughly every 20 pages when using tray 2.", priority: "Medium", owner: "hana", assignee: "maryam", status: "inprogress", comps: ["Printers"], room: "office", asset: "AS-051", sprint: "SP-1", est: 2, created: hoursAgo(30), firstResponse: hoursAgo(28) }, [ch(28, "maryam", "Assignee", "None", "Maryam Qureshi (component Printers)"), ch(24, "maryam", "Status", "Open", "In Progress")]),
+    mk({ id: "TK-517", type: "it", itype: "Request", title: "Create an email account for the new Imam office assistant", desc: "Name: Sumayya Iqbal. Needs the imam@ shared inbox.", priority: "Medium", owner: "hana", assignee: "maryam", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(5), comps: ["Accounts & email"], spent: 0.5, created: hoursAgo(20), firstResponse: hoursAgo(19), sprint: "SP-1" }, [c(6, "maryam", "Account created and added to the imam@ group. Temporary password sent to Hana by phone.", true), c(5, "maryam", "All set. Sumayya can sign in now.")]),
+    mk({ id: "TK-518", type: "it", itype: "Problem", title: "Projector in Room 240 flickers", desc: "Image flickers every few seconds on HDMI and VGA.", priority: "High", owner: "layla", status: "open", comps: ["AV equipment"], room: "r240", asset: "AS-031", created: hoursAgo(3), labels: ["av"] }),
+    mk({ id: "TK-519", type: "it", itype: "Problem", title: "Website prayer-times widget shows the wrong Isha time", desc: "Shows 8:15 PM; the masjid calendar says 8:45 PM.", priority: "High", owner: "khalid", assignee: "zaid", status: "inprogress", comps: ["Website & software"], labels: ["website"], sprint: "SP-1", due: addDays(TODAY, 1), est: 3, spent: 1, created: hoursAgo(40), firstResponse: hoursAgo(38) }),
+    mk({ id: "TK-520", type: "it", itype: "Task", title: "Test the PA system and mics before Ramadan", desc: "Run a full sound check in the main hall and MPH.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "open", comps: ["AV equipment"], epic: "TK-481", sprint: "SP-1", due: addDays(TODAY, 6), est: 2, created: hoursAgo(90), asset: "AS-032" }),
+    mk({ id: "TK-521", type: "it", itype: "Task", title: "Add two Wi-Fi access points to the gym", desc: "Coverage in the MPH is weak during large events.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "open", comps: ["Wi-Fi & network"], epic: "TK-481", sprint: "SP-2", est: 8, cost: 760, labels: ["wifi", "procurement"], created: hoursAgo(88), links: [{ rel: "relates to", id: "TK-502" }] }),
+    mk({ id: "TK-523", type: "it", itype: "Problem", title: "Cannot sign in to the IAR Google account", desc: "Locked out after changing the password on my phone.", priority: "Highest", owner: "sara", assignee: "maryam", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(59), comps: ["Accounts & email"], spent: 0.25, created: hoursAgo(60), firstResponse: hoursAgo(59.5) }),
+    mk({ id: "TK-488", type: "it", itype: "Problem", title: "Projector shows no picture from HDMI", desc: "Projector shows no picture from HDMI.", priority: "Medium", owner: "hana", assignee: "zaid", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(29 * 24), comps: ["AV equipment"], room: "r240", asset: "AS-031", sprint: "SP-0", spent: 1, created: hoursAgo(30 * 24), firstResponse: hoursAgo(30 * 24 - 2) }, [c(29 * 24, "zaid", "Replaced the HDMI switch.")]),
+  ];
+  S.tickets.forEach((t) => { if (!t.log.length) t.log = [{ t: t.created, who: t.owner, k: "created" }]; });
+  S.tickets.find((t) => t.id === "TK-505").links.push({ rel: "is blocked by", id: "TK-507" });
+  S.tickets.find((t) => t.id === "TK-507").links.push({ rel: "blocks", id: "TK-505" });
+  S.tickets.find((t) => t.id === "TK-506").links.push({ rel: "blocks", id: "TK-507" });
+  S.tickets.find((t) => t.id === "TK-505").links = [{ rel: "relates to", id: "TK-503" }];
+  S.tickets.find((t) => t.id === "TK-503").links = [{ rel: "relates to", id: "TK-505" }];
+  S.tickets.find((t) => t.id === "TK-521").links = [{ rel: "relates to", id: "TK-502" }];
+  S.tickets.find((t) => t.id === "TK-502").links = [{ rel: "relates to", id: "TK-521" }];
+  const n = (to, ticket, text, h) => S.tkx.notifs.push({ id: ++S.tkx.seq.N, to, t: hoursAgo(h), ticket, text, read: false, by: "system" });
+  n("idris", "TK-501", "Hana Siddiqui commented on TK-501", 28); n("zaid", "TK-518", "Highest/High-priority TK-518: Projector in Room 240 flickers", 3); n("zaid", "TK-519", "TK-519 is due tomorrow", 2);
+  n("hana", "TK-517", "TK-517 moved to Resolved · Done", 5); n("maryam", "TK-518", "TK-518 needs a first response", 2);
+  tkRunAutomation();
+}
+
+/* ---- JQL-lite: status = "In Progress" AND assignee = me ORDER BY priority DESC ---- */
+const JQL_FIELDS = {
+  key: (t) => t.id, status: (t) => TK_ST[t.status].n, statuscategory: (t) => ({ todo: "To Do", prog: "In Progress", done: "Done" })[catOf(t)],
+  assignee: (t) => t.assignee || null, reporter: (t) => t.owner, watcher: (t) => t.watchers, priority: (t) => t.priority, type: (t) => t.itype, issuetype: (t) => t.itype,
+  team: (t) => TK_TEAM[tkTeam(t)].name, project: (t) => TK_TEAM[tkTeam(t)].name, label: (t) => t.labels, labels: (t) => t.labels, component: (t) => t.comps,
+  room: (t) => (t.room ? roomName(t.room) : null), asset: (t) => t.asset || null, resolution: (t) => t.resolution || null, sprint: (t) => (t.sprint ? tkSprint(t.sprint)?.name : null),
+  epic: (t) => t.epic || null, parent: (t) => t.parent || null, summary: (t) => t.title, description: (t) => t.desc, text: (t) => `${t.id} ${t.title} ${t.desc} ${t.vendor}`,
+  due: (t) => t.due || null, created: (t) => t.created, updated: (t) => t.updated, resolved: (t) => t.resolvedAt || null, flagged: (t) => (t.flagged ? "true" : "false"),
+  cost: (t) => t.cost, spent: (t) => t.spent, estimate: (t) => t.est, vendor: (t) => t.vendor || null,
+};
+const JQL_DATES = ["due", "created", "updated", "resolved"], JQL_PEOPLE = ["assignee", "reporter", "watcher"];
+function jqlTokens(s) {
+  const re = /\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|!=|<=|>=|!~|[=<>~(),]|[^\s=<>~!(),"']+)/y, out = []; let m;
+  s = s.trim(); re.lastIndex = 0;
+  while (re.lastIndex < s.length && (m = re.exec(s))) out.push(m[1]);
+  if (re.lastIndex < s.length) throw new Error(`Unexpected text near "${s.slice(re.lastIndex, re.lastIndex + 12)}"`);
+  return out;
+}
+function jqlParse(src) {
+  let order = [], where = src;
+  const om = src.match(/\border\s+by\s+(.+)$/i);
+  if (om) { where = src.slice(0, om.index); order = om[1].split(",").map((p) => { const [f, d] = p.trim().split(/\s+/); if (!JQL_FIELDS[(f || "").toLowerCase()]) throw new Error(`Unknown field "${f}" in ORDER BY`); return { f: f.toLowerCase(), dir: /^desc$/i.test(d) ? -1 : 1 }; }); }
+  const tk = jqlTokens(where); let i = 0;
+  const peek = () => tk[i], eatWord = (w) => { if (tk[i] && tk[i].toLowerCase() === w) { i++; return true; } return false; };
+  const unq = (s) => (/^["']/.test(s) ? s.slice(1, -1).replace(/\\(.)/g, "$1") : s);
+  function value() {
+    const a = tk[i++]; if (a == null) throw new Error("Expected a value");
+    if (tk[i] === "(" && tk[i + 1] === ")") { i += 2; return { fn: a.toLowerCase() }; }
+    return unq(a);
+  }
+  function orExpr() { let l = andExpr(); while (eatWord("or")) { const a = l, b = andExpr(); l = (t) => a(t) || b(t); } return l; }
+  function andExpr() { let l = term(); while (eatWord("and")) { const a = l, b = term(); l = (t) => a(t) && b(t); } return l; }
+  function term() {
+    if (eatWord("not")) { const x = term(); return (t) => !x(t); }
+    if (peek() === "(") { i++; const e = orExpr(); if (tk[i++] !== ")") throw new Error("Missing )"); return e; }
+    const f = (tk[i++] || "").toLowerCase(); if (!f) throw new Error("Expected a field");
+    const get = JQL_FIELDS[f]; if (!get) throw new Error(`Unknown field "${f}". Try status, assignee, priority, due, label, component, room, text…`);
+    let op = (tk[i++] || "").toLowerCase(); if (!op) throw new Error(`Expected an operator after ${f}`);
+    if (op === "is") { const neg = eatWord("not"); if (!eatWord("empty") && !eatWord("null")) throw new Error("Use IS EMPTY or IS NOT EMPTY"); return (t) => { const v = get(t); const e = v == null || v === "" || (Array.isArray(v) && !v.length); return neg ? !e : e; }; }
+    let neg = false; if (op === "not") { neg = true; op = (tk[i++] || "").toLowerCase(); }
+    if (op === "in") {
+      if (tk[i++] !== "(") throw new Error("IN needs a list: (a, b)"); const vals = [];
+      while (tk[i] && tk[i] !== ")") { vals.push(value()); if (tk[i] === ",") i++; } i++;
+      return (t) => { const r = vals.some((v) => jqlCmp(f, get(t), "=", v)); return neg ? !r : r; };
+    }
+    if (!["=", "!=", "~", "!~", "<", ">", "<=", ">="].includes(op)) throw new Error(`Unknown operator "${op}"`);
+    const v = value();
+    return (t) => jqlCmp(f, get(t), op, v);
+  }
+  const pred = tk.length ? orExpr() : () => true;
+  if (i < tk.length) throw new Error(`Unexpected "${tk[i]}"`);
+  return { pred, order };
+}
+function jqlVal(f, v) {
+  if (v && typeof v === "object" && v.fn) {
+    if (v.fn === "currentuser") return S.me; if (v.fn === "now" || v.fn === "startofday") return TODAY;
+    throw new Error(`Unknown function ${v.fn}()`);
+  }
+  if (typeof v === "string" && /^[+-]?\d+[dwh]$/i.test(v)) { const n = parseInt(v), u = v.slice(-1).toLowerCase(); return addDays(TODAY, n * (u === "w" ? 7 : u === "d" ? 1 : 0)); }
+  if (JQL_PEOPLE.includes(f) && String(v).toLowerCase() === "me") return S.me;
+  return v;
+}
+function jqlCmp(f, got, op, want) {
+  want = jqlVal(f, want);
+  const one = (g) => {
+    if (g == null) return op === "!=" || op === "!~";
+    let a = g, b = want;
+    if (JQL_PEOPLE.includes(f)) { const p = (x) => (PEOPLE[x] ? x : tkResolveMention(String(x).toLowerCase().split(" ")[0]) || x); a = g; b = p(want); }
+    if (f === "priority" && ["<", ">", "<=", ">="].includes(op)) { const r = (x) => 5 - TK_PRI.findIndex((p) => p.toLowerCase() === String(x).toLowerCase()); a = r(a); b = r(b); return op === "<" ? a < b : op === ">" ? a > b : op === "<=" ? a <= b : a >= b; }
+    if (JQL_DATES.includes(f)) { a = String(a); b = String(b); if (b.length === 10) a = a.slice(0, 10); }
+    else if (typeof g === "number") { a = g; b = Number(b); }
+    else { a = String(a).toLowerCase(); b = String(b).toLowerCase(); }
+    switch (op) { case "=": return a === b; case "!=": return a !== b; case "~": return String(a).includes(String(b)); case "!~": return !String(a).includes(String(b)); case "<": return a < b; case ">": return a > b; case "<=": return a <= b; case ">=": return a >= b; }
+  };
+  if (Array.isArray(got)) { if (op === "!=" || op === "!~") return got.every(one); return got.some(one); }
+  return one(got);
+}
+function tkQuery(list, q) {
+  q = (q || "").trim(); if (!q) return { list, err: "" };
+  const jql = /(\s|^)(=|!=|~|<|>|<=|>=|in|is|not|order\s+by)(\s|\(|$)|[=~<>]/i.test(q) && /^[a-z]+\s*(=|!=|~|!~|<|>|<=|>=|\s(in|is|not|order)\b)/i.test(q) || /^order\s+by/i.test(q);
+  if (!jql) { const w = q.toLowerCase().split(/\s+/); return { list: list.filter((t) => { const h = `${t.id} ${t.title} ${t.desc} ${t.comps.join(" ")} ${t.labels.join(" ")} ${t.vendor} ${nameOf(t.assignee || "x")} ${roomName(t.room)}`.toLowerCase(); return w.every((x) => h.includes(x)); }), err: "" }; }
+  try {
+    const { pred, order } = jqlParse(q); let out = list.filter(pred);
+    if (order.length) out = tkSort(out, order);
+    return { list: out, err: "", ordered: !!order.length };
+  } catch (e) { return { list: list, err: e.message }; }
+}
+const TK_SORT_VAL = {
+  key: (t) => +t.id.slice(3), priority: (t) => TK_PRI.indexOf(t.priority), status: (t) => Object.keys(TK_ST).indexOf(t.status), assignee: (t) => nameOf(t.assignee || "~"), reporter: (t) => nameOf(t.owner),
+  due: (t) => t.due || "9999", created: (t) => t.created, updated: (t) => t.updated, resolved: (t) => t.resolvedAt || "", summary: (t) => t.title.toLowerCase(), type: (t) => t.itype, cost: (t) => t.cost, resolution: (t) => t.resolution || "",
+};
+function tkSort(list, order) {
+  return [...list].sort((a, b) => { for (const { f, dir } of order) { const g = TK_SORT_VAL[f] || (() => 0), x = g(a), y = g(b); if (x < y) return -dir; if (x > y) return dir; } return 0; });
+}
+
+/* ---- small view pieces ---- */
+const typeIcon = (t) => { const [g, c] = TK_TYPES[t.itype] || TK_TYPES.Task; return `<span class="ti ${c}" title="${esc(t.itype)}">${g}</span>`; };
+const priIcon = (p) => `<span class="pri ${TK_PRI_ICON[p][1]}" title="${esc(p)} priority">${TK_PRI_ICON[p][0]}</span>`;
+const avatar = (id, big) => (id ? `<span class="av ${big ? "big" : ""}" title="${esc(nameOf(id))}">${esc(initials(id))}</span>` : `<span class="av none ${big ? "big" : ""}" title="Unassigned">?</span>`);
+const stPill = (t) => `<span class="pill ${TK_ST[t.status].cls}">${TK_ST[t.status].n}</span>`;
+const dueChip = (t) => (t.due ? `<span class="due ${tkOverdue(t) ? "late" : ""}" title="Due ${esc(fmtDate(t.due))}">${tkOverdue(t) ? "Overdue · " : ""}${MON[parseD(t.due).getMonth()]} ${parseD(t.due).getDate()}</span>` : "");
+function tkRow(t) { return `<button class="item" type="button" data-card="${t.id}"><div><div class="t">${typeIcon(t)} ${esc(t.title)}</div><div class="s">${t.id} · ${esc(roomName(t.room))} · ${TK_TEAM[tkTeam(t)].name}${t.assignee ? " · " + esc(nameOf(t.assignee)) : " · Unassigned"}</div></div><div class="r">${stPill(t)}</div></button>`; }
+const tkVisible = () => S.tickets.filter((t) => canSeeTk(t) && (S.tk.team === "all" || tkTeam(t) === S.tk.team));
+const tkOpenCount = () => S.tickets.filter((t) => canWorkTk(t) && !isDone(t) && (t.status === "open" || t.status === "reopened") && !t.assignee).length;
+
+function kcard(t) {
+  const kids = tkKids(t), done = kids.filter(isDone).length, epic = t.epic && tkGet(t.epic);
+  const sla = !isDone(t) && tkHasSla(t) ? tkSla(t) : null, hot = sla && (sla.res.state === "breach" || sla.resp.state === "breach");
+  return `<div class="kc ${hot ? "hot" : ""} ${t.flagged ? "flag" : ""}" draggable="${canWorkTk(t)}" data-drag="${t.id}" data-tk2="open|${t.id}" tabindex="0" role="button" aria-label="${esc(t.id + " " + t.title)}">
+    <div class="kc-t">${esc(t.title)}</div>
+    ${epic || t.labels.length || t.flagged || tkBlocked(t) ? `<div class="kc-tags">${t.flagged ? '<span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${epic ? `<span class="tag epic">${esc(epic.title.length > 22 ? epic.title.slice(0, 21) + "…" : epic.title)}</span>` : ""}${t.labels.slice(0, 2).map((l) => `<span class="tag">${esc(l)}</span>`).join("")}</div>` : ""}
+    <div class="kc-f">${typeIcon(t)}<span class="mono key">${t.id}</span>${priIcon(t.priority)}${kids.length ? `<span class="sub" title="Sub-tasks done">↳ ${done}/${kids.length}</span>` : ""}${dueChip(t)}${hot ? '<span class="tag bad" title="SLA breached">SLA</span>' : ""}<span class="spacer"></span>${avatar(t.assignee)}</div></div>`;
+}
+
+/* ---- main tickets view ---- */
+const TK_TABS_W = [["board", "Board"], ["list", "List"], ["backlog", "Backlog"], ["calendar", "Calendar"], ["timeline", "Timeline"], ["reports", "Reports"], ["schedules", "Schedules"], ["settings", "Settings"]];
+function vTickets() {
+  const tk = S.tk, worker = anyWorker();
+  if (!worker) tk.tab = "mine";
+  else if (tk.tab === "mine") tk.tab = "board";
+  if (S.arg && TK_TABS_W.some((x) => x[0] === S.arg)) { tk.tab = S.arg; S.arg = null; }
+  const teams = myTeams();
+  if (teams.length === 1) tk.team = teams[0];
+  if (tk.team !== "all" && teams.length > 1 && !teams.includes(tk.team)) tk.team = "all";
+  const unread = S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length;
+  const head = `<div class="head"><div><h1>IT & Maintenance</h1><p class="lead">${worker ? "Track every building and tech issue from report to fix: boards, backlog, sprints, SLAs, preventive schedules and reports." : "Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment."}</p></div>
+    <div class="row">${teams.length > 1 ? `<select id="tkTeam" aria-label="Team"><option value="all" ${tk.team === "all" ? "selected" : ""}>All teams</option>${teams.map((x) => `<option value="${x}" ${tk.team === x ? "selected" : ""}>${TK_TEAM[x].name}</option>`).join("")}</select>` : ""}
+    <button class="btn" type="button" data-tk2="notifs" aria-label="Notifications">Notifications${unread ? ` <span class="count">${unread}</span>` : ""}</button>
+    <button class="btn primary" type="button" data-tk2="create">${worker ? "Create" : "Report a problem"}</button></div></div>`;
+  if (!worker) return head + vTkMine();
+  const tabs = `<div class="btabs tkt" role="tablist">${TK_TABS_W.map(([id, n]) => `<button type="button" role="tab" aria-selected="${tk.tab === id}" class="${tk.tab === id ? "on" : ""}" data-tk2="tab|${id}">${n}</button>`).join("")}</div>`;
+  const body = { board: vTkBoard, list: vTkList, backlog: vTkBacklog, calendar: vTkCalendar, timeline: vTkTimeline, reports: vTkReports, schedules: vTkSchedules, settings: vTkSettings }[tk.tab] || vTkBoard;
+  return head + tabs + body();
+}
+function vTkMine() {
+  const mine = S.tickets.filter((t) => t.owner === S.me).sort((a, b) => (b.updated > a.updated ? 1 : -1));
+  const watching = S.tickets.filter((t) => t.owner !== S.me && (t.watchers || []).includes(S.me));
+  const open = mine.filter((t) => !isDone(t)), done = mine.filter(isDone);
+  const tbl = (xs) => `<div class="tablewrap"><table><thead><tr><th>Request</th><th>Status</th><th>Assigned to</th><th>Updated</th></tr></thead><tbody>${xs.map((t) => `<tr><td><button class="lnk" type="button" data-card="${t.id}">${typeIcon(t)} ${esc(t.title)}</button><div class="small muted"><span class="mono">${t.id}</span> · ${esc(roomName(t.room))} · ${TK_TEAM[tkTeam(t)].name}</div></td><td>${stPill(t)}${t.resolution ? `<div class="small muted">${esc(t.resolution)}</div>` : ""}</td><td>${t.assignee ? esc(nameOf(t.assignee)) : '<span class="muted">Waiting to be picked up</span>'}</td><td class="small muted">${ago(t.updated)}</td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="panel"><div class="panel-h"><h2>Your open requests</h2><span class="small muted">${open.length} open</span></div>${open.length ? tbl(open) : `<div class="empty">Nothing open. Use <strong>Report a problem</strong> when something breaks.</div>`}</div>
+  ${watching.length ? `<div class="panel"><div class="panel-h"><h2>Requests you follow</h2></div>${tbl(watching)}</div>` : ""}
+  ${done.length ? `<div class="panel"><div class="panel-h"><h2>Resolved</h2></div>${tbl(done)}</div>` : ""}`;
+}
+
+/* ---- Board ---- */
+function tkBoardSet() {
+  const tk = S.tk, qf = tk.qf, q = (tk.bq || "").trim().toLowerCase();
+  let xs = tkVisible().filter((t) => t.itype !== "Epic");
+  if (tk.scope === "sprint") xs = xs.filter((t) => tkSprint(t.sprint)?.state === "active");
+  if (tk.epicF) xs = xs.filter((t) => t.epic === tk.epicF);
+  if (qf.mine) xs = xs.filter((t) => t.assignee === S.me);
+  if (qf.unassigned) xs = xs.filter((t) => !t.assignee);
+  if (qf.urgent) xs = xs.filter((t) => ["Highest", "High"].includes(t.priority));
+  if (qf.overdue) xs = xs.filter(tkOverdue);
+  if (qf.blocked) xs = xs.filter((t) => tkBlocked(t) || t.flagged);
+  if (qf.recent) xs = xs.filter((t) => Date.now() - tsMs(t.updated) < 2 * 864e5);
+  if (q) xs = xs.filter((t) => `${t.id} ${t.title} ${t.desc} ${t.labels.join(" ")}`.toLowerCase().includes(q));
+  return xs.filter((t) => !isDone(t) || (t.resolvedAt && Date.now() - tsMs(t.resolvedAt) < 14 * 864e5));
+}
+function vTkBoard() {
+  const tk = S.tk, xs = tkBoardSet();
+  const epics = tkVisible().filter((t) => t.itype === "Epic");
+  const qfs = [["mine", "Only my issues"], ["unassigned", "Unassigned"], ["urgent", "High priority"], ["overdue", "Overdue"], ["blocked", "Blocked or flagged"], ["recent", "Updated recently"]];
+  const act = tkVisible().find((t) => tkSprint(t.sprint)?.state === "active"), sp = S.tkx.sprints.find((s) => s.state === "active");
+  const lanes = tk.swim === "none" ? [{ k: "", n: "", items: xs }] : (() => {
+    const key = { assignee: (t) => t.assignee || "", priority: (t) => t.priority, epic: (t) => t.epic || "", type: (t) => t.itype }[tk.swim];
+    const vals = [...new Set(xs.map(key))].sort((a, b) => (tk.swim === "priority" ? TK_PRI.indexOf(a) - TK_PRI.indexOf(b) : String(a || "~").localeCompare(String(b || "~"))));
+    const label = (v) => (tk.swim === "assignee" ? (v ? nameOf(v) : "Unassigned") : tk.swim === "epic" ? (v ? `${v} · ${tkGet(v)?.title || ""}` : "No epic") : v);
+    return vals.map((v) => ({ k: v, n: label(v), items: xs.filter((t) => key(t) === v) }));
+  })();
+  const cols = (items, lane) => `<div class="kb">${TK_COLS.map((c) => { const ys = items.filter((t) => c.sts.includes(t.status)); return `<div class="kcol" data-drop="${c.id}" data-lane="${esc(lane)}"><h3><span>${c.n}</span><span class="mono">${ys.length}</span></h3>${ys.map(kcard).join("") || '<div class="small muted kempty">Drop issues here</div>'}</div>`; }).join("")}</div>`;
+  return `<div class="panel panel-b stack">
+    <div class="row">${sp && tk.scope === "sprint" ? `<strong>${esc(sp.name)}</strong><span class="small muted">${fmtDate(sp.start)} – ${fmtDate(sp.end)} · ${daysBetween(TODAY, sp.end) >= 0 ? daysBetween(TODAY, sp.end) + " days left" : "ended"}</span>` : '<strong>All issues</strong>'}
+      <span class="spacer"></span>
+      <label class="small muted" for="tkScope">Show</label><select id="tkScope"><option value="sprint" ${tk.scope === "sprint" ? "selected" : ""}>Active sprint</option><option value="all" ${tk.scope === "all" ? "selected" : ""}>All issues</option></select>
+      <label class="small muted" for="tkSwim">Group by</label><select id="tkSwim">${[["none", "None"], ["assignee", "Assignee"], ["priority", "Priority"], ["epic", "Epic"], ["type", "Issue type"]].map(([v, n]) => `<option value="${v}" ${tk.swim === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <label class="small muted" for="tkEpicF">Epic</label><select id="tkEpicF"><option value="">All</option>${epics.map((e) => `<option value="${e.id}" ${tk.epicF === e.id ? "selected" : ""}>${esc(e.title)}</option>`).join("")}</select></div>
+    <div class="row"><input type="search" id="tkbq" class="srch" placeholder="Search this board" value="${esc(tk.bq || "")}" aria-label="Search board">${qfs.map(([k, n]) => `<button type="button" class="chip ${tk.qf[k] ? "on" : ""}" data-tk2="qf|${k}">${n}</button>`).join("")}${Object.values(tk.qf).some(Boolean) || tk.bq ? '<button type="button" class="chip" data-tk2="qfclear">Clear</button>' : ""}</div>
+    ${lanes.length ? lanes.map((l) => (tk.swim === "none" ? cols(l.items, "") : `<div class="lane"><h3 class="lane-h">${l.k && tk.swim === "assignee" ? avatar(l.k) : ""} ${esc(l.n)} <span class="muted small">${l.items.length} issue${l.items.length === 1 ? "" : "s"}</span></h3>${cols(l.items, l.k)}</div>`)).join("") : '<div class="empty">No issues match.</div>'}
+    <div class="hint">Drag cards between columns to change status. Moves follow the workflow; resolving asks for a resolution. Click a card for details.</div></div>`;
+}
+
+/* ---- List + JQL ---- */
+function vTkList() {
+  const tk = S.tk, base = tkVisible();
+  const r = tkQuery(base, tk.q);
+  let xs = r.list;
+  if (!r.ordered) xs = tkSort(xs, [{ f: tk.sort.f, dir: tk.sort.dir }]);
+  const sel = tk.sel.filter((id) => xs.some((t) => t.id === id)); tk.sel = sel;
+  const th = (f, n) => `<th><button type="button" class="thb" data-tk2="sort|${f}">${n}${tk.sort.f === f ? (tk.sort.dir > 0 ? " ▲" : " ▼") : ""}</button></th>`;
+  const people = [...new Set(myTeams().flatMap(tkPeople))];
+  return `<div class="panel panel-b stack">
+    <div class="row"><input type="search" id="tkq" class="srch wide" placeholder='Search, or use JQL: status = "In Progress" AND assignee = me ORDER BY priority DESC' value="${esc(tk.q)}" aria-label="Search or JQL"><button type="button" class="btn small" data-tk2="savefilter">Save filter</button><button type="button" class="btn small" data-tk2="csv">Export CSV</button></div>
+    ${r.err ? `<div class="note bad" role="alert">${esc(r.err)}</div>` : ""}
+    <div class="row"><span class="small muted">Filters</span>${S.tkx.filters.map((f) => `<span class="chipx"><button type="button" class="chip ${tk.q === f.q ? "on" : ""}" data-tk2="filter|${f.id}">${esc(f.name)}</button>${f.mine ? `<button type="button" class="x" aria-label="Delete filter ${esc(f.name)}" data-tk2="delfilter|${f.id}">×</button>` : ""}</span>`).join("")}</div>
+    ${sel.length ? `<div class="bulk"><strong>${sel.length} selected</strong>
+      <select id="bkAssign"><option value="">Assign to…</option><option value="__none">Unassigned</option>${people.map((p) => `<option value="${p}">${esc(nameOf(p))}</option>`).join("")}</select>
+      <select id="bkStatus"><option value="">Move to…</option>${Object.keys(TK_ST).map((s) => `<option value="${s}">${TK_ST[s].n}</option>`).join("")}</select>
+      <select id="bkPri"><option value="">Priority…</option>${TK_PRI.map((p) => `<option>${p}</option>`).join("")}</select>
+      <select id="bkSprint"><option value="">Sprint…</option><option value="__none">Backlog</option>${S.tkx.sprints.filter((s) => s.state !== "done").map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select>
+      <input type="text" id="bkLabel" placeholder="Add label" size="10"><button type="button" class="btn small" data-tk2="bulkLabel">Add</button>
+      <button type="button" class="btn small" data-tk2="bulkclear">Clear</button></div>` : ""}
+    <div class="tablewrap"><table class="tkl"><thead><tr><th><input type="checkbox" aria-label="Select all" data-tk2="selall" ${sel.length && sel.length === xs.length ? "checked" : ""}></th>${th("type", "Type")}${th("key", "Key")}${th("summary", "Summary")}${th("status", "Status")}${th("assignee", "Assignee")}${th("priority", "Priority")}${th("due", "Due")}${th("updated", "Updated")}</tr></thead><tbody>
+    ${xs.map((t) => `<tr class="${sel.includes(t.id) ? "sel" : ""}"><td><input type="checkbox" aria-label="Select ${t.id}" data-tk2="sel|${t.id}" ${sel.includes(t.id) ? "checked" : ""}></td><td>${typeIcon(t)}</td><td class="mono">${t.id}</td>
+      <td><button type="button" class="lnk strong" data-card="${t.id}">${esc(t.title)}</button><div class="small muted">${t.comps.map(esc).join(", ")}${t.labels.length ? " · " + t.labels.map((l) => "#" + esc(l)).join(" ") : ""}</div></td><td>${stPill(t)}</td><td>${t.assignee ? `<span class="row" style="gap:6px">${avatar(t.assignee)}${esc(nameOf(t.assignee))}</span>` : '<span class="muted">Unassigned</span>'}</td><td>${priIcon(t.priority)} <span class="small">${t.priority}</span></td><td>${dueChip(t) || '<span class="muted">—</span>'}</td><td class="small muted">${ago(t.updated)}</td></tr>`).join("") || `<tr><td colspan="9" class="empty">No issues match.</td></tr>`}
+    </tbody></table></div><div class="small muted">${xs.length} issue${xs.length === 1 ? "" : "s"}. Fields: status, statusCategory, assignee, reporter, priority, type, team, label, component, room, asset, resolution, sprint, epic, due, created, updated, resolved, text, summary, cost. Operators: = != ~ &lt; &gt; IN, IS EMPTY, AND, OR, NOT.</div></div>`;
+}
+
+/* ---- Backlog + sprints ---- */
+function vTkBacklog() {
+  const xs = tkVisible().filter((t) => t.itype !== "Epic" && t.itype !== "Sub-task");
+  const sprints = S.tkx.sprints.filter((s) => s.state !== "done");
+  const hrs = (l) => l.reduce((a, t) => a + (Number(t.est) || 0), 0);
+  const row = (t) => `<div class="brow" draggable="true" data-drag="${t.id}"><span class="grip" aria-hidden="true">⋮⋮</span>${typeIcon(t)}<button type="button" class="lnk key mono" data-card="${t.id}">${t.id}</button><button type="button" class="lnk bt" data-card="${t.id}">${esc(t.title)}</button>${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${stPill(t)}${t.est ? `<span class="small muted">${t.est}h</span>` : ""}${priIcon(t.priority)}${avatar(t.assignee)}
+    <span class="row" style="gap:2px"><button type="button" class="btn small" aria-label="Move ${t.id} up" data-tk2="rank|${t.id}|-1">↑</button><button type="button" class="btn small" aria-label="Move ${t.id} down" data-tk2="rank|${t.id}|1">↓</button></span>
+    <select class="mv" aria-label="Move ${t.id} to" data-tkf="sprintmove|${t.id}"><option value="">Move to…</option><option value="__none">Backlog</option>${sprints.map((s) => `<option value="${s.id}" ${t.sprint === s.id ? "disabled" : ""}>${esc(s.name)}</option>`).join("")}</select></div>`;
+  const sec = (s) => {
+    const l = xs.filter((t) => (s ? t.sprint === s.id : !t.sprint && !isDone(t))).sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    const dn = l.filter(isDone).length;
+    return `<div class="panel" data-drop-sprint="${s ? s.id : "__none"}"><div class="panel-h"><div><h2>${s ? esc(s.name) : "Backlog"} ${s ? `<span class="pill ${s.state === "active" ? "ok" : ""}">${s.state === "active" ? "Active" : "Planned"}</span>` : ""}</h2>${s ? `<div class="small muted">${fmtDate(s.start)} – ${fmtDate(s.end)} · ${esc(s.goal)}</div>` : '<div class="small muted">Not scheduled yet. Drag issues into a sprint.</div>'}</div>
+      <div class="row"><span class="small muted">${l.length} issue${l.length === 1 ? "" : "s"} · ${hrs(l)}h estimated${s ? ` · ${dn}/${l.length} done` : ""}</span>${s && s.state === "planned" ? `<button type="button" class="btn small primary" data-tk2="startsprint|${s.id}">Start sprint</button>` : ""}${s && s.state === "active" ? `<button type="button" class="btn small" data-tk2="completesprint|${s.id}">Complete sprint</button>` : ""}${s ? `<button type="button" class="btn small" data-tk2="editsprint|${s.id}">Edit</button>` : ""}</div></div>
+      ${s && l.length ? `<div class="bar2"><span style="width:${Math.round((dn / l.length) * 100)}%"></span></div>` : ""}
+      <div class="blist">${l.map(row).join("") || '<div class="empty small">Nothing here. Drag issues in, or use the Move to menu.</div>'}</div>
+      <div class="panel-b"><button type="button" class="btn small" data-tk2="create|${s ? s.id : ""}">+ Create issue</button></div></div>`;
+  };
+  return `<div class="row"><button type="button" class="btn" data-tk2="newsprint">Create sprint</button><span class="small muted">Sprints are shared by IT and Maintenance. Completed sprints move unfinished work back to the backlog or into the next sprint.</span></div>${sprints.map(sec).join("")}${sec(null)}`;
+}
+
+/* ---- Calendar (due dates and preventive schedules) ---- */
+function vTkCalendar() {
+  const tk = S.tk, [y, m] = tk.cal.split("-").map(Number), first = new Date(y, m - 1, 1), startPad = first.getDay(), days = new Date(y, m, 0).getDate();
+  const prev = ymd(new Date(y, m - 2, 1)).slice(0, 7), next = ymd(new Date(y, m, 1)).slice(0, 7);
+  const xs = tkVisible().filter((t) => t.due && !t.parent);
+  const sc = S.tkx.schedules.filter((s) => s.on && (S.tk.team === "all" ? myTeams().includes(s.team) : s.team === S.tk.team));
+  let cells = "";
+  for (let i = 0; i < Math.ceil((startPad + days) / 7) * 7; i++) {
+    const dn = i - startPad + 1, ok = dn >= 1 && dn <= days, ds = ok ? `${y}-${pad(m)}-${pad(dn)}` : "";
+    const ts = ok ? xs.filter((t) => t.due === ds) : [], ss = ok ? sc.filter((s) => s.next === ds) : [];
+    cells += `<div class="cal ${ok ? "" : "off"} ${ds === TODAY ? "today" : ""}">${ok ? `<div class="dn">${dn}</div>` : ""}${ts.slice(0, 3).map((t) => `<button type="button" class="ce ${isDone(t) ? "done" : tkOverdue(t) ? "late" : ""}" data-card="${t.id}" title="${esc(t.title)}">${esc(t.title)}</button>`).join("")}${ts.length > 3 ? `<div class="small muted">+${ts.length - 3} more</div>` : ""}${ss.map((s) => `<div class="ce pm" title="Scheduled: ${esc(s.name)}">⟳ ${esc(s.name)}</div>`).join("")}</div>`;
+  }
+  return `<div class="panel"><div class="panel-h"><h2>${MON[m - 1]} ${y}</h2><div class="row"><button type="button" class="btn small" data-tk2="cal|${prev}">‹ Prev</button><button type="button" class="btn small" data-tk2="cal|${TODAY.slice(0, 7)}">Today</button><button type="button" class="btn small" data-tk2="cal|${next}">Next ›</button></div></div>
+    <div class="panel-b"><div class="calg">${DOW.map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div><div class="hint" style="margin-top:8px">Due dates of open and resolved tickets. ⟳ marks the next date of a preventive-maintenance schedule.</div></div></div>`;
+}
+
+/* ---- Timeline (epics and sprints) ---- */
+function vTkTimeline() {
+  const a = addDays(TODAY, -21), span = 98, pos = (d) => Math.max(0, Math.min(100, (daysBetween(a, d) / span) * 100));
+  const bar = (s, e, cls, label, extra, click) => `<div class="tlrow"><div class="tll">${label}</div><div class="tlt"><div class="tlb ${cls}" ${click ? `data-tk2="${click}" role="button" tabindex="0"` : ""} style="left:${pos(s)}%;width:${Math.max(1.5, pos(e) - pos(s))}%">${extra || ""}</div><div class="tlnow" style="left:${pos(TODAY)}%"></div></div></div>`;
+  const months = []; for (let i = 0; i < span; i += 7) months.push(`<span style="left:${(i / span) * 100}%">${MON[parseD(addDays(a, i)).getMonth()]} ${parseD(addDays(a, i)).getDate()}</span>`);
+  const epics = tkVisible().filter((t) => t.itype === "Epic");
+  return `<div class="panel"><div class="panel-h"><h2>Sprints and epics</h2><span class="small muted">The vertical line is today</span></div><div class="panel-b tl2"><div class="tlax">${months.join("")}</div>
+    ${S.tkx.sprints.map((s) => bar(s.start, s.end, "sp " + s.state, `<strong>${esc(s.name)}</strong>`, "", "")).join("")}
+    <div class="tlsep">Epics</div>
+    ${epics.map((e) => { const k = tkEpicKids(e), d = k.filter(isDone).length; return bar(e.start || e.created.slice(0, 10), e.due || addDays(TODAY, 30), "ep", `<button type="button" class="lnk" data-card="${e.id}">${esc(e.title)}</button><div class="small muted">${k.length} issue${k.length === 1 ? "" : "s"} · ${d} done</div>`, `<span class="fill" style="width:${k.length ? (d / k.length) * 100 : 0}%"></span>`, "open|" + e.id); }).join("") || '<div class="empty">No epics yet. Create one to group related work.</div>'}</div></div>`;
+}
+
+/* ---- Reports ---- */
+function vTkReports() {
+  const xs = tkVisible(), open = xs.filter((t) => !isDone(t) && t.itype !== "Epic");
+  const week = Date.now() - 7 * 864e5;
+  const resolved7 = xs.filter((t) => t.resolvedAt && tsMs(t.resolvedAt) > week);
+  const times = xs.filter((t) => t.resolvedAt && t.resolution !== "Withdrawn by reporter").map((t) => (tsMs(t.resolvedAt) - tsMs(t.created)) / 36e5);
+  const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+  const slaDone = xs.filter((t) => t.resolvedAt && tkHasSla(t)).map((t) => tkSla(t).res.state === "met");
+  const compliance = slaDone.length ? Math.round((slaDone.filter(Boolean).length / slaDone.length) * 100) : 100;
+  const breached = open.filter((t) => tkHasSla(t)).filter((t) => { const s = tkSla(t); return s.res.state === "breach" || s.resp.state === "breach"; });
+  const tile = (n, l, c) => `<div class="tile2"><div class="big ${c || ""}">${n}</div><div class="small muted">${l}</div></div>`;
+  const bars = (rows, max, fmt) => rows.map(([l, v, c]) => `<div class="hb"><span class="hl">${l}</span><span class="ht"><span class="${c || ""}" style="width:${max ? (v / max) * 100 : 0}%"></span></span><span class="hv mono">${fmt ? fmt(v) : v}</span></div>`).join("") || '<div class="small muted">Nothing yet.</div>';
+  const days = Array.from({ length: 14 }, (_, i) => addDays(TODAY, i - 13));
+  const cr = days.map((d) => xs.filter((t) => t.created.slice(0, 10) === d).length), rs = days.map((d) => xs.filter((t) => t.resolvedAt && t.resolvedAt.slice(0, 10) === d).length);
+  const mx = Math.max(1, ...cr, ...rs), W = 560, H = 140, bw = W / days.length;
+  const svg = `<svg viewBox="0 0 ${W} ${H + 22}" role="img" aria-label="Created and resolved tickets over the last 14 days" class="chart">${days.map((d, i) => `<rect x="${i * bw + 4}" y="${H - (cr[i] / mx) * H}" width="${bw / 2 - 4}" height="${(cr[i] / mx) * H}" fill="var(--info)"><title>${d}: ${cr[i]} created</title></rect><rect x="${i * bw + bw / 2}" y="${H - (rs[i] / mx) * H}" width="${bw / 2 - 4}" height="${(rs[i] / mx) * H}" fill="var(--ok)"><title>${d}: ${rs[i]} resolved</title></rect>${i % 2 === 0 ? `<text x="${i * bw + bw / 2}" y="${H + 14}" text-anchor="middle" class="ax">${parseD(d).getDate()}</text>` : ""}`).join("")}<line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/></svg>`;
+  const by = (f) => { const m = {}; open.forEach((t) => (Array.isArray(f(t)) ? f(t) : [f(t)]).forEach((k) => { if (k) m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const wl = {}; open.forEach((t) => { const k = t.assignee || ""; wl[k] = wl[k] || { n: 0, h: 0 }; wl[k].n++; wl[k].h += Math.max(0, (Number(t.est) || 0) - (Number(t.spent) || 0)); });
+  const assetCounts = {}; xs.filter((t) => t.asset).forEach((t) => (assetCounts[t.asset] = (assetCounts[t.asset] || 0) + 1));
+  const assetRows = Object.entries(assetCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, n]) => [`${id} · ${esc(S.assets.find((a) => a.id === id)?.name || id)}`, n]);
+  const spent = xs.reduce((a, t) => a + (Number(t.cost) || 0), 0), hrsLogged = xs.reduce((a, t) => a + (Number(t.spent) || 0), 0);
+  return `<div class="tiles2">${tile(open.length, "Open issues")}${tile(open.filter((t) => !t.assignee).length, "Unassigned", open.some((t) => !t.assignee) ? "warn" : "")}${tile(open.filter(tkOverdue).length, "Overdue", open.some(tkOverdue) ? "bad" : "")}${tile(resolved7.length, "Resolved, last 7 days", "ok")}${tile(avg ? fmtH(avg) : "—", "Average time to resolve")}${tile(compliance + "%", "Resolved within SLA", compliance < 80 ? "bad" : "ok")}${tile(breached.length, "Open past an SLA target", breached.length ? "bad" : "")}${tile(Math.round(hrsLogged * 10) / 10 + "h", `Time logged · $${spent.toLocaleString()} cost`)}</div>
+  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Created vs. resolved</h2><span class="legend"><span><i style="background:var(--info)"></i>Created</span><span><i style="background:var(--ok)"></i>Resolved</span></span></div><div class="panel-b">${svg}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Open by priority</h2></div><div class="panel-b">${bars(TK_PRI.map((p) => [p, open.filter((t) => t.priority === p).length, TK_PRI_ICON[p][1]]), Math.max(1, ...TK_PRI.map((p) => open.filter((t) => t.priority === p).length)))}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Open by status</h2></div><div class="panel-b">${bars(Object.keys(TK_ST).filter((s) => TK_ST[s].c !== "done").map((s) => [TK_ST[s].n, open.filter((t) => t.status === s).length, TK_ST[s].cls]), Math.max(1, open.length))}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Workload by person</h2><span class="small muted">open issues · hours remaining</span></div><div class="panel-b">${bars(Object.entries(wl).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => [k ? esc(nameOf(k)) : "Unassigned", v.n, k ? "" : "warn"]), Math.max(1, ...Object.values(wl).map((v) => v.n)), (v) => v)}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Open by component</h2></div><div class="panel-b">${bars(by((t) => t.comps).map(([k, v]) => [esc(k), v]), 8)}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Open by location</h2></div><div class="panel-b">${bars(by((t) => roomName(t.room)).slice(0, 6).map(([k, v]) => [esc(k), v]), 8)}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Equipment with the most tickets</h2></div><div class="panel-b">${bars(assetRows, Math.max(1, ...assetRows.map((r) => r[1])))}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Open past an SLA target</h2></div>${breached.length ? `<div class="list">${breached.map(tkRow).join("")}</div>` : '<div class="empty">None. Every open ticket is inside its targets.</div>'}</div></div>`;
+}
+
+/* ---- Preventive-maintenance schedules ---- */
+function vTkSchedules() {
+  const scs = S.tkx.schedules.filter((s) => myTeams().includes(s.team) && (S.tk.team === "all" || s.team === S.tk.team));
+  const due = scs.filter((s) => s.on && daysBetween(TODAY, s.next) <= 7);
+  return `<div class="row"><button type="button" class="btn" data-tk2="newschedule">New schedule</button><button type="button" class="btn primary" data-tk2="rundue" ${due.length ? "" : "disabled"}>Create tickets for ${due.length} due schedule${due.length === 1 ? "" : "s"}</button><span class="small muted">A schedule creates a Preventive ticket, with its checklist as sub-tasks, a week before it is due.</span></div>
+  <div class="panel"><div class="tablewrap"><table><thead><tr><th>Schedule</th><th>Team</th><th>Repeats</th><th>Equipment</th><th>Owner</th><th>Next due</th><th>Active</th><th></th></tr></thead><tbody>
+  ${scs.map((s) => `<tr><td><strong>${esc(s.name)}</strong><div class="small muted">${s.checklist.length ? s.checklist.length + " checklist item" + (s.checklist.length === 1 ? "" : "s") : "No checklist"}${s.last ? " · last created " + fmtDate(s.last) : ""}</div></td><td>${TK_TEAM[s.team].name}</td><td>${esc(s.freq)}</td><td>${s.asset ? `<span class="mono">${s.asset}</span> ${esc(S.assets.find((a) => a.id === s.asset)?.name || "")}` : esc(roomName(s.room))}</td><td>${esc(nameOf(s.assignee))}</td>
+    <td>${daysBetween(TODAY, s.next) < 0 ? `<span class="due late">Overdue · ${fmtDate(s.next)}</span>` : fmtDate(s.next)}<div class="small muted">${daysBetween(TODAY, s.next) >= 0 ? "in " + daysBetween(TODAY, s.next) + " days" : ""}</div></td>
+    <td><label class="toggle"><input type="checkbox" data-tkf="schedon|${s.id}" ${s.on ? "checked" : ""} aria-label="Active"><span></span></label></td><td><div class="row"><button type="button" class="btn small" data-tk2="runschedule|${s.id}">Create now</button><button type="button" class="btn small" data-tk2="editschedule|${s.id}">Edit</button></div></td></tr>`).join("") || '<tr><td colspan="8" class="empty">No schedules yet.</td></tr>'}</tbody></table></div></div>`;
+}
+
+/* ---- Project settings ---- */
+function vTkSettings() {
+  const admin = has("admins"), pend = S.tickets.filter((t) => t.status === "resolved" && t.resolvedAt && Date.now() - tsMs(t.resolvedAt) > 7 * 864e5).length;
+  return `<div class="grid2">
+  <div class="panel"><div class="panel-h"><h2>Automation</h2><button type="button" class="btn small" data-tk2="runauto">Run now</button></div><div class="panel-b stack">
+    ${S.tkx.auto.map((r) => `<div class="rule"><label class="toggle"><input type="checkbox" data-tkf="auto|${r.id}" ${r.on ? "checked" : ""} aria-label="${esc(r.name)}" ${admin || has("facilities") || has("it") ? "" : "disabled"}><span></span></label><div><strong>${esc(r.name)}</strong><div class="small muted">${esc(r.desc)}</div></div></div>`).join("")}
+    <div class="hint">${pend} resolved ticket${pend === 1 ? "" : "s"} waiting to be closed. Rules run when things happen; "Run now" also applies the timed ones.</div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Workflow</h2></div><div class="panel-b stack"><div class="small muted">Every status and where it can go. Workers can use any transition; reporters can only reopen their own resolved ticket or withdraw an open one.</div>
+    <table><thead><tr><th>From</th><th>Can move to</th></tr></thead><tbody>${Object.keys(TK_FLOW).map((s) => `<tr><td>${`<span class="pill ${TK_ST[s].cls}">${TK_ST[s].n}</span>`}</td><td class="small">${TK_FLOW[s].map((x) => TK_ST[x].n).join(" · ")}</td></tr>`).join("")}</tbody></table>
+    <div class="small muted">Resolve and Close ask for a resolution: ${TK_RESOLUTIONS.join(", ")}. Waiting pauses the SLA clock.</div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Priorities and SLA targets</h2></div><div class="tablewrap"><table><thead><tr><th>Priority</th><th>First response</th><th>Resolution</th></tr></thead><tbody>${TK_PRI.map((p) => `<tr><td>${priIcon(p)} ${p}</td><td>${TK_SLA[p][0]}h</td><td>${TK_SLA[p][1] >= 48 ? TK_SLA[p][1] / 24 + " days" : TK_SLA[p][1] + "h"}</td></tr>`).join("")}</tbody></table></div><div class="panel-b small muted">Targets use calendar hours. Highest priority also alerts the whole team.</div></div>
+  <div class="panel"><div class="panel-h"><h2>Components</h2>${admin || anyWorker() ? '<button type="button" class="btn small" data-tk2="newcomp">Add component</button>' : ""}</div><div class="tablewrap"><table><thead><tr><th>Component</th><th>Team</th><th>Default assignee</th><th>Open</th></tr></thead><tbody>${S.tkx.comps.filter((c) => myTeams().includes(c.team)).map((c) => `<tr><td>${esc(c.name)}</td><td>${TK_TEAM[c.team].name}</td><td><select data-tkf="complead|${esc(c.name)}" aria-label="Default assignee for ${esc(c.name)}"><option value="">None</option>${tkPeople(c.team).map((p) => `<option value="${p}" ${c.lead === p ? "selected" : ""}>${esc(nameOf(p))}</option>`).join("")}</select></td><td>${S.tickets.filter((t) => t.comps.includes(c.name) && !isDone(t)).length}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="panel"><div class="panel-h"><h2>Who is notified</h2></div><div class="panel-b small stack"><div>The reporter, assignee, watchers and anyone @mentioned hear about: assignment, comments, status changes, field changes and due dates.</div><div>Internal notes only notify team members. Notifications appear under <strong>Notifications</strong> here and would also go to email.</div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Labels</h2></div><div class="panel-b row">${(() => { const m = {}; S.tickets.forEach((t) => t.labels.forEach((l) => (m[l] = (m[l] || 0) + 1))); return Object.entries(m).sort().map(([l, n]) => `<button type="button" class="chip" data-tk2="labelq|${esc(l)}">#${esc(l)} <span class="muted">${n}</span></button>`).join(""); })()}</div></div></div>`;
+}
+
+/* ---- Issue view ---- */
+const TK_NEXT = { open: "inprogress", reopened: "inprogress", inprogress: "resolved", waiting: "inprogress", review: "resolved", resolved: "closed", closed: "reopened" };
 function vTicketCard(t) {
-  const a = t.asset ? S.assets.find((x) => x.id === t.asset) : null;
-  const work = canWorkTk(t);
-  const steps = ["new", "assigned", "in_progress", "resolved"], at = t.status === "waiting" ? 2 : steps.indexOf(t.status);
-  let act = "";
-  if (work && t.status !== "resolved") act = `<div class="panel panel-b stack"><div class="row">
-    ${t.status === "new" ? `<button class="btn primary" data-tk="assign" type="button">Assign to me</button>` : ""}
-    ${["assigned", "waiting"].includes(t.status) ? `<button class="btn primary" data-tk="start" type="button">Start work</button>` : ""}
-    ${t.status === "in_progress" ? `<button class="btn" data-tk="wait" type="button">Waiting on parts or vendor</button><button class="btn primary" data-tk="resolve" type="button">Resolve</button>` : ""}
-    ${t.status === "waiting" ? `<button class="btn primary" data-tk="resolve" type="button">Resolve</button>` : ""}</div>
-    <div class="fld" style="max-width:520px"><label for="tkNote">Note (optional)</label><input type="text" id="tkNote" placeholder="Replaced the HDMI switch"></div></div>`;
-  return `<div class="crumb"><button type="button" data-go="tickets">IT & Maintenance</button> / <span class="mono">${t.id}</span></div>
-  <div class="head"><div><h1>${esc(t.cat)}</h1><p class="lead">${esc(roomName(t.room))} · reported by ${esc(nameOf(t.owner))} · ${t.type === "it" ? "IT" : "Maintenance"} team${t.assignee ? " · " + esc(nameOf(t.assignee)) : ""}</p></div><span class="pill ${TK_ST[t.status][1]}">${TK_ST[t.status][0]}</span></div>
-  <div class="panel panel-b"><div class="stages">${["Reported", "Assigned", "In progress", "Resolved"].map((s, i) => `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`).join("")}</div></div>
-  ${act}
-  <div class="grid2"><div class="panel"><div class="panel-h"><h2>Details</h2>${t.urgency.startsWith("Urgent") ? '<span class="pill bad">Urgent</span>' : `<span class="pill">${esc(t.urgency)}</span>`}</div><div class="panel-b"><p style="margin:0 0 10px">${esc(t.desc)}</p><dl class="kv">
-    <dt>Equipment</dt><dd>${a ? `<button type="button" class="crumb" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-asset="${a.id}">${a.id} · ${esc(a.name)}</button>` : "Not specified"}</dd>${t.photo ? '<dt>Photo</dt><dd><span class="pill">photo.jpg</span></dd>' : ""}</dl></div></div>
-  <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${t.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div>`;
+  if (!canSeeTk(t)) return `<div class="empty">This ticket isn't shared with you. Only the reporter, watchers and the ${TK_TEAM[tkTeam(t)].name} team can open it.</div>`;
+  const worker = canWorkTk(t), mine = t.owner === S.me, tk = S.tk, edit = worker || (mine && !isDone(t));
+  const a = t.asset ? S.assets.find((x) => x.id === t.asset) : null, epic = t.epic && tkGet(t.epic), parent = t.parent && tkGet(t.parent);
+  const kids = tkKids(t), kdone = kids.filter(isDone).length, eKids = t.itype === "Epic" ? tkEpicKids(t) : [];
+  const sla = tkSla(t);
+  const trans = (TK_FLOW[t.status] || []).filter((to) => tkCan(t, to));
+  const nextTo = TK_NEXT[t.status];
+  const btns = trans.map((to) => `<button type="button" class="btn ${to === nextTo ? "primary" : ""}" data-tk2="move|${t.id}|${to}">${t.owner === S.me && !worker && to === "closed" ? "Withdraw this request" : TK_TRANS[to]}</button>`).join("");
+  const sel = (f, opts, cur, label, dis) => `<div class="kvr"><label for="f_${f}">${label}</label><select id="f_${f}" data-tkf="${f}|${t.id}" ${edit && worker && !dis ? "" : "disabled"}>${opts.map(([v, n]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>`;
+  const people = tkPeople(tkTeam(t)).map((p) => [p, nameOf(p)]);
+  const acts = (t.log || []).filter((l) => (worker || !(l.k === "work" || (l.k === "comment" && l.internal))) && (tk.act === "all" || (tk.act === "comments" && l.k === "comment") || (tk.act === "history" && l.k !== "comment" && l.k !== "work") || (tk.act === "work" && l.k === "work"))).slice().reverse();
+  const actHtml = acts.map((l) => {
+    if (l.k === "comment") return `<div class="act ${l.internal ? "int" : ""}">${avatar(l.who)}<div class="ab"><div><strong>${esc(nameOf(l.who))}</strong> <span class="small muted">${ago(l.t)} · ${fmtTs(l.t)}</span>${l.internal ? ' <span class="pill warn">Internal note</span>' : ""}${l.who === S.me || has("admins") ? ` <button type="button" class="lnk small" data-tk2="delcomment|${t.id}|${l.id}">Delete</button>` : ""}</div><div class="ctext">${tkMentionHtml(l.text)}</div></div></div>`;
+    if (l.k === "work") return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> logged <strong>${l.hours}h</strong>${l.text ? ": " + esc(l.text) : ""} <span class="small muted">${ago(l.t)}</span></div></div>`;
+    if (l.k === "created") return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> created this ticket <span class="small muted">${ago(l.t)} · ${fmtTs(l.t)}</span></div></div>`;
+    return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> changed <strong>${esc(l.f)}</strong>: <span class="muted">${esc(l.from || "None")}</span> → ${esc(l.to)} <span class="small muted">${ago(l.t)}</span></div></div>`;
+  }).join("") || '<div class="small muted">Nothing here yet.</div>';
+  const links = (t.links || []);
+  const logged = Number(t.spent) || 0, est = Number(t.est) || 0, pct = est ? Math.min(100, (logged / est) * 100) : 0;
+  const draft = tk.cdraft[t.id] || "";
+  return `<div class="crumb"><button type="button" data-go="tickets">IT & Maintenance</button> / ${epic ? `<button type="button" data-tk2="open|${epic.id}">${esc(epic.title)}</button> / ` : ""}${parent ? `<button type="button" data-tk2="open|${parent.id}">${parent.id}</button> / ` : ""}<span class="mono">${t.id}</span></div>
+  <div class="issue">
+   <div class="stack" style="min-width:0">
+    <div>${tk.editing === "title" ? `<form id="tkTitleForm" class="row" data-id="${t.id}"><input type="text" name="title" value="${esc(t.title)}" class="srch wide" aria-label="Summary" required><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></form>`
+      : `<h1 class="ih">${typeIcon(t)} ${esc(t.title)} ${edit ? `<button type="button" class="lnk small" data-tk2="edit|title">Edit</button>` : ""}</h1>`}
+     <div class="row small muted" style="margin-top:6px"><span class="mono">${t.id}</span> · ${esc(t.itype)} · ${TK_TEAM[tkTeam(t)].name}${t.flagged ? ' · <span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? ' · <span class="tag bad">Blocked</span>' : ""}${t.sched ? ` · from schedule ${t.sched}` : ""}</div></div>
+    <div class="panel panel-b stack"><div class="stages">${["Open", "In Progress", "In Review", "Resolved"].map((s, i) => { const at = { open: 0, reopened: 0, inprogress: 1, waiting: 1, review: 2, resolved: 3, closed: 3 }[t.status]; return `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`; }).join("")}</div>
+      <div class="row">${stPill(t)}${t.resolution ? `<span class="pill">${esc(t.resolution)}</span>` : ""}<span class="spacer"></span>${btns || '<span class="small muted">No actions available to you.</span>'}</div></div>
+    <div class="panel"><div class="panel-h"><h2>Description</h2>${edit && tk.editing !== "desc" ? '<button type="button" class="btn small" data-tk2="edit|desc">Edit</button>' : ""}</div><div class="panel-b">${tk.editing === "desc" ? `<form id="tkDescForm" data-id="${t.id}" class="stack"><textarea name="desc" rows="5" class="ta" aria-label="Description">${esc(t.desc)}</textarea><div class="row"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></div></form>` : `<div class="ctext">${t.desc ? tkMentionHtml(t.desc) : '<span class="muted">No description.</span>'}</div>`}</div></div>
+    <div class="panel"><div class="panel-h"><h2>Attachments <span class="muted small">${t.attach.length}</span></h2>${edit ? `<label class="btn small" for="tkFile_${t.id}">Add attachment</label><input type="file" id="tkFile_${t.id}" data-tkf="attach|${t.id}" hidden multiple>` : ""}</div>${t.attach.length ? `<div class="panel-b row">${t.attach.map((f, i) => `<span class="pill">${esc(f)}${edit ? ` <button type="button" class="x" aria-label="Remove ${esc(f)}" data-tk2="delattach|${t.id}|${i}">×</button>` : ""}</span>`).join("")}</div>` : '<div class="panel-b small muted">No files. Photos go to IAR\'s Shared Drive.</div>'}</div>
+    ${t.itype === "Epic" ? `<div class="panel"><div class="panel-h"><h2>Issues in this epic</h2><div class="row"><span class="small muted">${eKids.filter(isDone).length}/${eKids.length} done</span>${worker ? `<button type="button" class="btn small" data-tk2="create||${t.id}">Create issue</button>` : ""}</div></div>${eKids.length ? `<div class="bar2"><span style="width:${(eKids.filter(isDone).length / eKids.length) * 100}%"></span></div><div class="list">${eKids.map(tkRow).join("")}</div>` : '<div class="empty small">No issues yet.</div>'}</div>` : ""}
+    ${t.itype !== "Sub-task" && t.itype !== "Epic" ? `<div class="panel"><div class="panel-h"><h2>Sub-tasks <span class="muted small">${kdone}/${kids.length}</span></h2></div>${kids.length ? `<div class="bar2"><span style="width:${(kdone / kids.length) * 100}%"></span></div><div class="list">${kids.map(tkRow).join("")}</div>` : ""}${worker ? `<form id="tkSubForm" data-id="${t.id}" class="panel-b row"><input type="text" name="title" class="srch wide" placeholder="Add a sub-task and press Enter" aria-label="New sub-task"><button class="btn small" type="submit">Add</button></form>` : ""}</div>` : ""}
+    <div class="panel"><div class="panel-h"><h2>Linked issues</h2>${worker ? `<button type="button" class="btn small" data-tk2="linkmodal|${t.id}">Link issue</button>` : ""}</div>${links.length ? `<div class="list">${links.map((l, i) => { const o = tkGet(l.id); return o ? `<div class="item"><div><div class="s">${esc(l.rel)}</div><button type="button" class="lnk strong" data-card="${o.id}">${typeIcon(o)} ${o.id} · ${esc(o.title)}</button></div><div class="r">${stPill(o)}${worker ? `<button type="button" class="lnk small" data-tk2="unlink|${t.id}|${i}">Remove</button>` : ""}</div></div>` : ""; }).join("")}</div>` : '<div class="panel-b small muted">Not linked to anything.</div>'}</div>
+    <div class="panel"><div class="panel-h"><h2>Activity</h2><div class="btabs tkt small">${[["all", "All"], ["comments", "Comments"], ["history", "History"], ...(worker ? [["work", "Work log"]] : [])].map(([k, n]) => `<button type="button" class="${tk.act === k ? "on" : ""}" data-tk2="act|${k}">${n}</button>`).join("")}</div></div>
+     <div class="panel-b stack">
+      <form id="tkCommentForm" data-id="${t.id}" class="stack"><div class="row">${avatar(S.me)}<strong>${esc(nameOf(S.me))}</strong></div>
+        <textarea name="text" id="tkCommentText" rows="3" class="ta" placeholder="${worker ? "Reply to the reporter, or leave an internal note. Use @name to mention someone." : "Add a comment for the team. Use @name to mention someone."}" aria-label="Comment">${esc(draft)}</textarea>
+        <div class="row">${worker ? `<label class="small"><input type="checkbox" name="internal"> Internal note (reporter can't see it)</label><span class="spacer"></span>${["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."].map((c, i) => `<button type="button" class="chip" data-tk2="canned|${i}">${["Need info", "On it", "Fixed"][i]}</button>`).join("")}` : '<span class="spacer"></span>'}<button class="btn primary small" type="submit">Comment</button></div></form>
+      <div class="acts">${actHtml}</div></div></div>
+   </div>
+   <aside class="stack side">
+    <div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b kvl">
+      ${sel("assignee", [["", "Unassigned"], ...people], t.assignee, "Assignee")}
+      ${worker && t.assignee !== S.me && canWorkTk(t) ? `<div class="kvr"><span></span><button type="button" class="lnk small" data-tk2="assignme|${t.id}">Assign to me</button></div>` : ""}
+      <div class="kvr"><span class="l">Reporter</span><span class="row" style="gap:6px">${avatar(t.owner)}${esc(nameOf(t.owner))}</span></div>
+      ${sel("priority", TK_PRI.map((p) => [p, p]), t.priority, "Priority")}
+      ${sel("type", [["facilities", "Maintenance"], ["it", "IT"]], tkTeam(t), "Team", !has("admins") && !(has("it") && has("facilities")))}
+      ${sel("itype", Object.keys(TK_TYPES).filter((x) => x !== "Sub-task" || t.parent).map((x) => [x, x]), t.itype, "Issue type")}
+      <div class="kvr"><span class="l">Components</span><div class="chips">${t.comps.map((c) => `<span class="tag">${esc(c)}${worker ? ` <button type="button" class="x" aria-label="Remove ${esc(c)}" data-tk2="delcomp|${t.id}|${esc(c)}">×</button>` : ""}</span>`).join("")}${worker ? `<select data-tkf="addcomp|${t.id}" aria-label="Add component"><option value="">+ Add</option>${S.tkx.comps.filter((c) => c.team === tkTeam(t) && !t.comps.includes(c.name)).map((c) => `<option>${esc(c.name)}</option>`).join("")}</select>` : ""}</div></div>
+      <div class="kvr"><span class="l">Labels</span><div class="chips">${t.labels.map((l) => `<span class="tag">#${esc(l)}${worker ? ` <button type="button" class="x" aria-label="Remove ${esc(l)}" data-tk2="dellabel|${t.id}|${esc(l)}">×</button>` : ""}</span>`).join("")}${worker ? `<input type="text" class="mini" placeholder="+ label" data-tkf="addlabel|${t.id}" aria-label="Add label" size="8">` : ""}</div></div>
+      ${sel("room", [...ROOMS.filter((r) => r.id !== "offsite").map((r) => [r.id, r.name]), ["office", "Admin office"], ["parking", "Parking lot / outside"]], t.room, "Location")}
+      ${sel("asset", [["", "None"], ...S.assets.map((x) => [x.id, `${x.id} · ${x.name}`])], t.asset, "Equipment")}
+      ${a ? `<div class="kvr"><span></span><button type="button" class="lnk small" data-asset="${a.id}">Open ${a.id} in Asset Tracker</button></div>` : ""}
+      <div class="kvr"><label for="f_due">Due date</label><input type="date" id="f_due" value="${esc(t.due)}" data-tkf="due|${t.id}" ${worker ? "" : "disabled"}></div>
+      ${t.itype === "Epic" ? "" : sel("epic", [["", "None"], ...S.tickets.filter((x) => x.itype === "Epic" && tkTeam(x) === tkTeam(t)).map((x) => [x.id, x.title])], t.epic, "Epic")}
+      ${t.itype === "Sub-task" || t.itype === "Epic" ? "" : sel("sprint", [["", "Backlog"], ...S.tkx.sprints.filter((s) => s.state !== "done").map((s) => [s.id, s.name])], t.sprint, "Sprint")}
+      <div class="kvr"><label for="f_vendor">Vendor</label><input type="text" id="f_vendor" value="${esc(t.vendor)}" data-tkf="vendor|${t.id}" ${worker ? "" : "disabled"} placeholder="None"></div>
+      <div class="kvr"><label for="f_cost">Cost ($)</label><input type="number" id="f_cost" min="0" step="0.01" value="${t.cost || ""}" data-tkf="cost|${t.id}" ${worker ? "" : "disabled"} placeholder="0"></div>
+    </div></div>
+    ${worker ? `<div class="panel"><div class="panel-h"><h2>Time tracking</h2><button type="button" class="btn small" data-tk2="worklog|${t.id}">Log work</button></div><div class="panel-b stack"><div class="bar2 slim"><span style="width:${pct}%" class="${est && logged > est ? "over" : ""}"></span></div><div class="small">${logged}h logged${est ? ` of ${est}h estimated · ${Math.max(0, Math.round((est - logged) * 10) / 10)}h remaining` : ""}</div>
+      <div class="kvr"><label for="f_est">Original estimate (h)</label><input type="number" id="f_est" min="0" step="0.25" value="${t.est || ""}" data-tkf="est|${t.id}" placeholder="0"></div></div></div>
+    ${tkHasSla(t) ? `<div class="panel"><div class="panel-h"><h2>SLA</h2><span class="small muted">${t.priority} · ${TK_SLA[t.priority][0]}h / ${TK_SLA[t.priority][1] >= 48 ? TK_SLA[t.priority][1] / 24 + "d" : TK_SLA[t.priority][1] + "h"}</span></div><div class="panel-b stack"><div class="row"><span class="small muted" style="width:90px">First response</span>${slaPill(sla.resp)}</div><div class="row"><span class="small muted" style="width:90px">Resolution</span>${slaPill(sla.res)}</div></div></div>` : `<div class="panel"><div class="panel-h"><h2>SLA</h2></div><div class="panel-b small muted">SLAs apply to Problems and Requests. ${esc(t.itype)}s are planned work.</div></div>`}` : `<div class="panel"><div class="panel-h"><h2>What happens next</h2></div><div class="panel-b small stack"><div>${t.assignee ? `${esc(nameOf(t.assignee))} is on it.` : "Waiting to be picked up by the " + TK_TEAM[tkTeam(t)].name + " team."}</div>${isDone(t) ? "<div>If it isn't fixed, use Reopen above.</div>" : ""}</div></div>`}
+    <div class="panel"><div class="panel-h"><h2>People</h2></div><div class="panel-b stack"><div class="row">${(t.watchers || []).filter((w) => PEOPLE[w]).map((w) => avatar(w)).join("") || '<span class="small muted">No watchers</span>'}</div><div class="row"><button type="button" class="btn small" data-tk2="watch|${t.id}">${(t.watchers || []).includes(S.me) ? "Stop watching" : "Watch"}</button>${worker ? `<select data-tkf="addwatcher|${t.id}" aria-label="Add watcher"><option value="">Add watcher…</option>${Object.keys(PEOPLE).filter((p) => !["renter", "admin"].includes(p) && !(t.watchers || []).includes(p)).map((p) => `<option value="${p}">${esc(nameOf(p))}</option>`).join("")}</select>` : ""}</div></div></div>
+    <div class="panel"><div class="panel-b stack small"><div>Created ${fmtTs(t.created)}</div><div>Updated ${fmtTs(t.updated)}</div>${t.resolvedAt ? `<div>Resolved ${fmtTs(t.resolvedAt)}</div>` : ""}
+      ${worker ? `<div class="row"><button type="button" class="btn small" data-tk2="flag|${t.id}">${t.flagged ? "Remove flag" : "Flag as blocked"}</button><button type="button" class="btn small" data-tk2="clone|${t.id}">Clone</button>${t.itype !== "Sub-task" && t.itype !== "Epic" ? `<button type="button" class="btn small" data-tk2="create||${t.id}|sub">Add sub-task</button>` : ""}${has("admins") ? `<button type="button" class="btn small danger" data-tk2="deletemodal|${t.id}">Delete</button>` : ""}</div>` : ""}</div></div>
+   </aside></div>`;
 }
+
+/* ---- Modals ---- */
+const mField = (label, inner, wide, id) => `<div class="fld ${wide ? "wide" : ""}"><label${id ? ` for="${id}"` : ""}>${label}</label>${inner}</div>`;
+const mOpts = (opts, cur) => opts.map(([v, n]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(n)}</option>`).join("");
+function tkModalShell(title, body, o = {}) {
+  return `<div class="ov" data-tk2="closemodal"><div class="dlg ${o.wide ? "w" : ""}" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="dlg-h"><h2 id="dlgT">${title}</h2><button type="button" class="btn small" data-tk2="closemodal" aria-label="Close">✕</button></div><div class="dlg-b">${body}</div></div></div>`;
+}
+function tkCreateBody(d) {
+  const worker = anyWorker(), teams = worker ? myTeams() : ["facilities", "it"];
+  const team = teams.includes(d.team) ? d.team : teams[0]; d.team = team;
+  const comps = S.tkx.comps.filter((c) => c.team === team), assets = S.assets.filter((a) => !d.room || a.room === d.room);
+  const types = worker ? ["Problem", "Request", "Task", "Preventive", "Epic", "Sub-task"] : ["Problem", "Request"];
+  const epics = S.tickets.filter((t) => t.itype === "Epic" && tkTeam(t) === team), parents = S.tickets.filter((t) => !["Epic", "Sub-task"].includes(t.itype) && canSeeTk(t) && tkTeam(t) === team);
+  return `<form class="f" id="tkCreateForm" autocomplete="off">
+    ${teams.length > 1 || !worker ? `<div class="fld wide"><span class="lbl">What kind of problem?</span><div class="checks-inline">${[["facilities", "Building or maintenance"], ["it", "IT or tech"]].filter(([v]) => teams.includes(v)).map(([v, n]) => `<label><input type="radio" name="team" value="${v}" ${team === v ? "checked" : ""}> ${n}</label>`).join("")}</div></div>` : `<input type="hidden" name="team" value="${team}">`}
+    ${worker ? mField("Issue type", `<select name="itype" id="m_itype">${mOpts(types.map((x) => [x, x]), d.itype)}</select>`, false, "m_itype") : `<input type="hidden" name="itype" value="${d.itype || "Problem"}">`}
+    ${mField(worker ? "Priority" : "Urgency", worker ? `<select name="priority" id="m_pri">${mOpts(TK_PRI.map((x) => [x, x]), d.priority)}</select>` : `<select name="priority" id="m_pri">${mOpts([["Low", "Low"], ["Medium", "Normal"], ["Highest", "Urgent (safety or a service today)"]], d.priority)}</select>`, false, "m_pri")}
+    ${mField("Summary", `<input type="text" name="title" id="m_title" value="${esc(d.title)}" placeholder="Projector in Room 240 shows no picture" required>`, true, "m_title")}
+    <div class="wide" id="tkDupes" style="grid-column:1/-1"></div>
+    ${mField(worker ? "Description" : "What's wrong?", `<textarea name="desc" id="m_desc" placeholder="What happened, when, and anything you already tried.">${esc(d.desc)}</textarea>`, true, "m_desc")}
+    ${mField("Category", `<select name="comp" id="m_comp"><option value="">Not sure</option>${mOpts(comps.map((c) => [c.name, c.name]), d.comp)}</select>`, false, "m_comp")}
+    ${mField("Where?", `<select name="room" id="m_room">${mOpts([...ROOMS.filter((r) => r.id !== "offsite").map((r) => [r.id, r.name]), ["office", "Admin office"], ["parking", "Parking lot / outside"]], d.room)}</select>`, false, "m_room")}
+    ${mField("Equipment (optional)", `<select name="asset" id="m_asset"><option value="">Not sure / none</option>${mOpts(assets.map((a) => [a.id, `${a.id} · ${a.name}`]), d.asset)}</select>`, !worker, "m_asset")}
+    ${worker ? mField("Assignee", `<select name="assignee" id="m_asg"><option value="">Automatic</option>${mOpts(tkPeople(team).map((p) => [p, nameOf(p)]), d.assignee)}</select>`, false, "m_asg") : ""}
+    ${worker ? mField("Due date", `<input type="date" name="due" id="m_due" value="${esc(d.due)}">`, false, "m_due") : ""}
+    ${worker ? mField("Labels", `<input type="text" name="labels" id="m_lab" value="${esc(d.labels)}" placeholder="wifi, procurement">`, false, "m_lab") : ""}
+    ${worker ? mField("Original estimate (hours)", `<input type="number" name="est" id="m_est" min="0" step="0.25" value="${esc(d.est)}">`, false, "m_est") : ""}
+    ${worker && d.itype !== "Epic" && d.itype !== "Sub-task" ? mField("Sprint", `<select name="sprint" id="m_sp"><option value="">Backlog</option>${mOpts(S.tkx.sprints.filter((s) => s.state !== "done").map((s) => [s.id, s.name]), d.sprint)}</select>`, false, "m_sp") : ""}
+    ${worker && d.itype !== "Epic" && d.itype !== "Sub-task" ? mField("Epic", `<select name="epic" id="m_ep"><option value="">None</option>${mOpts(epics.map((e) => [e.id, e.title]), d.epic)}</select>`, false, "m_ep") : ""}
+    ${worker && d.itype === "Sub-task" ? mField("Parent issue", `<select name="parent" id="m_par" required><option value="">Choose…</option>${mOpts(parents.map((p) => [p.id, `${p.id} · ${p.title}`]), d.parent)}</select>`, true, "m_par") : ""}
+    <div class="fld wide"><label for="m_files">Photo or file (optional)</label><input type="file" name="files" id="m_files" multiple accept="image/*,.pdf">${d.files && d.files.length ? `<span class="hint">${d.files.map(esc).join(", ")}</span>` : ""}</div>
+    <div class="actions">${worker ? '<label class="small" style="margin-right:auto"><input type="checkbox" name="another"> Create another</label>' : ""}<button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">${worker ? "Create" : "Submit ticket"}</button></div></form>`;
+}
+function tkModalHTML() {
+  const m = S.tk.modal; if (!m) return "";
+  if (m.kind === "create") return tkModalShell(anyWorker() ? "Create issue" : "Report a problem", tkCreateBody(m.d), { wide: true });
+  if (m.kind === "notifs") {
+    const ns = S.tkx.notifs.filter((n) => n.to === S.me).sort((a, b) => (b.t > a.t ? 1 : -1)).slice(0, 40);
+    return tkModalShell("Notifications", `<div class="row" style="margin-bottom:8px"><span class="small muted">${ns.filter((n) => !n.read).length} unread. Email goes out for the same events.</span><span class="spacer"></span><button type="button" class="btn small" data-tk2="markread">Mark all read</button></div><div class="list">${ns.map((n) => `<button type="button" class="item ${n.read ? "" : "unread"}" data-tk2="notifopen|${n.id}"><div><div class="t">${esc(n.text)}</div><div class="s">${n.ticket} · ${ago(n.t)}</div></div></button>`).join("") || '<div class="empty">Nothing yet.</div>'}</div>`);
+  }
+  const t = m.id && tkGet(m.id);
+  if (m.kind === "transition") {
+    const needs = tkNeedsResolution(t, m.to);
+    const kids = tkKids(t).filter((k) => !isDone(k));
+    return tkModalShell(`${TK_TRANS[m.to]} · ${t.id}`, `<form class="f" id="tkTransForm">${kids.length && needs ? `<div class="note warn" style="grid-column:1/-1">${kids.length} sub-task${kids.length > 1 ? "s are" : " is"} still open. They stay open when you resolve this.</div>` : ""}
+      ${needs ? mField("Resolution", `<select name="resolution" id="t_res">${mOpts(TK_RESOLUTIONS.filter((r) => m.to === "closed" || r !== "Withdrawn by reporter" || t.owner === S.me).map((r) => [r, r]), m.to === "closed" && t.owner === S.me && !canWorkTk(t) ? "Withdrawn by reporter" : "Fixed")}</select>`, true, "t_res") : ""}
+      ${mField(m.to === "reopened" ? "Why is it still a problem?" : "Comment (optional)", `<textarea name="comment" id="t_c" placeholder="${m.to === "resolved" ? "Replaced the HDMI switch." : ""}"></textarea>`, true, "t_c")}
+      ${canWorkTk(t) && needs ? mField("Time spent (hours, optional)", `<input type="number" name="hours" id="t_h" min="0" step="0.25">`, false, "t_h") : ""}
+      <div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">${TK_TRANS[m.to]}</button></div></form>`);
+  }
+  if (m.kind === "link") return tkModalShell(`Link ${t.id}`, `<form class="f" id="tkLinkForm">${mField("This issue…", `<select name="rel" id="l_rel">${mOpts(Object.keys(TK_INV).map((r) => [r, r]), "relates to")}</select>`, false, "l_rel")}${mField("Issue", `<select name="other" id="l_o">${mOpts(S.tickets.filter((x) => x.id !== t.id && canSeeTk(x)).map((x) => [x.id, `${x.id} · ${x.title}`]), "")}</select>`, false, "l_o")}<div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Link</button></div></form>`);
+  if (m.kind === "worklog") return tkModalShell(`Log work · ${t.id}`, `<form class="f" id="tkWorkForm">${mField("Time spent (hours)", `<input type="number" name="hours" id="w_h" min="0.25" step="0.25" required>`, false, "w_h")}${mField("What did you do?", `<textarea name="text" id="w_t"></textarea>`, true, "w_t")}<div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Log</button></div></form>`);
+  if (m.kind === "sprint") { const s = m.sprint || { name: "", goal: "", start: TODAY, end: addDays(TODAY, 14) }; return tkModalShell(m.sprint ? "Edit sprint" : "Create sprint", `<form class="f" id="tkSprintForm">${mField("Name", `<input type="text" name="name" id="s_n" value="${esc(s.name)}" required>`, true, "s_n")}${mField("Goal", `<input type="text" name="goal" id="s_g" value="${esc(s.goal)}">`, true, "s_g")}${mField("Start", `<input type="date" name="start" id="s_s" value="${esc(s.start)}" required>`, false, "s_s")}${mField("End", `<input type="date" name="end" id="s_e" value="${esc(s.end)}" required>`, false, "s_e")}<div class="actions">${m.sprint ? '<button type="button" class="btn danger" data-tk2="delsprint">Delete sprint</button>' : ""}<button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`); }
+  if (m.kind === "csprint") { const s = tkSprint(m.id), xs = S.tickets.filter((x) => x.sprint === s.id), un = xs.filter((x) => !isDone(x)), nxt = S.tkx.sprints.filter((x) => x.state === "planned"); return tkModalShell(`Complete ${esc(s.name)}`, `<form class="f" id="tkCSprintForm"><div class="note info" style="grid-column:1/-1">${xs.length - un.length} of ${xs.length} issues are done. ${un.length} not finished.</div>${un.length ? mField("Move unfinished issues to", `<select name="to" id="cs_t"><option value="">Backlog</option>${mOpts(nxt.map((x) => [x.id, x.name]), nxt[0]?.id)}</select>`, true, "cs_t") : ""}<div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Complete sprint</button></div></form>`); }
+  if (m.kind === "schedule") {
+    const s = m.sc || { name: "", team: myTeams()[0], freq: "monthly", next: addDays(TODAY, 7), asset: "", room: "office", assignee: "", comp: "", priority: "Medium", est: 1, checklist: [], desc: "" };
+    const team = m.team || s.team;
+    return tkModalShell(m.sc ? "Edit schedule" : "New preventive schedule", `<form class="f" id="tkSchedForm">${mField("Name", `<input type="text" name="name" id="p_n" value="${esc(s.name)}" required>`, true, "p_n")}
+      ${mField("Team", `<select name="team" id="p_team">${mOpts(myTeams().map((x) => [x, TK_TEAM[x].name]), team)}</select>`, false, "p_team")}${mField("Repeats", `<select name="freq" id="p_f">${mOpts(Object.keys(TK_FREQ).map((x) => [x, x]), s.freq)}</select>`, false, "p_f")}
+      ${mField("Next due", `<input type="date" name="next" id="p_nx" value="${esc(s.next)}" required>`, false, "p_nx")}${mField("Owner", `<select name="assignee" id="p_a">${mOpts(tkPeople(team).map((p) => [p, nameOf(p)]), s.assignee)}</select>`, false, "p_a")}
+      ${mField("Equipment", `<select name="asset" id="p_as"><option value="">None</option>${mOpts(S.assets.map((a) => [a.id, `${a.id} · ${a.name}`]), s.asset)}</select>`, false, "p_as")}${mField("Location", `<select name="room" id="p_r">${mOpts([...ROOMS.filter((r) => r.id !== "offsite").map((r) => [r.id, r.name]), ["office", "Admin office"], ["parking", "Parking lot / outside"]], s.room)}</select>`, false, "p_r")}
+      ${mField("Component", `<select name="comp" id="p_c"><option value="">None</option>${mOpts(S.tkx.comps.filter((c) => c.team === team).map((c) => [c.name, c.name]), s.comp)}</select>`, false, "p_c")}${mField("Priority", `<select name="priority" id="p_p">${mOpts(TK_PRI.map((x) => [x, x]), s.priority)}</select>`, false, "p_p")}
+      ${mField("Checklist (one per line, becomes sub-tasks)", `<textarea name="checklist" id="p_cl" rows="4">${esc((s.checklist || []).join("\n"))}</textarea>`, true, "p_cl")}
+      <div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`, { wide: true });
+  }
+  if (m.kind === "savefilter") return tkModalShell("Save filter", `<form class="f" id="tkFilterForm">${mField("Name", `<input type="text" name="name" id="sf_n" required>`, true, "sf_n")}<div class="note info" style="grid-column:1/-1"><span class="mono">${esc(S.tk.q || "(everything)")}</span></div><div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`);
+  if (m.kind === "comp") return tkModalShell("Add component", `<form class="f" id="tkCompForm">${mField("Name", `<input type="text" name="name" id="c_n" required>`, true, "c_n")}${mField("Team", `<select name="team" id="c_t">${mOpts(myTeams().map((x) => [x, TK_TEAM[x].name]), myTeams()[0])}</select>`, false, "c_t")}<div class="actions"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button class="btn primary" type="submit">Add</button></div></form>`);
+  if (m.kind === "delete") return tkModalShell(`Delete ${t.id}?`, `<p>This permanently deletes <strong>${esc(t.title)}</strong>, its sub-tasks and its history. Resolve or close it instead if you want a record.</p><div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button type="button" class="btn danger" data-tk2="confirmdelete|${t.id}">Delete</button></div>`);
+  return "";
+}
+function tkPaintModal() {
+  const el = document.getElementById("tkModal"); if (!el) return;
+  el.innerHTML = tkModalHTML();
+  document.body.classList.toggle("modal-open", !!S.tk.modal);
+  if (S.tk.modal) { const f = el.querySelector("input[type=text]:not([type=hidden]), textarea, select, button.btn.primary"); if (f && !S.tk.modal.keep) f.focus(); tkDupes(); }
+}
+function tkReadCreate() {
+  const f = document.getElementById("tkCreateForm"); if (!f || !S.tk.modal || S.tk.modal.kind !== "create") return;
+  const d = S.tk.modal.d, v = (n) => (f.elements[n] ? f.elements[n].value : d[n]);
+  const radio = f.querySelector("input[name=team]:checked");
+  Object.assign(d, { team: radio ? radio.value : v("team"), itype: v("itype"), priority: v("priority"), title: v("title"), desc: v("desc"), comp: v("comp"), room: v("room"), asset: v("asset"), assignee: v("assignee") || "", due: v("due") || "", labels: v("labels") || "", est: v("est") || "", sprint: v("sprint") || "", epic: v("epic") || "", parent: v("parent") || "" });
+  const fl = f.elements.files; if (fl && fl.files && fl.files.length) d.files = [...fl.files].map((x) => x.name);
+}
+function tkDupes() {
+  const box = document.getElementById("tkDupes"), f = document.getElementById("tkCreateForm"); if (!box || !f) return;
+  const w = (f.elements.title.value || "").toLowerCase().split(/\W+/).filter((x) => x.length > 3);
+  if (w.length < 2) { box.innerHTML = ""; return; }
+  const hit = S.tickets.filter((t) => canSeeTk(t) && !isDone(t) && t.itype !== "Epic").map((t) => ({ t, n: w.filter((x) => `${t.title} ${t.desc}`.toLowerCase().includes(x)).length })).filter((x) => x.n >= 2).sort((a, b) => b.n - a.n).slice(0, 3);
+  box.innerHTML = hit.length ? `<div class="note warn"><strong>Already reported?</strong> ${hit.map(({ t }) => `<button type="button" class="lnk" data-card="${t.id}">${t.id} ${esc(t.title)}</button> (${TK_ST[t.status].n})`).join("; ")}. Open it and add a comment or watch it instead of filing a duplicate.</div>` : "";
+}
+function tkOpenCreate(o = {}) {
+  const worker = anyWorker();
+  S.tk.modal = { kind: "create", d: Object.assign({ team: myTeams()[0] || "facilities", itype: "Problem", priority: "Medium", title: "", desc: "", comp: "", room: "r240", asset: "", assignee: "", due: "", labels: "", est: "", sprint: "", epic: "", parent: "", files: [] }, o) };
+  if (!worker && !S.tk.modal.d.team) S.tk.modal.d.team = "facilities";
+  S.tk.modal.keep = false; tkPaintModal();
+}
+function tkCreateSubmit(f) {
+  tkReadCreate();
+  const d = S.tk.modal.d, worker = anyWorker();
+  if (!d.title.trim()) return toast("Add a summary so the team knows what to bring.");
+  if (d.itype === "Sub-task" && !d.parent) return toast("Choose a parent issue for the sub-task.");
+  const par = d.parent && tkGet(d.parent);
+  const t = tkNew({ type: d.team, itype: d.itype, title: d.title.trim(), desc: d.desc.trim(), priority: d.priority, owner: S.me, room: d.room, asset: d.asset, comps: d.comp ? [d.comp] : [], labels: d.labels.split(",").map((x) => x.trim().toLowerCase().replace(/\s+/g, "-")).filter(Boolean), assignee: worker ? d.assignee : "", due: d.due, est: Number(d.est) || 0, sprint: d.itype === "Epic" || d.itype === "Sub-task" ? "" : d.sprint, epic: d.itype === "Epic" ? "" : d.epic, parent: d.itype === "Sub-task" ? d.parent : "", attach: d.files || [] });
+  if (par) { t.type = par.type; t.epic = ""; }
+  if (d.itype === "Epic") { t.start = TODAY; t.due = t.due || addDays(TODAY, 30); }
+  tkApplyCreateRules(t);
+  S.tickets.unshift(t);
+  if (t.assignee && t.assignee !== S.me) tkNotify(t, `${nameOf(S.me)} assigned ${t.id} to ${nameOf(t.assignee)}`, { also: [t.assignee] });
+  if (!worker || t.assignee === S.me) tkFirstResponse(t);
+  const asset = t.asset && S.assets.find((x) => x.id === t.asset);
+  if (asset && t.itype === "Problem" && asset.status === "In use") { asset.status = "Needs repair"; t.log.push({ t: t.created, who: "system", k: "change", f: "Equipment status", from: "In use", to: "Needs repair" }); }
+  if (!(t.priority === "Highest" && S.tkx.auto.find((r) => r.id === "urgent")?.on)) tkNotify(t, `New ${TK_TEAM[tkTeam(t)].name} ticket ${t.id}: ${t.title}`, { also: t.assignee ? [] : tkPeople(tkTeam(t)) });
+  if (f.elements.another && f.elements.another.checked) { S.tk.modal.d.title = ""; S.tk.modal.d.desc = ""; S.tk.modal.d.files = []; toast(`${t.id} created`); render(); return; }
+  S.tk.modal = null; toast(`${t.id} sent to the ${TK_TEAM[tkTeam(t)].name} team${t.assignee ? " and assigned to " + nameOf(t.assignee) : ""}`);
+  go("card", t.id);
+}
+
+/* ---- Events ---- */
+function tkMoveOrAsk(t, to) {
+  if (!tkCan(t, to)) return toast(`${TK_ST[t.status].n} → ${TK_ST[to].n} isn't allowed by the workflow.`);
+  if (tkNeedsResolution(t, to) || to === "reopened" && !canWorkTk(t)) { S.tk.modal = { kind: "transition", id: t.id, to }; return render(); }
+  if (tkMove(t, to)) { toast(`${t.id} → ${TK_ST[to].n}`); render(); }
+}
+function tkRerender(focusId) {
+  const el = document.activeElement, id = focusId || (el && el.id), pos = el && el.selectionStart;
+  render();
+  if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { if (pos != null) n.setSelectionRange(pos, pos); } catch (e) {} } }
+}
+function tkCsv() {
+  const r = tkQuery(tkVisible(), S.tk.q), xs = r.list;
+  const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["Key", "Type", "Summary", "Status", "Resolution", "Priority", "Assignee", "Reporter", "Team", "Components", "Labels", "Location", "Equipment", "Due", "Created", "Resolved", "Estimate h", "Logged h", "Cost"]].concat(xs.map((t) => [t.id, t.itype, t.title, TK_ST[t.status].n, t.resolution, t.priority, nameOf(t.assignee || "") === "" ? "" : t.assignee ? nameOf(t.assignee) : "", nameOf(t.owner), TK_TEAM[tkTeam(t)].name, t.comps.join("; "), t.labels.join("; "), roomName(t.room), t.asset, t.due, t.created, t.resolvedAt, t.est, t.spent, t.cost]));
+  const blob = new Blob([rows.map((r) => r.map(cell).join(",")).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "iar-tickets.csv"; document.body.appendChild(a); a.click(); a.remove();
+  toast(`Exported ${xs.length} issues`);
+}
+function tkClick(e) {
+  const el = e.target.closest("[data-tk2]"); if (!el) return;
+  const [act, a, b, c] = el.dataset.tk2.split("|"), tk = S.tk;
+  if (act === "closemodal") { if (el.classList.contains("ov") && e.target !== el) return; tk.modal = null; return render(); }
+  if (el.matches("input[type=checkbox]") && act !== "sel" && act !== "selall") return;
+  switch (act) {
+    case "open": return go("card", a);
+    case "tab": tk.tab = a; tk.sel = []; return go("tickets");
+    case "qf": tk.qf[a] = !tk.qf[a]; return render();
+    case "qfclear": tk.qf = {}; tk.bq = ""; return render();
+    case "notifs": tk.modal = { kind: "notifs" }; return render();
+    case "markread": S.tkx.notifs.filter((n) => n.to === S.me).forEach((n) => (n.read = true)); return render();
+    case "notifopen": { const n = S.tkx.notifs.find((x) => x.id === Number(a)); if (n) { n.read = true; tk.modal = null; return go("card", n.ticket); } return; }
+    case "create": { const o = {}; if (a) o.sprint = a; if (b) { const p = tkGet(b); if (p && c === "sub") Object.assign(o, { itype: "Sub-task", parent: p.id, team: tkTeam(p), room: p.room, asset: p.asset, priority: p.priority }); else if (p && p.itype === "Epic") Object.assign(o, { epic: p.id, team: tkTeam(p) }); } return tkOpenCreate(o); }
+    case "sort": tk.sort = { f: a, dir: tk.sort.f === a ? -tk.sort.dir : 1 }; return render();
+    case "filter": { const f = S.tkx.filters.find((x) => x.id === a); tk.q = f.q; tk.tab = "list"; return render(); }
+    case "delfilter": S.tkx.filters = S.tkx.filters.filter((x) => x.id !== a); return render();
+    case "savefilter": if (!tk.q.trim()) return toast("Type a search or JQL query first."); tk.modal = { kind: "savefilter" }; return render();
+    case "labelq": tk.q = `label = ${a}`; tk.tab = "list"; return render();
+    case "csv": return tkCsv();
+    case "selall": { const xs = tkQuery(tkVisible(), tk.q).list; tk.sel = el.checked ? xs.map((t) => t.id) : []; return render(); }
+    case "sel": tk.sel = el.checked ? [...new Set([...tk.sel, a])] : tk.sel.filter((x) => x !== a); return render();
+    case "bulkclear": tk.sel = []; return render();
+    case "bulkLabel": { const v = document.getElementById("bkLabel").value; if (!v.trim()) return; tk.sel.forEach((id) => tkAddLabel(tkGet(id), v)); toast(`Label added to ${tk.sel.length} issues`); return render(); }
+    case "rank": { const t = tkGet(a), peers = S.tickets.filter((x) => x.sprint === t.sprint && x.itype !== "Epic" && x.itype !== "Sub-task" && canSeeTk(x) && (t.sprint || !isDone(x))).sort((p, q) => (p.rank || 0) - (q.rank || 0)); peers.forEach((p, i) => (p.rank = i)); const i = peers.indexOf(t), j = i + Number(b); if (j < 0 || j >= peers.length) return; [peers[i].rank, peers[j].rank] = [peers[j].rank, peers[i].rank]; return render(); }
+    case "newsprint": tk.modal = { kind: "sprint" }; return render();
+    case "editsprint": tk.modal = { kind: "sprint", id: a, sprint: tkSprint(a) }; return render();
+    case "delsprint": { const s = tk.modal.sprint; S.tickets.filter((t) => t.sprint === s.id).forEach((t) => (t.sprint = "")); S.tkx.sprints = S.tkx.sprints.filter((x) => x.id !== s.id); tk.modal = null; toast("Sprint deleted. Its issues are back in the backlog."); return render(); }
+    case "startsprint": { if (S.tkx.sprints.some((s) => s.state === "active")) return toast("Complete the active sprint first."); tkSprint(a).state = "active"; toast("Sprint started"); return render(); }
+    case "completesprint": tk.modal = { kind: "csprint", id: a }; return render();
+    case "cal": tk.cal = a; return render();
+    case "newschedule": tk.modal = { kind: "schedule" }; return render();
+    case "editschedule": { const sc = S.tkx.schedules.find((x) => x.id === a); tk.modal = { kind: "schedule", sc, team: sc.team }; return render(); }
+    case "runschedule": { const sc = S.tkx.schedules.find((x) => x.id === a), t = tkFromSchedule(sc); toast(`${t.id} created from "${sc.name}"`); return go("card", t.id); }
+    case "rundue": { const due = S.tkx.schedules.filter((s) => s.on && myTeams().includes(s.team) && daysBetween(TODAY, s.next) <= 7); due.forEach(tkFromSchedule); toast(`${due.length} ticket${due.length === 1 ? "" : "s"} created`); return render(); }
+    case "newcomp": tk.modal = { kind: "comp" }; return render();
+    case "runauto": { const r = tkRunAutomation(); toast(`Automation ran: ${r.closed} closed, ${r.reminded} reminder${r.reminded === 1 ? "" : "s"} sent`); return render(); }
+    case "move": return tkMoveOrAsk(tkGet(a), b);
+    case "assignme": tkSet(tkGet(a), "assignee", S.me); toast("Assigned to you"); return render();
+    case "flag": { const t = tkGet(a); t.flagged = !t.flagged; tkLog(t, { k: "change", f: "Flag", from: t.flagged ? "None" : "Flagged", to: t.flagged ? "Flagged" : "None" }); return render(); }
+    case "watch": { const t = tkGet(a); t.watchers = t.watchers || []; if (t.watchers.includes(S.me)) t.watchers = t.watchers.filter((x) => x !== S.me); else t.watchers.push(S.me); toast(t.watchers.includes(S.me) ? "You'll be notified of changes" : "Stopped watching"); return render(); }
+    case "clone": { const o = tkGet(a), t = tkNew({ ...JSON.parse(JSON.stringify(o)), id: undefined, title: "CLONE – " + o.title, owner: S.me, status: "open", resolution: "", resolvedAt: "", firstResponse: "", paused: 0, pausedAt: "", spent: 0, log: [], links: [{ rel: "relates to", id: o.id }], watchers: [S.me], sprint: "", flagged: false, created: tsNow(), updated: tsNow(), sched: "" }); S.tickets.unshift(t); toast(`${t.id} cloned from ${o.id}`); return go("card", t.id); }
+    case "deletemodal": tk.modal = { kind: "delete", id: a }; return render();
+    case "confirmdelete": { const ids = new Set([a, ...tkKids(tkGet(a)).map((k) => k.id)]); S.tickets = S.tickets.filter((t) => !ids.has(t.id)); S.tickets.forEach((t) => { t.links = (t.links || []).filter((l) => !ids.has(l.id)); if (ids.has(t.epic)) t.epic = ""; }); tk.modal = null; toast(`${a} deleted`); return go("tickets"); }
+    case "edit": tk.editing = a; return render();
+    case "canceledit": tk.editing = null; return render();
+    case "act": tk.act = a; return render();
+    case "canned": { const ta = document.getElementById("tkCommentText"); if (ta) { ta.value = ["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."][Number(a)]; ta.focus(); } return; }
+    case "delcomment": { const t = tkGet(a); t.log = t.log.filter((l) => !(l.k === "comment" && l.id === Number(b))); return render(); }
+    case "delattach": { const t = tkGet(a); t.attach.splice(Number(b), 1); return render(); }
+    case "delcomp": { const t = tkGet(a); t.comps = t.comps.filter((x) => x !== b); tkLog(t, { k: "change", f: "Components", from: b, to: "removed" }); return render(); }
+    case "dellabel": { const t = tkGet(a); t.labels = t.labels.filter((x) => x !== b); tkLog(t, { k: "change", f: "Labels", from: "#" + b, to: "removed" }); return render(); }
+    case "linkmodal": tk.modal = { kind: "link", id: a }; return render();
+    case "unlink": { const t = tkGet(a), l = t.links[Number(b)], o = tkGet(l.id); t.links.splice(Number(b), 1); if (o) o.links = (o.links || []).filter((x) => !(x.id === t.id && x.rel === TK_INV[l.rel])); tkLog(t, { k: "change", f: "Link", from: `${l.rel} ${l.id}`, to: "removed" }); return render(); }
+    case "worklog": tk.modal = { kind: "worklog", id: a }; return render();
+  }
+}
+function tkSubmit(e) {
+  const f = e.target, id = f.id, el = f.elements;
+  if (!/^tk/.test(id)) return;
+  const m = S.tk.modal, t = f.dataset.id ? tkGet(f.dataset.id) : m && m.id ? tkGet(m.id) : null;
+  if (id === "tkCreateForm") return tkCreateSubmit(f);
+  if (id === "tkTitleForm") { const v = el.title.value.trim(); if (v) tkSet(t, "title", v); S.tk.editing = null; return render(); }
+  if (id === "tkDescForm") { tkSet(t, "desc", el.desc.value.trim()); S.tk.editing = null; return render(); }
+  if (id === "tkSubForm") { const v = el.title.value.trim(); if (!v) return; const s = tkNew({ type: t.type, itype: "Sub-task", title: v, parent: t.id, owner: S.me, room: t.room, asset: t.asset, priority: t.priority, comps: t.comps.slice(), due: t.due }); S.tickets.unshift(s); tkLog(t, { k: "change", f: "Sub-task", from: "", to: "added " + s.id }); S.tk.focus = "tkSubForm"; return render(); }
+  if (id === "tkCommentForm") {
+    const text = el.text.value; if (!text.trim()) return toast("Write something first.");
+    tkComment(t, text, el.internal && el.internal.checked); S.tk.cdraft[t.id] = ""; toast(el.internal && el.internal.checked ? "Internal note added" : "Comment added" + (canWorkTk(t) ? `. ${nameOf(t.owner)} is notified.` : "")); return render();
+  }
+  if (id === "tkTransForm") {
+    const ok = tkMove(t, m.to, { resolution: el.resolution ? el.resolution.value : "", comment: el.comment.value.trim(), hours: el.hours ? Number(el.hours.value) || 0 : 0 });
+    if (ok) { S.tk.modal = null; toast(`${t.id} → ${TK_ST[m.to].n}${canWorkTk(t) && isDone(t) ? `. ${nameOf(t.owner)} is notified.` : ""}`); } return render();
+  }
+  if (id === "tkLinkForm") { const o = tkGet(el.other.value), rel = el.rel.value; if (!o) return; t.links.push({ rel, id: o.id }); o.links.push({ rel: TK_INV[rel], id: t.id }); tkLog(t, { k: "change", f: "Link", from: "", to: `${rel} ${o.id}` }); tkLog(o, { k: "change", f: "Link", from: "", to: `${TK_INV[rel]} ${t.id}` }); S.tk.modal = null; return render(); }
+  if (id === "tkWorkForm") { const h = Number(el.hours.value); if (!h) return; t.spent = Math.round((Number(t.spent || 0) + h) * 100) / 100; tkLog(t, { k: "work", hours: h, text: el.text.value.trim() }); tkWatch(t, S.me); S.tk.modal = null; toast(`${h}h logged`); return render(); }
+  if (id === "tkSprintForm") {
+    const v = { name: el.name.value.trim(), goal: el.goal.value.trim(), start: el.start.value, end: el.end.value };
+    if (v.end < v.start) return toast("The end date is before the start.");
+    if (m.sprint) Object.assign(m.sprint, v); else S.tkx.sprints.push({ id: "SP-" + ++S.tkx.seq.SP, state: "planned", ...v });
+    S.tk.modal = null; return render();
+  }
+  if (id === "tkCSprintForm") {
+    const s = tkSprint(m.id), to = el.to ? el.to.value : ""; const un = S.tickets.filter((x) => x.sprint === s.id && !isDone(x));
+    un.forEach((x) => { x.sprint = to; tkLog(x, { k: "change", f: "Sprint", from: s.name, to: to ? tkSprint(to).name : "Backlog" }); });
+    s.state = "done"; s.end = s.end > TODAY ? TODAY : s.end; S.tk.modal = null; toast(`${s.name} completed. ${un.length} unfinished issue${un.length === 1 ? "" : "s"} moved.`); return render();
+  }
+  if (id === "tkSchedForm") {
+    const v = { name: el.name.value.trim(), team: el.team.value, freq: el.freq.value, next: el.next.value, assignee: el.assignee.value, asset: el.asset.value, room: el.room.value, comp: el.comp.value, priority: el.priority.value, checklist: el.checklist.value.split("\n").map((x) => x.trim()).filter(Boolean) };
+    if (m.sc) Object.assign(m.sc, v); else S.tkx.schedules.push({ id: "PM-" + ++S.tkx.seq.SCH, on: true, est: 1, desc: "", last: "", ...v });
+    S.tk.modal = null; toast("Schedule saved"); return render();
+  }
+  if (id === "tkFilterForm") { S.tkx.filters.push({ id: "F-" + ++S.tkx.seq.F, name: el.name.value.trim(), q: S.tk.q, mine: true }); S.tk.modal = null; toast("Filter saved"); return render(); }
+  if (id === "tkCompForm") { const n = el.name.value.trim(); if (n && !S.tkx.comps.some((c) => c.name.toLowerCase() === n.toLowerCase())) S.tkx.comps.push({ name: n, team: el.team.value, lead: "" }); S.tk.modal = null; return render(); }
+}
+function tkChange(e) {
+  const el = e.target, k = el.dataset.tkf;
+  if (el.closest("#tkCreateForm")) { tkReadCreate(); if (["team", "itype", "room"].includes(el.name)) { if (el.name === "room") S.tk.modal.d.asset = ""; if (el.name === "team") { S.tk.modal.d.comp = ""; S.tk.modal.d.assignee = ""; S.tk.modal.d.epic = ""; S.tk.modal.d.parent = ""; } S.tk.modal.keep = true; tkPaintModal(); const n = document.getElementById({ team: "m_comp", itype: "m_itype", room: "m_room" }[el.name]); if (n) n.focus(); } return; }
+  if (el.closest("#tkSchedForm") && el.name === "team") { const m = S.tk.modal, f = document.getElementById("tkSchedForm"); m.team = el.value; const keep = { name: f.elements.name.value, freq: f.elements.freq.value, next: f.elements.next.value, asset: f.elements.asset.value, room: f.elements.room.value, priority: f.elements.priority.value, checklist: f.elements.checklist.value.split("\n").filter(Boolean) }; m.sc = Object.assign({}, m.sc || {}, keep, { team: el.value, assignee: "", comp: "" }); m.new = true; tkPaintModal(); return; }
+  if (el.id === "tkTeam") { S.tk.team = el.value; return render(); }
+  if (el.id === "tkScope") { S.tk.scope = el.value; return render(); }
+  if (el.id === "tkSwim") { S.tk.swim = el.value; return render(); }
+  if (el.id === "tkEpicF") { S.tk.epicF = el.value; return render(); }
+  if (/^bk(Assign|Status|Pri|Sprint)$/.test(el.id) && el.value) {
+    const ids = S.tk.sel.slice(); let n = 0;
+    ids.forEach((id) => { const t = tkGet(id); if (!t) return; if (el.id === "bkAssign") { tkSet(t, "assignee", el.value === "__none" ? "" : el.value); n++; } else if (el.id === "bkStatus") { if (tkCan(t, el.value) && !tkNeedsResolution(t, el.value)) { tkMove(t, el.value); n++; } else if (tkCan(t, el.value)) { tkMove(t, el.value, { resolution: "Done" }); n++; } } else if (el.id === "bkPri") { tkSet(t, "priority", el.value); n++; } else if (el.id === "bkSprint") { tkSet(t, "sprint", el.value === "__none" ? "" : el.value); n++; } });
+    toast(`${n} of ${ids.length} issues updated`); return render();
+  }
+  if (!k) return;
+  const [f, id, extra] = k.split("|"), t = tkGet(id), v = el.value;
+  if (f === "attach") { const names = [...el.files].map((x) => x.name); t.attach.push(...names); tkLog(t, { k: "change", f: "Attachment", from: "", to: names.join(", ") }); return render(); }
+  if (f === "sprintmove") { if (!v) return; tkSet(tkGet(id), "sprint", v === "__none" ? "" : v); return render(); }
+  if (f === "schedon") { S.tkx.schedules.find((s) => s.id === id).on = el.checked; return render(); }
+  if (f === "auto") { S.tkx.auto.find((r) => r.id === id).on = el.checked; toast(`Rule ${el.checked ? "on" : "off"}`); return render(); }
+  if (f === "complead") { S.tkx.comps.find((c) => c.name === id).lead = v; toast("Default assignee updated"); return render(); }
+  if (f === "addcomp") { if (v && !t.comps.includes(v)) { t.comps.push(v); tkLog(t, { k: "change", f: "Components", from: "", to: "+" + v }); } return render(); }
+  if (f === "addlabel") { tkAddLabel(t, v); return render(); }
+  if (f === "addwatcher") { if (v) { tkWatch(t, v); tkLog(t, { k: "change", f: "Watchers", from: "", to: "+" + nameOf(v) }); S.tkx.notifs.unshift({ id: ++S.tkx.seq.N, to: v, t: tsNow(), ticket: t.id, text: `${nameOf(S.me)} added you as a watcher on ${t.id}`, read: false, by: S.me }); } return render(); }
+  if (f === "type") { tkSet(t, "type", v); toast(`Moved to the ${TK_TEAM[tkTeam(t)].name} team`); return render(); }
+  if (f === "sprint" && v) tkFirstResponse(t);
+  tkSet(t, f, v); render();
+}
+let tkDeb;
+function tkInput(e) {
+  const el = e.target;
+  if (el.id === "tkq" || el.id === "tkbq") { clearTimeout(tkDeb); tkDeb = setTimeout(() => { S.tk[el.id === "tkq" ? "q" : "bq"] = el.value; tkRerender(el.id); }, 280); return; }
+  if (el.id === "tkCommentText") { const t = tkGet(S.arg); if (t) S.tk.cdraft[t.id] = el.value; return; }
+  if (el.id === "m_title") { tkDupes(); }
+}
+function tkDrag(e) {
+  const tk = S.tk;
+  if (e.type === "dragstart") { const c = e.target.closest("[data-drag]"); if (!c) return; tk.dragging = c.dataset.drag; e.dataTransfer.setData("text/plain", tk.dragging); e.dataTransfer.effectAllowed = "move"; c.classList.add("dragging"); return; }
+  if (e.type === "dragend") { tk.dragging = null; document.querySelectorAll(".dragging, .over").forEach((x) => x.classList.remove("dragging", "over")); return; }
+  const z = e.target.closest("[data-drop], [data-drop-sprint]"); if (!z || !tk.dragging) return;
+  if (e.type === "dragover") { e.preventDefault(); z.classList.add("over"); return; }
+  if (e.type === "dragleave") { if (!z.contains(e.relatedTarget)) z.classList.remove("over"); return; }
+  if (e.type === "drop") {
+    e.preventDefault(); z.classList.remove("over"); const t = tkGet(tk.dragging); tk.dragging = null; if (!t) return;
+    if (z.dataset.drop) {
+      if (!canWorkTk(t)) return toast("Only the team can change a ticket's status.");
+      const col = TK_COLS.find((c) => c.id === z.dataset.drop); if (col.sts.includes(t.status)) return;
+      const to = col.id === "done" ? "resolved" : col.id === "open" && isDone(t) ? "reopened" : col.sts[0];
+      return tkMoveOrAsk(t, to);
+    }
+    if (z.dataset.dropSprint) { tkSet(t, "sprint", z.dataset.dropSprint === "__none" ? "" : z.dataset.dropSprint); toast(`${t.id} moved`); return render(); }
+  }
+}
+function tkKey(e) {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+  if (e.key === "Escape" && S.tk && S.tk.modal) { S.tk.modal = null; return render(); }
+  if (e.key === "Enter" && e.target.matches("[data-tk2][role=button]")) { e.preventDefault(); return e.target.click(); }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey || !S || S.me === "renter" || !(S.view === "tickets" || String(S.arg).startsWith("TK-"))) return;
+  if (e.key === "c") { e.preventDefault(); tkOpenCreate(); }
+  if (e.key === "/") { const q = document.getElementById("tkq") || document.getElementById("tkbq"); if (q) { e.preventDefault(); q.focus(); } }
+}
+document.addEventListener("click", tkClick);
+document.addEventListener("submit", tkSubmit);
+document.addEventListener("change", tkChange);
+document.addEventListener("input", tkInput);
+["dragstart", "dragend", "dragover", "dragleave", "drop"].forEach((n) => document.addEventListener(n, tkDrag));
+document.addEventListener("keydown", tkKey);
 
 /* ------------------------------------------------------------------ */
 /* Asset tracker                                                       */
@@ -1649,8 +2686,13 @@ const STEPS = [
   { as: "omar", view: "budget", t: "Import from QuickBooks", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = qbSample(); }, p: "Omar imports an export. Each row is sorted by its QuickBooks account and class. Two gifts have no committee, so choose where they go (the roof check is Facility Maintenance, the dinner is Marketing & Fundraising), then import and watch the totals change." },
   { as: "khalid", view: "shura", t: "The Shura / board dashboard", reset: () => { S.shForm = false; }, p: "Khalid is on the Shura, so he gets the Shura / Board role. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment." },
   { as: "yasir", view: "budget", t: "Executive answers the Shura", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; }, p: "Requests land with the right office: reports go to finance, amendments and spending reviews to the executive. Approve or decline at the bottom of the Budget page. The Shura member is notified." },
-  { as: "amina", view: "tickets", t: "Report a problem", p: "Anyone can submit an IT or maintenance ticket. Pick the room and, if you know it, the equipment. It lands in the right team's queue." },
-  { as: "zaid", view: "tickets", t: "IT works its queue", p: "Zaid sees only IT tickets. Open the Wi-Fi ticket, assign it to himself, start it and resolve it. The person who reported it is notified." },
+  { as: "amina", view: "tickets", t: "Report a problem", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Anyone can report an IT or maintenance problem. Click Report a problem, pick the room and, if you know it, the equipment. Typing a summary checks for tickets already filed. Submit it: it is assigned to the component lead automatically." },
+  { as: "zaid", view: "tickets", t: "IT works the board", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Zaid sees IT only. The board shows the active sprint in columns. Drag the Wi-Fi ticket to In Progress (he is assigned automatically), then drag it to Done and pick a resolution. Try Group by Assignee and the quick filters." },
+  { as: "zaid", view: "card", arg: "TK-518", t: "Triage an issue", p: "A High-priority projector problem is waiting on a first response. The SLA panel shows the clock. Assign it, set the priority, add a component and a label, link it to another issue, add a sub-task, log time, and leave an internal note the reporter cannot see." },
+  { as: "idris", view: "tickets", t: "Search with JQL", reset: () => { S.tk.tab = "list"; S.tk.modal = null; }, p: "Switch to List. Try: priority >= High AND statusCategory != Done ORDER BY due ASC. Save it as a filter, select several rows to bulk-assign or move them, or export to CSV." },
+  { as: "idris", view: "tickets", t: "Plan a sprint", reset: () => { S.tk.tab = "backlog"; S.tk.modal = null; }, p: "Backlog shows the active sprint, the next one and everything unscheduled. Drag issues between them, reorder with the arrows, start or complete a sprint, and see unfinished work roll over." },
+  { as: "idris", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
+  { as: "admin", view: "tickets", t: "Reports and calendar", reset: () => { S.tk.tab = "reports"; S.tk.modal = null; }, p: "Switch the team to see every issue. Reports show created vs. resolved, workload, SLA compliance and the equipment with the most tickets; Calendar shows due dates; Timeline shows epics and sprints." },
   { as: "idris", view: "assets", t: "Track the equipment", p: "Idris keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset." },
   { as: "layla", view: "home", t: "Groups decide what people see", p: "Layla chairs Social & Welfare, so she sees S&W Aid. Amina never does. Try Portal Admin and Portal Settings: switch off a rule and watch the event checks change." },
 ];
@@ -1693,6 +2735,9 @@ function render() {
   renderGuide();
   document.getElementById("guideBtn").textContent = S.guide ? "Hide guide" : "Demo guide";
   if (S.view === "newEvent") paintChecks();
+  document.getElementById("main").classList.toggle("wide", S.view === "tickets" || (S.view === "card" && String(S.arg).startsWith("TK-")));
+  tkPaintModal();
+  if (S.tk.focus) { const f = document.getElementById(S.tk.focus); if (f && f.elements && f.elements[0]) f.elements[0].focus(); S.tk.focus = null; }
 }
 
 document.getElementById("persona").addEventListener("change", (e) => { S.me = e.target.value; S.draft = null; S.poDraft = null; go(S.me === "renter" ? "public" : "home"); });
@@ -1705,11 +2750,9 @@ document.addEventListener("click", (e) => {
   if (ds.card) return go("card", ds.card);
   if (ds.asset) { S.asSel = ds.asset; S.asFilter = "All"; if (has("facilities") || has("it") || has("office")) return go("assets"); return; }
   if (ds.asfilter) { S.asFilter = ds.asfilter; return render(); }
-  if (ds.tkphoto) { readTk(); S.tkDraft.photo = true; return render(); }
-  if (ds.tk) return tkAction(ds.tk);
   if (ds.checkout) { const a = S.assets.find((x) => x.id === ds.checkout); a.status = "Checked out"; a.out = { to: "Youth Committee · Youth Game Night", due: addDays(TODAY, 30) }; toast(`${a.id} checked out`); return render(); }
   if (ds.checkin) { const a = S.assets.find((x) => x.id === ds.checkin); a.status = "Available"; a.out = null; toast(`${a.id} checked in`); return render(); }
-  if (ds.reportasset) { const a = S.assets.find((x) => x.id === ds.reportasset); const it = ["IT", "AV"].includes(a.cat); S.tkDraft = { type: it ? "it" : "maint", cat: it ? (a.cat === "AV" ? "AV equipment" : "Computer or laptop") : "Repairs", room: a.room, asset: a.id, urgency: "Normal", desc: "" }; return go("tickets"); }
+  if (ds.reportasset) { const a = S.assets.find((x) => x.id === ds.reportasset); const it = ["IT", "AV"].includes(a.cat); go("tickets"); return tkOpenCreate({ team: it ? "it" : "facilities", comp: it ? (a.cat === "AV" ? "AV equipment" : "Computers") : "", room: a.room, asset: a.id }); }
   if (ds.budtab) { S.budTab = ds.budtab; return render(); }
   if (ds.qbstart) { S.qb = qbSample(); return render(); }
   if (ds.qbcancel) { S.qb = null; return render(); }
@@ -1776,20 +2819,6 @@ function poAction(a) {
   if (a === "return") { c.status = "returned"; log(c, "Returned to requester: please attach the itemized receipt"); toast("Returned to " + nameOf(c.owner)); }
   render();
 }
-function readTk() {
-  const f = document.getElementById("tkForm"); if (!f || !S.tkDraft) return;
-  Object.assign(S.tkDraft, { type: (f.querySelector("input[name=tktype]:checked") || {}).value || S.tkDraft.type, cat: f.elements.cat.value, urgency: f.elements.urgency.value, room: f.elements.room.value, asset: f.elements.asset.value, desc: f.elements.desc.value });
-}
-function tkAction(a) {
-  const t = getCard(S.arg); const note = (document.getElementById("tkNote")?.value || "").trim();
-  const L = (text) => t.log.push({ t: TODAY, who: S.me, text });
-  if (a === "assign") { t.status = "assigned"; t.assignee = S.me; L("Assigned to self"); }
-  if (a === "start") { t.status = "in_progress"; L("Started work" + (note ? ": " + note : "")); }
-  if (a === "wait") { t.status = "waiting"; L("Waiting on parts or vendor" + (note ? ": " + note : "")); }
-  if (a === "resolve") { t.status = "resolved"; L("Resolved" + (note ? ": " + note : "")); const as = t.asset && S.assets.find((x) => x.id === t.asset); if (as && as.status === "Needs repair") as.status = "In use"; }
-  toast({ assign: "Assigned to you", start: "Work started", wait: "Marked waiting", resolve: `Resolved. ${nameOf(t.owner)} has been notified.` }[a]);
-  render();
-}
 function readPO() {
   const f = document.getElementById("poForm"); if (!f || !S.poDraft) return;
   const d = S.poDraft;
@@ -1808,7 +2837,6 @@ document.addEventListener("input", (e) => {
   if (e.target.closest("#poForm")) { readPO(); const s = document.getElementById("poSum"); if (s) s.textContent = money(S.poDraft.lines.reduce((a, l) => a + Number(l.amount || 0), 0)); }
 });
 document.addEventListener("change", (e) => {
-  if (e.target.closest("#tkForm")) { readTk(); if (e.target.name === "tktype") S.tkDraft.cat = TK_CATS[S.tkDraft.type][0]; if (e.target.name === "room") S.tkDraft.asset = ""; if (["tktype", "room"].includes(e.target.name)) return render(); }
   if (e.target.dataset.qbrow) { S.qb.pick[e.target.dataset.qbrow] = e.target.value; return render(); }
   if (e.target.id === "budScope") { S.budScope = e.target.value; return render(); }
   if (e.target.id === "budMode") { S.budMode = e.target.value; return render(); }
@@ -1872,14 +2900,6 @@ document.addEventListener("submit", (e) => {
     const r = { id: "SR-" + ++S.seq.SR, owner: S.me, type, committee: f.committee.value, text: f.text.value.trim(), status: "open", created: TODAY };
     if (type === "amendment") { r.from = f.from.value; r.amount = Number(f.amount.value); }
     S.shReq.unshift(r); S.shForm = false; toast(`${r.id} sent to the ${SR_TYPES[type].to}`); return render();
-  }
-  if (e.target.id === "tkForm") {
-    readTk(); const d = S.tkDraft;
-    if (!d.desc.trim()) return toast("Say what's wrong so the team knows what to bring.");
-    const t = { id: "TK-" + ++S.seq.TK, ...d, owner: S.me, status: "new", log: [{ t: TODAY, who: S.me, text: "Reported" }] };
-    S.tickets.unshift(t); S.tkDraft = null;
-    toast(`${t.id} sent to the ${d.type === "it" ? "IT" : "maintenance"} team`);
-    return go("card", t.id);
   }
   if (e.target.id === "rnForm") {
     const f = e.target.elements;
