@@ -25,6 +25,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="topbar">
           <div className="topbar-inner">
             <Link href="/" className="brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/iar-logo-white.png" alt={ORG.name} className="brand-logo" />
               {ORG.shortName} <span>Portal</span>
             </Link>
             {viewer && (
