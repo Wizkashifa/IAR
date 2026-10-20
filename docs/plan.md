@@ -100,7 +100,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
-| Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
+| Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, folders filed by fiscal year where it makes sense, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
 | Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
