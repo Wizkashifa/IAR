@@ -86,7 +86,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .rail .group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 14px 10px 6px; }
 .rail button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--ink-2); }
 .rail button:hover { background: var(--surface-2); color: var(--ink); }
-.rail button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: inset 3px 0 0 var(--gold); }
+.rail button.on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 3px 0 0 var(--gold); }
 .rail .count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
 .rail .soon { font-size: 10.5px; color: var(--ink-3); }
 .main { min-width: 0; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -173,7 +173,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .tl-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }
 .btabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .btabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; font-weight: 500; color: var(--ink-2); margin-bottom: -1px; }
-.btabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.btabs button.on { color: var(--ink); border-bottom-color: var(--gold); box-shadow: inset 0 -1px 0 var(--gold); }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .pace { display: grid; grid-template-columns: minmax(120px, 170px) minmax(80px, 1fr) minmax(150px, 200px); gap: 10px; align-items: center; padding: 5px 0; }
 .pbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; }
@@ -275,7 +275,7 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
 .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; cursor: pointer; }
 .chip:hover { border-color: var(--ink-3); }
-.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .chipx { display: inline-flex; align-items: center; gap: 2px; }
 .tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; padding: 0 7px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); max-width: 100%; }
 .tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
