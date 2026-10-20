@@ -13,6 +13,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const viewer = await getViewer();
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&family=Outfit:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body>
         <header className="topbar">
           <div className="topbar-inner">
