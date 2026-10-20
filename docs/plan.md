@@ -100,6 +100,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
+| Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
 | Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
@@ -108,6 +109,45 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Budget | Chairs (their cost centers), finance, executive, Shura (read) | Built on the FY2026–27 budget (July 1–June 30): IAR General Fund cost centers plus the Page Road campus. Sankey of funding source → cost center → spent, committed, available, with a table. A Revenue tab sorts everything received into three kinds: **unrestricted gifts** to IAR (General Fund), **designated donations** to a committee (e.g. Da'wah) and **program revenue** earned by a committee (e.g. Youth); Page Road tracks tuition, endowment and donations against its plan. Finance imports a QuickBooks export (CSV now, QuickBooks Online connection later); rows are sorted by account and class, and anything without a committee waits for finance to assign it. Expense rows are matched to purchase requests | 3 |
 | Shura / Board dashboard | Shura / board members (group `portal-shura@`) | A dashboard first: received vs. spent, cost centers against the calendar, restricted money held, last year's close. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
 | Later | By group | Onboarding/offboarding checklist (groups, cards, keys, Drive), key checkout, volunteer signup, event templates | 4+ |
+
+## Library
+
+**Decided (Oct 20, 2026):** the portal is also the home for IAR's documents, not only for files attached to cards. It starts with Shura documentation and policies and grows from there. Files live in Google shared drives owned by IAR; the portal is the way in, not a second copy.
+
+**Principle: Drive enforces access, the portal presents it.** A Google Group can be a member of a shared drive with a role, so the groups that already decide which portal modules a person sees can also decide which drives they can open. The portal calls Drive with the signed-in user's own token, so browse and search only return what that person can already open. The portal keeps no file permissions of its own to get wrong.
+
+| Shared drive | Who has access (group → role) | Contents |
+| --- | --- | --- |
+| IAR Shura | `portal-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
+| IAR Social & Welfare | `portal-sw@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
+| IAR Policies | All staff group → Viewer; Shura and executive → Contributor | Approved policies: rooms, purchasing, rentals, volunteer, HR |
+| IAR Finance | `portal-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
+| IAR Operations (and per-team drives if needed) | Each team's group → Contributor | Run sheets, contracts, event files, templates |
+
+Exact drives and role levels are open (see questions below).
+
+**Setup in the Workspace admin console**
+- Add each group as a drive member with its role (Drive API: `permissions.create`, type `group`, `supportsAllDrives=true`). Nested groups work.
+- On restricted drives, allow access to members only and turn off sharing to non-members and link sharing. Give Manager to Kashif and one backup admin only, since Managers can change membership.
+- Make restricted groups invite-only with hidden member lists so the groups themselves are not discoverable. Consider turning off download, print and copy for Viewers on Social & Welfare.
+- Group membership changes can take a few minutes to reach Drive.
+
+**What the portal adds on top of Drive**
+- A Library module that lists drives grouped by team and searches across everything the user can open.
+- Tags and categories (policy, minutes, contract, form) stored in the portal database against the Drive file ID, since Drive has no good way to do this itself.
+- Policy documents with an owner and a review date, with a reminder when one is stale. Useful for the Shura's policy refresh.
+- Links between cards and files, so an approved budget or policy can be linked from the requests that rely on it. The link stores the Drive file ID, never a copy.
+- Upload into the right drive and folder, with the folder structure created automatically.
+
+**Technical notes**
+- Sign-in requests the Drive scope so the portal can act as the user. A service account (already planned) is used only for setup tasks such as creating folders and attaching card files.
+- The database holds file IDs, tags, owners and review dates, never file contents. W-9s and other tax-ID documents stay only in the restricted drive, as before.
+- Reusing `portal-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
+
+**Risks**
+- Group-based access is only as good as group hygiene. Review membership of restricted groups each quarter and on every offboarding (ties into the onboarding/offboarding checklist in Later).
+- Someone with Contributor access can still copy a file's content elsewhere. Drive permissions limit access, not what a person does with what they read.
+- A general library invites clutter. Give each drive an owner and require a category on upload.
 
 ## Policy automation
 
@@ -176,7 +216,7 @@ The calendar stays the booking record. The database holds everything about the c
 | Line item, vendor, account | The purchase request data model, unchanged (see purchase-requests-plan.md) |
 | Comment, attachment, audit log | Every change, who made it and when; files kept in the Shared Drive |
 
-**Access groups to create** (names are suggestions): `portal-staff`, `portal-committee-chairs`, `portal-office`, `portal-finance`, `portal-cardholders`, `portal-marketing`, `portal-av`, `portal-facilities`, `portal-security`, `portal-sw`, `portal-executive`, `portal-admins`.
+**Access groups to create** (names are suggestions): `portal-staff`, `portal-committee-chairs`, `portal-office`, `portal-finance`, `portal-cardholders`, `portal-marketing`, `portal-av`, `portal-facilities`, `portal-security`, `portal-sw`, `portal-shura`, `portal-executive`, `portal-admins`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
 
 ## Roadmap
 
@@ -186,7 +226,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
 | 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags; pilot with a few committees | Pilot runs clean; old Requisition and Program Request forms retired |
-| 2 · Team queues, run sheet, close-out | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired | Shura approves the refreshed room policy, including rental terms |
+| 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
 | 3 · Gym rentals, S&W aid, public calendar | Public front door for outside renters; private aid cases; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
 
@@ -214,6 +254,10 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Gym rental rates, deposit and insurance terms
 - [ ] Dollar limit for executive approval on purchase requests (carried over from the PO plan)
 - [ ] Which committees pilot Phase 1?
+- [ ] Library: which shared drives to create, and the role each group gets on each
+- [ ] Library: who owns each drive and each policy, and the review cadence for policies
+- [ ] Library: does Social & Welfare need download/copy blocked, and who are its named managers?
+- [ ] Library: migrate existing Shura and policy files from current Drive folders, or start fresh?
 
 **Next steps**
 
@@ -227,3 +271,5 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Pull the room list and calendar IDs from IAR's Google Calendar
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
+- [ ] Create the shared drives and add the access groups as members (Library)
+- [ ] Add the Drive scope to sign-in and build the Library module (Phase 2)
