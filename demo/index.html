@@ -1074,7 +1074,7 @@ const BLURB = {
   tickets: "Report a building or tech problem, or run the team's board, backlog, sprints and reports.",
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
-  shura: "Money at a glance for the Shura, with a way to ask finance or the executive for something.",
+  shura: "How IAR is doing: events, building and IT cases, requests, money and what needs a Shura decision.",
   library: "Policies, Shura documents and each committee's files, in shared drives that follow your Google Groups.",
   settings: "Rooms, access groups and the policy rules the portal checks.",
   away: "Going away? Hand your approvals to someone until you're back.",
@@ -1903,6 +1903,13 @@ function seedMoney() {
     { id: "SR-14", owner: "ext:Another Shura member", type: "amendment", committee: "Facility Maintenance", from: "Special Projects (Shura)", amount: 2500, text: "Move $2,500 from Special Projects (Shura) to Facility Maintenance for the MPH cooling repair.", status: "open", created: addDays(TODAY, -2) },
   ];
   S.seq.SR = 14;
+  /* Sample governance calendar. The Shura keeps the real dates. */
+  S.keyDates = [
+    { what: "Property and liability insurance renewal", date: addDays(TODAY, 41), owner: "Finance office" },
+    { what: "Fire extinguisher and alarm inspection", pm: "PM-2", owner: "Facilities" },
+    { what: "Outside review of last year's books", date: addDays(TODAY, 70), owner: "Finance office" },
+    { what: "Annual general meeting", date: addDays(TODAY, 95), owner: "Shura" },
+  ];
 }
 
 function qbSample() {
@@ -1988,15 +1995,15 @@ function vBudget() {
   const { all, list } = budgetScopes();
   const scope = S.budScope && (S.budScope === "IAR" ? all : list.includes(S.budScope)) ? S.budScope : all ? "IAR" : list[0];
   if (!scope) return `<h1>Budget</h1><div class="panel empty">Your committee isn't a cost center in the ${FY_LABEL()} budget file. Social &amp; Welfare is funded from restricted zakat and sadaqah and is tracked separately.</div>`;
-  const tab = S.budTab === "rev" ? "rev" : "flow", mode = S.budMode || "status";
+  const tab = S.budTab === "rev" ? "rev" : S.budTab === "ytd" && scope === "IAR" ? "ytd" : "flow", mode = S.budMode || "status";
   return `<div class="head"><div><h1>Budget</h1><p class="lead">The FY2026–27 budget (July 1 to June 30) by committee and cost center, and where each one stands. Budgets are from the approved budget file. Year-to-date spending and receipts are sample figures until the first QuickBooks import; commitments come from purchase requests in the portal.</p></div><span class="pill info">QuickBooks data through ${esc(fmtDate(S.imports[0].date))}</span></div>
   <div class="row">
     <label class="small muted" for="budScope">Show</label><select id="budScope" class="btn small">${all ? `<option value="IAR" ${scope === "IAR" ? "selected" : ""}>IAR as a whole</option>` : ""}${list.map((n) => `<option ${n === scope ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
     ${tab === "flow" ? `<label class="small muted" for="budMode">Flow</label><select id="budMode" class="btn small"><option value="status" ${mode === "status" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} → spent / committed / available</option><option value="fund" ${mode === "fund" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} only</option></select>` : ""}
     ${!all ? '<span class="small muted">You see the committees you chair.</span>' : ""}
   </div>
-  <div class="btabs" role="tablist">${[["flow", "Budget flow"], ["rev", "Revenue & QuickBooks"]].map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? "on" : ""}" data-budtab="${k}">${l}</button>`).join("")}</div>
-  ${tab === "rev" ? budRevenue(scope) : budFlow(scope, mode)}
+  <div class="btabs" role="tablist">${[["flow", "Budget flow"], ["rev", "Revenue & QuickBooks"], ...(scope === "IAR" ? [["ytd", "Year to date"]] : [])].map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? "on" : ""}" data-budtab="${k}">${l}</button>`).join("")}</div>
+  ${tab === "rev" ? budRevenue(scope) : tab === "ytd" ? budYearToDate() : budFlow(scope, mode)}
   ${reqHandlerPanel()}`;
 }
 function budFlow(scope, mode) {
@@ -2115,32 +2122,16 @@ function srForm() {
     <div class="actions"><button class="btn" type="button" data-shnew="1">Cancel</button><button class="btn primary" type="submit">Send request</button></div></form>`;
 }
 
-/* ---- Shura dashboard ---- */
-function vShura() {
+/* ---- Budget: year to date (IAR as a whole) ---- */
+function budYearToDate() {
   const all = S.budget.flatMap((c) => c.lines.map((l) => ({ ...l, committee: c.name })));
   const sum = (xs, k) => xs.reduce((a, x) => a + x[k], 0), pace = yearPace(), n = nMonths();
-  const rec = { gf: revSum((r) => r.kind === "gf"), don: revSum((r) => r.kind === "don"), prog: revSum((r) => r.kind === "prog") };
-  const R = rec.gf + rec.don + rec.prog, B = sum(all, "budget"), SP = sum(all, "spent"), CM = sum(all, "committed");
-  const gfL = all.filter((l) => l.source === "gf"), resL = all.filter((l) => l.source !== "gf");
-  const gfPos = rec.gf - sum(gfL, "spent"), gfAfter = gfPos - sum(gfL, "committed");
-  const openSum = Object.values(OPENING).reduce((a, b) => a + b, 0), held = rec.don + rec.prog + openSum - sum(resL, "spent"), heldAfter = held - sum(resL, "committed");
-  const open = S.shReq.filter((r) => r.status === "open").length;
-  const tile = (label, val, sub, extra) => `<div class="panel panel-b"><div class="small muted">${label}</div><div style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums">${val}</div><div class="small muted">${sub}</div>${extra || ""}</div>`;
-  const sgn = (v) => (v < 0 ? "−" : "+") + kfmt(Math.abs(v));
   const comm = S.budget.map((c) => { const b = sum(c.lines, "budget"), sp = sum(c.lines, "spent"), cm = sum(c.lines, "committed"); return { name: c.name, b, sp, cm, used: (sp + cm) / b, spent: sp / b }; }).sort((a, b) => b.used - a.used);
   const heldRow = (name, ls) => { const r = revSum((x) => x.who === name && x.kind !== "gf"), op = OPENING[name] || 0, sp = sum(ls, "spent"), cm = sum(ls, "committed"); return { name, r: r + op, sp, cm, bal: r + op - sp - cm }; };
   const held2 = [heldRow(PAGE_RD, all.filter((l) => l.site === PAGE_RD)), ...S.budget.filter((c) => c.lines.some((l) => l.site === "Own funds")).map((c) => heldRow(c.name, c.lines.filter((l) => l.site === "Own funds")))].sort((a, b) => b.bal - a.bal);
   const last = Object.entries(LAST).map(([name, [b, a, nb]]) => ({ name, b, a, nb, pct: a / b })).sort((x, y) => y.pct - x.pct);
   const lastTot = last.reduce((t, x) => ({ b: t.b + x.b, a: t.a + x.a, nb: t.nb + x.nb }), { b: 0, a: 0, nb: 0 });
-  return `<div class="head"><div><h1>Shura / Board Dashboard</h1><p class="lead">${FY_LABEL()}, ${Math.round(pace * 100)}% of the year gone. Money figures are from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}; commitments are live from approved purchase requests.</p></div><button class="btn" type="button" data-go="budget">Open full budget flow</button></div>
-  <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">
-    ${tile("Received this year", kfmt(R), `${Math.round((R / B) * 100)}% of ${kfmt(B)} budgeted`, `<div class="legend" style="flex-direction:column;gap:3px;margin-top:4px">${Object.keys(KIND).map((k) => `<span><i style="background:${KIND[k].color}"></i>${KIND[k].short} ${kfmt(rec[k])}</span>`).join("")}</div>`)}
-    ${tile("Spent + committed", kfmt(SP + CM), `${Math.round(((SP + CM) / B) * 100)}% of budget · ${kfmt(SP)} spent`)}
-    ${tile("General Fund cushion", sgn(gfAfter), `Unrestricted received minus spent and committed. ${gfPos < 0 ? "Spending is ahead of giving." : gfAfter < 0 ? "Giving is ahead of spending, but commitments take it below zero." : "Giving is ahead of spending."}`)}
-    ${tile("Restricted money held", kfmt(heldAfter), `Designated gifts and program revenue not yet spent or committed. It can only go to its purpose.`)}
-    ${tile("Open requests", String(open), open ? "Waiting on finance or the executive" : "Nothing waiting")}
-  </div>
-  <div class="panel"><div class="panel-h"><h2>Received vs. spent, year to date</h2><div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--ink)"></i>Spent</span></div></div><div class="panel-b">${cumLines()}
+  return `<div class="panel"><div class="panel-h"><h2>Received vs. spent, year to date</h2><div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--ink)"></i>Spent</span></div></div><div class="panel-b">${cumLines()}
     <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">Show as table</summary><div class="tablewrap"><table><thead><tr><th>Month</th><th class="num">Received</th><th class="num">Spent</th></tr></thead><tbody>${Array.from({ length: n }, (_, m) => `<tr><td>${FYM[m]}</td><td class="num">${kfmt(revSum((r) => r.m === m))}</td><td class="num">${kfmt(S.spendM[m])}</td></tr>`).join("")}</tbody></table></div></details></div></div>
   <div class="grid2">
     <div class="panel"><div class="panel-h"><h2>Committees against the calendar</h2><span class="small muted">Green tick = where ${Math.round(pace * 100)}% of the year puts spending</span></div><div class="panel-b">
@@ -2151,9 +2142,105 @@ function vShura() {
   <div class="panel"><div class="panel-h"><h2>How last year closed</h2><span class="small muted">FY2025–26 General Fund, from the budget vs. actuals report</span></div><div class="tablewrap"><table><thead><tr><th>Cost center</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Used</th><th class="num">This year's budget</th></tr></thead><tbody>
     ${last.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${kfmt(x.b)}</td><td class="num">${kfmt(x.a)}</td><td class="num">${Math.round(x.pct * 100)}% ${x.pct > 1.03 ? '<span class="pill bad">Over</span>' : ""}</td><td class="num">${kfmt(x.nb)}${x.nb > x.b ? " ▲" : x.nb < x.b ? " ▼" : ""}</td></tr>`).join("")}
     <tr><td><strong>Total (excl. self-funded carry-over)</strong></td><td class="num"><strong>${kfmt(lastTot.b)}</strong></td><td class="num"><strong>${kfmt(lastTot.a)}</strong></td><td class="num"><strong>${Math.round((lastTot.a / lastTot.b) * 100)}%</strong></td><td class="num"><strong>${kfmt(lastTot.nb)}</strong></td></tr>
-  </tbody></table></div></div>
-  <div class="panel"><div class="panel-h"><h2>Shura requests</h2><button class="btn primary small" type="button" data-shnew="1">${S.shForm ? "Close form" : "New request"}</button></div>
-    ${S.shForm ? srForm() : ""}
+  </tbody></table></div></div>`;
+}
+
+/* ---- Shura / Board: how IAR is doing, across every module ---- */
+/* Maintenance and IT cases by kind. Sub-tasks count through their parent. */
+const CASE_KIND = { repair: "Repairs", preventive: "Preventive", improve: "Improvements" }; // new things and projects
+const caseKind = (t) => (t.itype === "Preventive" ? "preventive" : t.itype === "Problem" ? "repair" : "improve");
+function orgHealth(days = 30) {
+  const end = addDays(TODAY, days), since = addDays(TODAY, -days);
+  const window = (c) => { const out = []; for (let d = TODAY; d <= end; d = addDays(d, 1)) if (occursOn(c, d)) out.push(d); return out; };
+  const evLive = S.cards.filter((c) => ["approved", "closeout"].includes(c.status)).map((c) => ({ c, dates: window(c) })).filter((x) => x.dates.length);
+  const evPending = S.cards.filter((c) => ["submitted", "office", "mission", "changes"].includes(c.status));
+  const rentals = S.rentals.filter((r) => r.status === "approved" && r.date >= TODAY && r.date <= end);
+  const cases = (team) => {
+    const ts = S.tickets.filter((t) => tkTeam(t) === team && t.itype !== "Sub-task");
+    const open = ts.filter((t) => !isDone(t));
+    const by = Object.fromEntries(Object.keys(CASE_KIND).map((k) => [k, open.filter((t) => caseKind(t) === k).length]));
+    return {
+      open, by, overdue: open.filter(tkOverdue).length,
+      late: open.filter((t) => tkHasSla(t) && tkSla(t).res.state === "breach").length,
+      urgent: open.filter((t) => ["Highest", "High"].includes(t.priority)).length,
+      closed: ts.filter((t) => t.resolvedAt && t.resolvedAt.slice(0, 10) >= since).length,
+      pmLate: S.tkx.schedules.filter((s) => s.on && s.team === team && s.next < TODAY).length,
+      pmAll: S.tkx.schedules.filter((s) => s.on && s.team === team).length,
+      projects: open.filter((t) => t.itype === "Epic"),
+    };
+  };
+  const poOpen = S.pos.filter((p) => ["chair", "finance", "to_pay", "books", "returned"].includes(p.status));
+  return {
+    days, evLive, evPending, rentals,
+    evCount: evLive.reduce((a, x) => a + x.dates.length, 0) + rentals.length,
+    people: evLive.reduce((a, x) => a + x.dates.length * (x.c.attendance || 0), 0) + rentals.reduce((a, r) => a + (r.attendance || 0), 0),
+    closeout: S.cards.filter((c) => c.status === "closeout"),
+    fac: cases("facilities"), it: cases("it"),
+    poOpen, poAmt: poOpen.reduce((a, p) => a + total(p), 0), poSlow: poOpen.filter((p) => daysBetween(p.created, TODAY) > 7),
+    rnPending: S.rentals.filter((r) => r.status === "submitted"),
+    aid: { n: S.aid.length, amt: S.aid.reduce((a, x) => a + x.amount, 0), waiting: S.aid.filter((x) => /awaiting/i.test(x.status)).length },
+    assets: { repair: S.assets.filter((a) => a.status === "Needs repair"), warranty: S.assets.filter((a) => a.warranty && a.warranty >= TODAY && a.warranty <= addDays(TODAY, 90)) },
+    policies: S.lib.files.filter((f) => f.drive === "policies" && f.review && f.review < TODAY && f.folder !== "Archive"),
+    drafts: S.lib.files.filter((f) => f.drive === "policies" && f.folder === "Drafts"),
+    minutes: S.lib.files.filter((f) => f.drive === "shura" && f.folder === "Minutes").sort((a, b) => (a.updated < b.updated ? 1 : -1))[0],
+    meeting: S.bookings.filter((b) => /shura/i.test(b.label) && b.date >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1))[0],
+  };
+}
+function vShura() {
+  const H = orgHealth(), pace = yearPace();
+  const all = S.budget.flatMap((c) => c.lines), sum = (xs, k) => xs.reduce((a, x) => a + x[k], 0);
+  const B = sum(all, "budget"), SP = sum(all, "spent"), CM = sum(all, "committed");
+  const recGf = revSum((r) => r.kind === "gf"), R = revSum(() => true);
+  const gfL = all.filter((l) => l.source === "gf"), gfAfter = recGf - sum(gfL, "spent") - sum(gfL, "committed");
+  const ahead = S.budget.filter((c) => (sum(c.lines, "spent") + sum(c.lines, "committed")) / sum(c.lines, "budget") > pace + 0.05);
+  const openSR = S.shReq.filter((r) => r.status === "open");
+  const sgn = (v) => (v < 0 ? "−" : "+") + kfmt(Math.abs(v));
+  const flag = (n, label, cls = "warn") => (n ? `<span class="pill ${cls}">${n} ${label}</span>` : "");
+  const tile = (label, val, sub, go, extra) => `<button class="tile" type="button" ${go ? `data-go="${go}"` : "disabled"} style="text-align:left"><div class="small muted">${label}</div><div style="font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;margin:2px 0">${val}</div><div class="small muted">${sub}</div>${extra ? `<div class="row" style="gap:4px;margin-top:6px">${extra}</div>` : ""}</button>`;
+  const kinds = (c) => Object.entries(CASE_KIND).map(([k, l]) => `${c.by[k]} ${l.toLowerCase()}`).join(" · ");
+  const caseRow = (name, c) => `<tr><td><strong>${name}</strong></td>${Object.keys(CASE_KIND).map((k) => `<td class="num">${c.by[k]}</td>`).join("")}<td class="num"><strong>${c.open.length}</strong></td><td class="num">${c.urgent}</td><td class="num">${c.overdue + c.late ? `<span class="pill bad">${c.overdue + c.late}</span>` : "0"}</td><td class="num">${c.closed}</td><td class="num">${c.pmAll - c.pmLate} of ${c.pmAll}</td></tr>`;
+  /* Decisions and follow-ups that sit with the Shura or its officers. */
+  const asks = [
+    ...H.evPending.filter((c) => c.status === "mission").map((c) => [`Mission review: ${c.title}`, `${c.committee} · ${fmtDate(c.date)} · ${c.attendance} expected`, "bad"]),
+    ...[...H.fac.projects, ...H.it.projects].filter((t) => /shura/i.test(t.desc + " " + tkKids(t).map((k) => k.title).join(" "))).map((t) => [`Capital project: ${t.title}`, `${t.id} · due ${fmtDate(t.due)} · needs Shura approval once quotes are in`, "warn"]),
+    ...H.drafts.map((f) => [`Draft for the Shura: ${f.name.replace(/\.\w+$/, "")}`, `Policies drive · updated ${fmtDate(f.updated)}`, "info"]),
+    ...H.policies.map((f) => [`Policy past its review date: ${f.name.replace(/\.\w+$/, "")}`, `Review was due ${fmtDate(f.review)}`, "warn"]),
+    ...openSR.map((r) => [`${r.id} · ${SR_TYPES[r.type].label}`, `Open with ${SR_TYPES[r.type].to} since ${fmtDate(r.created)}`, "info"]),
+  ];
+  const big = H.evLive.flatMap((x) => x.dates.map((d) => ({ d, c: x.c }))).filter((x) => x.c.isPublic || x.c.attendance >= 50).sort((a, b) => (a.d > b.d ? 1 : -1)).slice(0, 5);
+  return `<div class="head"><div><h1>Shura / Board</h1><p class="lead">How IAR is doing across events, the building, IT, requests and money. Counts are live from the portal; money is from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}. Nothing here names the people behind a request or an aid case.</p></div>
+    <div class="row">${H.meeting ? `<span class="pill info">Next Shura meeting ${esc(fmtDate(H.meeting.date))}</span>` : ""}<button class="btn primary" type="button" data-shnew="1">${S.shForm ? "Close form" : "Ask finance or the executive"}</button></div></div>
+  ${S.shForm ? `<div class="panel"><div class="panel-h"><h2>New Shura request</h2></div>${srForm()}</div>` : ""}
+  <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+    ${tile(`Events, next ${H.days} days`, H.evCount, `About ${H.people.toLocaleString()} people expected · ${H.rentals.length} rental${H.rentals.length === 1 ? "" : "s"}`, "events", flag(H.evPending.length, "awaiting review", "info") + flag(H.closeout.length, "close-out open"))}
+    ${tile("Maintenance cases open", H.fac.open.length, kinds(H.fac), "tickets", flag(H.fac.overdue + H.fac.late, "late", "bad") + flag(H.fac.pmLate, "preventive overdue"))}
+    ${tile("IT cases open", H.it.open.length, kinds(H.it), "tickets", flag(H.it.overdue + H.it.late, "late", "bad") + flag(H.it.urgent, "high priority"))}
+    ${tile("Purchase requests in progress", H.poOpen.length, `${money(H.poAmt)} waiting to be approved or paid`, "purchases", flag(H.poSlow.length, "waiting over a week"))}
+    ${tile("General Fund cushion", sgn(gfAfter), `Unrestricted giving minus spending and commitments. ${kfmt(R)} received, ${kfmt(SP + CM)} spent or committed of ${kfmt(B)}.`, "budget", flag(ahead.length, `committee${ahead.length === 1 ? "" : "s"} ahead of pace`))}
+    ${tile("Community care", H.aid.n, `Aid cases this year, ${money(H.aid.amt)} in total. Details stay with Social & Welfare.`, has("sw") || has("finance") ? "aid" : "", flag(H.aid.waiting, "awaiting a decision", "info"))}
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-h"><h2>Needs the Shura</h2><span class="pill ${asks.length ? "warn" : "ok"}">${asks.length || "Nothing"}</span></div>
+      ${asks.length ? `<div class="list">${asks.map(([t, s, cls]) => `<div class="item" style="cursor:default"><div><div class="t">${esc(t)}</div><div class="s">${esc(s)}</div></div><div class="r"><span class="pill ${cls}" aria-hidden="true">●</span></div></div>`).join("")}</div>` : `<div class="empty">Nothing is waiting on a Shura decision.</div>`}
+      <div class="panel-b small muted" style="border-top:1px solid var(--line)">Latest minutes: ${H.minutes ? `${esc(H.minutes.name.replace(/\.\w+$/, ""))}, posted ${esc(fmtDate(H.minutes.updated))}` : "none yet"}. <button class="lnk" type="button" data-go="library">Open the Shura drive</button></div></div>
+    <div class="panel"><div class="panel-h"><h2>Coming up</h2><button class="btn small" type="button" data-go="events">All events</button></div>
+      ${big.length ? `<div class="list">${big.map(({ d, c }) => `<div class="item" style="cursor:default"><div><div class="t">${esc(c.title)}</div><div class="s">${esc(fmtDate(d))} · ${esc(c.committee)} · ${esc(room(c.room).name)}</div></div><div class="r small mono">${c.attendance} expected</div></div>`).join("")}</div>` : `<div class="empty">No large or public events in the next ${H.days} days.</div>`}
+      <div class="panel-b small muted" style="border-top:1px solid var(--line)">Waiting on review: ${H.evPending.length ? H.evPending.map((c) => `${esc(c.title)} (${EV_STATUS[c.status][0].toLowerCase()})`).join(", ") : "none"}.${H.rnPending.length ? ` ${H.rnPending.length} rental request${H.rnPending.length === 1 ? "" : "s"} with the office.` : ""}</div></div>
+  </div>
+  <div class="panel"><div class="panel-h"><h2>Building and IT</h2><span class="small muted">Open cases by kind, last ${H.days} days for closed</span></div><div class="tablewrap"><table><thead><tr><th>Team</th>${Object.values(CASE_KIND).map((l) => `<th class="num">${l}</th>`).join("")}<th class="num">Open</th><th class="num">Urgent</th><th class="num">Late</th><th class="num">Closed</th><th class="num">PM on time</th></tr></thead><tbody>
+    ${caseRow("Maintenance", H.fac)}${caseRow("IT", H.it)}</tbody></table></div>
+    <div class="panel-b small muted" style="border-top:1px solid var(--line)">Urgent means high or highest priority. PM on time counts preventive schedules that aren't overdue. Late means past its due date or past the response target for its priority.
+      ${[...H.fac.projects, ...H.it.projects].length ? ` Projects: ${[...H.fac.projects, ...H.it.projects].map((t) => `${esc(t.title)} (due ${esc(fmtDate(t.due))})`).join("; ")}.` : ""}
+      ${H.assets.repair.length ? ` Equipment needing repair: ${H.assets.repair.map((a) => esc(a.name)).join(", ")}.` : ""}
+      ${H.assets.warranty.length ? ` Warranties ending in 90 days: ${H.assets.warranty.map((a) => esc(a.name)).join(", ")}.` : ""}</div></div>
+  <div class="panel"><div class="panel-h"><h2>Money at a glance</h2><button class="btn small" type="button" data-budtab="ytd" data-go="budget">Year to date in Budget</button></div><div class="panel-b">
+    <div class="pace"><div><strong>Year gone</strong></div><div class="pbar" role="img" aria-label="${Math.round(pace * 100)}% of the fiscal year gone"><div class="sp" style="width:${pace * 100}%"></div></div><div class="small">${Math.round(pace * 100)}% of ${FY_LABEL()}</div></div>
+    <div class="pace"><div><strong>Received</strong></div><div class="pbar" role="img" aria-label="${Math.round((R / B) * 100)}% of budget received"><div class="sp" style="width:${Math.min(100, (R / B) * 100)}%;background:var(--accent)"></div><i class="tick" style="left:${pace * 100}%"></i></div><div class="small"><span class="mono">${kfmt(R)}</span> · ${Math.round((R / B) * 100)}% of budget</div></div>
+    <div class="pace"><div><strong>Spent + committed</strong></div><div class="pbar" role="img" aria-label="${Math.round(((SP + CM) / B) * 100)}% of budget spent or committed"><div class="sp" style="width:${Math.min(100, (SP / B) * 100)}%"></div><div class="cm" style="left:${Math.min(100, (SP / B) * 100)}%;width:${Math.min(100, (CM / B) * 100)}%"></div><i class="tick" style="left:${pace * 100}%"></i></div><div class="small"><span class="mono">${kfmt(SP + CM)}</span> · ${Math.round(((SP + CM) / B) * 100)}% of budget</div></div>
+    <p class="small muted" style="margin:8px 0 0">${ahead.length ? `Ahead of pace: ${ahead.map((c) => esc(c.name)).join(", ")}.` : "Every committee is on pace."} Green tick = share of the year gone. The full picture (monthly trend, each committee, restricted funds, last year's close) is in Budget.</p></div></div>
+  <div class="panel"><div class="panel-h"><h2>Key dates</h2><span class="small muted">Sample dates until the Shura confirms them</span></div><div class="tablewrap"><table><thead><tr><th>What</th><th>When</th><th>Owner</th></tr></thead><tbody>
+    ${S.keyDates.map((k) => (k.pm ? { ...k, date: (S.tkx.schedules.find((x) => x.id === k.pm) || {}).next } : k)).filter((k) => k.date).sort((a, b) => (a.date > b.date ? 1 : -1)).map((k) => `<tr><td>${esc(k.what)}</td><td class="mono">${esc(fmtDate(k.date))} <span class="small muted">· ${daysBetween(TODAY, k.date)} days</span></td><td>${esc(k.owner)}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="panel"><div class="panel-h"><h2>Shura requests</h2><span class="small muted">Reports, budget amendments and spending reviews</span></div>
     <div class="list">${S.shReq.length ? S.shReq.map((r) => srCard(r, false)).join("") : '<div class="empty">No requests yet.</div>'}</div></div>`;
 }
 
@@ -3234,7 +3321,7 @@ document.getElementById("guideBtn").addEventListener("click", () => { S.guide = 
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button, [data-card]"); if (!b) return;
   const ds = b.dataset;
-  if (ds.go) { if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
+  if (ds.go) { if (ds.budtab) { S.budTab = ds.budtab; S.budScope = "IAR"; } if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
   if (ds.card) return go("card", ds.card);
   if (ds.nopen) { const n = S.notifs.find((x) => x.id === Number(ds.nopen)); if (!n) return; if (!n.readBy.includes(S.me)) n.readBy.push(S.me); return n.card ? go("card", n.card) : go(n.view || "home"); }
   if (ds.nallread) { myNotifs().forEach((n) => { if (!n.readBy.includes(S.me)) n.readBy.push(S.me); }); S.tkx.notifs.filter((n) => n.to === S.me).forEach((n) => (n.read = true)); return render(); }
