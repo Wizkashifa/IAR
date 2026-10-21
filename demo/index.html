@@ -2434,7 +2434,7 @@ function vTkList() {
   const th = (f, n) => `<th><button type="button" class="thb" data-tk2="sort|${f}">${n}${tk.sort.f === f ? (tk.sort.dir > 0 ? " ▲" : " ▼") : ""}</button></th>`;
   const people = [...new Set(myTeams().flatMap(tkPeople))];
   return `<div class="panel panel-b stack">
-    <div class="row"><input type="search" id="tkq" class="srch wide" placeholder='Search, or use JQL: status = "In Progress" AND assignee = me ORDER BY priority DESC' value="${esc(tk.q)}" aria-label="Search or JQL"><button type="button" class="btn small" data-tk2="savefilter">Save filter</button><button type="button" class="btn small" data-tk2="csv">Export CSV</button></div>
+    <div class="row"><input type="search" id="tkq" class="srch wide" placeholder='Search, or use JQL: status = "In Progress" AND assignee = me ORDER BY priority DESC' value="${esc(tk.q)}" aria-label="Search or JQL"><button type="button" class="btn small" data-tk2="savefilter">Save filter</button><button type="button" class="btn small" disabled title="Not available in the demo">Export CSV</button></div>
     ${r.err ? `<div class="note bad" role="alert">${esc(r.err)}</div>` : ""}
     <div class="row"><span class="small muted">Filters</span>${S.tkx.filters.map((f) => `<span class="chipx"><button type="button" class="chip ${tk.q === f.q ? "on" : ""}" data-tk2="filter|${f.id}">${esc(f.name)}</button>${f.mine ? `<button type="button" class="x" aria-label="Delete filter ${esc(f.name)}" data-tk2="delfilter|${f.id}">×</button>` : ""}</span>`).join("")}</div>
     ${sel.length ? `<div class="bulk"><strong>${sel.length} selected</strong>
@@ -2755,14 +2755,6 @@ function tkRerender(focusId) {
   render();
   if (id) { const n = document.getElementById(id); if (n) { n.focus(); try { if (pos != null) n.setSelectionRange(pos, pos); } catch (e) {} } }
 }
-function tkCsv() {
-  const r = tkQuery(tkVisible(), S.tk.q), xs = r.list;
-  const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = [["Key", "Type", "Summary", "Status", "Resolution", "Priority", "Assignee", "Reporter", "Team", "Components", "Labels", "Location", "Equipment", "Due", "Created", "Resolved", "Estimate h", "Logged h", "Cost"]].concat(xs.map((t) => [t.id, t.itype, t.title, TK_ST[t.status].n, t.resolution, t.priority, nameOf(t.assignee || "") === "" ? "" : t.assignee ? nameOf(t.assignee) : "", nameOf(t.owner), TK_TEAM[tkTeam(t)].name, t.comps.join("; "), t.labels.join("; "), roomName(t.room), t.asset, t.due, t.created, t.resolvedAt, t.est, t.spent, t.cost]));
-  const blob = new Blob([rows.map((r) => r.map(cell).join(",")).join("\n")], { type: "text/csv" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "iar-tickets.csv"; document.body.appendChild(a); a.click(); a.remove();
-  toast(`Exported ${xs.length} issues`);
-}
 function tkClick(e) {
   const el = e.target.closest("[data-tk2]"); if (!el) return;
   const [act, a, b, c] = el.dataset.tk2.split("|"), tk = S.tk;
@@ -2782,7 +2774,6 @@ function tkClick(e) {
     case "delfilter": S.tkx.filters = S.tkx.filters.filter((x) => x.id !== a); return render();
     case "savefilter": if (!tk.q.trim()) return toast("Type a search or JQL query first."); tk.modal = { kind: "savefilter" }; return render();
     case "labelq": tk.q = `label = ${a}`; tk.tab = "list"; return render();
-    case "csv": return tkCsv();
     case "selall": { const xs = tkQuery(tkVisible(), tk.q).list; tk.sel = el.checked ? xs.map((t) => t.id) : []; return render(); }
     case "sel": tk.sel = el.checked ? [...new Set([...tk.sel, a])] : tk.sel.filter((x) => x !== a); return render();
     case "bulkclear": tk.sel = []; return render();
@@ -2978,7 +2969,7 @@ const STEPS = [
   { as: "amina", view: "tickets", t: "Report a problem", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Anyone can report an IT or maintenance problem. Click Report a problem, pick the room and, if you know it, the equipment. Typing a summary checks for tickets already filed. Submit it: it is assigned to the component lead automatically." },
   { as: "zaid", view: "tickets", t: "IT works the board", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Zaid sees IT only. The board shows the active sprint in columns. Drag the Wi-Fi ticket to In Progress (he is assigned automatically), then drag it to Done and pick a resolution. Try Group by Assignee and the quick filters." },
   { as: "zaid", view: "card", arg: "TK-518", t: "Triage an issue", p: "A High-priority projector problem is waiting on a first response. The SLA panel shows the clock. Assign it, set the priority, add a component and a label, link it to another issue, add a sub-task, log time, and leave an internal note the reporter cannot see." },
-  { as: "idris", view: "tickets", t: "Search with JQL", reset: () => { S.tk.tab = "list"; S.tk.modal = null; }, p: "Switch to List. Try: priority >= High AND statusCategory != Done ORDER BY due ASC. Save it as a filter, select several rows to bulk-assign or move them, or export to CSV." },
+  { as: "idris", view: "tickets", t: "Search with JQL", reset: () => { S.tk.tab = "list"; S.tk.modal = null; }, p: "Switch to List. Try: priority >= High AND statusCategory != Done ORDER BY due ASC. Save it as a filter, select several rows to bulk-assign or move them,." },
   { as: "idris", view: "tickets", t: "Plan a sprint", reset: () => { S.tk.tab = "backlog"; S.tk.modal = null; }, p: "Backlog shows the active sprint, the next one and everything unscheduled. Drag issues between them, reorder with the arrows, start or complete a sprint, and see unfinished work roll over." },
   { as: "idris", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
   { as: "admin", view: "tickets", t: "Reports and calendar", reset: () => { S.tk.tab = "reports"; S.tk.modal = null; }, p: "Switch the team to see every issue. Reports show created vs. resolved, workload, SLA compliance and the equipment with the most tickets; Calendar shows due dates; Timeline shows epics and sprints." },
