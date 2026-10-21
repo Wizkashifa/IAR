@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
+import { actorFor, peopleStore } from "@/lib/people";
+import { isActive, todayLocal } from "@/lib/away";
 import { accountLabel, findAccount } from "@/lib/purchases/accounts";
 import { DELIVERY_LABEL, KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "@/lib/purchases/types";
-import { canViewDetail, daysWaiting, isPurchaseCard, permission, type Action, type Actor } from "@/lib/purchases/workflow";
+import { approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, type Action } from "@/lib/purchases/workflow";
 import { actOnPurchase, actOnPurchaseWith } from "../actions";
 import { Flash, StatusPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
 
@@ -19,19 +21,21 @@ export default async function PurchaseDetail({
 }) {
   const [{ id }, { ok, error }] = await Promise.all([params, searchParams]);
   const viewer = await requireViewer();
-  const card = await (await cardStore()).get(id);
+  const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
   // A request someone can't open looks the same as one that doesn't exist.
-  if (!isPurchaseCard(card) || !canViewDetail(card, { email: viewer.email, name: viewer.name, roles: viewer.actingRoles, seeAll: viewer.roles.includes("admins") })) notFound();
+  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) notFound();
 
   const pc = card;
   const p = card.purchase;
-  const actor: Actor = { email: viewer.email, name: viewer.name, roles: viewer.actingRoles };
   const can = (a: Action) => permission(pc, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const card_ = p.kind === "card";
   const total = purchaseTotal(p);
   const owed = openExpectedReturns(p);
   const live = card.status === "in_review" || card.status === "approved" || card.status === "paid";
+  const coveringFor = coveringApprover(pc, actor);
+  const approverAway = live && p.stage === "chair" && p.approverEmail ? await (await peopleStore()).getAway(p.approverEmail) : null;
+  const awayNow = approverAway && isActive(approverAway, todayLocal()) ? approverAway : null;
   const hidden = (name: string, value: string) => <input type="hidden" name={name} value={value} />;
   const base = (
     <>
@@ -72,6 +76,13 @@ export default async function PurchaseDetail({
               <Link href={`/purchases/${card.id}/edit`}>Edit and resubmit</Link>
             </>
           )}
+        </div>
+      )}
+      {approvingAsDirector(pc, actor) && live && <div className="callout info">This is waiting on {p.approverEmail}. As the committee&apos;s director you can approve, return or reject it too; it&apos;s recorded as your decision as director.</div>}
+      {coveringFor && live && <div className="callout info">You&apos;re covering approvals for {coveringFor} while they&apos;re away. Your approval is recorded as on their behalf.</div>}
+      {!coveringFor && awayNow && (
+        <div className="callout info">
+          {awayNow.name} is away until {fmtDate(`${awayNow.until}T12:00:00Z`)}. {awayNow.delegate} is covering their approvals.
         </div>
       )}
       {card.status === "denied" && p.returnNote && <div className="callout bad"><strong>Rejected:</strong> {p.returnNote}</div>}

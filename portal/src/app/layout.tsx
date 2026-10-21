@@ -3,6 +3,11 @@ import Link from "next/link";
 import "./globals.css";
 import { getViewer } from "@/lib/viewer";
 import { ORG } from "@/lib/org";
+import { unreadCount } from "@/lib/notifications";
+import { isActive, todayLocal } from "@/lib/away";
+import { peopleStore } from "@/lib/people";
+import { Suspense } from "react";
+import { FeedbackLink } from "./FeedbackLink";
 
 export const metadata: Metadata = {
   title: `${ORG.shortName} Portal`,
@@ -11,6 +16,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
+  const [unread, away] = viewer
+    ? await Promise.all([unreadCount(viewer), (await peopleStore()).getAway(viewer.email).catch(() => null)])
+    : [0, null];
+  const awayNow = Boolean(away && isActive(away, todayLocal()));
   return (
     <html lang="en">
       <head>
@@ -37,13 +46,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </nav>
             )}
             {viewer && (
+              <form action="/search" className="topsearch" role="search">
+                <input type="search" name="q" placeholder="Search requests" aria-label="Search requests" />
+              </form>
+            )}
+            {viewer && (
               <div className="user">
                 {viewer.dev && (
                   <Link href="/dev" className="devbadge" title="Local development: switch sample user">
                     Dev mode
                   </Link>
                 )}
-                <span>{viewer.name}</span>
+                <Link href="/notifications" className="bell" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+                  Notifications{unread > 0 && <span className="count">{unread > 49 ? "50+" : unread}</span>}
+                </Link>
+                <Suspense fallback={null}>
+                  <FeedbackLink />
+                </Suspense>
+                <Link href="/away" className="me" title="Out of office">
+                  {viewer.name}
+                  {awayNow && <span className="awaybadge">Away</span>}
+                </Link>
                 {!viewer.dev && <a href="/api/auth/signout">Sign out</a>}
               </div>
             )}

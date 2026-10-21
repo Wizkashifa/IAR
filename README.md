@@ -15,6 +15,7 @@ Phase 1 modules: **My Requests**, **Purchase Requests** (payments, reimbursement
 - **[portal/](portal/)** — the portal app (Next.js on Cloud Run, Firestore). Run it locally with `cd portal && npm install && npm run dev`, no Google setup needed; switch sample users at `/dev`. `npm test` runs the Purchase Requests approval rules.
   - Purchase Requests lives in `portal/src/lib/purchases/` (chart of accounts, approval workflow, form checks, settings, Drive uploads) and `portal/src/app/purchases/` (list and queues, new request, detail and actions). A purchase is a card of type `purchase` with its fields under `card.purchase`.
 - **[docs/setup.md](docs/setup.md)** — one-time Google Cloud and Workspace setup, and how to deploy.
+- **[docs/beta-launch.md](docs/beta-launch.md)** — the order to do that setup in for the small-group beta, what to collect first, the room-calendar groundwork, and the smoke test. Written for Claude Cowork to follow.
 - **[app/index.html](app/index.html)** — the original clickable Purchase Requests prototype (sample data only, nothing saved), now superseded by the module in `portal/`. Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
 
 ## Picking this up in a new chat

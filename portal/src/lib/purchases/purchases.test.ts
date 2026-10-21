@@ -5,6 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ACCOUNTS, FUNDS } from "./accounts";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
+import { purchaseNotices } from "./notices";
+import { fundsOverseenBy, parseRoster } from "./roster";
 import * as wf from "./workflow";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
@@ -245,4 +247,163 @@ test("queues: each person sees only what they can act on", () => {
   assert.deepEqual(wf.actionableBy([a, b], chair).length, 1);
   assert.deepEqual(wf.actionableBy([a, b], finance).length, 1);
   assert.deepEqual(wf.actionableBy([a, b], volunteer).length, 0);
+});
+
+// ---- Out of office -----------------------------------------------------
+
+test("someone covering an away chair can act on that chair's step, recorded on their behalf", () => {
+  const c = submitted();
+  const cover: wf.Actor = { ...backup, covering: [chair.email] };
+  assert.equal(wf.permission(c, backup, "approve").ok, false);
+  assert.equal(wf.permission(c, cover, "approve").ok, true);
+  assert.equal(wf.canViewDetail(c, cover), true);
+  const next = wf.approve(c, cover, settings, T(1));
+  assert.equal(next.purchase.stage, "finance");
+  assert.deepEqual(next.purchase.approvals[0], { stage: "chair", by: backup.email, at: T(1), onBehalfOf: chair.email });
+  assert.equal(next.purchase.history.at(-1)?.action, `Approved (Chair approval) for ${chair.email}`);
+  // Covering stops at the chair step: it doesn't make anyone a finance approver.
+  assert.equal(wf.permission(next, cover, "approve").ok, false);
+});
+
+test("covering never lets someone approve their own request, or someone else's step", () => {
+  const own = submitted({}, backup);
+  assert.equal(wf.permission(own, { ...backup, covering: [chair.email] }, "approve").ok, false);
+  const c = submitted();
+  assert.equal(wf.permission(c, { ...volunteer, covering: ["someone.else@x.org"] }, "approve").ok, false);
+});
+
+// ---- Notifications -----------------------------------------------------
+
+const to = (n: { to: { email: string } | { role: string } }) => ("email" in n.to ? n.to.email : `role:${n.to.role}`);
+
+test("notices: each step emails whoever acts next; the requester hears when it comes back", () => {
+  const c = submitted();
+  const sub = purchaseNotices(null, c, volunteer);
+  assert.deepEqual(sub.map((n) => [to(n), n.email, n.delegable]), [[chair.email, true, true]]);
+  assert.match(sub[0].text, /PO-1 .*needs your chair approval/);
+
+  const atFinance = wf.approve(c, chair, settings, T(1));
+  assert.deepEqual(purchaseNotices(c, atFinance, chair).map((n) => [to(n), n.email]), [["role:finance", true]]);
+
+  const toPay = wf.approve(atFinance, finance, settings, T(2));
+  assert.deepEqual(purchaseNotices(atFinance, toPay, finance).map((n) => [to(n), n.email]), [["role:finance", true], [volunteer.email, false]]);
+
+  const paid = wf.recordPayment(toPay, office, T(3), "Check", "20431");
+  const paidN = purchaseNotices(toPay, paid, office);
+  assert.deepEqual(paidN.map((n) => [to(n), n.email]), [["role:finance", false], [volunteer.email, false]]);
+  assert.match(paidN[1].text, /paid \(Check 20431\)/);
+
+  const back = wf.returnForChanges(c, chair, T(1), "Attach the invoice");
+  const backN = purchaseNotices(c, back, chair);
+  assert.deepEqual(backN.map((n) => [to(n), n.email]), [[volunteer.email, true]]);
+  assert.match(backN[0].text, /Attach the invoice/);
+});
+
+test("notices: nobody is notified about their own action, and S&W details stay out", () => {
+  const own = submitted({}, chair);
+  // The chair's own request goes to the backup, not back to the chair.
+  assert.deepEqual(purchaseNotices(null, own, chair).map(to), [backup.email]);
+  const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
+  for (const n of purchaseNotices(null, sw, volunteer)) assert.doesNotMatch(n.text, /Youth night|\$300/);
+});
+
+function findSwAccount(): string {
+  const a = ACCOUNTS.find((x) => x.fund === "Social & Welfare");
+  if (!a) throw new Error("no S&W account");
+  return a.id;
+}
+
+// ---- Roster and oversight ----------------------------------------------
+
+test("roster: bad addresses, unknown funds and full card numbers are left out and reported", () => {
+  const { roster, problems } = parseRoster(
+    {
+      funds: {
+        "Youth Expenses": { committee: "Youth", chair: "Sam.Chair@x.org", backup: "sam.chair@x.org" },
+        "Women Expenses": { chair: "someone@gmail.com" },
+        "Made Up Fund": { chair: "a@x.org" },
+      },
+      directors: [{ name: "Director", email: "dir@x.org", funds: ["Youth Expenses", "Nope"] }],
+      cards: [
+        { last4: "2093", holderEmail: "h@x.org", holderName: "H", fund: "Youth Expenses" },
+        { last4: "4111111111111111", holderEmail: "h@x.org", fund: "Youth Expenses" },
+      ],
+    },
+    { funds: FUNDS, domain: "x.org" },
+  );
+  assert.deepEqual(roster.funds["Youth Expenses"], { committee: "Youth", chair: "sam.chair@x.org", backup: undefined });
+  assert.deepEqual(roster.funds["Women Expenses"], { committee: undefined, chair: undefined, backup: undefined });
+  assert.equal(roster.funds["Made Up Fund"], undefined);
+  assert.deepEqual(roster.directors, [{ name: "Director", email: "dir@x.org", funds: ["Youth Expenses"] }]);
+  assert.deepEqual(roster.cards.map((c) => c.last4), ["2093"]);
+  assert.equal(problems.length, 5);
+  assert.deepEqual(fundsOverseenBy(roster, "DIR@x.org"), ["Youth Expenses"]);
+  assert.deepEqual(fundsOverseenBy(roster, "sam.chair@x.org"), ["Youth Expenses"]);
+});
+
+test("oversight alone: seeing a committee's requests doesn't let anyone act on them, and never opens S&W's", () => {
+  const director: wf.Actor = { email: "dir@x.org", name: "Director", roles: ["member"], oversees: ["Youth Expenses", "Social & Welfare"] };
+  const c = submitted();
+  assert.equal(wf.canViewDetail(c, { ...volunteer, email: "other@x.org" }), false);
+  assert.equal(wf.canViewDetail(c, director), true);
+  assert.equal(wf.permission(c, director, "approve").ok, false);
+  assert.equal(wf.canViewDetail(submitted({ fund: "Women Expenses" }), director), false);
+  const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
+  assert.equal(wf.canViewDetail(sw, director), false);
+});
+
+// ---- Directors -----------------------------------------------------------
+
+const dir: wf.Actor = { email: "dir@x.org", name: "Director", roles: ["member"], oversees: ["Youth Expenses"], directs: ["Youth Expenses", "Social & Welfare"] };
+const withDirector: wf.RoutingSettings = {
+  approversFor: (fund) =>
+    fund === "Women Expenses" ? { directors: [dir.email] } : { chair: chair.email, backup: fund === "Youth Expenses" ? undefined : backup.email, directors: [dir.email] },
+  executiveThreshold: 2500,
+};
+function routed(over: Partial<PurchaseInput>, owner: wf.Actor): wf.PurchaseCard {
+  const r = parsePurchaseInput(input(over), { ...ctx, requesterName: owner.name });
+  if (!r.ok) throw new Error(r.errors.join("; "));
+  const c = wf.newPurchase(r.details, owner.email, T(0));
+  c.id = "PO-2";
+  return wf.submit(c, owner, withDirector, T(0));
+}
+
+test("directors: can take the chair step for their committee, recorded as director", () => {
+  const c = routed({}, volunteer);
+  assert.equal(c.purchase.approverEmail, chair.email);
+  assert.equal(wf.permission(c, dir, "approve").ok, true);
+  const next = wf.approve(c, dir, withDirector, T(1));
+  assert.equal(next.purchase.stage, "finance");
+  assert.deepEqual(next.purchase.approvals[0], { stage: "chair", by: dir.email, at: T(1), asDirector: true });
+  assert.equal(next.purchase.history.at(-1)?.action, "Approved (Chair approval) as director");
+  // Only the chair step: a director is not a finance approver.
+  assert.equal(wf.permission(next, dir, "approve").ok, false);
+  // Not for committees they don't direct.
+  assert.equal(wf.permission(routed({ fund: "Education Expenses" }, volunteer), dir, "approve").ok, false);
+});
+
+test("directors: a fund with no chair, or a chair's own request with no backup, goes to the director", () => {
+  const noChair = routed({ fund: "Women Expenses" }, volunteer);
+  assert.equal(noChair.purchase.stage, "chair");
+  assert.equal(noChair.purchase.approverEmail, dir.email);
+  const chairsOwn = routed({}, chair);
+  assert.equal(chairsOwn.purchase.approverEmail, dir.email);
+  assert.match(chairsOwn.purchase.history[0].note ?? "", /director/);
+});
+
+test("directors: never their own request, never S&W", () => {
+  const own = routed({}, dir);
+  assert.equal(own.purchase.approverEmail, chair.email);
+  assert.equal(wf.permission(own, dir, "approve").ok, false);
+  const sw = routed({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] }, volunteer);
+  assert.equal(wf.permission(sw, dir, "approve").ok, false);
+});
+
+test("directors: told in the portal (no email) when a committee request waits on the chair", () => {
+  const c = routed({}, volunteer);
+  const ns = purchaseNotices(null, c, volunteer, { directors: [dir.email] });
+  assert.deepEqual(ns.map((n) => [to(n), n.email]), [[chair.email, true], [dir.email, false]]);
+  // Routed to the director by name: one email, no duplicate notice.
+  const noChair = routed({ fund: "Women Expenses" }, volunteer);
+  assert.deepEqual(purchaseNotices(null, noChair, volunteer, { directors: [dir.email] }).map((n) => [to(n), n.email]), [[dir.email, true]]);
 });

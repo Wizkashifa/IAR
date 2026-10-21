@@ -19,13 +19,13 @@ Done once by a Workspace super admin and a Google Cloud project owner. Names bel
 ### 1. Google Cloud project
 
 1. In the Google Cloud console, create a project under the **islam1.org** organization, for example `iar-portal`, and attach billing.
-2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (for Purchase Requests receipts).
+2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (Purchase Requests receipts), Gmail (alert emails) and Calendar (room bookings, for the Events module).
 
 ```
 gcloud config set project iar-portal
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
-  drive.googleapis.com
+  drive.googleapis.com gmail.googleapis.com calendar-json.googleapis.com
 ```
 
 ### 2. Firestore
@@ -47,7 +47,15 @@ gcloud firestore indexes composite create --collection-group=cards \
   --field-config=field-path=createdAt,order=ascending
 ```
 
-Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Notifications (the bell) need one more:
+
+```
+gcloud firestore indexes composite create --collection-group=notifications \
+  --field-config=field-path=to,order=ascending \
+  --field-config=field-path=at,order=descending
+```
+
+Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, and beta feedback at `orgs/iar/feedback`. If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -95,6 +103,7 @@ Create these Google Groups in the Admin console. Membership decides what each pe
 | portal-executive@ | Executive approvals |
 | portal-shura@ | Shura / board: dashboard and budget (read-only) and requests to finance and the executive. Never approves or pays |
 | portal-admins@ | Everything, plus portal settings. Keep to two or three people |
+| portal-beta@ | During the beta only: with `PORTAL_ACCESS_GROUP` set, only this group and portal-admins@ can sign in. Add testers directly, not through nested groups |
 
 Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group itself (`actingRoles` in `portal/src/lib/viewer.ts`).
 
@@ -102,22 +111,42 @@ Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see ev
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
 2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
-3. **Approvers and cards.** Fill in `FUND_APPROVERS` (each fund's chair and a backup) and `CREDIT_CARDS` (last four digits, cardholder, fund — never the full number) in `portal/src/lib/purchases/settings.ts`, from the office's confirmed lists. Until then every request goes straight to finance review and nobody can submit card receipts. These move to Portal Settings later.
-4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
-5. Notification emails, the morning digest and reminders aren't built yet; for the pilot, approvers check "Waiting on you" on the home page.
+3. **Approvers, directors and cards.** These come from a roster file that never goes in the repo (the repo is public). Its format is at the top of `portal/src/lib/purchases/roster.ts`: each fund's chair and backup, directors who can see and approve a set of funds' requests (at the chair step, alongside the chair), and IAR cards (last four digits only). Store it in Secret Manager and mount it as a file:
 
-### 8. Deploy
+```
+gcloud secrets create portal-roster --data-file=roster.json
+gcloud secrets add-iam-policy-binding portal-roster --member=serviceAccount:$SA --role=roles/secretmanager.secretAccessor
+```
+
+   The deploy command mounts it at `/secrets/roster.json`. To change people later, add a new version (`gcloud secrets versions add portal-roster --data-file=roster.json`) and redeploy so a new revision reads it. Addresses that fail a check are left out and logged as `roster:` lines in Cloud Run's logs. Without the file, every request goes to finance review and nobody can submit card receipts. This moves to Portal Settings later.
+4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
+5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
+
+### 8. Email alerts
+
+The portal emails whoever has to act next: an approver when a request reaches them, finance when one reaches its queue, a requester when a request comes back for changes, and the person covering for someone who's away. Everything else appears only under Notifications in the portal. Until this is set up, nothing is emailed and the bell still works.
+
+1. Create a mailbox for the portal to send from, for example `portal@islam1.org` (it needs a Gmail license; a shared mailbox nobody signs in to is fine).
+2. Admin console → Security → API controls → Domain-wide delegation: edit the portal's entry from step 4 and add the scope `https://www.googleapis.com/auth/gmail.send` (keep the groups scope; separate them with a comma).
+3. Set `PORTAL_MAIL_FROM=portal@islam1.org` when deploying.
+4. Let `portal@islam1.org` post to the groups the portal emails (`portal-finance@`, `portal-executive@`, `portal-admins@`): in each group's settings, "Who can post" must include that address or the whole organization.
+
+Be aware: domain-wide delegation applies to the service account, not to one mailbox, so the gmail.send scope would let it send as any islam1.org user. The portal only ever sends as `PORTAL_MAIL_FROM`, the service account has no key file, and only the Cloud Run service runs as it. Keep the project's owners to the two named in "Who owns what".
+
+To try it locally without Google, run `npm run dev`; every email the portal would send is listed at http://localhost:3000/dev.
+
+### 9. Deploy
 
 From the repo root:
 
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id> \
-  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-beta@islam1.org,PORTAL_ROSTER_FILE=/secrets/roster.json \
+  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest,/secrets/roster.json=portal-roster:latest
 ```
 
-`--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
+Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
 
 ## Who owns what
 

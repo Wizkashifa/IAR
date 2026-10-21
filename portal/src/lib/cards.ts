@@ -1,4 +1,5 @@
 import "server-only";
+import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { ORG } from "./org";
 import type { PurchaseDetails } from "./purchases/types";
@@ -88,6 +89,8 @@ export interface CardStore {
   listOpenPurchases(): Promise<Card[]>;
   /** Purchase cards created since an ISO time, any status (for the card receipts checklist). */
   listPurchasesSince(iso: string): Promise<Card[]>;
+  /** The most recently updated cards of any type (for search). */
+  listRecent(limit: number): Promise<Card[]>;
   /** Assigns the next ID with the given prefix ("PO") and saves. */
   create(card: Omit<Card, "id">, prefix: string): Promise<Card>;
   /** Saves only if nobody else saved since `expectedUpdatedAt`. */
@@ -159,6 +162,10 @@ const memoryStore: CardStore = {
     await ensureSeeded();
     return [...mem.cards.values()].filter((c) => c.type === "purchase" && (c.createdAt ?? c.updatedAt) >= iso).map(clone);
   },
+  async listRecent(limit) {
+    await ensureSeeded();
+    return [...mem.cards.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit).map(clone);
+  },
   async create(card, prefix) {
     await ensureSeeded();
     const n = mem.next[prefix] ?? 1;
@@ -189,16 +196,9 @@ const memoryStore: CardStore = {
 
 let firestoreStore: CardStore | null = null;
 
-/** Firestore rejects `undefined` fields; drop them before writing. */
-function clean<T>(x: T): T {
-  return JSON.parse(JSON.stringify(x)) as T;
-}
-
 async function getFirestoreStore(): Promise<CardStore> {
   if (firestoreStore) return firestoreStore;
-  const { Firestore } = await import("@google-cloud/firestore");
-  const db = new Firestore();
-  const org = db.collection("orgs").doc(ORG.id);
+  const { db, org } = await firestore();
   const cards = org.collection("cards");
   const vendors = org.collection("vendors");
   const toCard = (d: { id: string; data(): unknown }) => ({ id: d.id, ...(d.data() as Omit<Card, "id">) });
@@ -225,6 +225,10 @@ async function getFirestoreStore(): Promise<CardStore> {
     },
     async listPurchasesSince(iso) {
       const snap = await cards.where("type", "==", "purchase").where("createdAt", ">=", iso).limit(1000).get();
+      return snap.docs.map(toCard);
+    },
+    async listRecent(limit) {
+      const snap = await cards.orderBy("updatedAt", "desc").limit(limit).get();
       return snap.docs.map(toCard);
     },
     async create(card, prefix) {
