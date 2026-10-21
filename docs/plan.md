@@ -273,3 +273,11 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)
 - [ ] Add the Drive scope to sign-in and build the Library module (Phase 2)
+
+## Recurring reservations (proposed)
+
+- Every reservation has an end date. There is no open-ended option.
+- The requester picks the end date, but it can be no more than 3 months after the first date (Portal Settings can raise the limit to 6). Longer needs are met by renewing.
+- Each session is checked against the calendar; conflicts list how many dates clash.
+- Renewal: a committee may request its next period no earlier than 30 days before the current end date (adjustable). The renewal starts after the current series ends and goes through normal approval.
+- In production, school hours, prayers, Jumuah and the food pantry come from the IAR Google Calendar, so the standing-hold rules above are demo-only.
