@@ -277,7 +277,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 ## Recurring reservations (proposed)
 
 - Every reservation has an end date. There is no open-ended option.
-- A series is a fixed term of 3 or 6 months (up for debate; Portal Settings can offer 3, 6, or let the committee choose). The end date is calculated from the first date and shown on the form.
+- The requester picks the end date, but it can be no more than 3 months after the first date (Portal Settings can raise the limit to 6). Longer needs are met by renewing.
 - Each session is checked against the calendar; conflicts list how many dates clash.
 - Renewal: a committee may request its next period no earlier than 30 days before the current end date (adjustable). The renewal starts after the current series ends and goes through normal approval.
 - In production, school hours, prayers, Jumuah and the food pantry come from the IAR Google Calendar, so the standing-hold rules above are demo-only.

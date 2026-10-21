@@ -442,7 +442,8 @@ const addMonths = (s, n) => { const d = parseD(s), day = d.getDate(); d.setDate(
 /* Recurring reservations. A series always has an end date: start plus a fixed term. */
 const RECUR_FREQ = { weekly: "Every week", biweekly: "Every 2 weeks", monthly: "Monthly, same weekday" };
 const recurEnd = (start, months) => addDays(addMonths(start, Number(months)), -1);
-const mkRecur = (freq, term, start) => ({ freq, term: Number(term), start, end: recurEnd(start, term) });
+const mkRecur = (freq, start, end) => ({ freq, start, end });
+const recurMax = (start) => recurEnd(start, POLICY.maxMonths);
 /* Does an item (a card, booking or calendar entry) fall on this date? Items with no recur are one-offs. */
 function occursOn(x, date) {
   const r = x.recur; if (!r) return x.date === date;
@@ -456,8 +457,8 @@ function occursOn(x, date) {
 }
 const occurrences = (r) => { const out = []; for (let d = r.start; d <= r.end; d = addDays(d, 1)) if (occursOn({ recur: r }, d)) out.push(d); return out; };
 /* The series on a saved card, or one built from the request form's fields. */
-const recurOf = (e) => e.recur || (e.recurFreq && e.recurFreq !== "none" && e.date ? mkRecur(e.recurFreq, e.recurTerm || 3, e.date) : null);
-const recurText = (r) => `${r.freq === "monthly" ? `Monthly on ${["1st", "2nd", "3rd", "4th", "5th"][(r.nth || Math.ceil(parseD(r.start).getDate() / 7)) - 1]} ${DOW_LONG[dow(r.start)]}` : `${r.freq === "biweekly" ? "Every other " : "Every "}${DOW_LONG[dow(r.start)].slice(0, -1)}`} · ${r.term} months`;
+const recurOf = (e) => e.recur || (e.recurFreq && e.recurFreq !== "none" && e.date ? mkRecur(e.recurFreq, e.date, e.recurEnd || "") : null);
+const recurText = (r) => `${r.freq === "monthly" ? `Monthly on ${["1st", "2nd", "3rd", "4th", "5th"][(r.nth || Math.ceil(parseD(r.start).getDate() / 7)) - 1]} ${DOW_LONG[dow(r.start)]}` : `${r.freq === "biweekly" ? "Every other " : "Every "}${DOW_LONG[dow(r.start)].slice(0, -1)}`}`;
 const renewOpens = (r) => addDays(r.end, -POLICY.renewDays);
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DOW_LONG = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
@@ -544,7 +545,7 @@ const RULES = [
   { id: "advert", name: "No advertising until approved", policy: "§4", on: true },
 ];
 /* Recurring reservations: every series has an end date, so there is no on/off switch. These two are the adjustable parts. */
-const POLICY_DEFAULT = { terms: [3, 6], renewDays: 30 };
+const POLICY_DEFAULT = { maxMonths: 3, renewDays: 30 };
 const POLICY = { ...POLICY_DEFAULT };
 const ruleOn = (id) => (RULES.find((r) => r.id === id) || { on: true }).on;
 
@@ -561,7 +562,7 @@ function seed() {
   const satLater = nextDow(TODAY, 6, 26);
   const now = (d) => addDays(TODAY, -d);
   const serA = nextDow(addDays(TODAY, -78), 2, 0); // a 3-month Tuesday series that is close to its end
-  const serB = nextDow(addDays(TODAY, -33), 3, 0); // a 6-month Wednesday series that just started
+  const serB = nextDow(addDays(TODAY, -33), 3, 0); // a 3-month Wednesday series that just started
   S = {
     me: "amina",
     view: "home",
@@ -576,10 +577,10 @@ function seed() {
       { room: "mphB", date: sunLater, s: toMin("16:00"), e: toMin("18:00"), label: "Sisters' fitness" },
     ],
     cards: [
-      ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "amina", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", 3, serA), created: now(78),
+      ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "amina", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", serA, recurEnd(serA, 3)), created: now(78),
         tasks: { security: "todo" }, log: [[now(78), "amina", "Submitted as a weekly series, 3 months"], [now(76), "hana", "Approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
-      ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", 6, serB), created: now(33),
-        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 6 months"], [now(31), "hana", "Approved. Every Wednesday through " + fmtLong(recurEnd(serB, 6)) + " is held on the IAR calendar"]] }),
+      ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", serB, recurEnd(serB, 3)), created: now(33),
+        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 3 months"], [now(31), "hana", "Approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
       ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "amina", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
         log: [[now(5), "amina", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "hana", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
       ev({ id: "EV-1031", title: "Youth Family Night", owner: "amina", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
@@ -722,10 +723,12 @@ function runChecks(e, ownerId) {
   const ws = s - Number(e.setup || 0), we = en + Number(e.teardown || 0);
   if (!e.date) { add("bad", "Pick a date.", ""); return out; }
   const rec = recurOf(e);
-  const dates = rec ? occurrences(rec) : [e.date];
+  const dates = rec && rec.end >= rec.start && rec.end <= recurMax(rec.start) ? occurrences(rec) : [e.date];
   if (rec) {
     const RP = "Recurring reservations (proposed)";
-    if (!POLICY.terms.includes(rec.term)) out.push({ sev: "bad", block: true, text: `A series can run ${POLICY.terms.join(" or ")} months. Pick one of those.`, rule: RP });
+    if (!rec.end) out.push({ sev: "bad", block: true, text: "Pick an end date. Every series needs one.", rule: RP });
+    else if (rec.end < rec.start) out.push({ sev: "bad", block: true, text: "The end date can't be before the first date.", rule: RP });
+    else if (rec.end > recurMax(rec.start)) out.push({ sev: "bad", block: true, text: `A series can run at most ${POLICY.maxMonths} months from its first date, so the latest end date is ${fmtLong(recurMax(rec.start))}. Renew when it ends.`, rule: RP });
     else add("info", `${recurText(rec)}: ${dates.length} sessions, ${fmtLong(rec.start)} to ${fmtLong(rec.end)}. Every series ends on a set date; there are no open-ended reservations.`, RP);
     const prior = e.renews && getCard(e.renews);
     if (prior && prior.recur) {
@@ -1128,7 +1131,7 @@ function timeline(date, roomId, req) {
 }
 
 function defaultDraft() {
-  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurTerm: POLICY.terms[0], description: "Board games, a trivia round and dinner for youth and parents." };
+  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents." };
 }
 function vNewEvent() {
   const d = S.draft || (S.draft = defaultDraft());
@@ -1151,7 +1154,7 @@ function vNewEvent() {
       <div class="fld"><label for="f_setup">Setup before (minutes)</label><input type="number" id="f_setup" name="setup" value="${d.setup}" min="0" step="15"></div>
       <div class="fld"><label for="f_teardown">Cleanup after (minutes)</label><input type="number" id="f_teardown" name="teardown" value="${d.teardown}" min="0" step="15"></div>
       <div class="fld"><label for="f_recurFreq">Repeats</label><select id="f_recurFreq" name="recurFreq"><option value="none" ${d.recurFreq === "none" ? "selected" : ""}>Does not repeat</option>${Object.entries(RECUR_FREQ).map(([k, l]) => `<option value="${k}" ${d.recurFreq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
-      <div class="fld"><label for="f_recurTerm">For how long</label><select id="f_recurTerm" name="recurTerm">${POLICY.terms.map((m) => `<option value="${m}" ${Number(d.recurTerm) === m ? "selected" : ""}>${m} months</option>`).join("")}</select><span class="hint" id="recurHint"></span></div>
+      <div class="fld"><label for="f_recurEnd">Repeats until</label><input type="date" id="f_recurEnd" name="recurEnd" value="${d.recurEnd || ""}"><span class="hint" id="recurHint"></span></div>
       <div class="fld wide"><label for="f_room">Room</label><select id="f_room" name="room">${ROOMS.map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}${r.cap ? ` (${r.cap})` : ""}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_attendance">Expected attendance</label><input type="number" id="f_attendance" name="attendance" value="${d.attendance}" min="1"></div>
       <div class="fld"><label for="f_budget">Budget estimate ($)</label><input type="number" id="f_budget" name="budget" value="${d.budget}" min="0" step="50"></div>
@@ -1179,14 +1182,16 @@ function vNewEvent() {
 function readDraft() {
   const f = document.getElementById("evForm"); if (!f) return;
   const v = (n) => f.elements[n].value, c = (n) => f.elements[n].checked;
-  Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), recurFreq: v("recurFreq"), recurTerm: Number(v("recurTerm") || POLICY.terms[0]), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
+  Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), recurFreq: v("recurFreq"), recurEnd: v("recurEnd"), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
 }
 function paintChecks() {
   const d = S.draft; if (!d || !document.getElementById("checks")) return;
   const ch = runChecks(d, S.me);
-  const rec = recurOf(d), term = document.getElementById("f_recurTerm");
-  term.disabled = !rec;
-  document.getElementById("recurHint").textContent = rec ? `Ends ${fmtLong(rec.end)}. A series always has an end date.` : "Only for repeating events";
+  const endEl = document.getElementById("f_recurEnd");
+  if (d.recurFreq !== "none" && d.date && !d.recurEnd) { d.recurEnd = recurMax(d.date); endEl.value = d.recurEnd; }
+  endEl.disabled = d.recurFreq === "none";
+  if (d.date) { endEl.min = d.date; endEl.max = recurMax(d.date); }
+  document.getElementById("recurHint").textContent = d.recurFreq === "none" ? "Only for repeating events" : d.date ? `Required. No later than ${fmtLong(recurMax(d.date))} (${POLICY.maxMonths} months from the first date).` : "";
   document.getElementById("checks").innerHTML = checksHtml(ch);
   const w = worst(ch);
   document.getElementById("checkSum").innerHTML = `<span class="pill ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
@@ -1233,7 +1238,7 @@ function seriesPanel(c) {
   const can = c.status === "approved" && (c.owner === S.me || has("office")) && !live;
   const renew = live ? `<div class="note info">Next period requested: <button class="crumb" style="border:0;background:none;padding:0;cursor:pointer" data-card="${next.id}">${next.id}</button> (${esc(EV_STATUS[next.status][0])})</div>`
     : c.status !== "approved" ? ""
-    : `<div class="row"><button class="btn primary" data-act="renew" type="button" ${open && can ? "" : "disabled"}>Request the next ${r.term} months</button><span class="small muted">${open ? "Renewal is open." : `Renewal opens ${fmtLong(opens)}, ${POLICY.renewDays} days before the end date.`}</span></div>`;
+    : `<div class="row"><button class="btn primary" data-act="renew" type="button" ${open && can ? "" : "disabled"}>Request the next period</button><span class="small muted">${open ? "Renewal is open." : `Renewal opens ${fmtLong(opens)}, ${POLICY.renewDays} days before the end date.`}</span></div>`;
   return `<div class="panel"><div class="panel-h"><h2>Recurring series</h2><span class="pill ${left < 0 ? "bad" : open ? "warn" : "ok"}">${left < 0 ? "Ended" : open ? "Renewal open" : "Active"}</span></div><div class="panel-b stack">
     <div>${esc(recurText(r))}<div class="small muted">${fmtLong(r.start)} to ${fmtLong(r.end)} · ${occurrences(r).length} sessions · ${state}</div></div>
     ${prior ? `<div class="small muted">Renews <button class="crumb" style="border:0;background:none;padding:0;cursor:pointer" data-card="${prior.id}">${prior.id}</button></div>` : ""}
@@ -1533,7 +1538,7 @@ function vSettings() {
   <div class="panel"><div class="panel-h"><h2>Recurring reservations</h2><span class="small muted">Proposed · up for debate</span></div><div class="panel-b stack">
     <div class="note info">Every series has an end date. There is no open-ended option, so there is nothing to switch off.</div>
     <div class="f">
-      <div class="fld"><label for="polTerms">Length of one request</label><select id="polTerms"><option value="3" ${POLICY.terms.join() === "3" ? "selected" : ""}>3 months</option><option value="6" ${POLICY.terms.join() === "6" ? "selected" : ""}>6 months</option><option value="3,6" ${POLICY.terms.join() === "3,6" ? "selected" : ""}>Committee chooses 3 or 6 months</option></select></div>
+      <div class="fld"><label for="polTerms">Longest a series can run (from its first date)</label><select id="polTerms"><option value="3" ${POLICY.maxMonths === 3 ? "selected" : ""}>3 months</option><option value="6" ${POLICY.maxMonths === 6 ? "selected" : ""}>6 months</option></select></div>
       <div class="fld"><label for="polRenew">Renewal opens (days before the end date)</label><input type="number" id="polRenew" value="${POLICY.renewDays}" min="0" max="90"></div>
     </div>
   </div></div>
@@ -2932,7 +2937,7 @@ const STEPS = [
   { as: "omar", view: "purchases", t: "Finance reviews card receipts", p: "Omar sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives." },
   { as: "idris", view: "runsheet", t: "Security's run sheet", p: "Idris sees one page of what's happening where for each day, built from approved events. His room checks get logged back to each event card." },
   { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
-  { as: "amina", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurTerm: POLICY.terms[0], description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week for the term. The end date is worked out for you and shown under the term, and every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
+  { as: "amina", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurEnd: recurMax(nextDow(TODAY, 2, 10)), description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week and Repeats until is filled with the latest allowed date, 3 months out. Try a later date: it is rejected, since a series can\'t pass 3 months. Every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
   { as: "amina", view: "card", arg: "EV-1022", t: "Renew a series", p: "The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. Hana (office) approves the renewal like any request." },
   { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: "No IAR account needed. Send the request, then switch to Hana and open Facility Rentals to review it against the same calendar." },
@@ -3061,14 +3066,14 @@ function eventAction(a) {
   else if (a === "missionOk") { c.status = "office"; log(c, "Mission review: aligned. Sent to the office" + (note ? `. ${note}` : "")); toast("Sent to the IAR office"); }
   else if (a === "missionAsk") { log(c, "Question: " + (note || "Who are the outside speakers?")); toast("Question sent to " + nameOf(c.owner)); }
   else if (a === "missionNo") { c.status = "denied"; log(c, "Mission review: not aligned" + (note ? `. ${note}` : "")); toast("Denied after mission review"); }
-  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurTerm: c.recur ? c.recur.term : POLICY.terms[0], renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
+  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurEnd: c.recur ? c.recur.end : "", renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
   else if (a === "renew") {
     const r = c.recur, next = c.renewedBy && getCard(c.renewedBy);
     if (!r) return;
     if (TODAY < renewOpens(r)) return toast(`Renewal opens ${fmtLong(renewOpens(r))}.`);
     if (next && !["denied", "cancelled"].includes(next.status)) return toast(`Already requested: ${next.id}`);
     let first = addDays(r.end, 1); while (!occursOn({ recur: { ...r, end: null } }, first)) first = addDays(first, 1);
-    S.draft = JSON.parse(JSON.stringify({ id: null, renews: c.id, title: c.title, description: c.description || "", committee: c.committee, date: first, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: r.freq, recurTerm: r.term, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers }));
+    S.draft = JSON.parse(JSON.stringify({ id: null, renews: c.id, title: c.title, description: c.description || "", committee: c.committee, date: first, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: r.freq, recurEnd: recurMax(first), attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers }));
     return go("newEvent");
   }
   else if (a === "held") { c.status = "closeout"; log(c, "Event held. Close-out opened for the owner"); toast("Close-out opened for " + nameOf(c.owner)); }
@@ -3121,7 +3126,7 @@ document.addEventListener("change", (e) => {
   if (e.target.dataset && e.target.dataset.k === "flag" && e.target.closest("#poForm")) { readPO(); render(); }
   if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
   if (e.target.id === "rsDate") go("runsheet", e.target.value);
-  if (e.target.id === "polTerms") { POLICY.terms = e.target.value.split(",").map(Number); toast(`Series length: ${POLICY.terms.join(" or ")} months`); }
+  if (e.target.id === "polTerms") { POLICY.maxMonths = Number(e.target.value); toast(`Longest series: ${POLICY.maxMonths} months`); }
   if (e.target.id === "polRenew") { POLICY.renewDays = Math.max(0, Number(e.target.value) || 0); toast(`Renewal opens ${POLICY.renewDays} days before the end date`); }
   if (e.target.dataset.rule) { RULES.find((r) => r.id === e.target.dataset.rule).on = e.target.checked; toast(`Rule ${e.target.checked ? "on" : "off"}: ${RULES.find((r) => r.id === e.target.dataset.rule).name}`); }
 });
