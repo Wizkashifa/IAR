@@ -18,7 +18,9 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
         <div className="error">
           {error === "AccessDenied"
             ? `Only @${ORG.domain} accounts can use the portal. Switch accounts and try again.`
-            : "Sign-in didn't work. Please try again."}
+            : error === "NotInBeta"
+              ? "The portal is open to a small group of testers for now. If you should be one of them, ask the IAR office to add you."
+              : "Sign-in didn't work. Please try again."}
         </div>
       )}
       <SignInButton />

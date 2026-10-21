@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
 import { DEV_PERSONAS, isDevAuth } from "./dev";
-import { directRolesFromGroups, rolesFromGroups, type Role } from "./org";
+import { directRolesFromGroups, mayUsePortal, rolesFromGroups, type Role } from "./org";
 
 /**
  * `roles` decide what someone can see; `actingRoles` (from their own groups,
@@ -22,6 +22,8 @@ export async function getViewer(): Promise<Viewer | null> {
   const email = session?.user?.email;
   if (!email) return null;
   const groups = (session as { groups?: string[] }).groups ?? [];
+  // Removed from the beta group: groups refresh every 15 minutes, then access stops.
+  if (!mayUsePortal(groups)) return null;
   return { email, name: session.user?.name ?? email, roles: rolesFromGroups(groups), actingRoles: directRolesFromGroups(groups), dev: false };
 }
 

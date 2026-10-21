@@ -61,6 +61,19 @@ export function directRolesFromGroups(groupEmails: string[]): Role[] {
 }
 
 /** Turn a user's Google Group emails into portal roles, for what they can see. */
+/**
+ * During a beta, only members of this group (PORTAL_ACCESS_GROUP, e.g.
+ * portal-beta@islam1.org) and portal admins can sign in. Unset: every
+ * @domain account can. Add testers to the group directly; nested groups
+ * aren't checked.
+ */
+export function mayUsePortal(groupEmails: string[]): boolean {
+  const gate = process.env.PORTAL_ACCESS_GROUP?.trim().toLowerCase();
+  if (!gate) return true;
+  const held = new Set(groupEmails.map((g) => g.toLowerCase()));
+  return held.has(gate) || held.has(ORG.roleGroups.admins.toLowerCase());
+}
+
 export function rolesFromGroups(groupEmails: string[]): Role[] {
   const roles = directRolesFromGroups(groupEmails);
   // Admins can see every module, for support and setup.

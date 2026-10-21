@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { type Away, checkAway, coveringFor, isActive, todayLocal } from "./away";
 import type { Card } from "./cards";
 import { internalPath } from "./links";
+import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";
 
 const me = { email: "chair@x.org", name: "Chair" };
@@ -82,4 +83,20 @@ test("search: every word must match; the exact number comes first", () => {
 test("links: only paths inside the portal are followed", () => {
   assert.equal(internalPath("/purchases/PO-1"), "/purchases/PO-1");
   for (const bad of ["//evil.example", "/\\evil.example", "https://evil.example", "purchases", "/a\r\nSet-Cookie: x"]) assert.equal(internalPath(bad), null, bad);
+});
+
+test("beta gate: only the access group and portal admins get in while it's set", () => {
+  const before = process.env.PORTAL_ACCESS_GROUP;
+  try {
+    delete process.env.PORTAL_ACCESS_GROUP;
+    assert.equal(mayUsePortal([]), true);
+    process.env.PORTAL_ACCESS_GROUP = "Portal-Beta@islam1.org";
+    assert.equal(mayUsePortal([]), false);
+    assert.equal(mayUsePortal(["portal-beta@islam1.org"]), true);
+    assert.equal(mayUsePortal(["portal-admins@islam1.org"]), true);
+    assert.equal(mayUsePortal(["portal-finance@islam1.org"]), false);
+  } finally {
+    if (before === undefined) delete process.env.PORTAL_ACCESS_GROUP;
+    else process.env.PORTAL_ACCESS_GROUP = before;
+  }
 });

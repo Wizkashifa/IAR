@@ -19,13 +19,13 @@ Done once by a Workspace super admin and a Google Cloud project owner. Names bel
 ### 1. Google Cloud project
 
 1. In the Google Cloud console, create a project under the **islam1.org** organization, for example `iar-portal`, and attach billing.
-2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (for Purchase Requests receipts).
+2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (Purchase Requests receipts), Gmail (alert emails) and Calendar (room bookings, for the Events module).
 
 ```
 gcloud config set project iar-portal
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
-  drive.googleapis.com
+  drive.googleapis.com gmail.googleapis.com calendar-json.googleapis.com
 ```
 
 ### 2. Firestore
@@ -103,6 +103,7 @@ Create these Google Groups in the Admin console. Membership decides what each pe
 | portal-executive@ | Executive approvals |
 | portal-shura@ | Shura / board: dashboard and budget (read-only) and requests to finance and the executive. Never approves or pays |
 | portal-admins@ | Everything, plus portal settings. Keep to two or three people |
+| portal-beta@ | During the beta only: with `PORTAL_ACCESS_GROUP` set, only this group and portal-admins@ can sign in. Add testers directly, not through nested groups |
 
 Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group itself (`actingRoles` in `portal/src/lib/viewer.ts`).
 
@@ -134,11 +135,11 @@ From the repo root:
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org \
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-beta@islam1.org \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 
-`--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
+Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
 
 ## Who owns what
 

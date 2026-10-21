@@ -1,7 +1,7 @@
 import "server-only";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { ORG } from "./org";
+import { mayUsePortal, ORG } from "./org";
 import { lookupGroups } from "./groups";
 
 const GROUP_REFRESH_MS = 15 * 60 * 1000;
@@ -21,9 +21,15 @@ export const authOptions: NextAuthOptions = {
     // The hd parameter is only a hint; enforce the domain here.
     async signIn({ profile }) {
       const p = profile as { email?: string; email_verified?: boolean; hd?: string } | undefined;
-      return Boolean(
-        p?.email_verified && p.hd === ORG.domain && p.email?.toLowerCase().endsWith(`@${ORG.domain}`),
-      );
+      const inDomain = Boolean(p?.email_verified && p.hd === ORG.domain && p.email?.toLowerCase().endsWith(`@${ORG.domain}`));
+      if (!inDomain || !p?.email) return false;
+      if (!process.env.PORTAL_ACCESS_GROUP) return true;
+      try {
+        return mayUsePortal(await lookupGroups(p.email)) || "/signin?error=NotInBeta";
+      } catch (err) {
+        console.error("group lookup failed at sign-in", err);
+        return "/signin?error=NotInBeta";
+      }
     },
     // Group membership is looked up at sign-in and refreshed every 15 minutes,
     // so removing someone from a group takes effect without a new login.
