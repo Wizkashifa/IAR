@@ -5,7 +5,7 @@ import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
 import { visibleModules } from "@/lib/modules";
 import { cardStore, NEEDS_OWNER, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
 import { STAGE_LABEL } from "@/lib/purchases/types";
-import { actionableBy, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
+import { actionableBy, approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +86,7 @@ export default async function Home() {
                     <div className="what">
                       {c.id} · {STAGE_LABEL[c.purchase.stage]} · waiting {days === 0 ? "since today" : `${days} day${days === 1 ? "" : "s"}`}
                       {coveringApprover(c, actor) && ` · covering for ${coveringApprover(c, actor)}`}
+                      {approvingAsDirector(c, actor) && " · as director"}
                     </div>
                   </li>
                 );

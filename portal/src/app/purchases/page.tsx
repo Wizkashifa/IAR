@@ -71,7 +71,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
       {!overseer && committeeOpen.length > 0 && (
         <>
           <h2>Your committees ({committeeOpen.length} open)</h2>
-          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, back up or direct these committees.</p>
+          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, back up or direct these committees; directors can also approve them at the chair step.</p>
           <PurchaseTable cards={committeeOpen} redact={redact} showOwner empty="" />
         </>
       )}

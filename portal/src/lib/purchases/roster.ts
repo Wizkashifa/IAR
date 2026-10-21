@@ -11,7 +11,9 @@
  *   "cards": [{ "last4": "2093", "holderEmail": "…", "holderName": "…", "fund": "Imam's Office Fund Expenses" }]
  * }
  *
- * A fund with no chair goes straight to finance review. Anything that fails
+ * Directors can see their funds' requests and take the chair step on them
+ * (see workflow.ts). A fund with no chair goes to its director, or straight
+ * to finance review if it has none. Anything that fails
  * a check is left out and reported, never guessed.
  */
 
@@ -73,6 +75,17 @@ export function parseRoster(raw: unknown, ctx: { funds: string[]; domain: string
     else if (holder) roster.cards.push({ last4, holderEmail: holder, holderName: String(c.holderName ?? holder), fund: String(c.fund) });
   }
   return { roster, problems };
+}
+
+/** Directors of a fund, by email. */
+export function directorsOf(roster: Roster, fund: string): string[] {
+  return roster.directors.filter((d) => d.funds.includes(fund)).map((d) => d.email);
+}
+
+/** Funds a person directs (they can take the chair step on them). */
+export function fundsDirectedBy(roster: Roster, email: string): string[] {
+  const e = email.toLowerCase();
+  return [...new Set(roster.directors.filter((d) => d.email === e).flatMap((d) => d.funds))].sort();
 }
 
 /** Funds a person can see every request for: ones they chair or back up, and ones they direct. */

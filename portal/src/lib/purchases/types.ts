@@ -48,8 +48,11 @@ export type Attachment = {
 
 export type HistoryEntry = { at: string; by: string; action: string; note?: string };
 
-/** `onBehalfOf`: the away approver whose step this was, when someone covering approved it. */
-export type Approval = { stage: PurchaseStage; by: string; at: string; onBehalfOf?: string };
+/**
+ * `onBehalfOf`: the away approver whose step this was, when someone covering approved it.
+ * `asDirector`: the committee's director took the chair step.
+ */
+export type Approval = { stage: PurchaseStage; by: string; at: string; onBehalfOf?: string; asDirector?: boolean };
 
 export type PurchaseDetails = {
   kind: PurchaseKind;

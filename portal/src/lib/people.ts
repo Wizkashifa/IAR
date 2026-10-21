@@ -2,7 +2,7 @@ import "server-only";
 import { type Away, coveringFor, todayLocal } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
-import { fundsOverseen } from "./purchases/settings";
+import { fundsDirected, fundsOverseen } from "./purchases/settings";
 import type { Actor } from "./purchases/workflow";
 import type { Viewer } from "./viewer";
 
@@ -78,5 +78,5 @@ export async function actorFor(viewer: Viewer): Promise<Actor> {
     // Covering is a convenience; a lookup failure must not lock anyone out of their own approvals.
     console.error("away lookup failed", err);
   }
-  return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: fundsOverseen(email) };
+  return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: fundsOverseen(email), directs: fundsDirected(email) };
 }

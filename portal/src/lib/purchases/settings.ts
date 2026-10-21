@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { isDevAuth } from "../dev";
 import { ORG } from "../org";
 import { FUNDS } from "./accounts";
-import { type CreditCard, EMPTY_ROSTER, type Roster, fundsOverseenBy, parseRoster } from "./roster";
+import { type CreditCard, EMPTY_ROSTER, type Roster, directorsOf, fundsDirectedBy, fundsOverseenBy, parseRoster } from "./roster";
 import type { RoutingSettings } from "./workflow";
 
 /**
@@ -70,7 +70,7 @@ export function routingSettings(): RoutingSettings {
   return {
     approversFor: (fund) => {
       const a = r.funds[fund];
-      return a ? { chair: a.chair, backup: a.backup } : {};
+      return { chair: a?.chair, backup: a?.backup, directors: directorsOf(r, fund) };
     },
     // Not decided yet. Unset means no executive step. Dev shows the step at $2,500.
     executiveThreshold: parseThreshold(process.env.PO_EXECUTIVE_THRESHOLD) ?? (isDevAuth() ? 2500 : null),
@@ -83,6 +83,11 @@ export function creditCards(): CreditCard[] {
 
 export function cardsHeldBy(email: string): CreditCard[] {
   return creditCards().filter((c) => c.holderEmail.toLowerCase() === email.toLowerCase());
+}
+
+/** Funds this person directs: they can approve their committees' requests. */
+export function fundsDirected(email: string): string[] {
+  return fundsDirectedBy(roster(), email);
 }
 
 /** Funds whose requests this person can see: ones they chair or back up, and ones they direct. */

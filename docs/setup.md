@@ -111,7 +111,7 @@ Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see ev
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
 2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
-3. **Approvers, directors and cards.** These come from a roster file that never goes in the repo (the repo is public). Its format is at the top of `portal/src/lib/purchases/roster.ts`: each fund's chair and backup, directors who can see a set of funds' requests, and IAR cards (last four digits only). Store it in Secret Manager and mount it as a file:
+3. **Approvers, directors and cards.** These come from a roster file that never goes in the repo (the repo is public). Its format is at the top of `portal/src/lib/purchases/roster.ts`: each fund's chair and backup, directors who can see and approve a set of funds' requests (at the chair step, alongside the chair), and IAR cards (last four digits only). Store it in Secret Manager and mount it as a file:
 
 ```
 gcloud secrets create portal-roster --data-file=roster.json

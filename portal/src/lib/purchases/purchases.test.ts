@@ -341,7 +341,7 @@ test("roster: bad addresses, unknown funds and full card numbers are left out an
   assert.deepEqual(fundsOverseenBy(roster, "sam.chair@x.org"), ["Youth Expenses"]);
 });
 
-test("oversight: a director can open their committees' requests but not act on them, and never S&W's", () => {
+test("oversight alone: seeing a committee's requests doesn't let anyone act on them, and never opens S&W's", () => {
   const director: wf.Actor = { email: "dir@x.org", name: "Director", roles: ["member"], oversees: ["Youth Expenses", "Social & Welfare"] };
   const c = submitted();
   assert.equal(wf.canViewDetail(c, { ...volunteer, email: "other@x.org" }), false);
@@ -350,4 +350,60 @@ test("oversight: a director can open their committees' requests but not act on t
   assert.equal(wf.canViewDetail(submitted({ fund: "Women Expenses" }), director), false);
   const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
   assert.equal(wf.canViewDetail(sw, director), false);
+});
+
+// ---- Directors -----------------------------------------------------------
+
+const dir: wf.Actor = { email: "dir@x.org", name: "Director", roles: ["member"], oversees: ["Youth Expenses"], directs: ["Youth Expenses", "Social & Welfare"] };
+const withDirector: wf.RoutingSettings = {
+  approversFor: (fund) =>
+    fund === "Women Expenses" ? { directors: [dir.email] } : { chair: chair.email, backup: fund === "Youth Expenses" ? undefined : backup.email, directors: [dir.email] },
+  executiveThreshold: 2500,
+};
+function routed(over: Partial<PurchaseInput>, owner: wf.Actor): wf.PurchaseCard {
+  const r = parsePurchaseInput(input(over), { ...ctx, requesterName: owner.name });
+  if (!r.ok) throw new Error(r.errors.join("; "));
+  const c = wf.newPurchase(r.details, owner.email, T(0));
+  c.id = "PO-2";
+  return wf.submit(c, owner, withDirector, T(0));
+}
+
+test("directors: can take the chair step for their committee, recorded as director", () => {
+  const c = routed({}, volunteer);
+  assert.equal(c.purchase.approverEmail, chair.email);
+  assert.equal(wf.permission(c, dir, "approve").ok, true);
+  const next = wf.approve(c, dir, withDirector, T(1));
+  assert.equal(next.purchase.stage, "finance");
+  assert.deepEqual(next.purchase.approvals[0], { stage: "chair", by: dir.email, at: T(1), asDirector: true });
+  assert.equal(next.purchase.history.at(-1)?.action, "Approved (Chair approval) as director");
+  // Only the chair step: a director is not a finance approver.
+  assert.equal(wf.permission(next, dir, "approve").ok, false);
+  // Not for committees they don't direct.
+  assert.equal(wf.permission(routed({ fund: "Education Expenses" }, volunteer), dir, "approve").ok, false);
+});
+
+test("directors: a fund with no chair, or a chair's own request with no backup, goes to the director", () => {
+  const noChair = routed({ fund: "Women Expenses" }, volunteer);
+  assert.equal(noChair.purchase.stage, "chair");
+  assert.equal(noChair.purchase.approverEmail, dir.email);
+  const chairsOwn = routed({}, chair);
+  assert.equal(chairsOwn.purchase.approverEmail, dir.email);
+  assert.match(chairsOwn.purchase.history[0].note ?? "", /director/);
+});
+
+test("directors: never their own request, never S&W", () => {
+  const own = routed({}, dir);
+  assert.equal(own.purchase.approverEmail, chair.email);
+  assert.equal(wf.permission(own, dir, "approve").ok, false);
+  const sw = routed({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] }, volunteer);
+  assert.equal(wf.permission(sw, dir, "approve").ok, false);
+});
+
+test("directors: told in the portal (no email) when a committee request waits on the chair", () => {
+  const c = routed({}, volunteer);
+  const ns = purchaseNotices(null, c, volunteer, { directors: [dir.email] });
+  assert.deepEqual(ns.map((n) => [to(n), n.email]), [[chair.email, true], [dir.email, false]]);
+  // Routed to the director by name: one email, no duplicate notice.
+  const noChair = routed({ fund: "Women Expenses" }, volunteer);
+  assert.deepEqual(purchaseNotices(null, noChair, volunteer, { directors: [dir.email] }).map((n) => [to(n), n.email]), [[dir.email, true]]);
 });

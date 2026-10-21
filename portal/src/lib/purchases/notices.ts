@@ -4,7 +4,8 @@
  * The plan's rule: alert only the person who has to act next. Approvers get
  * an email the moment a request reaches them; the requester gets one when it
  * comes back for changes. Everything else (approved, paid, rejected) is an
- * in-portal notice only. Plain functions so they can be tested.
+ * in-portal notice only. A committee's director hears in the portal when one
+ * of its requests reaches the chair step. Plain functions so they can be tested.
  */
 import type { Role } from "../org";
 import { STAGE_LABEL, purchaseTotal } from "./types";
@@ -55,7 +56,7 @@ const isOpen = (c: PurchaseCard) => c.status === "in_review" || c.status === "ap
  * Notices for one change, from the card before (null for a new request) to
  * after. The actor never notifies themselves.
  */
-export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard, actor: Actor): Notice[] {
+export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard, actor: Actor, opts: { directors?: string[] } = {}): Notice[] {
   const out: Notice[] = [];
   const href = `/purchases/${after.id}`;
   const what = label(after);
@@ -91,6 +92,13 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
       `${what} needs your ${STAGE_LABEL[stage].toLowerCase()}.`;
     // QuickBooks entry is batch work finance does from its queue; no email for it.
     add(next, ask, stage !== "books", "email" in next);
+  }
+  // Directors can take the chair step too: a notice in the portal, no email (the chair is emailed).
+  if (stage === "chair" && !after.purchase.restricted) {
+    for (const d of opts.directors ?? []) {
+      if (!same(d, after.purchase.approverEmail) && !same(d, after.ownerEmail))
+        add({ email: d }, `${what} is waiting for chair approval. As the committee's director you can approve it too.`, false);
+    }
   }
   if (before) {
     if (stage === "payment") add(owner, `${what} is approved. The finance office will pay it.`, false);

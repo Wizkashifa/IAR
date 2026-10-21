@@ -14,6 +14,7 @@ import * as wf from "@/lib/purchases/workflow";
 export type FormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
+const directorsFor = (c: wf.PurchaseCard) => ({ directors: routingSettings().approversFor(c.purchase.fund).directors });
 
 async function parseForm(viewer: Viewer, form: FormData) {
   let raw: PurchaseInput;
@@ -46,7 +47,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
   const routed = wf.submit(wf.newPurchase(r.details, viewer.email, now), actor, routingSettings(), now);
   const { id: _blank, ...toCreate } = routed;
   const created = (await store.create(toCreate, "PO")) as wf.PurchaseCard;
-  await deliver(purchaseNotices(null, created, actor), actor.email);
+  await deliver(purchaseNotices(null, created, actor, directorsFor(created)), actor.email);
 
   if (r.files.length) {
     try {
@@ -94,7 +95,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   try {
     const next = wf.resubmit(card, edited, actor, routingSettings(), now);
     await store.save(next, card.updatedAt);
-    await deliver(purchaseNotices(card, next, actor), actor.email);
+    await deliver(purchaseNotices(card, next, actor, directorsFor(next)), actor.email);
   } catch (err) {
     return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
@@ -153,7 +154,7 @@ export async function actOnPurchase(form: FormData): Promise<void> {
         throw new wf.WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
-    await deliver(purchaseNotices(card, next, actor), actor.email);
+    await deliver(purchaseNotices(card, next, actor, directorsFor(next)), actor.email);
     // Paying a vendor for the first time puts them in the registry.
     if (action === "pay" && card.purchase.kind === "pay" && card.purchase.payee) {
       const vid = vendorId(card.purchase.payee);

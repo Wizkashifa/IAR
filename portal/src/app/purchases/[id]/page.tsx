@@ -6,7 +6,7 @@ import { actorFor, peopleStore } from "@/lib/people";
 import { isActive, todayLocal } from "@/lib/away";
 import { accountLabel, findAccount } from "@/lib/purchases/accounts";
 import { DELIVERY_LABEL, KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "@/lib/purchases/types";
-import { canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, type Action } from "@/lib/purchases/workflow";
+import { approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, type Action } from "@/lib/purchases/workflow";
 import { actOnPurchase, actOnPurchaseWith } from "../actions";
 import { Flash, StatusPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
 
@@ -78,6 +78,7 @@ export default async function PurchaseDetail({
           )}
         </div>
       )}
+      {approvingAsDirector(pc, actor) && live && <div className="callout info">This is waiting on {p.approverEmail}. As the committee&apos;s director you can approve, return or reject it too; it&apos;s recorded as your decision as director.</div>}
       {coveringFor && live && <div className="callout info">You&apos;re covering approvals for {coveringFor} while they&apos;re away. Your approval is recorded as on their behalf.</div>}
       {!coveringFor && awayNow && (
         <div className="callout info">
