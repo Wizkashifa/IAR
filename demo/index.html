@@ -777,6 +777,9 @@ function runChecks(e, ownerId) {
     if (mr.length) add("info", `Mission review will be added: ${mr.join(", ")}.`, "Proposed rule");
     else add("ok", "No mission review needed.", "Proposed rule");
   }
+  const dn = String(e.description || "").trim().length;
+  if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule, any speakers, and what you need from each team." : "Add a description. The office, marketing and the teams all read it.", "Program Request Form");
+  else add("ok", "Description gives reviewers enough to go on.", "Program Request Form");
   if (e.isPublic && ruleOn("advert")) add("info", "Marketing unlocks after approval. No advertising before then.", "Room policy §4");
   return out;
 }
@@ -1167,7 +1170,7 @@ function vNewEvent() {
   <div class="grid2">
     <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
       <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
-      <div class="fld wide"><label for="f_description">Description</label><textarea id="f_description" name="description">${esc(d.description || "")}</textarea></div>
+      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from the office, marketing, AV or facilities.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
       <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
       <div class="fld"><label for="f_date">${d.recurFreq !== "none" ? "First date" : "Date"}</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
       <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
@@ -1213,11 +1216,14 @@ function paintChecks() {
   endEl.disabled = d.recurFreq === "none";
   if (d.date) { endEl.min = d.date; endEl.max = recurMax(d.date); }
   document.getElementById("recurHint").textContent = d.recurFreq === "none" ? "Only for repeating events" : d.date ? `Required. No later than ${fmtLong(recurMax(d.date))} (${POLICY.maxMonths} months from the first date).` : "";
+  document.getElementById("descHint").textContent = descHint(d.description);
   document.getElementById("checks").innerHTML = checksHtml(ch);
   const w = worst(ch);
   document.getElementById("checkSum").innerHTML = `<span class="pill ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
   document.getElementById("evTl").innerHTML = d.date && d.room !== "offsite" ? timeline(d.date, d.room, d) : `<div class="muted small">Off-site: nothing to check on the calendar.</div>`;
 }
+const DESC_GOOD = 200;
+const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the office approve faster and the teams plan: what happens, who it's for, the schedule, speakers or guests, and what you need.`; };
 const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${{ ok: "✓", warn: "!", bad: "×", info: "i" }[c.sev]}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
 
 function submitEvent() {
@@ -1307,6 +1313,7 @@ function vCard() {
   <div class="grid2">
     <div class="stack">
       ${c.recur ? seriesPanel(c) : ""}
+      ${c.description ? `<div class="panel"><div class="panel-h"><h2>About this event</h2></div><div class="panel-b" style="white-space:pre-wrap">${esc(c.description)}</div></div>` : ""}
       <div class="panel"><div class="panel-h"><h2>Team tasks</h2><span class="small muted">${c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "Unlocked" : "Unlock on approval"}</span></div><div class="panel-b">
         ${c.tasks.length ? c.tasks.map((t) => `<div class="task"><div><div>${esc(t.title)}</div><div class="small muted">${TEAM_NAME[t.team]}${t.result ? " · " + esc(t.result) : ""}</div></div><div class="row">${taskPill(t)}${taskButtons(c, t)}</div></div>`).join("") : `<div class="muted">No team tasks for this event.</div>`}
       </div></div>
