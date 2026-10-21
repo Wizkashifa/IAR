@@ -1,7 +1,7 @@
 <title>IAR Portal Demo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&family=Source+Sans+3:wght@400;500;600&display=swap">
 <style>
 /* Layout: sticky top bar with role switcher; left module rail; working area; slide-in demo guide on the right. */
 :root {
@@ -15,6 +15,7 @@
   --line: #e6dcc0;
   --accent: #0b2e12;
   --accent-ink: #f6eedb;
+  --accent-text: #0b2e12;
   --accent-soft: #e3ecdd;
   --gold: #d4af37;
   --gold-light: #f7dc86;
@@ -34,31 +35,31 @@
   --src2: #eb6834;
   --src3: #1baf7a;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
-  --font: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: var(--font);
   --r: 8px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #07190b; --surface: #0b2e12; --surface-2: #123a1a; --ink: #f6eedb; --ink-2: #b9bfa9; --ink-3: #8c9580;
-    --line: #2f4a30; --accent: #d4af37; --accent-ink: #0b2e12; --accent-soft: #1d3d1f;
-    --ok: #74d29d; --ok-soft: #1a3526; --warn: #f7dc86; --warn-soft: #3a3010; --bad: #f19a92; --bad-soft: #3c2220;
+    --line: #2f4a30; --accent: #d4af37; --accent-ink: #0b2e12; --accent-text: #d3e2cc; --accent-soft: #1d3d1f;
+    --ok: #74d29d; --ok-soft: #1a3526; --warn: #efe6cf; --warn-soft: #4a3c14; --bad: #f19a92; --bad-soft: #3c2220;
     --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #d4af37; --src1: #3987e5; --src2: #d95926; --src3: #199e70;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #07190b; --surface: #0b2e12; --surface-2: #123a1a; --ink: #f6eedb; --ink-2: #b9bfa9; --ink-3: #8c9580;
-  --line: #2f4a30; --accent: #d4af37; --accent-ink: #0b2e12; --accent-soft: #1d3d1f;
-  --ok: #74d29d; --ok-soft: #1a3526; --warn: #f7dc86; --warn-soft: #3a3010; --bad: #f19a92; --bad-soft: #3c2220;
+  --line: #2f4a30; --accent: #d4af37; --accent-ink: #0b2e12; --accent-text: #d3e2cc; --accent-soft: #1d3d1f;
+  --ok: #74d29d; --ok-soft: #1a3526; --warn: #efe6cf; --warn-soft: #4a3c14; --bad: #f19a92; --bad-soft: #3c2220;
   --info: #8fb6ea; --info-soft: #1d2b3e; --hold-standing: #34413c; --hold-booking: #3f5a4f; --hold-request: #d4af37; --src1: #3987e5; --src2: #d95926; --src3: #199e70;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; }
 button, input, select, textarea { font: inherit; color: inherit; }
-a { color: var(--accent); }
-.mono { font-family: var(--mono); font-size: 12.5px; }
+a { color: var(--accent-text); }
+.mono { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #0b2e12; }
@@ -86,7 +87,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .rail .group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 14px 10px 6px; }
 .rail button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--ink-2); }
 .rail button:hover { background: var(--surface-2); color: var(--ink); }
-.rail button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: inset 3px 0 0 var(--gold); }
+.rail button.on { background: var(--accent-soft); color: var(--accent-text); box-shadow: inset 3px 0 0 var(--gold); }
 .rail .count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
 .rail .soon { font-size: 10.5px; color: var(--ink-3); }
 .main { min-width: 0; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -98,7 +99,7 @@ h3 { font-size: 14px; margin: 0; }
 .lead { color: var(--ink-2); margin: 4px 0 0; max-width: 68ch; }
 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .crumb { font-size: 12.5px; color: var(--ink-2); }
-.crumb button { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+.crumb button { border: 0; background: none; color: var(--accent-text); cursor: pointer; padding: 0; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 .panel-h { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -114,7 +115,7 @@ h3 { font-size: 14px; margin: 0; }
 .tile:hover { border-color: var(--gold); }
 .tile.locked { opacity: .65; cursor: default; background: var(--surface-2); }
 .tile.locked:hover { border-color: var(--line); }
-.lk { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--accent); font: inherit; font-weight: 600; }
+.lk { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--accent-text); font: inherit; font-weight: 600; }
 .tile p { margin: 0; color: var(--ink-2); font-size: 13px; }
 .tile .foot { margin-top: auto; padding-top: 6px; }
 
@@ -123,7 +124,7 @@ h3 { font-size: 14px; margin: 0; }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.bad { background: var(--bad-soft); color: var(--bad); }
 .pill.info { background: var(--info-soft); color: var(--info); }
-.pill.accent { background: var(--accent-soft); color: var(--accent); }
+.pill.accent { background: var(--accent-soft); color: var(--accent-text); }
 
 .list { display: flex; flex-direction: column; }
 .item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: center; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; cursor: pointer; }
@@ -173,7 +174,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .tl-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }
 .btabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .btabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; font-weight: 500; color: var(--ink-2); margin-bottom: -1px; }
-.btabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.btabs button.on { color: var(--ink); border-bottom-color: var(--gold); box-shadow: inset 0 -1px 0 var(--gold); }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .pace { display: grid; grid-template-columns: minmax(120px, 170px) minmax(80px, 1fr) minmax(150px, 200px); gap: 10px; align-items: center; padding: 5px 0; }
 .pbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; }
@@ -266,7 +267,7 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .srch { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-width: 180px; }
 .srch.wide { flex: 1 1 320px; }
 .ta { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
-.lnk { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-align: left; font: inherit; }
+.lnk { border: 0; background: none; padding: 0; color: var(--accent-text); cursor: pointer; text-align: left; font: inherit; }
 .lnk:hover { text-decoration: underline; }
 .lnk.strong { font-weight: 600; color: var(--ink); }
 .lnk.small { font-size: 12.5px; }
@@ -275,17 +276,17 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .count { font-family: var(--mono); font-size: 11px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; }
 .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; cursor: pointer; }
 .chip:hover { border-color: var(--ink-3); }
-.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
 .chipx { display: inline-flex; align-items: center; gap: 2px; }
 .tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; padding: 0 7px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); max-width: 100%; }
 .tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
 .tag.flag { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
-.tag.epic { background: var(--accent-soft); color: var(--accent); }
+.tag.epic { background: var(--accent-soft); color: var(--accent-text); }
 .ti { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 4px; font-size: 11px; font-weight: 700; flex: none; vertical-align: -3px; }
-.ti.bad { background: var(--bad-soft); color: var(--bad); } .ti.info { background: var(--info-soft); color: var(--info); } .ti.accent { background: var(--accent-soft); color: var(--accent); } .ti.ok { background: var(--ok-soft); color: var(--ok); } .ti.warn { background: var(--warn-soft); color: var(--warn); }
+.ti.bad { background: var(--bad-soft); color: var(--bad); } .ti.info { background: var(--info-soft); color: var(--info); } .ti.accent { background: var(--accent-soft); color: var(--accent-text); } .ti.ok { background: var(--ok-soft); color: var(--ok); } .ti.warn { background: var(--warn-soft); color: var(--warn); }
 .pri { font-size: 10.5px; font-weight: 700; letter-spacing: -1px; }
 .pri.bad { color: var(--bad); } .pri.warn { color: var(--warn); } .pri.info { color: var(--info); }
-.av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 700; flex: none; }
+.av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); font-size: 10px; font-weight: 700; flex: none; }
 .av.big { width: 30px; height: 30px; font-size: 12px; }
 .av.none { background: transparent; border: 1px dashed var(--ink-3); color: var(--ink-3); }
 .due { font-size: 12px; color: var(--ink-2); }
@@ -393,8 +394,8 @@ body.modal-open { overflow: hidden; }
   .board { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .rail { align-self: start; align-items: center; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px max(16px, env(safe-area-inset-left, 0px)); }
   .rail .group { display: none; }
   .rail button { white-space: nowrap; }
   .rail .soon { display: none; }
@@ -859,15 +860,20 @@ function myTasks() {
 /* ------------------------------------------------------------------ */
 const slug = (t) => t.toLowerCase().replace(/[^a-z]+/g, "");
 const COMMITTEE_DRIVES = ["Youth", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration"];
-const LIB_CATS = ["Policy", "Minutes", "Resolution", "Budget", "Contract", "Form", "Case file", "Receipt", "Plan", "Draft", "Other"];
+/* Each folder is either filed by fiscal year (IAR's year runs July 1 to June 30) or evergreen (no year folders). */
+const byYear = (...n) => n.map((x) => ({ n: x, fy: true }));
+const evergreen = (...n) => n.map((x) => ({ n: x, fy: false }));
+const fyOf = (d) => { const x = parseD(d), y = x.getMonth() >= 6 ? x.getFullYear() : x.getFullYear() - 1; return `FY${String(y).slice(2)}-${String(y + 1).slice(2)}`; };
 const LIB_DRIVES = [
-  { id: "policies", kind: "Everyone", name: "Policies", tokens: ["member"], role: "Viewer", blurb: "Approved IAR policies. Everyone can read them; the Shura and executive edit.", folders: ["Rooms and rentals", "Purchasing", "People"] },
-  { id: "ops", kind: "Everyone", name: "Operations", tokens: ["office", "facilities", "security", "av", "it"], role: "Contributor", blurb: "Run sheets, contracts and setup diagrams for the teams that run the buildings.", folders: ["Contracts", "Run sheets"] },
-  ...COMMITTEE_DRIVES.map((c) => ({ id: "c-" + slug(c), kind: "Committees", name: c === "Women's Committee" || c === "Administration" ? c : c + " Committee", tokens: ["c:" + c], role: "Contributor", blurb: `${c === "Administration" ? "Office" : c} files, plans and event material.`, folders: ["Planning", "Events"] })),
-  { id: "shura", kind: "Restricted", name: "IAR Shura", tokens: ["shura"], role: "Content manager", blurb: "Minutes, resolutions, board packets and approved budgets.", folders: ["Minutes", "Resolutions", "Board packets", "Budget"] },
-  { id: "sw", kind: "Restricted", name: "Social & Welfare", tokens: ["sw"], role: "Contributor", blurb: "Case files and aid records. The most restricted drive: no sharing, download off for viewers.", folders: ["Case files", "Guidelines"] },
-  { id: "finance", kind: "Restricted", name: "Finance", tokens: ["finance"], role: "Content manager", blurb: "W-9s, receipts, card statements and QuickBooks exports.", folders: ["W-9s", "Receipts", "Card statements", "QuickBooks exports"] },
+  { id: "policies", name: "Policies", tokens: ["member"], role: "Viewer", blurb: "Approved IAR policies. Everyone can read them; the Shura and executive edit.", folders: evergreen("Rooms and rentals", "Purchasing", "People", "Drafts", "Archive") },
+  { id: "ops", name: "Operations", tokens: ["office", "facilities", "security", "av", "it"], role: "Contributor", blurb: "Run sheets, contracts and setup diagrams for the teams that run the buildings.", folders: [...byYear("Contracts"), ...evergreen("Run sheets")] },
+  ...COMMITTEE_DRIVES.map((c) => ({ id: "c-" + slug(c), name: c === "Women's Committee" || c === "Administration" ? c : c + " Committee", tokens: ["c:" + c], role: "Contributor", blurb: `${c === "Administration" ? "Office" : c} files, plans and event material.`, folders: [...evergreen("Planning"), ...byYear("Events")] })),
+  { id: "shura", name: "IAR Shura", tokens: ["shura"], role: "Content manager", blurb: "Minutes, resolutions, board packets and approved budgets.", folders: byYear("Minutes", "Resolutions", "Board packets", "Budget") },
+  { id: "sw", name: "Social & Welfare", tokens: ["sw"], role: "Contributor", blurb: "Case files and aid records. No sharing outside the group; download is off for viewers.", folders: [...byYear("Case files"), ...evergreen("Guidelines")] },
+  { id: "finance", name: "Finance", tokens: ["finance"], role: "Content manager", blurb: "W-9s, receipts, card statements and QuickBooks exports.", folders: [...evergreen("W-9s"), ...byYear("Receipts", "Card statements", "QuickBooks exports")] },
 ];
+const folderDef = (d, n) => d.folders.find((f) => f.n === n) || { n, fy: false };
+const filePath = (x) => { const d = libDrive(x.drive); return folderDef(d, x.folder).fy ? `${x.folder} / ${fyOf(x.updated)}` : x.folder; };
 const groupOf = (t) => (t === "member" ? "portal-staff@" : t.startsWith("c:") ? `portal-${slug(t.slice(2))}@` : `portal-${t}@`);
 const GROUP_TOKENS = ["shura", "sw", "finance", "office", "facilities", "security", "av", "it", ...COMMITTEE_DRIVES.map((c) => "c:" + c)];
 const personIn = (k, t) => PEOPLE[k].roles.includes(t) || (t.startsWith("c:") && PEOPLE[k].committees.includes(t.slice(2))) || (S.extra[k] || []).includes(t);
@@ -877,47 +883,55 @@ const libDrive = (id) => LIB_DRIVES.find((d) => d.id === id);
 function libSeed() {
   const n = (d) => addDays(TODAY, d);
   let q = 0;
-  const f = (drive, folder, name, cat, owner, age, o = {}) => ({ id: "F-" + ++q, drive, folder, name, cat, owner, updated: n(-age), review: o.review || "", link: o.link || [] });
-  S.lib = { drive: null, folder: null, sel: null, q: "", tab: "files", seq: q, files: [
-    f("policies", "Rooms and rentals", "Room use policy.docx", "Policy", "hana", 210, { review: n(-20), link: ["EV-1031"] }),
-    f("policies", "Rooms and rentals", "Facility rental terms (draft for Shura).docx", "Draft", "hana", 6, { review: n(30) }),
-    f("policies", "Rooms and rentals", "Food and catering rules.pdf", "Policy", "hana", 140, { review: n(10) }),
-    f("policies", "Purchasing", "Purchasing and reimbursement policy.pdf", "Policy", "omar", 95, { review: n(90), link: ["PO-11045", "PO-11046"] }),
-    f("policies", "People", "Volunteer code of conduct.pdf", "Policy", "hana", 300, { review: n(200) }),
-    f("ops", "Run sheets", "Daily run sheet template.xlsx", "Form", "hana", 40),
-    f("ops", "Contracts", "Security patrol contract.pdf", "Contract", "idris", 120),
-    f("ops", "Contracts", "HVAC maintenance contract.pdf", "Contract", "idris", 75),
-    f("ops", "Run sheets", "Setup diagrams — Multipurpose Hall.pdf", "Plan", "yusuf", 33),
-    f("c-youth", "Events", "Youth Family Night — flyer.png", "Other", "bilal", 9, { link: ["EV-1031"] }),
-    f("c-youth", "Planning", "Halaqa winter series outline.docx", "Plan", "amina", 4, { link: ["EV-1042"] }),
-    f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "Plan", "bilal", 18, { link: ["PO-11039"] }),
-    f("c-outreach", "Events", "Interfaith Open House — speaker list.docx", "Plan", "bilal", 7, { link: ["EV-1053"] }),
-    f("c-outreach", "Planning", "Invitation list.xlsx", "Other", "bilal", 12),
-    f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "Plan", "hana", 50),
-    f("c-education", "Planning", "Teacher roster.xlsx", "Other", "hana", 22),
-    f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "Plan", "hana", 8, { link: ["EV-1050"] }),
-    f("c-dawah", "Planning", "New Muslim guide.pdf", "Other", "hana", 70),
-    f("c-dawah", "Planning", "Booklet print order.pdf", "Receipt", "hana", 35),
-    f("c-administration", "Planning", "Office procedures manual.docx", "Policy", "hana", 160, { review: n(45) }),
-    f("c-administration", "Planning", "Key and lock log.xlsx", "Other", "hana", 3),
-    f("shura", "Minutes", "Shura minutes — September meeting.docx", "Minutes", "khalid", 25),
-    f("shura", "Minutes", "Shura minutes — August meeting.docx", "Minutes", "khalid", 56),
-    f("shura", "Resolutions", "Resolution 2026-04: gym rental terms.pdf", "Resolution", "khalid", 40),
-    f("shura", "Board packets", "Board packet — October.pdf", "Other", "khalid", 5),
-    f("shura", "Budget", "FY26-27 approved budget.xlsx", "Budget", "omar", 110),
-    f("shura", "Budget", "Budget amendment request — Youth.pdf", "Budget", "bilal", 14),
-    f("sw", "Case files", "Case 311 — intake and approval.pdf", "Case file", "layla", 30),
-    f("sw", "Case files", "Case 318 — documents.pdf", "Case file", "layla", 9),
-    f("sw", "Guidelines", "Zakat distribution guidelines.pdf", "Policy", "layla", 180, { review: n(-5) }),
-    f("finance", "W-9s", "W-9 — Triangle Sound & Stage.pdf", "Form", "omar", 20, { link: ["PO-11046"] }),
-    f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "Form", "omar", 60, { link: ["PO-11039"] }),
-    f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "Receipt", "amina", 3, { link: ["PO-11045"] }),
-    f("finance", "Card statements", "Card 3051 — September statement.pdf", "Receipt", "omar", 12, { link: ["PO-11051"] }),
-    f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "Other", "omar", 15),
+  const f = (drive, folder, name, owner, age, o = {}) => ({ id: "F-" + ++q, drive, folder, name, owner, updated: n(-age), review: o.review || "", link: o.link || [] });
+  S.lib = { drive: null, folder: null, sel: null, q: "", tab: "files", year: "cur", seq: q, files: [
+    f("policies", "Rooms and rentals", "Room use policy.docx", "hana", 210, { review: n(-20), link: ["EV-1031"] }),
+    f("policies", "Rooms and rentals", "Food and catering rules.pdf", "hana", 140, { review: n(10) }),
+    f("policies", "Drafts", "Facility rental terms (draft for Shura).docx", "hana", 6, { review: n(30) }),
+    f("policies", "Purchasing", "Purchasing and reimbursement policy.pdf", "omar", 95, { review: n(90), link: ["PO-11045", "PO-11046"] }),
+    f("policies", "People", "Volunteer code of conduct.pdf", "hana", 300, { review: n(200) }),
+    f("policies", "Archive", "Room use policy (2023 version).docx", "hana", 900),
+    f("ops", "Run sheets", "Daily run sheet template.xlsx", "hana", 40),
+    f("ops", "Run sheets", "Setup diagrams — Multipurpose Hall.pdf", "yusuf", 33),
+    f("ops", "Contracts", "Security patrol contract.pdf", "idris", 120),
+    f("ops", "Contracts", "HVAC maintenance contract.pdf", "idris", 75),
+    f("ops", "Contracts", "Security patrol contract (prior term).pdf", "idris", 380),
+    f("c-youth", "Events", "Youth Family Night — flyer.png", "bilal", 9, { link: ["EV-1031"] }),
+    f("c-youth", "Planning", "Halaqa winter series outline.docx", "amina", 4, { link: ["EV-1042"] }),
+    f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "bilal", 18, { link: ["PO-11039"] }),
+    f("c-youth", "Events", "Summer camp schedule.pdf", "bilal", 190),
+    f("c-outreach", "Events", "Interfaith Open House — speaker list.docx", "bilal", 7, { link: ["EV-1053"] }),
+    f("c-outreach", "Planning", "Invitation list.xlsx", "bilal", 12),
+    f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "hana", 50),
+    f("c-education", "Planning", "Teacher roster.xlsx", "hana", 22),
+    f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "hana", 8, { link: ["EV-1050"] }),
+    f("c-dawah", "Planning", "New Muslim guide.pdf", "hana", 70),
+    f("c-dawah", "Events", "Booklet print order.pdf", "hana", 35),
+    f("c-administration", "Planning", "Office procedures manual.docx", "hana", 160, { review: n(45) }),
+    f("c-administration", "Planning", "Key and lock log.xlsx", "hana", 3),
+    f("shura", "Minutes", "Shura minutes — September meeting.docx", "khalid", 25),
+    f("shura", "Minutes", "Shura minutes — August meeting.docx", "khalid", 56),
+    f("shura", "Minutes", "Shura minutes — June meeting.docx", "khalid", 125),
+    f("shura", "Minutes", "Shura minutes — May meeting.docx", "khalid", 160),
+    f("shura", "Resolutions", "Resolution 2026-04: gym rental terms.pdf", "khalid", 40),
+    f("shura", "Board packets", "Board packet — October.pdf", "khalid", 5),
+    f("shura", "Budget", "FY26-27 approved budget.xlsx", "omar", 110),
+    f("shura", "Budget", "Budget amendment request — Youth.pdf", "bilal", 14),
+    f("shura", "Budget", "FY25-26 approved budget.xlsx", "omar", 420),
+    f("sw", "Case files", "Case 311 — intake and approval.pdf", "layla", 30),
+    f("sw", "Case files", "Case 318 — documents.pdf", "layla", 9),
+    f("sw", "Case files", "Case 287 — closed.pdf", "layla", 250),
+    f("sw", "Guidelines", "Zakat distribution guidelines.pdf", "layla", 180, { review: n(-5) }),
+    f("finance", "W-9s", "W-9 — Triangle Sound & Stage.pdf", "omar", 20, { link: ["PO-11046"] }),
+    f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "omar", 60, { link: ["PO-11039"] }),
+    f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "amina", 3, { link: ["PO-11045"] }),
+    f("finance", "Receipts", "Carolina Air Systems — deposit receipt.pdf", "omar", 300),
+    f("finance", "Card statements", "Card 3051 — September statement.pdf", "omar", 12, { link: ["PO-11051"] }),
+    f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "omar", 15),
   ] };
   S.lib.seq = q;
 }
-function libReset(drive, q) { Object.assign(S.lib, { drive: drive || null, folder: null, sel: null, q: q || "", tab: "files" }); }
+function libReset(drive, q) { Object.assign(S.lib, { drive: drive || null, folder: null, sel: null, q: q || "", tab: "files", year: "cur" }); }
 function reviewPill(f) {
   if (!f.review) return "";
   const d = daysBetween(TODAY, f.review);
@@ -935,35 +949,39 @@ function libBody() {
   if (L.drive && !libCanOpen(libDrive(L.drive))) { L.drive = null; L.folder = null; L.sel = null; }
   const q = L.q.trim().toLowerCase();
   if (q) {
-    const hits = L.files.filter((x) => open.some((d) => d.id === x.drive) && (x.name.toLowerCase().includes(q) || x.cat.toLowerCase().includes(q) || nameOf(x.owner).toLowerCase().includes(q)));
-    return `<div class="panel">${hits.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Drive</th><th>Category</th><th>Updated</th></tr></thead><tbody>
-      ${hits.map((x) => `<tr><td><button class="lk" type="button" data-libgo="${x.id}">${esc(x.name)}</button></td><td>${esc(libDrive(x.drive).name)}</td><td><span class="pill">${esc(x.cat)}</span></td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files match. Search only covers the drives you can open.</div>`}</div>`;
+    const hits = L.files.filter((x) => open.some((d) => d.id === x.drive) && (x.name.toLowerCase().includes(q) || x.folder.toLowerCase().includes(q) || nameOf(x.owner).toLowerCase().includes(q)));
+    return `<div class="panel">${hits.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Where</th><th>Updated</th></tr></thead><tbody>
+      ${hits.map((x) => `<tr><td><button class="lk" type="button" data-libgo="${x.id}">${esc(x.name)}</button></td><td>${esc(libDrive(x.drive).name)} / ${esc(filePath(x))}</td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files match. Search only covers the drives you can open.</div>`}</div>`;
   }
   if (L.drive) return libDriveView(libDrive(L.drive));
-  const sections = ["Everyone", "Committees", "Restricted"];
-  const heads = { Everyone: "Shared with everyone", Committees: "Committee drives", Restricted: "Restricted drives" };
-  return sections.map((k) => `<div><h2 style="margin:18px 0 10px">${heads[k]}</h2><div class="tiles">${LIB_DRIVES.filter((d) => d.kind === k).map((d) => libCanOpen(d)
+  const tile = (d) => libCanOpen(d)
     ? `<button class="tile" type="button" data-libdrive="${d.id}"><h3>${esc(d.name)}</h3><p>${esc(d.blurb)}</p><div class="foot"><span class="pill ok">Open</span> <span class="pill">${L.files.filter((x) => x.drive === d.id).length} files</span></div></button>`
-    : `<div class="tile locked"><h3>${esc(d.name)}</h3><p>Restricted. Access comes from <span class="mono">${esc(d.tokens.map(groupOf).join(", "))}</span>.</p><div class="foot"><span class="pill">Not in your groups</span></div></div>`).join("")}</div></div>`).join("");
+    : `<div class="tile locked"><h3>${esc(d.name)}</h3><p>Locked. Access comes from <span class="mono">${esc(d.tokens.map(groupOf).join(", "))}</span>.</p><div class="foot"><span class="pill">Not in your groups</span></div></div>`;
+  const mine = LIB_DRIVES.filter(libCanOpen), locked = LIB_DRIVES.filter((d) => !libCanOpen(d));
+  return `<div class="tiles" style="margin-top:14px">${mine.map(tile).join("")}${locked.map(tile).join("")}</div>`;
 }
 function libDriveView(d) {
-  const L = S.lib;
-  const all = L.files.filter((x) => x.drive === d.id);
-  const xs = all.filter((x) => !L.folder || x.folder === L.folder);
+  const L = S.lib, now = fyOf(TODAY);
+  const inFolder = L.files.filter((x) => x.drive === d.id && (!L.folder || x.folder === L.folder));
+  const older = inFolder.filter((x) => folderDef(d, x.folder).fy && fyOf(x.updated) !== now);
+  const xs = L.year === "all" ? inFolder : inFolder.filter((x) => !older.includes(x));
   const sel = L.sel ? L.files.find((x) => x.id === L.sel && x.drive === d.id) : null;
+  const up = L.folder || d.folders[0].n;
   return `<div class="row" style="margin-top:14px"><button class="btn small" type="button" data-libdrive="">All drives</button><strong>${esc(d.name)}</strong><span class="pill">${esc(d.role)}</span><span class="small muted mono">${esc(d.tokens.map(groupOf).join(", "))}</span></div>
-  <div class="row">${["", ...d.folders].map((fo) => `<button class="btn small ${(L.folder || "") === fo ? "primary" : ""}" type="button" data-libfolder="${esc(fo)}">${fo ? esc(fo) : "All folders"}</button>`).join("")}</div>
-  <div class="grid2"><div class="panel">${xs.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Category</th><th>Owner</th><th>Updated</th></tr></thead><tbody>
-    ${xs.map((x) => `<tr><td><button class="lk" type="button" data-libfile="${x.id}">${esc(x.name)}</button><div class="small muted">${esc(x.folder)} ${reviewPill(x)}</div></td><td><span class="pill">${esc(x.cat)}</span></td><td>${esc(nameOf(x.owner))}</td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files in this folder yet.</div>`}
-    <div class="panel-b"><div class="small muted" style="margin-bottom:6px">Upload to ${esc(L.folder || d.folders[0])}</div><div class="row"><input id="libUpName" placeholder="File name, e.g. Event budget.xlsx" style="flex:1;min-width:160px"><select id="libUpCat">${LIB_CATS.map((c) => `<option>${c}</option>`).join("")}</select><button class="btn small primary" type="button" data-libupload="${d.id}">Upload</button></div></div></div>
+  <div class="row">${[{ n: "" }, ...d.folders].map((fo) => `<button class="btn small ${(L.folder || "") === fo.n ? "primary" : ""}" type="button" data-libfolder="${esc(fo.n)}">${fo.n ? esc(fo.n) : "All folders"}</button>`).join("")}</div>
+  ${d.folders.some((fo) => fo.fy) && (older.length || L.year === "all") ? `<div class="small muted">Showing ${L.year === "all" ? "every year" : now}. <button class="lk" type="button" data-libyear="${L.year === "all" ? "cur" : "all"}">${L.year === "all" ? "Current year only" : `Show ${older.length} file${older.length === 1 ? "" : "s"} from earlier years`}</button></div>` : ""}
+  <div class="grid2"><div class="panel">${xs.length ? `<div class="tablewrap"><table><thead><tr><th>File</th><th>Folder</th><th>Owner</th><th>Updated</th></tr></thead><tbody>
+    ${xs.map((x) => `<tr><td><button class="lk" type="button" data-libfile="${x.id}">${esc(x.name)}</button><div class="small muted">${reviewPill(x)}</div></td><td class="small">${esc(filePath(x))}</td><td>${esc(nameOf(x.owner))}</td><td>${fmtDate(x.updated)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No files here yet.</div>`}
+    <div class="panel-b"><div class="small muted" style="margin-bottom:6px">Upload a file</div><div class="row"><input id="libUpName" placeholder="File name, e.g. Event budget.xlsx" style="flex:1;min-width:160px"><select id="libUpFolder" aria-label="Folder">${d.folders.map((fo) => `<option ${fo.n === up ? "selected" : ""}>${esc(fo.n)}</option>`).join("")}</select><input id="libUpDate" type="date" value="${TODAY}" aria-label="Document date"><button class="btn small primary" type="button" data-libupload="${d.id}">Upload</button></div><div class="small muted" id="libUpHint" style="margin-top:6px">${libUpHint(d, up, TODAY)}</div></div></div>
   <div class="panel">${sel ? libFileDetail(sel, d) : `<div class="empty">Pick a file to see its details.</div>`}</div></div>`;
 }
+const libUpHint = (d, folder, date) => (folderDef(d, folder).fy ? `Goes to ${folder} / ${fyOf(date)}, filed by the document date. The folder is created if it doesn't exist yet.` : `Goes to ${folder}. This folder isn't split by year.`);
 function libFileDetail(x, d) {
   const links = x.link.map((id) => getCard(id)).filter(Boolean);
   return `<div class="panel-h"><h2 style="overflow-wrap:anywhere">${esc(x.name)}</h2></div><div class="panel-b">
-    <dl class="kv"><dt>Drive</dt><dd>${esc(d.name)} / ${esc(x.folder)}</dd><dt>Category</dt><dd><span class="pill">${esc(x.cat)}</span></dd><dt>Owner</dt><dd>${esc(nameOf(x.owner))}</dd><dt>Updated</dt><dd>${fmtDate(x.updated)}</dd>${x.review ? `<dt>Policy review</dt><dd>${reviewPill(x)}</dd>` : ""}</dl><h3 style="margin:14px 0 6px">Linked requests</h3>${links.length ? `<div class="list">${links.map((c) => itemRow(c, "")).join("")}</div>` : `<div class="small muted">Not linked to any request.</div>`}
+    <dl class="kv"><dt>Drive</dt><dd>${esc(d.name)}</dd><dt>Folder</dt><dd>${esc(filePath(x))}</dd><dt>Owner</dt><dd>${esc(nameOf(x.owner))}</dd><dt>Document date</dt><dd>${fmtDate(x.updated)}</dd>${x.review ? `<dt>Policy review</dt><dd>${reviewPill(x)}</dd>` : ""}</dl><h3 style="margin:14px 0 6px">Linked requests</h3>${links.length ? `<div class="list">${links.map((c) => itemRow(c, "")).join("")}</div>` : `<div class="small muted">Not linked to any request.</div>`}
     <div class="row" style="margin-top:14px"><button class="btn small" type="button" data-libopen="1">Open in Google Drive</button></div>
-    <p class="small muted" style="margin-top:10px">The portal stores only this file's Drive ID, category and review date. Drive decides who can open it, using the drive's Google Group.</p></div>`;
+    <p class="small muted" style="margin-top:10px">The portal stores only this file's Drive ID, review date and request links. The folder, the file and who can open it all live in Drive.</p></div>`;
 }
 function libAccess() {
   const people = Object.keys(PEOPLE).filter((k) => !["renter", "admin"].includes(k));
@@ -979,10 +997,11 @@ function libAccess() {
     <button class="btn primary" type="button" data-libadd="1">Add to group</button></div></div></div>
   <div class="panel"><div class="panel-h"><h2>Groups</h2><span class="small muted">Each group is a member of its shared drive(s) in Google</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Opens</th><th>Members</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
+document.addEventListener("change", (e) => { if (e.target.id === "libUpFolder" || e.target.id === "libUpDate") { const d = libDrive(S.lib.drive); document.getElementById("libUpHint").textContent = libUpHint(d, document.getElementById("libUpFolder").value, document.getElementById("libUpDate").value || TODAY); } });
 document.addEventListener("input", (e) => { if (e.target.id === "libQ") { S.lib.q = e.target.value; document.getElementById("libBody").innerHTML = libBody(); } });
 function libClick(ds) {
   const L = S.lib;
-  if ("libdrive" in ds) { Object.assign(L, { drive: ds.libdrive || null, folder: null, sel: null, q: "" }); return render(), true; }
+  if ("libdrive" in ds) { Object.assign(L, { drive: ds.libdrive || null, folder: null, sel: null, q: "", year: "cur" }); return render(), true; }
   if ("libfolder" in ds) { L.folder = ds.libfolder || null; L.sel = null; return render(), true; }
   if (ds.libfile) { L.sel = ds.libfile; return render(), true; }
   if (ds.libgo) { const x = L.files.find((y) => y.id === ds.libgo); Object.assign(L, { drive: x.drive, folder: null, sel: x.id, q: "" }); return render(), true; }
@@ -995,11 +1014,13 @@ function libClick(ds) {
     return render(), true;
   }
   if (ds.libremove) { const [k, t] = ds.libremove.split("|"); S.extra[k] = (S.extra[k] || []).filter((x) => x !== t); toast(`Removed from ${groupOf(t)}`); return render(), true; }
+  if ("libyear" in ds) { L.year = ds.libyear; return render(), true; }
   if (ds.libupload) {
     const name = document.getElementById("libUpName").value.trim(); if (!name) { toast("Enter a file name"); return true; }
-    const d = libDrive(ds.libupload);
-    L.files.unshift({ id: "F-" + ++L.seq, drive: d.id, folder: L.folder || d.folders[0], name, cat: document.getElementById("libUpCat").value, owner: S.me, updated: TODAY, review: "", link: [] });
-    toast("Uploaded to " + d.name); return render(), true;
+    const d = libDrive(ds.libupload), folder = document.getElementById("libUpFolder").value, date = document.getElementById("libUpDate").value || TODAY;
+    const fresh = folderDef(d, folder).fy && !L.files.some((x) => x.drive === d.id && x.folder === folder && fyOf(x.updated) === fyOf(date));
+    L.files.unshift({ id: "F-" + ++L.seq, drive: d.id, folder, name, owner: S.me, updated: date, review: "", link: [] });
+    toast(`Uploaded to ${d.name} / ${folder}${folderDef(d, folder).fy ? " / " + fyOf(date) : ""}${fresh ? ". Created the new year folder." : ""}`); L.folder = folder; L.year = "all"; return render(), true;
   }
   return false;
 }
@@ -1359,7 +1380,7 @@ function cardChecklist() {
   const ym = lastMonthYm();
   return `<div class="panel"><div class="panel-h"><h2>Card receipts for ${fmtYm(ym)}</h2><span class="small muted">${IAR_CARDS.length} cards</span></div><div class="tablewrap"><table><thead><tr><th>Card</th><th>Cardholder</th><th>Committee</th><th>Receipts</th></tr></thead><tbody>
     ${IAR_CARDS.map((k) => { const sub = S.pos.find((p) => p.card && p.card.last4 === k.last4 && p.card.month === ym && p.status !== "rejected");
-      return `<tr><td class="mono">···${k.last4}</td><td>${esc(nameOf(k.holder))}</td><td>${esc(k.committee)}</td><td>${sub ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${sub.id}">${sub.id}</button> ${statusPill(sub)}` : '<span class="pill warn">Not submitted</span>'}</td></tr>`; }).join("")}
+      return `<tr><td class="mono">···${k.last4}</td><td>${esc(nameOf(k.holder))}</td><td>${esc(k.committee)}</td><td>${sub ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${sub.id}">${sub.id}</button> ${statusPill(sub)}` : '<span class="pill warn">Not submitted</span>'}</td></tr>`; }).join("")}
   </tbody></table></div></div>`;
 }
 /* Finance: card charges expected back (refunds and repayments) until the money arrives. */
@@ -1440,7 +1461,7 @@ function vPOCard(c) {
   <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
     ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
     ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
-    ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
+    ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
     <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>
   </dl></div></div>
   <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div></div>`;
@@ -2910,7 +2931,7 @@ function vAssets() {
   <div class="row">${cats.map((c) => `<button class="btn small ${c === f ? "primary" : ""}" type="button" data-asfilter="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   ${warrantySoon.length ? `<div class="note info">Warranty ending within 4 months: ${warrantySoon.map((a) => `${a.id} ${esc(a.name)} (${fmtDate(a.warranty)})`).join("; ")}.</div>` : ""}
   <div class="grid2"><div class="panel"><div class="tablewrap"><table><thead><tr><th>Tag</th><th>Item</th><th>Location</th><th>Status</th></tr></thead><tbody>
-    ${xs.map((a) => `<tr><td class="mono"><button type="button" class="crumb" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent);font-family:var(--mono)" data-asset="${a.id}">${a.id}</button></td><td>${esc(a.name)}<div class="small muted">${esc(a.cat)}</div></td><td>${esc(roomName(a.room))}</td><td><span class="pill ${AS_ST[a.status] || ""}">${esc(a.status)}</span>${a.out ? `<div class="small muted">${esc(a.out.to)} · due ${a.out.due.slice(5)}</div>` : ""}</td></tr>`).join("")}
+    ${xs.map((a) => `<tr><td class="mono"><button type="button" class="crumb" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text);font-family:var(--mono)" data-asset="${a.id}">${a.id}</button></td><td>${esc(a.name)}<div class="small muted">${esc(a.cat)}</div></td><td>${esc(roomName(a.room))}</td><td><span class="pill ${AS_ST[a.status] || ""}">${esc(a.status)}</span>${a.out ? `<div class="small muted">${esc(a.out.to)} · due ${a.out.due.slice(5)}</div>` : ""}</td></tr>`).join("")}
   </tbody></table></div></div>
   <div class="panel">${sel ? assetDetail(sel) : `<div class="empty">Pick an item to see its history.</div>`}</div></div>`;
 }
@@ -2955,10 +2976,10 @@ const STEPS = [
   { as: "idris", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
   { as: "admin", view: "tickets", t: "Reports and calendar", reset: () => { S.tk.tab = "reports"; S.tk.modal = null; }, p: "Switch the team to see every issue. Reports show created vs. resolved, workload, SLA compliance and the equipment with the most tickets; Calendar shows due dates; Timeline shows epics and sprints." },
   { as: "idris", view: "assets", t: "Track the equipment", p: "Idris keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset." },
-  { as: "khalid", view: "library", t: "Shura documents", reset: () => libReset("shura"), p: "Khalid is on the Shura, so portal-shura@ opens the IAR Shura drive: minutes, resolutions, board packets and the approved budget. Open a file to see its details. The portal keeps only the file's category and review date; Drive holds the file and checks access." },
+  { as: "khalid", view: "library", t: "Shura documents", reset: () => libReset("shura"), p: "Khalid is on the Shura, so portal-shura@ opens the IAR Shura drive: minutes, resolutions, board packets and the approved budget. Open a file to see its details. Minutes are filed by fiscal year (FY26-27 first, earlier years behind a link). The portal keeps only the Drive ID and review date; Drive holds the file and checks access." },
   { as: "amina", view: "library", t: "Restricted drives stay closed", reset: () => libReset(null, "budget"), p: "Amina sees Policies and the Youth drive, and the restricted drives show as locked. The search for 'budget' finds nothing, because the approved budget lives in the Shura drive and search only covers drives she can open. Clear the box and try 'policy'." },
   { as: "omar", view: "library", t: "Finance files link to requests", reset: () => libReset("finance"), p: "Omar's finance group opens the Finance drive. Open the W-9 for Triangle Sound & Stage: it is linked to the purchase request that needed it. Click the request to jump to the card." },
-  { as: "hana", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Every policy has an owner and a review date. The room use policy is overdue and the catering rules are due soon. In production the owner gets a reminder." },
+  { as: "hana", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Policies aren't split by year: a new version replaces the file, and retired ones go to Archive. Each has a review date; the room use policy is overdue and the catering rules are due soon. Try uploading a file to Minutes with a June date and watch the folder it lands in." },
   { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: "The Access tab shows each group and who is in it. Add Khalid (Shura) to portal-sw@, then switch to Khalid: he now has Social & Welfare as well as the Shura drive, and S&W Aid appears in his sidebar. Remove him with the × to undo." },
   { as: "layla", view: "home", t: "Groups decide what people see", p: "Layla chairs Social & Welfare, so she sees S&W Aid. Amina never does. Try Portal Admin and Portal Settings: switch off a rule and watch the event checks change." },
 ];
@@ -3196,5 +3217,7 @@ seed();
 S.guide = window.innerWidth >= 1200;
 render();
 </script>
+
+</body></html>
 
 </body></html>
