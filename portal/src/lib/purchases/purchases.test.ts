@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ACCOUNTS, FUNDS } from "./accounts";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
+import { purchaseNotices } from "./notices";
 import * as wf from "./workflow";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
@@ -246,3 +247,67 @@ test("queues: each person sees only what they can act on", () => {
   assert.deepEqual(wf.actionableBy([a, b], finance).length, 1);
   assert.deepEqual(wf.actionableBy([a, b], volunteer).length, 0);
 });
+
+// ---- Out of office -----------------------------------------------------
+
+test("someone covering an away chair can act on that chair's step, recorded on their behalf", () => {
+  const c = submitted();
+  const cover: wf.Actor = { ...backup, covering: [chair.email] };
+  assert.equal(wf.permission(c, backup, "approve").ok, false);
+  assert.equal(wf.permission(c, cover, "approve").ok, true);
+  assert.equal(wf.canViewDetail(c, cover), true);
+  const next = wf.approve(c, cover, settings, T(1));
+  assert.equal(next.purchase.stage, "finance");
+  assert.deepEqual(next.purchase.approvals[0], { stage: "chair", by: backup.email, at: T(1), onBehalfOf: chair.email });
+  assert.equal(next.purchase.history.at(-1)?.action, `Approved (Chair approval) for ${chair.email}`);
+  // Covering stops at the chair step: it doesn't make anyone a finance approver.
+  assert.equal(wf.permission(next, cover, "approve").ok, false);
+});
+
+test("covering never lets someone approve their own request, or someone else's step", () => {
+  const own = submitted({}, backup);
+  assert.equal(wf.permission(own, { ...backup, covering: [chair.email] }, "approve").ok, false);
+  const c = submitted();
+  assert.equal(wf.permission(c, { ...volunteer, covering: ["someone.else@x.org"] }, "approve").ok, false);
+});
+
+// ---- Notifications -----------------------------------------------------
+
+const to = (n: { to: { email: string } | { role: string } }) => ("email" in n.to ? n.to.email : `role:${n.to.role}`);
+
+test("notices: each step emails whoever acts next; the requester hears when it comes back", () => {
+  const c = submitted();
+  const sub = purchaseNotices(null, c, volunteer);
+  assert.deepEqual(sub.map((n) => [to(n), n.email, n.delegable]), [[chair.email, true, true]]);
+  assert.match(sub[0].text, /PO-1 .*needs your chair approval/);
+
+  const atFinance = wf.approve(c, chair, settings, T(1));
+  assert.deepEqual(purchaseNotices(c, atFinance, chair).map((n) => [to(n), n.email]), [["role:finance", true]]);
+
+  const toPay = wf.approve(atFinance, finance, settings, T(2));
+  assert.deepEqual(purchaseNotices(atFinance, toPay, finance).map((n) => [to(n), n.email]), [["role:finance", true], [volunteer.email, false]]);
+
+  const paid = wf.recordPayment(toPay, office, T(3), "Check", "20431");
+  const paidN = purchaseNotices(toPay, paid, office);
+  assert.deepEqual(paidN.map((n) => [to(n), n.email]), [["role:finance", false], [volunteer.email, false]]);
+  assert.match(paidN[1].text, /paid \(Check 20431\)/);
+
+  const back = wf.returnForChanges(c, chair, T(1), "Attach the invoice");
+  const backN = purchaseNotices(c, back, chair);
+  assert.deepEqual(backN.map((n) => [to(n), n.email]), [[volunteer.email, true]]);
+  assert.match(backN[0].text, /Attach the invoice/);
+});
+
+test("notices: nobody is notified about their own action, and S&W details stay out", () => {
+  const own = submitted({}, chair);
+  // The chair's own request goes to the backup, not back to the chair.
+  assert.deepEqual(purchaseNotices(null, own, chair).map(to), [backup.email]);
+  const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
+  for (const n of purchaseNotices(null, sw, volunteer)) assert.doesNotMatch(n.text, /Youth night|\$300/);
+});
+
+function findSwAccount(): string {
+  const a = ACCOUNTS.find((x) => x.fund === "Social & Welfare");
+  if (!a) throw new Error("no S&W account");
+  return a.id;
+}

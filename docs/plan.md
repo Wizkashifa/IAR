@@ -104,7 +104,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
 | Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
-| IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified | 2 |
+| IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified. Facilities is a paid team that works in Jira today; this module brings that work into the portal so requesters can see how their request is progressing | 2 |
 | Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
 | Budget | Chairs (their cost centers), finance, executive, Shura (read) | Built on the FY2026–27 budget (July 1–June 30): IAR General Fund cost centers plus the Page Road campus. Sankey of funding source → cost center → spent, committed, available, with a table. A Revenue tab sorts everything received into three kinds: **unrestricted gifts** to IAR (General Fund), **designated donations** to a committee (e.g. Da'wah) and **program revenue** earned by a committee (e.g. Youth); Page Road tracks tuition, endowment and donations against its plan. Finance imports a QuickBooks export (CSV now, QuickBooks Online connection later); rows are sorted by account and class, and anything without a committee waits for finance to assign it. Expense rows are matched to purchase requests | 3 |
 | Shura / Board dashboard | Shura / board members (group `portal-shura@`) | A dashboard first: received vs. spent, cost centers against the calendar, restricted money held, last year's close. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
@@ -265,7 +265,9 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
 - [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation (`docs/setup.md`)
-- [ ] Purchase Requests module on the shell (design in purchase-requests-plan.md)
+- [x] Purchase Requests module on the shell (design in purchase-requests-plan.md)
+- [x] Portal-wide notifications (bell plus email to whoever acts next), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
+- [ ] Set up the portal's sending mailbox and the gmail.send scope (`docs/setup.md`, step 8)
 - [ ] Event cards with calendar holds and rule flags
 - [ ] Create the access groups and a service account in Google Workspace
 - [ ] Pull the room list and calendar IDs from IAR's Google Calendar

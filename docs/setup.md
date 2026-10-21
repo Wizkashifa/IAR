@@ -47,7 +47,15 @@ gcloud firestore indexes composite create --collection-group=cards \
   --field-config=field-path=createdAt,order=ascending
 ```
 
-Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Notifications (the bell) need one more:
+
+```
+gcloud firestore indexes composite create --collection-group=notifications \
+  --field-config=field-path=to,order=ascending \
+  --field-config=field-path=at,order=descending
+```
+
+Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, and beta feedback at `orgs/iar/feedback`. If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -104,16 +112,29 @@ Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see ev
 2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
 3. **Approvers and cards.** Fill in `FUND_APPROVERS` (each fund's chair and a backup) and `CREDIT_CARDS` (last four digits, cardholder, fund — never the full number) in `portal/src/lib/purchases/settings.ts`, from the office's confirmed lists. Until then every request goes straight to finance review and nobody can submit card receipts. These move to Portal Settings later.
 4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
-5. Notification emails, the morning digest and reminders aren't built yet; for the pilot, approvers check "Waiting on you" on the home page.
+5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
 
-### 8. Deploy
+### 8. Email alerts
+
+The portal emails whoever has to act next: an approver when a request reaches them, finance when one reaches its queue, a requester when a request comes back for changes, and the person covering for someone who's away. Everything else appears only under Notifications in the portal. Until this is set up, nothing is emailed and the bell still works.
+
+1. Create a mailbox for the portal to send from, for example `portal@islam1.org` (it needs a Gmail license; a shared mailbox nobody signs in to is fine).
+2. Admin console → Security → API controls → Domain-wide delegation: edit the portal's entry from step 4 and add the scope `https://www.googleapis.com/auth/gmail.send` (keep the groups scope; separate them with a comma).
+3. Set `PORTAL_MAIL_FROM=portal@islam1.org` when deploying.
+4. Let `portal@islam1.org` post to the groups the portal emails (`portal-finance@`, `portal-executive@`, `portal-admins@`): in each group's settings, "Who can post" must include that address or the whole organization.
+
+Be aware: domain-wide delegation applies to the service account, not to one mailbox, so the gmail.send scope would let it send as any islam1.org user. The portal only ever sends as `PORTAL_MAIL_FROM`, the service account has no key file, and only the Cloud Run service runs as it. Keep the project's owners to the two named in "Who owns what".
+
+To try it locally without Google, run `npm run dev`; every email the portal would send is listed at http://localhost:3000/dev.
+
+### 9. Deploy
 
 From the repo root:
 
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id> \
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 

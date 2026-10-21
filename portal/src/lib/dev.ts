@@ -8,6 +8,9 @@ export function isDevAuth(): boolean {
   return process.env.DEV_AUTH === "1" && !process.env.K_SERVICE;
 }
 
+/** Sample users' email domain, standing in for the org's domain in dev mode. */
+export const DEV_DOMAIN = "dev.local";
+
 export type DevPersona = { id: string; name: string; email: string; title: string; groups: string[] };
 
 const g = ORG.roleGroups;

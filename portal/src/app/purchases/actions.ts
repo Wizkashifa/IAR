@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cardStore, ConflictError, vendorId } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
+import { deliver } from "@/lib/notifications";
+import { actorFor } from "@/lib/people";
+import { purchaseNotices } from "@/lib/purchases/notices";
 import { checkFiles, filesFrom, saveAttachments } from "@/lib/purchases/drive";
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
 import { cardsHeldBy, routingSettings } from "@/lib/purchases/settings";
@@ -10,7 +13,6 @@ import * as wf from "@/lib/purchases/workflow";
 
 export type FormState = { errors: string[] };
 
-const actorOf = (v: Viewer): wf.Actor => ({ email: v.email.toLowerCase(), name: v.name, roles: v.actingRoles });
 const nowIso = () => new Date().toISOString();
 
 async function parseForm(viewer: Viewer, form: FormData) {
@@ -35,7 +37,7 @@ async function parseForm(viewer: Viewer, form: FormData) {
 
 export async function createPurchase(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
-  const actor = actorOf(viewer);
+  const actor = await actorFor(viewer);
   const r = await parseForm(viewer, form);
   if (!r.ok) return { errors: r.errors };
 
@@ -44,6 +46,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
   const routed = wf.submit(wf.newPurchase(r.details, viewer.email, now), actor, routingSettings(), now);
   const { id: _blank, ...toCreate } = routed;
   const created = (await store.create(toCreate, "PO")) as wf.PurchaseCard;
+  await deliver(purchaseNotices(null, created, actor), actor.email);
 
   if (r.files.length) {
     try {
@@ -65,7 +68,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
 
 export async function resubmitPurchase(id: string, _prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
-  const actor = actorOf(viewer);
+  const actor = await actorFor(viewer);
   const store = await cardStore();
   const card = await store.get(id);
   if (!wf.isPurchaseCard(card)) return { errors: ["That request no longer exists."] };
@@ -89,7 +92,9 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     attachments,
   };
   try {
-    await store.save(wf.resubmit(card, edited, actor, routingSettings(), now), card.updatedAt);
+    const next = wf.resubmit(card, edited, actor, routingSettings(), now);
+    await store.save(next, card.updatedAt);
+    await deliver(purchaseNotices(card, next, actor), actor.email);
   } catch (err) {
     return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
@@ -100,7 +105,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
 /** Approve, return, reject, pay, book, resolve a refund/repayment, or cancel. */
 export async function actOnPurchase(form: FormData): Promise<void> {
   const viewer = await requireViewer();
-  const actor = actorOf(viewer);
+  const actor = await actorFor(viewer);
   const id = String(form.get("id") ?? "");
   const action = String(form.get("action") ?? "") as wf.Action;
   const note = String(form.get("note") ?? "").slice(0, 1000);
@@ -148,6 +153,7 @@ export async function actOnPurchase(form: FormData): Promise<void> {
         throw new wf.WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
+    await deliver(purchaseNotices(card, next, actor), actor.email);
     // Paying a vendor for the first time puts them in the registry.
     if (action === "pay" && card.purchase.kind === "pay" && card.purchase.payee) {
       const vid = vendorId(card.purchase.payee);

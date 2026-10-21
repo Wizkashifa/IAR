@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { DEV_PERSONAS, isDevAuth } from "@/lib/dev";
 import { rolesFromGroups } from "@/lib/org";
+import { devOutbox } from "@/lib/mail";
+import { fmtDateTime } from "../purchases/ui";
 import { choosePersona } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +29,21 @@ export default async function DevPage() {
           </form>
         ))}
       </div>
+
+      <h2>Emails the portal would have sent</h2>
+      <p className="note">Nothing is emailed in dev mode. Newest first; restart the dev server to clear.</p>
+      {devOutbox().length === 0 ? (
+        <div className="panel empty">None yet. Submit or approve a request to see them.</div>
+      ) : (
+        <ul className="notifs">
+          {devOutbox().map((m, i) => (
+            <li key={i} className="notif">
+              <span className="t"><strong>To {m.to.join(", ")}</strong>: {m.subject}</span>
+              <span className="sub pre">{fmtDateTime(m.at)} · {m.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

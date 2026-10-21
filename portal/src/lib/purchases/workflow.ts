@@ -10,6 +10,8 @@
  * - Requests at or above the executive threshold need executive approval.
  * - Card receipts get an after-the-fact finance review (the money is spent).
  * - Social & Welfare requests are restricted to S&W and finance.
+ * - Someone covering for an away chair (see lib/away.ts) acts on that chair's
+ *   step only, and the history records whose approval it was.
  * - Every step is written to the card's history.
  */
 import type { Card, CardStatus } from "../cards";
@@ -37,13 +39,26 @@ export type RoutingSettings = {
  * the admin "see everything" expansion: being a portal admin is a support
  * role and does not let anyone approve or pay.
  */
-export type Actor = { email: string; name: string; roles: Role[] };
+export type Actor = {
+  email: string;
+  name: string;
+  roles: Role[];
+  /** People who are away and asked this person to cover their approvals today. */
+  covering?: string[];
+};
 
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };
 
 export class WorkflowError extends Error {}
 
 const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+
+/** The away approver `actor` is standing in for on this request, if they aren't the approver themselves. */
+export function coveringApprover(card: PurchaseCard, actor: Actor): string | undefined {
+  const p = card.purchase;
+  if (p.stage !== "chair" || !p.approverEmail || same(p.approverEmail, actor.email)) return undefined;
+  return actor.covering?.some((e) => same(e, p.approverEmail)) ? p.approverEmail : undefined;
+}
 
 export function isPurchaseCard(c: Card | null | undefined): c is PurchaseCard {
   return Boolean(c && c.type === "purchase" && c.purchase);
@@ -61,6 +76,7 @@ export function canViewDetail(card: PurchaseCard, viewer: Actor & { seeAll?: boo
   const involved =
     same(card.ownerEmail, viewer.email) ||
     same(p.approverEmail, viewer.email) ||
+    Boolean(coveringApprover(card, viewer)) ||
     p.approvals.some((a) => same(a.by, viewer.email));
   if (p.restricted) return involved || viewer.roles.includes("finance") || viewer.roles.includes("sw");
   return (
@@ -178,7 +194,7 @@ export function permission(card: PurchaseCard, actor: Actor, action: Action): { 
   const isApprovalStage = p.stage === "chair" || p.stage === "finance" || p.stage === "executive";
   if (action === "approve" || action === "return" || action === "reject") {
     if (!isApprovalStage) return no("This request is past approval.");
-    if (p.stage === "chair" && !same(p.approverEmail, actor.email))
+    if (p.stage === "chair" && !same(p.approverEmail, actor.email) && !coveringApprover(card, actor))
       return no(`This step is waiting on ${p.approverEmail ?? "the fund's chair"}.`);
     if (p.stage === "finance" && !has("finance")) return no("This step is waiting on the finance office.");
     if (p.stage === "executive" && !has("executive")) return no("This step is waiting on executive approval.");
@@ -207,6 +223,12 @@ function must(card: PurchaseCard, actor: Actor, action: Action) {
 
 function entry(actor: Actor, now: string, action: string, note?: string): HistoryEntry {
   return note ? { at: now, by: actor.email, action, note } : { at: now, by: actor.email, action };
+}
+
+/** " for chair@…" when someone is covering an away approver. */
+function behalf(card: PurchaseCard, actor: Actor): string {
+  const who = coveringApprover(card, actor);
+  return who ? ` for ${who}` : "";
 }
 
 function withStage(card: PurchaseCard, p: PurchaseDetails, now: string, status?: CardStatus): PurchaseCard {
@@ -268,9 +290,11 @@ export function approve(card: PurchaseCard, actor: Actor, s: RoutingSettings, no
     w9Required = false;
     history.push(entry(actor, now, "Confirmed W-9 on file"));
   }
-  const approved: PurchaseDetails = { ...cur, w9Required, approvals: [...cur.approvals, { stage: cur.stage, by: actor.email, at: now }] };
+  const onBehalfOf = coveringApprover(card, actor);
+  const approval = onBehalfOf ? { stage: cur.stage, by: actor.email, at: now, onBehalfOf } : { stage: cur.stage, by: actor.email, at: now };
+  const approved: PurchaseDetails = { ...cur, w9Required, approvals: [...cur.approvals, approval] };
   const stage = nextStage(approved, s);
-  history.push(entry(actor, now, `Approved (${STAGE_LABEL[cur.stage]})`, opts.note));
+  history.push(entry(actor, now, `Approved (${STAGE_LABEL[cur.stage]})${behalf(card, actor)}`, opts.note));
   const p: PurchaseDetails = { ...approved, stage, approverEmail: undefined, stageSince: now, history, returnNote: undefined };
   return withStage(card, p, now);
 }
@@ -281,7 +305,7 @@ export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, 
   const p: PurchaseDetails = {
     ...card.purchase,
     returnNote: note.trim(),
-    history: [...card.purchase.history, entry(actor, now, `Returned for changes (${STAGE_LABEL[card.purchase.stage]})`, note.trim())],
+    history: [...card.purchase.history, entry(actor, now, `Returned for changes (${STAGE_LABEL[card.purchase.stage]})${behalf(card, actor)}`, note.trim())],
   };
   return withStage(card, p, now, "changes_requested");
 }
@@ -292,7 +316,7 @@ export function reject(card: PurchaseCard, actor: Actor, now: string, note: stri
   const p: PurchaseDetails = {
     ...card.purchase,
     returnNote: note.trim(),
-    history: [...card.purchase.history, entry(actor, now, `Rejected (${STAGE_LABEL[card.purchase.stage]})`, note.trim())],
+    history: [...card.purchase.history, entry(actor, now, `Rejected (${STAGE_LABEL[card.purchase.stage]})${behalf(card, actor)}`, note.trim())],
   };
   return withStage(card, p, now, "denied");
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
+import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
 import { creditCards } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
@@ -24,7 +25,7 @@ const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }
 export default async function PurchasesPage({ searchParams }: { searchParams: Promise<{ view?: string; ok?: string; error?: string }> }) {
   const { view = "all", ok, error } = await searchParams;
   const viewer = await requireViewer();
-  const actor = { email: viewer.email, name: viewer.name, roles: viewer.actingRoles };
+  const actor = await actorFor(viewer);
   const store = await cardStore();
   const since = new Date(Date.now() - 75 * 864e5).toISOString();
   const [mine, open, recent] = await Promise.all([

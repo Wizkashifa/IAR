@@ -1,19 +1,31 @@
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
+import { actorFor, peopleStore } from "@/lib/people";
+import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
 import { visibleModules } from "@/lib/modules";
 import { cardStore, NEEDS_OWNER, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
 import { STAGE_LABEL } from "@/lib/purchases/types";
-import { actionableBy, canViewDetail, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
+import { actionableBy, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
 
 export const dynamic = "force-dynamic";
+
+const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 export default async function Home() {
   const viewer = await requireViewer();
   const modules = visibleModules(viewer.roles);
   const store = await cardStore();
-  const [cards, openPurchases] = await Promise.all([store.listByOwner(viewer.email), store.listOpenPurchases()]);
+  const people = await peopleStore();
+  const [cards, openPurchases, actor, myAway, coverFor] = await Promise.all([
+    store.listByOwner(viewer.email),
+    store.listOpenPurchases(),
+    actorFor(viewer),
+    people.getAway(viewer.email),
+    people.listAwayByDelegate(viewer.email),
+  ]);
+  const today = todayLocal();
   const needsYou = cards.filter((c) => NEEDS_OWNER.includes(c.status));
-  const actor = { email: viewer.email, name: viewer.name, roles: viewer.actingRoles };
+  const covering = coverFor.filter((a) => isCurrentOrUpcoming(a, today));
   const approvals = actionableBy(openPurchases.filter(isPurchaseCard), actor);
   const firstName = viewer.name.split(" ")[0];
 
@@ -21,6 +33,17 @@ export default async function Home() {
     <>
       <h1>Assalamu alaikum, {firstName}</h1>
       <p className="lead">Everything you can do at IAR, in one place.</p>
+
+      {myAway && isCurrentOrUpcoming(myAway, today) && (
+        <div className="callout info">
+          {isActive(myAway, today) ? "You're marked away" : `You'll be away from ${fmtDay(myAway.from)}`} until {fmtDay(myAway.until)}. {myAway.delegate} is covering your approvals. <Link href="/away">Change</Link>
+        </div>
+      )}
+      {covering.map((a) => (
+        <div key={a.email} className="callout info">
+          {isActive(a, today) ? "You're covering" : `From ${fmtDay(a.from)} you'll cover`} approvals for {a.name} until {fmtDay(a.until)}{a.note ? `: “${a.note}”` : "."}
+        </div>
+      ))}
 
       {needsYou.length > 0 && (
         <>
@@ -62,6 +85,7 @@ export default async function Home() {
                     </Link>
                     <div className="what">
                       {c.id} · {STAGE_LABEL[c.purchase.stage]} · waiting {days === 0 ? "since today" : `${days} day${days === 1 ? "" : "s"}`}
+                      {coveringApprover(c, actor) && ` · covering for ${coveringApprover(c, actor)}`}
                     </div>
                   </li>
                 );

@@ -202,3 +202,29 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outl
 .total strong { font-size: 18px; margin-left: 6px; }
 .button:disabled { opacity: 0.6; cursor: default; }
 .form > .button { justify-self: start; }
+
+/* ---- Notifications, search, feedback, out of office ------------------- */
+.topsearch { flex: 0 1 220px; }
+.topsearch input { background: rgba(246, 238, 219, 0.1) !important; border-color: rgba(212, 175, 55, 0.4) !important; color: var(--cream) !important; padding: 6px 10px !important; font-size: 13px !important; }
+.topsearch input::placeholder { color: rgba(246, 238, 219, 0.6); }
+.user .bell, .user .topfeedback, .user .me { color: var(--cream); }
+.user .bell:hover, .user .topfeedback:hover, .user .me:hover { color: var(--gold-light); text-decoration: none; }
+.topfeedback.on { color: var(--gold-light); }
+.count { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--gold); color: #0b2e12; font-size: 11px; font-weight: 700; text-align: center; line-height: 18px; }
+.awaybadge { margin-left: 6px; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.callout.info { background: #e3ecf6; color: #24507a; }
+@media (prefers-color-scheme: dark) { .callout.info { background: #1d2c3b; color: #9cc3ea; } }
+.notifs { list-style: none; margin: 16px 0 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.notifs li { border-top: 1px solid var(--line); }
+.notifs li:first-child { border-top: 0; }
+.notifs li.unread { border-left: 3px solid var(--gold); }
+.notif { display: grid; gap: 2px; width: 100%; text-align: left; background: none; border: 0; padding: 12px 16px; font: inherit; color: var(--ink); cursor: pointer; }
+.notif:hover { background: var(--accent-soft); }
+.notifs li.unread .t { font-weight: 600; }
+.notif .sub { color: var(--ink-2); font-size: 12px; }
+.searchform { display: flex; gap: 8px; margin: 12px 0 16px; }
+.searchform input { flex: 1; }
+@media (max-width: 640px) {
+  .topsearch { order: 4; flex-basis: 100%; }
+  .user { flex-wrap: wrap; }
+}
