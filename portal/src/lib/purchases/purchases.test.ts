@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { ACCOUNTS, FUNDS } from "./accounts";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
 import { purchaseNotices } from "./notices";
+import { fundsOverseenBy, parseRoster } from "./roster";
 import * as wf from "./workflow";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
@@ -311,3 +312,42 @@ function findSwAccount(): string {
   if (!a) throw new Error("no S&W account");
   return a.id;
 }
+
+// ---- Roster and oversight ----------------------------------------------
+
+test("roster: bad addresses, unknown funds and full card numbers are left out and reported", () => {
+  const { roster, problems } = parseRoster(
+    {
+      funds: {
+        "Youth Expenses": { committee: "Youth", chair: "Sam.Chair@x.org", backup: "sam.chair@x.org" },
+        "Women Expenses": { chair: "someone@gmail.com" },
+        "Made Up Fund": { chair: "a@x.org" },
+      },
+      directors: [{ name: "Director", email: "dir@x.org", funds: ["Youth Expenses", "Nope"] }],
+      cards: [
+        { last4: "2093", holderEmail: "h@x.org", holderName: "H", fund: "Youth Expenses" },
+        { last4: "4111111111111111", holderEmail: "h@x.org", fund: "Youth Expenses" },
+      ],
+    },
+    { funds: FUNDS, domain: "x.org" },
+  );
+  assert.deepEqual(roster.funds["Youth Expenses"], { committee: "Youth", chair: "sam.chair@x.org", backup: undefined });
+  assert.deepEqual(roster.funds["Women Expenses"], { committee: undefined, chair: undefined, backup: undefined });
+  assert.equal(roster.funds["Made Up Fund"], undefined);
+  assert.deepEqual(roster.directors, [{ name: "Director", email: "dir@x.org", funds: ["Youth Expenses"] }]);
+  assert.deepEqual(roster.cards.map((c) => c.last4), ["2093"]);
+  assert.equal(problems.length, 5);
+  assert.deepEqual(fundsOverseenBy(roster, "DIR@x.org"), ["Youth Expenses"]);
+  assert.deepEqual(fundsOverseenBy(roster, "sam.chair@x.org"), ["Youth Expenses"]);
+});
+
+test("oversight: a director can open their committees' requests but not act on them, and never S&W's", () => {
+  const director: wf.Actor = { email: "dir@x.org", name: "Director", roles: ["member"], oversees: ["Youth Expenses", "Social & Welfare"] };
+  const c = submitted();
+  assert.equal(wf.canViewDetail(c, { ...volunteer, email: "other@x.org" }), false);
+  assert.equal(wf.canViewDetail(c, director), true);
+  assert.equal(wf.permission(c, director, "approve").ok, false);
+  assert.equal(wf.canViewDetail(submitted({ fund: "Women Expenses" }), director), false);
+  const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
+  assert.equal(wf.canViewDetail(sw, director), false);
+});

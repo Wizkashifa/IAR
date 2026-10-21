@@ -20,6 +20,7 @@ export const DEV_PERSONAS: DevPersona[] = [
   { id: "office", name: "Sample Office", email: "office@dev.local", title: "IAR office", groups: [g.office] },
   { id: "finance", name: "Sample Finance", email: "finance@dev.local", title: "Finance, cardholder", groups: [g.finance, g.cardholders] },
   { id: "sw", name: "Sample S&W Chair", email: "sw@dev.local", title: "Social & Welfare chair", groups: [g.sw, g.chairs] },
+  { id: "director", name: "Sample Director", email: "director@dev.local", title: "Director over Youth, Women, Sports, Older Adults", groups: [] },
   { id: "executive", name: "Sample Executive", email: "exec@dev.local", title: "Executive approver", groups: [g.executive] },
   { id: "shura", name: "Sample Shura Member", email: "shura@dev.local", title: "Shura / board member", groups: [g.shura] },
   { id: "security", name: "Sample Security", email: "security@dev.local", title: "Security & facilities", groups: [g.security, g.facilities] },

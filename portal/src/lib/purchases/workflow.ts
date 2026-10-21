@@ -10,6 +10,8 @@
  * - Requests at or above the executive threshold need executive approval.
  * - Card receipts get an after-the-fact finance review (the money is spent).
  * - Social & Welfare requests are restricted to S&W and finance.
+ * - A fund's chair, backup and director can see its requests (not S&W's);
+ *   seeing a request never lets anyone act on it.
  * - Someone covering for an away chair (see lib/away.ts) acts on that chair's
  *   step only, and the history records whose approval it was.
  * - Every step is written to the card's history.
@@ -45,6 +47,8 @@ export type Actor = {
   roles: Role[];
   /** People who are away and asked this person to cover their approvals today. */
   covering?: string[];
+  /** Funds whose requests this person may open: ones they chair, back up or direct (see roster.ts). */
+  oversees?: string[];
 };
 
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };
@@ -81,6 +85,7 @@ export function canViewDetail(card: PurchaseCard, viewer: Actor & { seeAll?: boo
   if (p.restricted) return involved || viewer.roles.includes("finance") || viewer.roles.includes("sw");
   return (
     involved ||
+    Boolean(viewer.oversees?.includes(p.fund)) ||
     Boolean(viewer.seeAll) ||
     viewer.roles.some((r) => r === "finance" || r === "office" || r === "executive")
   );

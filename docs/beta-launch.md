@@ -6,7 +6,7 @@ How to put the portal on IAR's Google Cloud for a small group of testers. Writte
 - Everything is created under the **islam1.org** Google organization: IAR's Cloud project, IAR's Workspace. Never use a personal Google account or project, and never deploy anywhere except Cloud Run in IAR's project.
 - **Never create or download a service account key.** The portal signs its own tokens.
 - **Stop and ask Kashif before** turning on billing, buying a Workspace license, adding domain-wide delegation scopes, or anything that emails people. These cost money or widen access.
-- Don't put card numbers, tax IDs or passwords in the repo. Card settings hold only the last four digits.
+- **This repo is public.** Never commit people's names, emails or roles, card numbers, tax IDs or passwords. Who approves what lives in the roster file (`roster.json`), which goes only into Secret Manager. Card entries hold only the last four digits.
 - Keep the old Requisition Form running during the beta. Nobody loses a way to get paid while we test.
 
 ## What's in the beta
@@ -49,8 +49,8 @@ Each step points to the matching section of setup.md. Do them in order and run t
    Check: `gcloud iam service-accounts keys list --iam-account $SA --managed-by=user` is empty.
 4. **Group lookups** (setup §4): the read-only directory user and its domain-wide delegation entry. *Stop and ask before adding the delegation.*
 5. **Google sign-in** (setup §5): an Internal OAuth consent screen and a web client; secrets go in Secret Manager.
-6. **Access groups** (setup §6), plus **`portal-beta@islam1.org`**. Add each tester to `portal-beta@` directly (nested groups aren't checked). Put each tester in their role groups too: chair → `portal-committee-chairs@`, finance → `portal-finance@`, and so on. Two or three people in `portal-admins@`, who always get in.
-7. **Purchase Requests** (setup §7): the PO Records Shared Drive and folder ID, and the restricted W-9 drive (without the service account). Fill in `FUND_APPROVERS` and `CREDIT_CARDS` in `portal/src/lib/purchases/settings.ts` for the beta funds and cards. Then run `npm test`, commit and push.
+6. **Access groups** (setup §6), plus **`portal-beta@islam1.org`**. Members come from Kashif's group sheet. Add each tester to `portal-beta@` directly (nested groups aren't checked). Put each tester in their role groups too: chair → `portal-committee-chairs@`, finance → `portal-finance@`, and so on. Two or three people in `portal-admins@`, who always get in.
+7. **Purchase Requests** (setup §7): the PO Records Shared Drive and folder ID, and the restricted W-9 drive (without the service account). Kashif provides `roster.json` and a sheet of who goes in which group. First check every address marked as guessed in Admin console → Directory → Users, and fix any that don't exist. Then upload the roster as the `portal-roster` secret. Don't copy it into the repo.
 8. **Email** (setup §8): the sending mailbox, the gmail.send scope and group posting permissions. *Stop and ask before buying the license and before adding the scope.*
 9. **Room calendars, groundwork for Events** (below). The beta doesn't use these yet, but doing it now means Events can be switched on without another round in the Admin console.
 10. **Deploy** (setup §9). Add `PORTAL_ACCESS_GROUP=portal-beta@islam1.org` to `--set-env-vars`. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL, then deploy again.
@@ -69,7 +69,7 @@ Check: in Google Calendar, signed in as an admin, each room calendar shows the s
 
 ## Smoke test after deploy
 
-Use two tester accounts, A (requester) and B (chair of the fund A uses), plus one finance tester.
+Use two tester accounts, A (requester) and B (chair of the fund A uses), plus one finance tester. Every step of a request needs someone in `portal-beta@`; anyone else can't sign in to act on it. With the first beta group, that means the bookkeeper in finance and a tester as approver for each fund the requesters use.
 
 - [ ] Someone **not** in `portal-beta@` signs in and sees "open to a small group of testers".
 - [ ] A submits a $25 reimbursement with a receipt. The receipt lands in the PO Records drive under `<year> / PO-12001 · <fund>`.

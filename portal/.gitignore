@@ -5,3 +5,6 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 .test-build/
+
+# People data never goes in this public repo (see docs/beta-launch.md).
+roster*.json

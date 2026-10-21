@@ -111,7 +111,14 @@ Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see ev
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
 2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
-3. **Approvers and cards.** Fill in `FUND_APPROVERS` (each fund's chair and a backup) and `CREDIT_CARDS` (last four digits, cardholder, fund — never the full number) in `portal/src/lib/purchases/settings.ts`, from the office's confirmed lists. Until then every request goes straight to finance review and nobody can submit card receipts. These move to Portal Settings later.
+3. **Approvers, directors and cards.** These come from a roster file that never goes in the repo (the repo is public). Its format is at the top of `portal/src/lib/purchases/roster.ts`: each fund's chair and backup, directors who can see a set of funds' requests, and IAR cards (last four digits only). Store it in Secret Manager and mount it as a file:
+
+```
+gcloud secrets create portal-roster --data-file=roster.json
+gcloud secrets add-iam-policy-binding portal-roster --member=serviceAccount:$SA --role=roles/secretmanager.secretAccessor
+```
+
+   The deploy command mounts it at `/secrets/roster.json`. To change people later, add a new version (`gcloud secrets versions add portal-roster --data-file=roster.json`) and redeploy so a new revision reads it. Addresses that fail a check are left out and logged as `roster:` lines in Cloud Run's logs. Without the file, every request goes to finance review and nobody can submit card receipts. This moves to Portal Settings later.
 4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
 5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
 
@@ -135,8 +142,8 @@ From the repo root:
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-beta@islam1.org \
-  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-beta@islam1.org,PORTAL_ROSTER_FILE=/secrets/roster.json \
+  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest,/secrets/roster.json=portal-roster:latest
 ```
 
 Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.

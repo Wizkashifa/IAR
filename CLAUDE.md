@@ -6,6 +6,7 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 
 - **It runs on IAR's own Google Cloud**, in a project under the islam1.org organization: Cloud Run + Firestore. Never deploy it to a personal Google account, Vercel, Firebase Hosting on a personal project, or any other host.
 - **It uses IAR's Google Workspace for everything shared**: sign-in (@islam1.org only), Google Groups (who sees what), Gmail (alert emails, sent as the portal's own mailbox), Google Calendar (room bookings, the source of truth), and Shared Drives (files). No Microsoft services, and no second copy of data that Workspace already holds.
+- **This repo is public. No people data in it.** Names, emails and who approves what live in a roster file (format in `portal/src/lib/purchases/roster.ts`) that goes only into Secret Manager. `.gitignore` blocks `roster*.json`. The repo should move to a private IAR-owned GitHub organization.
 - **No key files.** The Cloud Run service account signs its own tokens (`portal/src/lib/google.ts`). Don't create or download service account keys.
 - **Owned by IAR, not a person.** Admin access comes from Google Groups (`portal-admins@`), and the Cloud project needs at least two owners.
 - **Facilities moves into the portal.** The paid facilities team works in Jira today. The goal is to bring them into the portal's IT & Maintenance module, so requesters can follow their requests. Keeping Jira and syncing with it is the fallback only if moving doesn't work out.

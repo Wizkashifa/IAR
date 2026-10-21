@@ -43,6 +43,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const filtered = openPurchases.filter(filter.test).sort((a, b) => daysWaiting(b) - daysWaiting(a));
   const redact = (c: PurchaseCard) => !canViewDetail(c, { ...actor, seeAll: viewer.roles.includes("admins") });
   const finance = viewer.roles.includes("finance");
+  const inQueue = new Set(queue.map((c) => c.id));
+  const committeeOpen = openPurchases
+    .filter((c) => actor.oversees?.includes(c.purchase.fund) && !inQueue.has(c.id) && !c.purchase.restricted && c.status !== "closed")
+    .sort((a, b) => daysWaiting(b) - daysWaiting(a));
 
   return (
     <>
@@ -61,6 +65,14 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         <>
           <h2>Waiting on you ({queue.length})</h2>
           <PurchaseTable cards={queue} redact={redact} showOwner empty="" />
+        </>
+      )}
+
+      {!overseer && committeeOpen.length > 0 && (
+        <>
+          <h2>Your committees ({committeeOpen.length} open)</h2>
+          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, back up or direct these committees.</p>
+          <PurchaseTable cards={committeeOpen} redact={redact} showOwner empty="" />
         </>
       )}
 

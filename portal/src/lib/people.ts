@@ -2,6 +2,7 @@ import "server-only";
 import { type Away, coveringFor, todayLocal } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
+import { fundsOverseen } from "./purchases/settings";
 import type { Actor } from "./purchases/workflow";
 import type { Viewer } from "./viewer";
 
@@ -65,7 +66,8 @@ export async function peopleStore(): Promise<PeopleStore> {
 
 /**
  * The person acting, for workflow checks: their own group roles (never the
- * admin expansion) plus whoever they're covering for today.
+ * admin expansion), whoever they're covering for today, and the funds they
+ * oversee.
  */
 export async function actorFor(viewer: Viewer): Promise<Actor> {
   const email = viewer.email.toLowerCase();
@@ -76,5 +78,5 @@ export async function actorFor(viewer: Viewer): Promise<Actor> {
     // Covering is a convenience; a lookup failure must not lock anyone out of their own approvals.
     console.error("away lookup failed", err);
   }
-  return { email, name: viewer.name, roles: viewer.actingRoles, covering };
+  return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: fundsOverseen(email) };
 }
