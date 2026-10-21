@@ -437,7 +437,30 @@ const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); ret
 const dow = (s) => parseD(s).getDay();
 const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 864e5);
 const nextDow = (from, target, minDays) => { let d = addDays(from, minDays); while (dow(d) !== target) d = addDays(d, 1); return d; };
+const addMonths = (s, n) => { const d = parseD(s), day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); return ymd(d); };
+
+/* Recurring reservations. A series always has an end date: start plus a fixed term. */
+const RECUR_FREQ = { weekly: "Every week", biweekly: "Every 2 weeks", monthly: "Monthly, same weekday" };
+const recurEnd = (start, months) => addDays(addMonths(start, Number(months)), -1);
+const mkRecur = (freq, term, start) => ({ freq, term: Number(term), start, end: recurEnd(start, term) });
+/* Does an item (a card, booking or calendar entry) fall on this date? Items with no recur are one-offs. */
+function occursOn(x, date) {
+  const r = x.recur; if (!r) return x.date === date;
+  if (date < r.start || (r.end && date > r.end)) return false;
+  const d = dow(date);
+  if (r.dows ? !r.dows.includes(d) : d !== dow(r.start)) return false;
+  const week = (s) => Math.ceil(parseD(s).getDate() / 7);
+  if (r.freq === "monthly") return week(date) === (r.nth || week(r.start));
+  if (r.freq === "biweekly") return (daysBetween(r.start, date) / 7) % 2 === 0;
+  return true;
+}
+const occurrences = (r) => { const out = []; for (let d = r.start; d <= r.end; d = addDays(d, 1)) if (occursOn({ recur: r }, d)) out.push(d); return out; };
+/* The series on a saved card, or one built from the request form's fields. */
+const recurOf = (e) => e.recur || (e.recurFreq && e.recurFreq !== "none" && e.date ? mkRecur(e.recurFreq, e.recurTerm || 3, e.date) : null);
+const recurText = (r) => `${r.freq === "monthly" ? `Monthly on ${["1st", "2nd", "3rd", "4th", "5th"][(r.nth || Math.ceil(parseD(r.start).getDate() / 7)) - 1]} ${DOW_LONG[dow(r.start)]}` : `${r.freq === "biweekly" ? "Every other " : "Every "}${DOW_LONG[dow(r.start)].slice(0, -1)}`} · ${r.term} months`;
+const renewOpens = (r) => addDays(r.end, -POLICY.renewDays);
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DOW_LONG = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const fmtDate = (s) => { const d = parseD(s); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; };
 const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
@@ -446,6 +469,7 @@ const fmtRange = (a, b) => `${fmtT(a)}–${fmtT(b)}`;
 const money = (n) => "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const firstSat = (s) => { const d = parseD(s); return d.getDay() === 6 && d.getDate() <= 7; };
+const fmtLong = (s) => { const d = parseD(s); return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; };
 
 /* ------------------------------------------------------------------ */
 /* People (fictional) and roles                                        */
@@ -519,6 +543,9 @@ const RULES = [
   { id: "mission", name: "Mission review for new programs, outside speakers, fundraisers, 150+ people or $2,500+ budget", policy: "Proposed · needs Shura approval", on: true },
   { id: "advert", name: "No advertising until approved", policy: "§4", on: true },
 ];
+/* Recurring reservations: every series has an end date, so there is no on/off switch. These two are the adjustable parts. */
+const POLICY_DEFAULT = { terms: [3, 6], renewDays: 30 };
+const POLICY = { ...POLICY_DEFAULT };
 const ruleOn = (id) => (RULES.find((r) => r.id === id) || { on: true }).on;
 
 /* ------------------------------------------------------------------ */
@@ -533,6 +560,8 @@ function seed() {
   const pastDay = addDays(TODAY, -3);
   const satLater = nextDow(TODAY, 6, 26);
   const now = (d) => addDays(TODAY, -d);
+  const serA = nextDow(addDays(TODAY, -78), 2, 0); // a 3-month Tuesday series that is close to its end
+  const serB = nextDow(addDays(TODAY, -33), 3, 0); // a 6-month Wednesday series that just started
   S = {
     me: "amina",
     view: "home",
@@ -547,6 +576,10 @@ function seed() {
       { room: "mphB", date: sunLater, s: toMin("16:00"), e: toMin("18:00"), label: "Sisters' fitness" },
     ],
     cards: [
+      ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "amina", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", 3, serA), created: now(78),
+        tasks: { security: "todo" }, log: [[now(78), "amina", "Submitted as a weekly series, 3 months"], [now(76), "hana", "Approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
+      ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", 6, serB), created: now(33),
+        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 6 months"], [now(31), "hana", "Approved. Every Wednesday through " + fmtLong(recurEnd(serB, 6)) + " is held on the IAR calendar"]] }),
       ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "amina", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
         log: [[now(5), "amina", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "hana", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
       ev({ id: "EV-1031", title: "Youth Family Night", owner: "amina", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
@@ -657,9 +690,9 @@ function holdsOn(date, excludeId) {
     }
     if (r.pantry && firstSat(date) && ruleOn("pantry")) out.push({ room: r.id, s: 480, e: 720, label: "Food pantry", kind: "standing", rule: "pantry" });
   }
-  for (const b of S.bookings) if (b.date === date) out.push({ ...b, kind: "booking" });
+  for (const b of S.bookings) if (occursOn(b, date)) out.push({ ...b, kind: "booking" });
   for (const c of S.cards) {
-    if (c.id === excludeId || c.date !== date || c.room === "offsite") continue;
+    if (c.id === excludeId || !occursOn(c, date) || c.room === "offsite") continue;
     if (["denied", "cancelled", "changes"].includes(c.status)) continue;
     out.push({ room: c.room, s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, label: c.title, kind: c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "booking" : "tentative", cardId: c.id });
   }
@@ -688,14 +721,31 @@ function runChecks(e, ownerId) {
   const s = toMin(e.start), en = toMin(e.end);
   const ws = s - Number(e.setup || 0), we = en + Number(e.teardown || 0);
   if (!e.date) { add("bad", "Pick a date.", ""); return out; }
+  const rec = recurOf(e);
+  const dates = rec ? occurrences(rec) : [e.date];
+  if (rec) {
+    const RP = "Recurring reservations (proposed)";
+    if (!POLICY.terms.includes(rec.term)) out.push({ sev: "bad", block: true, text: `A series can run ${POLICY.terms.join(" or ")} months. Pick one of those.`, rule: RP });
+    else add("info", `${recurText(rec)}: ${dates.length} sessions, ${fmtLong(rec.start)} to ${fmtLong(rec.end)}. Every series ends on a set date; there are no open-ended reservations.`, RP);
+    const prior = e.renews && getCard(e.renews);
+    if (prior && prior.recur) {
+      if (TODAY < renewOpens(prior.recur)) out.push({ sev: "bad", block: true, text: `Renewal opens ${fmtLong(renewOpens(prior.recur))}, ${POLICY.renewDays} days before the current series ends on ${fmtLong(prior.recur.end)}.`, rule: RP });
+      else if (e.date <= prior.recur.end) out.push({ sev: "bad", block: true, text: `The next period has to start after the current one ends on ${fmtLong(prior.recur.end)}.`, rule: RP });
+      else add("ok", `Renewal window is open (${POLICY.renewDays} days before the current series ends on ${fmtLong(prior.recur.end)}).`, RP);
+    }
+  }
   if (en <= s) add("bad", "End time must be after the start time.", "");
   if (e.room === "offsite") add("info", "Off-site event: no room hold needed.", "");
   else if (ruleOn("conflicts")) {
-    const seen = new Set();
-    const clashes = holdsOn(e.date, e.id).filter((h) => roomsOverlap(h.room, e.room) && h.s < we && ws < h.e).filter((h) => { const k = h.label + h.s + h.e; if (seen.has(k)) return false; seen.add(k); return true; });
-    if (clashes.length) {
-      for (const h of clashes) add("bad", `Overlaps ${h.label}, ${fmtRange(h.s, h.e)}.`, h.rule ? RULE_LABEL[h.rule] : h.kind === "tentative" ? "Pending request on the calendar" : "Booked on the IAR calendar");
-    } else add("ok", `${rm.name} is free on the IAR calendar, ${fmtRange(ws, we)} including setup and cleanup.`, "IAR Google Calendar");
+    const found = new Map();
+    for (const dt of dates) for (const h of holdsOn(dt, e.id).filter((h) => roomsOverlap(h.room, e.room) && h.s < we && ws < h.e)) {
+      const k = h.label + h.s + h.e;
+      if (!found.has(k)) found.set(k, { h, on: [] });
+      if (!found.get(k).on.includes(dt)) found.get(k).on.push(dt);
+    }
+    if (found.size) {
+      for (const { h, on } of found.values()) add("bad", `Overlaps ${h.label}, ${fmtRange(h.s, h.e)}${rec ? `, on ${on.length} of ${dates.length} dates (first: ${fmtDate(on[0])})` : ""}.`, h.rule ? RULE_LABEL[h.rule] : h.kind === "tentative" ? "Pending request on the calendar" : "Booked on the IAR calendar");
+    } else add("ok", `${rm.name} is free on the IAR calendar, ${fmtRange(ws, we)} including setup and cleanup${rec ? `, on all ${dates.length} dates` : ""}.`, "IAR Google Calendar");
     if (rm.mph && ruleOn("gap")) {
       const near = holdsOn(e.date, e.id).filter((h) => room(h.room).mph && roomsOverlap(h.room, e.room) && h.kind !== "standing" && ((h.e <= ws && ws - h.e < 120) || (h.s >= we && h.s - we < 120)));
       for (const h of near) add("warn", `Less than 2 hours between this and ${h.label} (${fmtRange(h.s, h.e)}). The MPH needs a cleaning gap.`, "Room policy §4");
@@ -1029,7 +1079,7 @@ function vHome() {
 function itemRow(c, why) {
   if (String(c.id).startsWith("TK-")) return tkRow(c);
   const title = c.kind === "rental" ? `Rental: ${c.org}` : c.kind === "po" ? c.desc : c.title;
-  const sub = c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
+  const sub = c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}${c.recur ? ` · repeats until ${fmtLong(c.recur.end)}` : ""}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
   return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${statusPill(c)}</div></button>`;
 }
 const total = (c) => c.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
@@ -1078,7 +1128,7 @@ function timeline(date, roomId, req) {
 }
 
 function defaultDraft() {
-  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, description: "Board games, a trivia round and dinner for youth and parents." };
+  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurTerm: POLICY.terms[0], description: "Board games, a trivia round and dinner for youth and parents." };
 }
 function vNewEvent() {
   const d = S.draft || (S.draft = defaultDraft());
@@ -1086,18 +1136,22 @@ function vNewEvent() {
   const committees = p.roles.includes("office") || p.roles.includes("admins") ? COMMITTEES : [...p.committees.filter((c) => COMMITTEES.includes(c)), "Community member (private event)"];
   if (!committees.includes(d.committee)) d.committee = committees[0];
   const editing = d.id ? getCard(d.id) : null;
+  const prior = d.renews && getCard(d.renews);
   return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / ${editing ? "Edit " + esc(d.id) : "New request"}</div>
-  <div><h1>${editing ? "Update and resubmit" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing, AV and setup. The checks on the right update as you type.</p></div>
+  <div><h1>${editing ? "Update and resubmit" : prior ? "Renew a recurring series" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing, AV and setup. The checks on the right update as you type.</p></div>
+  ${prior ? `<div class="note info">Next period for <span class="mono">${prior.id}</span>, which ends ${fmtLong(prior.recur.end)}. It goes through the same checks and approval as any new request.</div>` : ""}
   <div class="grid2">
     <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
       <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
       <div class="fld wide"><label for="f_description">Description</label><textarea id="f_description" name="description">${esc(d.description || "")}</textarea></div>
       <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
-      <div class="fld"><label for="f_date">Date</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
+      <div class="fld"><label for="f_date">${d.recurFreq !== "none" ? "First date" : "Date"}</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
       <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
       <div class="fld"><label for="f_end">Event ends</label><input type="time" id="f_end" name="end" value="${d.end}" step="900"></div>
       <div class="fld"><label for="f_setup">Setup before (minutes)</label><input type="number" id="f_setup" name="setup" value="${d.setup}" min="0" step="15"></div>
       <div class="fld"><label for="f_teardown">Cleanup after (minutes)</label><input type="number" id="f_teardown" name="teardown" value="${d.teardown}" min="0" step="15"></div>
+      <div class="fld"><label for="f_recurFreq">Repeats</label><select id="f_recurFreq" name="recurFreq"><option value="none" ${d.recurFreq === "none" ? "selected" : ""}>Does not repeat</option>${Object.entries(RECUR_FREQ).map(([k, l]) => `<option value="${k}" ${d.recurFreq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="fld"><label for="f_recurTerm">For how long</label><select id="f_recurTerm" name="recurTerm">${POLICY.terms.map((m) => `<option value="${m}" ${Number(d.recurTerm) === m ? "selected" : ""}>${m} months</option>`).join("")}</select><span class="hint" id="recurHint"></span></div>
       <div class="fld wide"><label for="f_room">Room</label><select id="f_room" name="room">${ROOMS.map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}${r.cap ? ` (${r.cap})` : ""}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_attendance">Expected attendance</label><input type="number" id="f_attendance" name="attendance" value="${d.attendance}" min="1"></div>
       <div class="fld"><label for="f_budget">Budget estimate ($)</label><input type="number" id="f_budget" name="budget" value="${d.budget}" min="0" step="50"></div>
@@ -1125,11 +1179,14 @@ function vNewEvent() {
 function readDraft() {
   const f = document.getElementById("evForm"); if (!f) return;
   const v = (n) => f.elements[n].value, c = (n) => f.elements[n].checked;
-  Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
+  Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), recurFreq: v("recurFreq"), recurTerm: Number(v("recurTerm") || POLICY.terms[0]), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
 }
 function paintChecks() {
   const d = S.draft; if (!d || !document.getElementById("checks")) return;
   const ch = runChecks(d, S.me);
+  const rec = recurOf(d), term = document.getElementById("f_recurTerm");
+  term.disabled = !rec;
+  document.getElementById("recurHint").textContent = rec ? `Ends ${fmtLong(rec.end)}. A series always has an end date.` : "Only for repeating events";
   document.getElementById("checks").innerHTML = checksHtml(ch);
   const w = worst(ch);
   document.getElementById("checkSum").innerHTML = `<span class="pill ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
@@ -1141,18 +1198,23 @@ function submitEvent() {
   readDraft();
   const d = S.draft;
   const ch = runChecks(d, S.me);
+  const blocked = ch.find((x) => x.block);
+  if (blocked) return toast(blocked.text);
   const mission = ruleOn("mission") && missionReasons(d).length > 0;
   let c;
   if (d.id) {
     c = getCard(d.id);
     Object.assign(c, JSON.parse(JSON.stringify(d)), { kind: "event" });
     c.status = mission ? "mission" : "office";
+    c.recur = recurOf(d);
     c.tasks = buildTasks(c, {});
     log(c, "Updated and resubmitted");
   } else {
     c = ev({ ...JSON.parse(JSON.stringify(d)), id: "EV-" + ++S.seq.EV, owner: S.me, status: mission ? "mission" : "office", created: TODAY });
-    log(c, "Submitted");
+    c.recur = recurOf(d);
+    log(c, c.recur ? `Submitted as a series: ${recurText(c.recur)}, ${fmtLong(c.recur.start)} to ${fmtLong(c.recur.end)}` : "Submitted");
     S.cards.unshift(c);
+    if (d.renews) { const prior = getCard(d.renews); prior.renewedBy = c.id; log(prior, `Renewal requested: ${c.id}`); }
   }
   const flagged = ch.filter((x) => x.sev === "bad" || x.sev === "warn").length;
   c.log.push({ t: TODAY, who: "system", text: flagged ? `Auto checks: ${flagged} flag${flagged > 1 ? "s" : ""} for the office to review` : "Auto checks passed. Room held on the IAR calendar (tentative)" });
@@ -1160,6 +1222,23 @@ function submitEvent() {
   S.draft = null;
   toast(`${c.id} submitted. ${mission ? "Sent for mission review." : "Sent to the IAR office."}`);
   go("card", c.id);
+}
+
+/* ---- Recurring series --------------------------------------------- */
+function seriesPanel(c) {
+  const r = c.recur, left = daysBetween(TODAY, r.end), opens = renewOpens(r), open = TODAY >= opens;
+  const next = c.renewedBy && getCard(c.renewedBy), live = next && !["denied", "cancelled"].includes(next.status);
+  const prior = c.renews && getCard(c.renews);
+  const state = left < 0 ? `Ended ${fmtLong(r.end)}` : `Ends ${fmtLong(r.end)} (${left} day${left === 1 ? "" : "s"} left)`;
+  const can = c.status === "approved" && (c.owner === S.me || has("office")) && !live;
+  const renew = live ? `<div class="note info">Next period requested: <button class="crumb" style="border:0;background:none;padding:0;cursor:pointer" data-card="${next.id}">${next.id}</button> (${esc(EV_STATUS[next.status][0])})</div>`
+    : c.status !== "approved" ? ""
+    : `<div class="row"><button class="btn primary" data-act="renew" type="button" ${open && can ? "" : "disabled"}>Request the next ${r.term} months</button><span class="small muted">${open ? "Renewal is open." : `Renewal opens ${fmtLong(opens)}, ${POLICY.renewDays} days before the end date.`}</span></div>`;
+  return `<div class="panel"><div class="panel-h"><h2>Recurring series</h2><span class="pill ${left < 0 ? "bad" : open ? "warn" : "ok"}">${left < 0 ? "Ended" : open ? "Renewal open" : "Active"}</span></div><div class="panel-b stack">
+    <div>${esc(recurText(r))}<div class="small muted">${fmtLong(r.start)} to ${fmtLong(r.end)} · ${occurrences(r).length} sessions · ${state}</div></div>
+    ${prior ? `<div class="small muted">Renews <button class="crumb" style="border:0;background:none;padding:0;cursor:pointer" data-card="${prior.id}">${prior.id}</button></div>` : ""}
+    ${renew}
+    <div class="small muted">Every series has an end date. A committee can ask for its next period no earlier than ${POLICY.renewDays} days before this one ends.</div></div></div>`;
 }
 
 /* ---- Card detail -------------------------------------------------- */
@@ -1189,18 +1268,19 @@ function vCard() {
   if (c.status === "office" && has("office")) actions.push(`<button class="btn primary" data-act="approve" type="button">Approve</button><button class="btn" data-act="changes" type="button">Request changes</button><button class="btn danger" data-act="deny" type="button">Deny</button>`);
   if (c.status === "mission" && has("executive")) actions.push(`<button class="btn primary" data-act="missionOk" type="button">Aligned with the mission · send to office</button><button class="btn" data-act="missionAsk" type="button">Ask a question</button><button class="btn danger" data-act="missionNo" type="button">Not aligned · deny</button>`);
   if (c.status === "changes" && c.owner === S.me) actions.push(`<button class="btn primary" data-act="edit" type="button">Edit and resubmit</button>`);
-  if (c.status === "approved" && (c.owner === S.me || has("office"))) actions.push(`<button class="btn" data-act="held" type="button">Mark event as held</button>`);
+  if (c.status === "approved" && !c.recur && (c.owner === S.me || has("office"))) actions.push(`<button class="btn" data-act="held" type="button">Mark event as held</button>`);
   if (c.status === "approved" && c.owner === S.me) actions.push(`<button class="btn" data-act="linkPO" type="button">Add a purchase request</button>`);
   const conflictNote = c.status === "office" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
   const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question/.test(l.text));
   return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / <span class="mono">${c.id}</span></div>
-  <div class="head"><div><h1>${esc(c.title)}</h1><p class="lead">${esc(c.committee)} · owned by ${esc(nameOf(c.owner))} · ${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))} · ${esc(r.name)}</p></div>${statusPill(c)}</div>
+  <div class="head"><div><h1>${esc(c.title)}</h1><p class="lead">${esc(c.committee)} · owned by ${esc(nameOf(c.owner))} · ${c.recur ? `${esc(recurText(c.recur))}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))} · ${esc(r.name)}</p></div>${statusPill(c)}</div>
   <div class="panel panel-b"><div class="stages">${stages}</div></div>
   ${c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : ""}
   ${actions.length ? `<div class="panel panel-b stack">${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div></div>` : ""}
   ${c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""}
   <div class="grid2">
     <div class="stack">
+      ${c.recur ? seriesPanel(c) : ""}
       <div class="panel"><div class="panel-h"><h2>Team tasks</h2><span class="small muted">${c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "Unlocked" : "Unlock on approval"}</span></div><div class="panel-b">
         ${c.tasks.length ? c.tasks.map((t) => `<div class="task"><div><div>${esc(t.title)}</div><div class="small muted">${TEAM_NAME[t.team]}${t.result ? " · " + esc(t.result) : ""}</div></div><div class="row">${taskPill(t)}${taskButtons(c, t)}</div></div>`).join("") : `<div class="muted">No team tasks for this event.</div>`}
       </div></div>
@@ -1380,11 +1460,13 @@ function vQueues() {
 
 /* ---- Run sheet ---------------------------------------------------- */
 function vRunSheet() {
-  const dates = [...new Set([...S.cards.filter((c) => ["approved", "closeout"].includes(c.status)).map((c) => c.date), ...S.bookings.map((b) => b.date), ...S.rentals.filter((r) => r.status === "approved").map((r) => r.date)])].filter((d) => d >= TODAY).sort();
+  const upcoming = Array.from({ length: 60 }, (_, i) => addDays(TODAY, i));
+  const live = (c) => ["approved", "closeout"].includes(c.status);
+  const dates = upcoming.filter((d) => S.cards.some((c) => live(c) && occursOn(c, d)) || S.bookings.some((b) => !b.recur && b.date === d) || S.rentals.some((r) => r.status === "approved" && r.date === d));
   const date = S.arg || dates[0] || TODAY;
   const rows = [
-    ...S.cards.filter((c) => c.date === date && ["approved", "closeout", "closed"].includes(c.status)).map((c) => ({ s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, ev: `${fmtRange(toMin(c.start), toMin(c.end))}`, room: room(c.room).name, title: c.title, who: `${nameOf(c.owner)} · ${c.committee}`, setup: c.setupNotes || "Standard", sec: (c.food ? "Food served. " : "") + (c.attendance >= 100 ? "Large crowd; parking help. " : "") + "Check room before and after.", after: afterHours(c), n: c.attendance })),
-    ...S.bookings.filter((b) => b.date === date).map((b) => ({ s: b.s, e: b.e, ev: fmtRange(b.s, b.e), room: room(b.room).name, title: b.label, who: "Recurring booking", setup: "Standard", sec: "Check room after.", after: b.e > 22 * 60, n: "" })),
+    ...S.cards.filter((c) => occursOn(c, date) && ["approved", "closeout", "closed"].includes(c.status)).map((c) => ({ s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, ev: `${fmtRange(toMin(c.start), toMin(c.end))}`, room: room(c.room).name, title: c.title + (c.recur ? " (series)" : ""), who: `${nameOf(c.owner)} · ${c.committee}`, setup: c.setupNotes || "Standard", sec: (c.food ? "Food served. " : "") + (c.attendance >= 100 ? "Large crowd; parking help. " : "") + "Check room before and after.", after: afterHours(c), n: c.attendance })),
+    ...S.bookings.filter((b) => !b.recur && b.date === date).map((b) => ({ s: b.s, e: b.e, ev: fmtRange(b.s, b.e), room: room(b.room).name, title: b.label, who: "Recurring booking", setup: "Standard", sec: "Check room after.", after: b.e > 22 * 60, n: "" })),
     ...S.rentals.filter((r) => r.date === date && r.status === "approved").map((r) => ({ s: toMin(r.start), e: toMin(r.end), ev: fmtRange(toMin(r.start), toMin(r.end)), room: room(r.room).name, title: "Rental: " + r.org, who: r.contact, setup: "Standard", sec: "Outside group: check in at the security desk.", after: false, n: r.attendance })),
   ].sort((a, b) => a.s - b.s);
   return `<div class="head"><div><h1>Daily Run Sheet</h1><p class="lead">Built from approved event cards and the IAR calendar. In the portal this prints on one page.</p></div>
@@ -1448,6 +1530,13 @@ function vSettings() {
   <div class="panel"><div class="panel-h"><h2>Policy rules</h2><span class="small muted">Switch one off and the event form's checks change immediately</span></div><div class="panel-b"><div class="list">
     ${RULES.map((r) => `<div class="task"><div><div>${esc(r.name)}</div><div class="small muted">${esc(r.policy)}</div></div><label class="toggle" title="Turn this rule on or off"><input type="checkbox" id="rule_${r.id}" data-rule="${r.id}" ${r.on ? "checked" : ""} aria-label="${esc(r.name)}"><span></span></label></div>`).join("")}
   </div></div></div>
+  <div class="panel"><div class="panel-h"><h2>Recurring reservations</h2><span class="small muted">Proposed · up for debate</span></div><div class="panel-b stack">
+    <div class="note info">Every series has an end date. There is no open-ended option, so there is nothing to switch off.</div>
+    <div class="f">
+      <div class="fld"><label for="polTerms">Length of one request</label><select id="polTerms"><option value="3" ${POLICY.terms.join() === "3" ? "selected" : ""}>3 months</option><option value="6" ${POLICY.terms.join() === "6" ? "selected" : ""}>6 months</option><option value="3,6" ${POLICY.terms.join() === "3,6" ? "selected" : ""}>Committee chooses 3 or 6 months</option></select></div>
+      <div class="fld"><label for="polRenew">Renewal opens (days before the end date)</label><input type="number" id="polRenew" value="${POLICY.renewDays}" min="0" max="90"></div>
+    </div>
+  </div></div>
   <div class="grid2">
     <div class="panel"><div class="panel-h"><h2>Rooms</h2><span class="small muted">${ROOMS.length - 1} rooms</span></div><div class="tablewrap"><table><thead><tr><th>Room</th><th class="num">Capacity</th><th>Food</th></tr></thead><tbody>
       ${ROOMS.filter((r) => r.id !== "offsite").map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.cap}</td><td>${r.food ? "Yes" : ""}</td></tr>`).join("")}</tbody></table></div></div>
@@ -2843,6 +2932,8 @@ const STEPS = [
   { as: "omar", view: "purchases", t: "Finance reviews card receipts", p: "Omar sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives." },
   { as: "idris", view: "runsheet", t: "Security's run sheet", p: "Idris sees one page of what's happening where for each day, built from approved events. His room checks get logged back to each event card." },
   { as: "amina", view: "card", arg: "EV-0998", t: "Close out an event", p: "After the food drive briefing, Amina adds attendance. Actual spend comes from the linked purchase, and room condition comes from security." },
+  { as: "amina", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurTerm: POLICY.terms[0], description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week for the term. The end date is worked out for you and shown under the term, and every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
+  { as: "amina", view: "card", arg: "EV-1022", t: "Renew a series", p: "The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. Hana (office) approves the renewal like any request." },
   { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: "The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first. Routine events skip this step." },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: "No IAR account needed. Send the request, then switch to Hana and open Facility Rentals to review it against the same calendar." },
   { as: "yasir", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
@@ -2936,7 +3027,7 @@ document.addEventListener("click", (e) => {
   if (libClick(ds)) return;
   if (ds.step) return doStep(Number(ds.step));
   if (ds.closeguide) { S.guide = false; return render(); }
-  if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); toast("Demo reset to its starting data"); return render(); }
+  if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); Object.assign(POLICY, POLICY_DEFAULT); toast("Demo reset to its starting data"); return render(); }
   if (ds.rnnew) { S.rnDone = null; S.rnDraft = null; return render(); }
   if (ds.addline) { readPO(); S.poDraft.lines.push(S.poDraft.type === "card" ? cardBlankLine() : { acct: ACCOUNTS[0], amount: "", note: "" }); return render(); }
   if (ds.delline) { readPO(); S.poDraft.lines.splice(Number(ds.delline), 1); return render(); }
@@ -2970,7 +3061,16 @@ function eventAction(a) {
   else if (a === "missionOk") { c.status = "office"; log(c, "Mission review: aligned. Sent to the office" + (note ? `. ${note}` : "")); toast("Sent to the IAR office"); }
   else if (a === "missionAsk") { log(c, "Question: " + (note || "Who are the outside speakers?")); toast("Question sent to " + nameOf(c.owner)); }
   else if (a === "missionNo") { c.status = "denied"; log(c, "Mission review: not aligned" + (note ? `. ${note}` : "")); toast("Denied after mission review"); }
-  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
+  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurTerm: c.recur ? c.recur.term : POLICY.terms[0], renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
+  else if (a === "renew") {
+    const r = c.recur, next = c.renewedBy && getCard(c.renewedBy);
+    if (!r) return;
+    if (TODAY < renewOpens(r)) return toast(`Renewal opens ${fmtLong(renewOpens(r))}.`);
+    if (next && !["denied", "cancelled"].includes(next.status)) return toast(`Already requested: ${next.id}`);
+    let first = addDays(r.end, 1); while (!occursOn({ recur: { ...r, end: null } }, first)) first = addDays(first, 1);
+    S.draft = JSON.parse(JSON.stringify({ id: null, renews: c.id, title: c.title, description: c.description || "", committee: c.committee, date: first, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: r.freq, recurTerm: r.term, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers }));
+    return go("newEvent");
+  }
   else if (a === "held") { c.status = "closeout"; log(c, "Event held. Close-out opened for the owner"); toast("Close-out opened for " + nameOf(c.owner)); }
   else if (a === "linkPO") { S.poDraft = null; return go("newPO", c.id); }
   render();
@@ -3021,6 +3121,8 @@ document.addEventListener("change", (e) => {
   if (e.target.dataset && e.target.dataset.k === "flag" && e.target.closest("#poForm")) { readPO(); render(); }
   if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
   if (e.target.id === "rsDate") go("runsheet", e.target.value);
+  if (e.target.id === "polTerms") { POLICY.terms = e.target.value.split(",").map(Number); toast(`Series length: ${POLICY.terms.join(" or ")} months`); }
+  if (e.target.id === "polRenew") { POLICY.renewDays = Math.max(0, Number(e.target.value) || 0); toast(`Renewal opens ${POLICY.renewDays} days before the end date`); }
   if (e.target.dataset.rule) { RULES.find((r) => r.id === e.target.dataset.rule).on = e.target.checked; toast(`Rule ${e.target.checked ? "on" : "off"}: ${RULES.find((r) => r.id === e.target.dataset.rule).name}`); }
 });
 document.addEventListener("submit", (e) => {
