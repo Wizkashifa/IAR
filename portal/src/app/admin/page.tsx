@@ -15,7 +15,7 @@ const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", faci
 const ROLE_LABEL: Record<string, string> = {
   office: "Event review, rentals, run sheet; submits for any committee",
   finance: "Finance review, payment, QuickBooks, S&W aid; submits for any fund",
-  executive: "Head Imam, Shura chair and CEO: mission review and executive approvals",
+  executive: "Executive offices (Head Imam, Shura chair, CEO): mission review and executive approvals. One person can hold several",
   admins: "Sees everything and this page; never approves or pays",
 };
 

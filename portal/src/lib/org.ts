@@ -38,7 +38,7 @@ export const ORG = {
   roleGroups: {
     office: `portal-role-office@${domain}`,
     finance: `portal-role-finance@${domain}`,
-    /** The Head Imam, the Shura chair and the CEO: mission review and executive approvals. */
+    /** Whoever holds an executive office (Head Imam, Shura chair, CEO; one person can hold several): mission review and executive approvals. */
     executive: `portal-role-executive@${domain}`,
     admins: `portal-role-admin@${domain}`,
   } as Partial<Record<Role, string>>,

@@ -313,7 +313,7 @@ Budget and financial reporting are not part of the initial launch, so this list 
   - A director sees those committees' requests and can approve at the chair step alongside the chair, recorded "as director".
   - They can submit for those committees.
   - They never act on Social & Welfare's restricted requests, their own requests, or finance, payment or executive steps.
-- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta. Executive is the Head Imam, the Shura chair and the CEO.
+- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta. The executive group holds whoever has an executive office (Head Imam, Shura chair, CEO). One person can hold several, and nothing about the offices is in code.
 - **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Safety & Security, Social & Welfare or Shura gives that team's queue or module.
 - **Funds.** Members charge their own teams' funds; the office and finance can charge any fund. Each team's fund is set in Portal Settings, which suggests one when the names match.
 

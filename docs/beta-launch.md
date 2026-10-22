@@ -52,7 +52,7 @@ Each step points to the matching section of setup.md. Do them in order and run t
 6. **Groups** (setup §6). Members come from Kashif's group sheet.
    - Create the 27 `portal-team-*` groups with their display names. Make each chair an **Owner** and each vice chair a **Manager**; add members as Members.
    - Create one `portal-pillar-*` group per director. Make the director its Owner, and add the team groups they oversee as members.
-   - Create the role groups: `portal-role-office@`, `-finance@`, `-executive@` (the Head Imam, the Shura chair and the CEO) and `-admin@` (two or three people, who always get in).
+   - Create the role groups: `portal-role-office@`, `-finance@`, `-executive@` (whoever holds the Head Imam, Shura chair and CEO offices; one person may hold more than one) and `-admin@` (two or three people, who always get in).
    - Create **`portal-role-beta@islam1.org`** and add each tester to it directly; nested groups aren't checked.
    - In every team and pillar group, set "Who can manage members" to owners only.
 7. **Purchase Requests** (setup §7): the PO Records Shared Drive and folder ID, and the restricted W-9 drive (without the service account). Before adding people to groups, check every address marked as guessed in Kashif's sheet in Admin console → Directory → Users, and fix any that don't exist. After the first deploy, an admin opens Portal Settings, picks a fund for every team marked "Needs a fund", and adds IAR's cards.
