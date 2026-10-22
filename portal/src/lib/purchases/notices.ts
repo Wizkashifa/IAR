@@ -7,6 +7,7 @@
  * in-portal notice only. A committee's director hears in the portal when one
  * of its requests reaches the chair step. Plain functions so they can be tested.
  */
+import { commenters, preview } from "../comments";
 import type { Role } from "../org";
 import { STAGE_LABEL, purchaseTotal } from "./types";
 import type { Actor, PurchaseCard } from "./workflow";
@@ -110,6 +111,30 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
     if (stage === "payment") add(owner, `${what} is approved. The finance office will pay it.`, false);
     else if (stage === "books" && after.purchase.payment)
       add(owner, `${what} was paid (${after.purchase.payment.method} ${after.purchase.payment.reference}).`, false);
+  }
+  return out;
+}
+
+/**
+ * A new comment: the requester, whoever the request is waiting on, and
+ * earlier commenters hear about it in the portal. No email: a comment asks
+ * nothing of anyone by itself.
+ */
+export function purchaseCommentNotices(card: PurchaseCard, by: Actor, text: string): Notice[] {
+  const href = `/purchases/${card.id}#comments`;
+  const what = label(card);
+  const msg = card.purchase.restricted ? `${by.name} commented on ${what}` : `${by.name} commented on ${what}: “${preview(text)}”`;
+  const open = card.status === "in_review" || card.status === "approved" || card.status === "paid";
+  const to: Recipient[] = [{ email: card.ownerEmail }, ...commenters(card).map((email) => ({ email }))];
+  const next = open ? nextActor(card) : null;
+  if (next) to.push(next);
+  const seen = new Set<string>();
+  const out: Notice[] = [];
+  for (const r of to) {
+    const key = "email" in r ? r.email.toLowerCase() : `role:${r.role}`;
+    if (seen.has(key) || ("email" in r && same(r.email, by.email))) continue;
+    seen.add(key);
+    out.push({ to: r, cardId: card.id, href, text: msg, email: false, delegable: false });
   }
   return out;
 }

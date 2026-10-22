@@ -704,7 +704,7 @@ function ev(o) {
   return c;
 }
 function po(o) {
-  const c = Object.assign({ kind: "po", w9: false, log: [] }, o);
+  const c = Object.assign({ kind: "po", w9: false, log: [], comments: [] }, o);
   // Lines are [account, amount, note, flag] or, for card charges, objects with date and merchant.
   c.lines = o.lines.map((l) => (Array.isArray(l) ? { acct: l[0], amount: l[1], note: l[2] || "", flag: l[3] || "" } : { note: "", flag: "", repayBy: "", noReceipt: false, resolved: false, ...l }));
   c.log = [{ t: o.created, who: o.owner, text: "Submitted" }];
@@ -1574,6 +1574,46 @@ function seriesPanel(c) {
     <div class="small muted">Every series has an end date. A committee can ask for its next period no earlier than ${POLICY.renewDays} days before this one ends.</div></div></div>`;
 }
 
+/* ---- Request pages ---------------------------------------------------
+   One layout for every request type (events, purchases, marketing, tickets):
+   crumb · title, lead line and status · stages · notes · actions ·
+   main column (the request, comments, history) and a side column (details). */
+const reqStages = (steps, at) => `<div class="stages">${steps.map((s, i) => { const o = typeof s === "string" ? { label: s } : s; return `<div class="stage ${o.cls ?? (i < at ? "done" : i === at ? "now" : "")}"><div class="bar"></div>${esc(o.label)}</div>`; }).join("")}</div>`;
+function reqPage(o) {
+  return `<div class="crumb"><button type="button" data-go="${o.back[0]}">${esc(o.back[1])}</button> / ${o.trail || ""}<span class="mono">${esc(o.id)}</span></div>
+  <div class="head"><div style="min-width:0">${o.titleForm || `<h1 class="ih">${o.title}</h1>`}<p class="lead">${o.lead.filter(Boolean).map(esc).join(" · ")}</p></div><div class="row">${o.pills}</div></div>
+  <div class="panel panel-b">${o.stages}</div>
+  ${o.notes || ""}
+  ${o.actions ? `<div class="panel panel-b stack">${o.actions}</div>` : ""}
+  <div class="issue"><div class="stack" style="min-width:0">${o.main}</div><aside class="stack side">${o.side}</aside></div>`;
+}
+const whenOf = (t) => (String(t).length <= 10 ? fmtDate(t) : `${ago(t)} · ${fmtTs(t)}`);
+const actRow = (who, html, t, extra = "") => `<div class="act">${avatar(who)}<div class="ab"><strong>${esc(nameOf(who))}</strong> ${html} <span class="small muted">${whenOf(t)}</span>${extra}</div></div>`;
+/* Comments: anyone who can open a request can add one. o.form overrides the form (tickets add internal notes). */
+function commentsPanel(id, items, o = {}) {
+  const form = o.form || `<form class="stack" id="cmtForm" data-id="${esc(id)}"><textarea name="text" rows="3" class="ta" placeholder="Ask a question or add context. Everyone who can open this request sees it." aria-label="Comment"></textarea><div class="row"><span class="spacer"></span><button class="btn primary small" type="submit">Comment</button></div></form>`;
+  return `<div class="panel" id="comments"><div class="panel-h"><h2>Comments <span class="muted small">${items.length}</span></h2></div><div class="panel-b stack">
+    ${form}
+    <div class="acts">${items.length ? items.slice().reverse().map((c) => `<div class="act ${c.internal ? "int" : ""}">${avatar(c.who)}<div class="ab"><div><strong>${esc(nameOf(c.who))}</strong> <span class="small muted">${whenOf(c.t)}</span>${c.internal ? ' <span class="pill warn">Internal note</span>' : ""}${c.extra || ""}</div><div class="ctext">${c.html ?? esc(c.text)}</div></div></div>`).join("") : '<div class="small muted">No comments yet.</div>'}</div>
+  </div></div>`;
+}
+const historyPanel = (rows, head = "") => `<div class="panel"><div class="panel-h"><h2>History</h2>${head}</div><div class="panel-b"><div class="acts">${rows || '<div class="small muted">Nothing yet.</div>'}</div></div></div>`;
+/* A log of {t, who, text} entries, newest first. */
+const logHistory = (log) => historyPanel(log.slice().reverse().map((l) => actRow(l.who, esc(l.text), l.t)).join(""));
+const detailsPanel = (rows, sub = "") => `<div class="panel"><div class="panel-h"><h2>Details</h2>${sub}</div><div class="panel-b"><dl class="kv">${rows}</dl></div></div>`;
+/* Who hears about a new comment: the requester, whoever the request is waiting on, and earlier commenters. Portal only. */
+function commentNotify(c, text) {
+  const restricted = c.kind === "po" && restrictedPO(c);
+  const what = c.kind === "po" ? poLabel(c) : `${c.id} “${c.title}”`;
+  const msg = `${nameOf(S.me)} commented on ${what}${restricted ? "" : `: “${text.length > 100 ? text.slice(0, 99) + "…" : text}”`}`;
+  const to = new Set([c.owner, ...(c.comments || []).map((x) => x.who)]);
+  if (c.kind === "event") { if (c.status === "office") to.add("role:office"); if (c.status === "mission") to.add("role:executive"); }
+  if (c.kind === "po") { if (c.status === "chair") chairsOf(c).forEach((p) => to.add(p)); if (["finance", "to_pay", "books"].includes(c.status)) to.add("role:finance"); }
+  if (c.kind === "mkt" && ["submitted", "scheduled", "doing"].includes(c.status)) to.add("role:marketing");
+  to.delete(S.me);
+  to.forEach((x) => notify(x, msg, { card: c.id }));
+}
+
 /* ---- Card detail -------------------------------------------------- */
 function vCard() {
   const c = getCard(S.arg);
@@ -1589,12 +1629,12 @@ function vCard() {
   const order = ["submitted", "checks", "mission", "office", "approved", "eventday", "closeout", "closed"];
   const labels = { submitted: "Submitted", checks: "Auto checks", mission: "Mission review", office: "Office approval", approved: "Approved", eventday: "Event day", closeout: "Close-out", closed: "Closed" };
   const at = { mission: 2, office: 3, changes: 3, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
-  const stages = order.map((k, i) => {
+  const steps = order.map((k, i) => {
     let cls = i < at ? "done" : i === at ? "now" : "";
     if (k === "mission" && !mission) cls += " skip";
     if (k === "eventday" && c.status === "approved" && c.date <= TODAY) cls = "now";
-    return `<div class="stage ${cls}"><div class="bar"></div>${labels[k]}${k === "mission" && !mission ? " (skipped)" : ""}</div>`;
-  }).join("");
+    return { label: labels[k] + (k === "mission" && !mission ? " (skipped)" : ""), cls };
+  });
   const r = room(c.room);
   const linked = c.linkedPOs.map(getCard).filter(Boolean);
   const spent = linked.filter((p) => ["paid", "to_pay"].includes(p.status)).reduce((a, p) => a + total(p), 0);
@@ -1606,15 +1646,14 @@ function vCard() {
   if (c.status === "approved" && c.owner === S.me) actions.push(`<button class="btn" data-act="linkPO" type="button">Add a purchase request</button>`);
   const conflictNote = c.status === "office" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
   const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question/.test(l.text));
-  return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / <span class="mono">${c.id}</span></div>
-  <div class="head"><div><h1>${esc(c.title)}</h1><p class="lead">${esc(c.committee)} · owned by ${esc(nameOf(c.owner))} · ${c.recur ? `${esc(recurText(c.recur))}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))} · ${esc(r.name)}</p></div>${statusPill(c)}</div>
-  <div class="panel panel-b"><div class="stages">${stages}</div></div>
-  ${c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : ""}
-  ${actions.length ? `<div class="panel panel-b stack">${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div></div>` : ""}
-  ${c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""}
-  <div class="grid2">
-    <div class="stack">
-      ${c.recur ? seriesPanel(c) : ""}
+  return reqPage({
+    back: ["events", "Events & Rooms"], id: c.id, title: esc(c.title),
+    lead: ["Event", c.committee, `from ${nameOf(c.owner)}`, `${c.recur ? `${recurText(c.recur)}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))}`, r.name],
+    pills: statusPill(c),
+    stages: reqStages(steps),
+    notes: (c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : "") + (c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""),
+    actions: actions.length ? `${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div>` : "",
+    main: `${c.recur ? seriesPanel(c) : ""}
       ${c.description ? `<div class="panel"><div class="panel-h"><h2>About this event</h2></div><div class="panel-b" style="white-space:pre-wrap">${esc(c.description)}</div></div>` : ""}
       ${c.isPublic ? briefPanel(c) : ""}
       ${c.av ? avPanel(c) : ""}
@@ -1625,18 +1664,15 @@ function vCard() {
         ${linked.length ? `<div class="list">${linked.map((p) => itemRow(p, "")).join("")}</div>` : `<div class="muted">None linked yet.</div>`}
         ${linked.length ? `<div class="small muted" style="margin-top:8px">Spent so far: <strong>${money(spent)}</strong> of ${money(c.budget)}</div>` : ""}
       </div></div>
-      <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div>
-    </div>
-    <div class="stack">
-      <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch)}</div></div></div>
-      <div class="panel"><div class="panel-h"><h2>Calendar</h2></div><div class="panel-b">${c.room === "offsite" ? '<span class="muted">Off-site</span>' : timeline(c.date, c.room, c)}</div></div>
-      <div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
+      ${commentsPanel(c.id, c.comments)}
+      ${logHistory(c.log)}`,
+    side: `${detailsPanel(`<dt>Requested by</dt><dd>${esc(nameOf(c.owner))}</dd><dt>Committee</dt><dd>${esc(c.committee)}</dd><dt>Waiting on</dt><dd>${esc(waitingOn(c)) || "Nothing"}</dd>
         <dt>Room hold</dt><dd>${fmtRange(toMin(c.start) - c.setup, toMin(c.end) + c.teardown)} (setup ${c.setup} min, cleanup ${c.teardown} min)</dd>
         <dt>Expected</dt><dd>${c.attendance} people</dd><dt>Food</dt><dd>${c.food ? "Yes" : "No"}</dd><dt>Public</dt><dd>${c.isPublic ? "Yes" : "Internal"}</dd>
-        <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup</dt><dd>${esc(c.setupNotes)}</dd>` : ""}
-      </dl></div></div>
-    </div>
-  </div>`;
+        <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup</dt><dd>${esc(c.setupNotes)}</dd>` : ""}`)}
+      <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch)}</div></div></div>
+      <div class="panel"><div class="panel-h"><h2>Calendar</h2></div><div class="panel-b">${c.room === "offsite" ? '<span class="muted">Off-site</span>' : timeline(c.date, c.room, c)}</div></div>`,
+  });
 }
 /* What the requester told marketing and A/V, shown on the card so the teams never need a separate form. */
 const kvRow = (k, v, pre) => (v ? `<dt>${esc(k)}</dt><dd${pre ? ' style="white-space:pre-wrap"' : ""}>${esc(v)}</dd>` : "");
@@ -1771,7 +1807,7 @@ function vPOCard(c) {
   if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${isCard ? "Approve the charges" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
   if (canAct && c.status === "to_pay") act = `<button class="btn primary" data-po="paid" type="button">Record payment (check #20431)</button>`;
   if (canAct && c.status === "books") act = `<button class="btn primary" data-po="books" type="button">Mark entered in QuickBooks</button>`;
-  const why = !act && c.owner === S.me && ["chair", "finance", "to_pay", "books"].includes(c.status) && (has("finance") || has("chairs")) ? `<div class="panel panel-b small muted">You can't approve or book your own request. It's waiting on ${esc(waitingOn(c))}.</div>` : "";
+  const why = !act && c.owner === S.me && ["chair", "finance", "to_pay", "books"].includes(c.status) && (has("finance") || has("chairs")) ? `<div class="note info">You can't approve or book your own request. It's waiting on ${esc(waitingOn(c))}.</div>` : "";
   const owed = owedLines(c);
   const tag = (l, i) => [
     l.noReceipt ? '<span class="pill warn">No receipt</span>' : "",
@@ -1786,19 +1822,22 @@ function vPOCard(c) {
     : `<thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
       ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}</tbody>`;
   const cardInfo = isCard && c.card ? IAR_CARDS.find((k) => k.last4 === c.card.last4) : null;
-  return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / <span class="mono">${c.id}</span></div>
-  <div class="head"><div><h1>${esc(c.desc)}</h1><p class="lead">${PO_TYPE[c.type]} · ${esc(c.committee)} · from ${esc(nameOf(c.owner))}</p></div>${statusPill(c)}</div>
-  <div class="panel panel-b"><div class="stages">${steps.map((s, i) => `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`).join("")}</div></div>
-  ${actNote}
-  ${act ? `<div class="panel panel-b row">${act}</div>` : why}
-  <div class="grid2"><div class="panel"><div class="panel-h"><h2>${isCard ? "Charges" : "Line items"}</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table>${lineTable}</table></div></div>
-  <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
-    ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
-    ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
-    ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
-    <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>
-  </dl></div></div>
-  <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${c.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div></div></div>`;
+  return reqPage({
+    back: ["purchases", "Purchase Requests"], id: c.id, title: esc(c.desc),
+    lead: [PO_TYPE[c.type], c.committee, `from ${nameOf(c.owner)}`, money(total(c))],
+    pills: statusPill(c) + (restrictedPO(c) ? ' <span class="pill bad">Restricted</span>' : ""),
+    stages: reqStages(steps, at),
+    notes: actNote + (act ? "" : why),
+    actions: act ? `<div class="row">${act}</div>` : "",
+    main: `<div class="panel"><div class="panel-h"><h2>${isCard ? "Charges" : "Line items"}</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table>${lineTable}</table></div></div>
+      ${commentsPanel(c.id, c.comments)}
+      ${logHistory(c.log)}`,
+    side: detailsPanel(`<dt>Requested by</dt><dd>${esc(nameOf(c.owner))}</dd><dt>Committee</dt><dd>${esc(c.committee)}</dd><dt>Waiting on</dt><dd>${esc(waitingOn(c)) || "Nothing"}</dd>
+      ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
+      ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
+      ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
+      <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>`),
+  });
 }
 
 /* ---- Team queue --------------------------------------------------- */
@@ -1876,7 +1915,7 @@ function mkTitle(r) {
 }
 const mkDue = (r) => r.answers.due || "";
 function mkReq(o) {
-  const r = { kind: "mkt", files: "", notes: "", log: [], ...o };
+  const r = { kind: "mkt", files: "", notes: "", log: [], comments: [], ...o };
   r.title = mkTitle(r);
   r.log = (o.log || []).map(([t, who, text]) => ({ t, who, text }));
   return r;
@@ -1958,9 +1997,8 @@ function submitMK() {
 function vMKCard(r) {
   if (!canSeeMK(r)) return `<div class="empty">This request isn't shared with your groups.</div>`;
   const t = MK_TYPES[r.type], team = has("marketing");
-  const order = ["submitted", "scheduled", "doing", "done"], labels = { submitted: "Weekly review", scheduled: "Scheduled", doing: "In progress", done: "Done" };
-  const at = { submitted: 0, changes: 0, declined: 0, scheduled: 1, doing: 2, done: 3 }[r.status];
-  const stages = order.map((k, i) => `<div class="stage ${i < at || r.status === "done" ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${labels[k]}</div>`).join("");
+  const order = ["Weekly review", "Scheduled", "In progress", "Done"];
+  const at = { submitted: 0, changes: 0, declined: 0, scheduled: 1, doing: 2, done: 4 }[r.status];
   const actions = [];
   if (team && r.status === "submitted") actions.push(`<button class="btn primary" data-mk="schedule" type="button">Schedule</button><button class="btn" data-mk="ask" type="button">Ask a question</button><button class="btn danger" data-mk="decline" type="button">Decline</button>`);
   if (team && r.status === "scheduled") actions.push(`<button class="btn primary" data-mk="start" type="button">Start</button>`);
@@ -1974,23 +2012,21 @@ function vMKCard(r) {
     const shown = f.kind === "radio" ? f.opts[v] : f.kind === "date" ? fmtLong(v) : v;
     return f.kind === "url" ? linkRow(f.label, v) : kvRow(f.label, shown, f.kind === "textarea");
   };
-  return `<div class="crumb"><button type="button" data-go="marketing">Marketing Requests</button> / <span class="mono">${r.id}</span></div>
-  <div class="head"><div><h1>${esc(r.title)}</h1><p class="lead">${esc(t.label)} · ${esc(r.committee)} · from ${esc(nameOf(r.owner))}${due ? ` · needed by ${fmtDate(due)}` : ""}</p></div>${statusPill(r)}</div>
-  <div class="panel panel-b"><div class="stages">${stages}</div></div>
-  ${r.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Question: /, ""))}</div>` : ""}
-  ${tight ? `<div class="note warn">Needed in ${daysBetween(TODAY, due)} days. Marketing usually takes 1–2 weeks.</div>` : ""}
-  ${actions.length ? `<div class="panel panel-b stack"><div class="row">${actions.join("")}</div>
-    ${team && r.status === "submitted" ? `<div class="fld" style="max-width:260px"><label for="mkDoneBy">Done by (when scheduling)</label><input type="date" id="mkDoneBy" value="${due || addDays(TODAY, 14)}" min="${TODAY}"></div>` : ""}
-    <div class="fld" style="max-width:520px"><label for="mkNote">${r.owner === S.me && r.status === "changes" ? "Your answer" : "Note to include (optional)"}</label><input type="text" id="mkNote" placeholder="${r.owner === S.me && r.status === "changes" ? "Answer marketing's question" : "e.g. Which size: banner or poster?"}"></div></div>` : ""}
-  <div class="grid2">
-    <div class="stack">
-      <div class="panel"><div class="panel-h"><h2>The request</h2></div><div class="panel-b"><dl class="kv stacked">${t.fields.map(ans).join("")}${linkRow("Files", r.files)}${kvRow("Comments", r.notes, true)}</dl></div></div>
-      <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${r.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div>
-    </div>
-    <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
-      <dt>Type</dt><dd>${esc(t.label)}</dd><dt>Submitted</dt><dd>${fmtLong(r.created)}</dd>${r.doneBy ? `<dt>Marketing aims to finish</dt><dd>${fmtLong(r.doneBy)}</dd>` : ""}<dt>Waiting on</dt><dd>${esc(waitingOn(r)) || "Nothing"}</dd>
-    </dl></div></div></div>
-  </div>`;
+  return reqPage({
+    back: ["marketing", "Marketing Requests"], id: r.id, title: esc(r.title),
+    lead: [t.label, r.committee, `from ${nameOf(r.owner)}`, due ? `needed by ${fmtDate(due)}` : ""],
+    pills: statusPill(r),
+    stages: reqStages(order, at),
+    notes: (r.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Question: /, ""))}</div>` : "") + (tight ? `<div class="note warn">Needed in ${daysBetween(TODAY, due)} days. Marketing usually takes 1–2 weeks.</div>` : ""),
+    actions: actions.length ? `<div class="row">${actions.join("")}</div>
+      ${team && r.status === "submitted" ? `<div class="fld" style="max-width:260px"><label for="mkDoneBy">Done by (when scheduling)</label><input type="date" id="mkDoneBy" value="${due || addDays(TODAY, 14)}" min="${TODAY}"></div>` : ""}
+      <div class="fld" style="max-width:520px"><label for="mkNote">${r.owner === S.me && r.status === "changes" ? "Your answer" : "Note to include (optional)"}</label><input type="text" id="mkNote" placeholder="${r.owner === S.me && r.status === "changes" ? "Answer marketing's question" : "e.g. Which size: banner or poster?"}"></div>` : "",
+    main: `<div class="panel"><div class="panel-h"><h2>The request</h2></div><div class="panel-b"><dl class="kv stacked">${t.fields.map(ans).join("")}${linkRow("Files", r.files)}${kvRow("Notes from the requester", r.notes, true)}</dl></div></div>
+      ${commentsPanel(r.id, r.comments)}
+      ${logHistory(r.log)}`,
+    side: detailsPanel(`<dt>Requested by</dt><dd>${esc(nameOf(r.owner))}</dd><dt>Committee</dt><dd>${esc(r.committee)}</dd><dt>Waiting on</dt><dd>${esc(waitingOn(r)) || "Nothing"}</dd>
+      <dt>Type</dt><dd>${esc(t.label)}</dd><dt>Submitted</dt><dd>${fmtLong(r.created)}</dd>${r.doneBy ? `<dt>Marketing aims to finish</dt><dd>${fmtLong(r.doneBy)}</dd>` : ""}`),
+  });
 }
 function mkAction(a) {
   const r = getCard(S.arg), prev = r.status, note = (document.getElementById("mkNote")?.value || "").trim();
@@ -3172,7 +3208,8 @@ const roRow = (label, html) => `<div class="kvr"><span class="l">${label}</span>
 const TK_NEXT = { open: "inprogress", reopened: "inprogress", inprogress: "resolved", waiting: "inprogress", review: "resolved", resolved: "closed", closed: "reopened" };
 function vTicketCard(t) {
   if (!canSeeTk(t)) return `<div class="empty">This ticket isn't shared with you. Only the reporter, watchers and the ${TK_TEAM[tkTeam(t)].name} team can open it.</div>`;
-  const worker = canWorkTk(t), mine = t.owner === S.me, tk = S.tk, edit = worker || (mine && !isDone(t));
+  // Only the ticket's team edits it. The reporter can comment, reopen or withdraw, nothing else.
+  const worker = canWorkTk(t), tk = S.tk, edit = worker;
   const a = t.asset ? S.assets.find((x) => x.id === t.asset) : null, epic = t.epic && tkGet(t.epic), parent = t.parent && tkGet(t.parent);
   const kids = tkKids(t), kdone = kids.filter(isDone).length, eKids = t.itype === "Epic" ? tkEpicKids(t) : [];
   const sla = tkSla(t);
@@ -3181,37 +3218,35 @@ function vTicketCard(t) {
   const btns = trans.map((to) => `<button type="button" class="btn ${to === nextTo ? "primary" : ""}" data-tk2="move|${t.id}|${to}">${t.owner === S.me && !worker && to === "closed" ? "Withdraw this request" : TK_TRANS[to]}</button>`).join("");
   const sel = (f, opts, cur, label, dis) => `<div class="kvr"><label for="f_${f}">${label}</label><select id="f_${f}" data-tkf="${f}|${t.id}" ${edit && worker && !dis ? "" : "disabled"}>${opts.map(([v, n]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>`;
   const people = tkPeople(tkTeam(t)).map((p) => [p, nameOf(p)]);
-  const acts = (t.log || []).filter((l) => (worker || !(l.k === "work" || (l.k === "comment" && l.internal))) && (tk.act === "all" || (tk.act === "comments" && l.k === "comment") || (tk.act === "history" && l.k !== "comment" && l.k !== "work") || (tk.act === "work" && l.k === "work"))).slice().reverse();
-  const actHtml = acts.map((l) => {
-    if (l.k === "comment") return `<div class="act ${l.internal ? "int" : ""}">${avatar(l.who)}<div class="ab"><div><strong>${esc(nameOf(l.who))}</strong> <span class="small muted">${ago(l.t)} · ${fmtTs(l.t)}</span>${l.internal ? ' <span class="pill warn">Internal note</span>' : ""}${l.who === S.me || has("admins") ? ` <button type="button" class="lnk small" data-tk2="delcomment|${t.id}|${l.id}">Delete</button>` : ""}</div><div class="ctext">${tkMentionHtml(l.text)}</div></div></div>`;
-    if (l.k === "work") return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> logged <strong>${l.hours}h</strong>${l.text ? ": " + esc(l.text) : ""} <span class="small muted">${ago(l.t)}</span></div></div>`;
-    if (l.k === "created") return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> created this ticket <span class="small muted">${ago(l.t)} · ${fmtTs(l.t)}</span></div></div>`;
-    return `<div class="act">${avatar(l.who)}<div class="ab"><strong>${esc(nameOf(l.who))}</strong> changed <strong>${esc(l.f)}</strong>: <span class="muted">${esc(l.from || "None")}</span> → ${esc(l.to)} <span class="small muted">${ago(l.t)}</span></div></div>`;
-  }).join("") || '<div class="small muted">Nothing here yet.</div>';
+  const comments = (t.log || []).filter((l) => l.k === "comment" && (worker || !l.internal)).map((l) => ({ who: l.who, t: l.t, html: tkMentionHtml(l.text), internal: l.internal, extra: l.who === S.me || has("admins") ? ` <button type="button" class="lnk small" data-tk2="delcomment|${t.id}|${l.id}">Delete</button>` : "" }));
+  const history = (t.log || []).filter((l) => l.k !== "comment" && (worker || l.k !== "work")).slice().reverse().map((l) =>
+    l.k === "work" ? actRow(l.who, `logged <strong>${l.hours}h</strong>${l.text ? ": " + esc(l.text) : ""}`, l.t)
+    : l.k === "created" ? actRow(l.who, "reported this ticket", l.t)
+    : actRow(l.who, `changed <strong>${esc(l.f)}</strong>: <span class="muted">${esc(l.from || "None")}</span> → ${esc(l.to)}`, l.t)).join("");
   const links = (t.links || []);
   const logged = Number(t.spent) || 0, est = Number(t.est) || 0, pct = est ? Math.min(100, (logged / est) * 100) : 0;
   const draft = tk.cdraft[t.id] || "";
-  return `<div class="crumb"><button type="button" data-go="tickets">IT & Maintenance</button> / ${epic ? `<button type="button" data-tk2="open|${epic.id}">${esc(epic.title)}</button> / ` : ""}${parent ? `<button type="button" data-tk2="open|${parent.id}">${parent.id}</button> / ` : ""}<span class="mono">${t.id}</span></div>
-  <div class="issue">
-   <div class="stack" style="min-width:0">
-    <div>${tk.editing === "title" ? `<form id="tkTitleForm" class="row" data-id="${t.id}"><input type="text" name="title" value="${esc(t.title)}" class="srch wide" aria-label="Summary" required><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></form>`
-      : `<h1 class="ih">${typeIcon(t)} ${esc(t.title)} ${edit ? `<button type="button" class="lnk small" data-tk2="edit|title">Edit</button>` : ""}</h1>`}
-     <div class="row small muted" style="margin-top:6px"><span class="mono">${t.id}</span> · ${esc(t.itype)} · ${TK_TEAM[tkTeam(t)].name}${t.flagged ? ' · <span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? ' · <span class="tag bad">Blocked</span>' : ""}${t.sched ? ` · from schedule ${t.sched}` : ""}</div></div>
-    <div class="panel panel-b stack"><div class="stages">${["Open", "In Progress", "In Review", "Resolved"].map((s, i) => { const at = { open: 0, reopened: 0, inprogress: 1, waiting: 1, review: 2, resolved: 3, closed: 3 }[t.status]; return `<div class="stage ${i < at ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${s}</div>`; }).join("")}</div>
-      <div class="row">${stPill(t)}${t.resolution ? `<span class="pill">${esc(t.resolution)}</span>` : ""}<span class="spacer"></span>${btns || '<span class="small muted">No actions available to you.</span>'}</div></div>
-    <div class="panel"><div class="panel-h"><h2>Description</h2>${edit && tk.editing !== "desc" ? '<button type="button" class="btn small" data-tk2="edit|desc">Edit</button>' : ""}</div><div class="panel-b">${tk.editing === "desc" ? `<form id="tkDescForm" data-id="${t.id}" class="stack"><textarea name="desc" rows="5" class="ta" aria-label="Description">${esc(t.desc)}</textarea><div class="row"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></div></form>` : `<div class="ctext">${t.desc ? tkMentionHtml(t.desc) : '<span class="muted">No description.</span>'}</div>`}</div></div>
-    <div class="panel"><div class="panel-h"><h2>Attachments <span class="muted small">${t.attach.length}</span></h2>${edit ? `<label class="btn small" for="tkFile_${t.id}">Add attachment</label><input type="file" id="tkFile_${t.id}" data-tkf="attach|${t.id}" hidden multiple>` : ""}</div>${t.attach.length ? `<div class="panel-b row">${t.attach.map((f, i) => `<span class="pill">${esc(f)}${edit ? ` <button type="button" class="x" aria-label="Remove ${esc(f)}" data-tk2="delattach|${t.id}|${i}">×</button>` : ""}</span>`).join("")}</div>` : '<div class="panel-b small muted">No files. Photos go to IAR\'s Shared Drive.</div>'}</div>
+  const commentForm = `<form id="tkCommentForm" data-id="${t.id}" class="stack">
+        <textarea name="text" id="tkCommentText" rows="3" class="ta" placeholder="${worker ? "Reply to the reporter, or leave an internal note. Use @name to mention someone." : "Ask a question or add detail for the team. Use @name to mention someone."}" aria-label="Comment">${esc(draft)}</textarea>
+        <div class="row">${worker ? `<label class="small"><input type="checkbox" name="internal"> Internal note (reporter can't see it)</label><span class="spacer"></span>${["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."].map((c, i) => `<button type="button" class="chip" data-tk2="canned|${i}">${["Need info", "On it", "Fixed"][i]}</button>`).join("")}` : '<span class="spacer"></span>'}<button class="btn primary small" type="submit">Comment</button></div></form>`;
+  const at = { open: 0, reopened: 0, inprogress: 1, waiting: 1, review: 2, resolved: 4, closed: 4 }[t.status];
+  return reqPage({
+    back: ["tickets", "IT & Maintenance"], id: t.id,
+    trail: `${epic ? `<button type="button" data-tk2="open|${epic.id}">${esc(epic.title)}</button> / ` : ""}${parent ? `<button type="button" data-tk2="open|${parent.id}">${parent.id}</button> / ` : ""}`,
+    titleForm: tk.editing === "title" && edit ? `<form id="tkTitleForm" class="row" data-id="${t.id}"><input type="text" name="title" value="${esc(t.title)}" class="srch wide" aria-label="Summary" required><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></form>` : "",
+    title: `${typeIcon(t)} ${esc(t.title)} ${edit ? `<button type="button" class="lnk small" data-tk2="edit|title">Edit</button>` : ""}`,
+    lead: [t.itype, TK_TEAM[tkTeam(t)].name, `from ${nameOf(t.owner)}`, roomName(t.room), t.sched ? `from schedule ${t.sched}` : ""],
+    pills: `${stPill(t)}${t.resolution ? ` <span class="pill">${esc(t.resolution)}</span>` : ""}${t.flagged ? ' <span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? ' <span class="tag bad">Blocked</span>' : ""}`,
+    stages: reqStages(["Open", "In Progress", "In Review", "Resolved"], at),
+    actions: btns ? `<div class="row">${btns}</div>` : "",
+    main: `<div class="panel"><div class="panel-h"><h2>Description</h2>${edit && tk.editing !== "desc" ? '<button type="button" class="btn small" data-tk2="edit|desc">Edit</button>' : ""}</div><div class="panel-b">${tk.editing === "desc" && edit ? `<form id="tkDescForm" data-id="${t.id}" class="stack"><textarea name="desc" rows="5" class="ta" aria-label="Description">${esc(t.desc)}</textarea><div class="row"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></div></form>` : `<div class="ctext">${t.desc ? tkMentionHtml(t.desc) : '<span class="muted">No description.</span>'}</div>`}</div></div>
+    <div class="panel"><div class="panel-h"><h2>Attachments <span class="muted small">${t.attach.length}</span></h2>${edit ? `<label class="btn small" for="tkFile_${t.id}">Add attachment</label><input type="file" id="tkFile_${t.id}" data-tkf="attach|${t.id}" hidden multiple>` : ""}</div>${t.attach.length ? `<div class="panel-b row">${t.attach.map((f, i) => `<span class="pill">${esc(f)}${edit ? ` <button type="button" class="x" aria-label="Remove ${esc(f)}" data-tk2="delattach|${t.id}|${i}">×</button>` : ""}</span>`).join("")}</div>` : `<div class="panel-b small muted">No files.${worker ? " Photos go to IAR's Shared Drive." : ""}</div>`}</div>
     ${t.itype === "Epic" ? `<div class="panel"><div class="panel-h"><h2>Issues in this epic</h2><div class="row"><span class="small muted">${eKids.filter(isDone).length}/${eKids.length} done</span>${worker ? `<button type="button" class="btn small" data-tk2="create||${t.id}">Create issue</button>` : ""}</div></div>${eKids.length ? `<div class="bar2"><span style="width:${(eKids.filter(isDone).length / eKids.length) * 100}%"></span></div><div class="list">${eKids.map(tkRow).join("")}</div>` : '<div class="empty small">No issues yet.</div>'}</div>` : ""}
-    ${t.itype !== "Sub-task" && t.itype !== "Epic" ? `<div class="panel"><div class="panel-h"><h2>Sub-tasks <span class="muted small">${kdone}/${kids.length}</span></h2></div>${kids.length ? `<div class="bar2"><span style="width:${(kdone / kids.length) * 100}%"></span></div><div class="list">${kids.map(tkRow).join("")}</div>` : ""}${worker ? `<form id="tkSubForm" data-id="${t.id}" class="panel-b row"><input type="text" name="title" class="srch wide" placeholder="Add a sub-task and press Enter" aria-label="New sub-task"><button class="btn small" type="submit">Add</button></form>` : ""}</div>` : ""}
-    <div class="panel"><div class="panel-h"><h2>Linked issues</h2>${worker ? `<button type="button" class="btn small" data-tk2="linkmodal|${t.id}">Link issue</button>` : ""}</div>${links.length ? `<div class="list">${links.map((l, i) => { const o = tkGet(l.id); return o ? `<div class="item"><div><div class="s">${esc(l.rel)}</div><button type="button" class="lnk strong" data-card="${o.id}">${typeIcon(o)} ${o.id} · ${esc(o.title)}</button></div><div class="r">${stPill(o)}${worker ? `<button type="button" class="lnk small" data-tk2="unlink|${t.id}|${i}">Remove</button>` : ""}</div></div>` : ""; }).join("")}</div>` : '<div class="panel-b small muted">Not linked to anything.</div>'}</div>
-    <div class="panel"><div class="panel-h"><h2>Activity</h2><div class="btabs tkt small">${[["all", "All"], ["comments", "Comments"], ["history", "History"], ...(worker ? [["work", "Work log"]] : [])].map(([k, n]) => `<button type="button" class="${tk.act === k ? "on" : ""}" data-tk2="act|${k}">${n}</button>`).join("")}</div></div>
-     <div class="panel-b stack">
-      <form id="tkCommentForm" data-id="${t.id}" class="stack"><div class="row">${avatar(S.me)}<strong>${esc(nameOf(S.me))}</strong></div>
-        <textarea name="text" id="tkCommentText" rows="3" class="ta" placeholder="${worker ? "Reply to the reporter, or leave an internal note. Use @name to mention someone." : "Add a comment for the team. Use @name to mention someone."}" aria-label="Comment">${esc(draft)}</textarea>
-        <div class="row">${worker ? `<label class="small"><input type="checkbox" name="internal"> Internal note (reporter can't see it)</label><span class="spacer"></span>${["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."].map((c, i) => `<button type="button" class="chip" data-tk2="canned|${i}">${["Need info", "On it", "Fixed"][i]}</button>`).join("")}` : '<span class="spacer"></span>'}<button class="btn primary small" type="submit">Comment</button></div></form>
-      <div class="acts">${actHtml}</div></div></div>
-   </div>
-   <aside class="stack side">
+    ${t.itype !== "Sub-task" && t.itype !== "Epic" && (worker || kids.length) ? `<div class="panel"><div class="panel-h"><h2>Sub-tasks <span class="muted small">${kdone}/${kids.length}</span></h2></div>${kids.length ? `<div class="bar2"><span style="width:${(kdone / kids.length) * 100}%"></span></div><div class="list">${kids.map(tkRow).join("")}</div>` : ""}${worker ? `<form id="tkSubForm" data-id="${t.id}" class="panel-b row"><input type="text" name="title" class="srch wide" placeholder="Add a sub-task and press Enter" aria-label="New sub-task"><button class="btn small" type="submit">Add</button></form>` : ""}</div>` : ""}
+    ${worker || links.length ? `<div class="panel"><div class="panel-h"><h2>Linked issues</h2>${worker ? `<button type="button" class="btn small" data-tk2="linkmodal|${t.id}">Link issue</button>` : ""}</div>${links.length ? `<div class="list">${links.map((l, i) => { const o = tkGet(l.id); return o ? `<div class="item"><div><div class="s">${esc(l.rel)}</div><button type="button" class="lnk strong" data-card="${o.id}">${typeIcon(o)} ${o.id} · ${esc(o.title)}</button></div><div class="r">${stPill(o)}${worker ? `<button type="button" class="lnk small" data-tk2="unlink|${t.id}|${i}">Remove</button>` : ""}</div></div>` : ""; }).join("")}</div>` : '<div class="panel-b small muted">Not linked to anything.</div>'}</div>` : ""}
+    ${commentsPanel(t.id, comments, { form: commentForm })}
+    ${historyPanel(history)}`,
+    side: `
     ${worker ? `<div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b kvl">
       ${sel("assignee", [["", "Unassigned"], ...people], t.assignee, "Assignee")}
       ${worker && t.assignee !== S.me && canWorkTk(t) ? `<div class="kvr"><span></span><button type="button" class="lnk small" data-tk2="assignme|${t.id}">Assign to me</button></div>` : ""}
@@ -3246,7 +3281,8 @@ function vTicketCard(t) {
     <div class="panel"><div class="panel-h"><h2>People</h2></div><div class="panel-b stack"><div class="row">${(t.watchers || []).filter((w) => PEOPLE[w]).map((w) => avatar(w)).join("") || '<span class="small muted">No watchers</span>'}</div><div class="row"><button type="button" class="btn small" data-tk2="watch|${t.id}">${(t.watchers || []).includes(S.me) ? "Stop watching" : "Watch"}</button>${worker ? `<select data-tkf="addwatcher|${t.id}" aria-label="Add watcher"><option value="">Add watcher…</option>${Object.keys(PEOPLE).filter((p) => !["renter", "admin"].includes(p) && !(t.watchers || []).includes(p)).map((p) => `<option value="${p}">${esc(nameOf(p))}</option>`).join("")}</select>` : ""}</div></div></div>
     <div class="panel"><div class="panel-b stack small"><div>Created ${fmtTs(t.created)}</div><div>Updated ${fmtTs(t.updated)}</div>${t.resolvedAt ? `<div>Resolved ${fmtTs(t.resolvedAt)}</div>` : ""}
       ${worker ? `<div class="row"><button type="button" class="btn small" data-tk2="flag|${t.id}">${t.flagged ? "Remove flag" : "Flag as blocked"}</button><button type="button" class="btn small" data-tk2="clone|${t.id}">Clone</button>${t.itype !== "Sub-task" && t.itype !== "Epic" ? `<button type="button" class="btn small" data-tk2="create||${t.id}|sub">Add sub-task</button>` : ""}${has("admins") ? `<button type="button" class="btn small danger" data-tk2="deletemodal|${t.id}">Delete</button>` : ""}</div>` : ""}</div></div>
-   </aside></div>`;
+`,
+  });
 }
 
 /* ---- Modals ---- */
@@ -3437,6 +3473,8 @@ function tkSubmit(e) {
   if (!/^tk/.test(id)) return;
   const m = S.tk.modal, t = f.dataset.id ? tkGet(f.dataset.id) : m && m.id ? tkGet(m.id) : null;
   if (id === "tkCreateForm") return tkCreateSubmit(f);
+  // Only the team edits a ticket's details; reporters comment.
+  if (["tkTitleForm", "tkDescForm"].includes(id) && !canWorkTk(t)) return toast("Only the team can change this. Add a comment instead.");
   if (id === "tkTitleForm") { const v = el.title.value.trim(); if (v) tkSet(t, "title", v); S.tk.editing = null; return render(); }
   if (id === "tkDescForm") { tkSet(t, "desc", el.desc.value.trim()); S.tk.editing = null; return render(); }
   if (id === "tkSubForm") { const v = el.title.value.trim(); if (!v) return; const s = tkNew({ type: t.type, itype: "Sub-task", title: v, parent: t.id, owner: S.me, room: t.room, asset: t.asset, priority: t.priority, comps: t.comps.slice(), due: t.due }); S.tickets.unshift(s); tkLog(t, { k: "change", f: "Sub-task", from: "", to: "added " + s.id }); S.tk.focus = "tkSubForm"; return render(); }
@@ -3804,6 +3842,15 @@ document.addEventListener("submit", (e) => {
   e.preventDefault();
   if (e.target.id === "topSearch" || e.target.id === "srchForm") { const q = e.target.elements.q.value.trim(); if (e.target.id === "topSearch") e.target.reset(); return go("search", q); }
   if (e.target.id === "awayForm") return saveAway(e.target.elements);
+  if (e.target.id === "cmtForm") {
+    const c = getCard(e.target.dataset.id), text = e.target.elements.text.value.trim();
+    if (!c) return;
+    if (!text) return toast("Write a comment first.");
+    commentNotify(c, text); // before adding, so the writer isn't counted as an earlier commenter
+    (c.comments ||= []).push({ id: c.comments.length + 1, t: tsNow(), who: S.me, text });
+    toast("Comment added.");
+    return render();
+  }
   if (e.target.id === "fbForm") {
     const f = e.target.elements, text = f.text.value.trim();
     if (!text) return toast("Tell us what happened or what you'd like.");
