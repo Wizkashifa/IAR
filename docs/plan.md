@@ -45,7 +45,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Teams work their own queues | Marketing, facilities, security and finance see their tasks across all cards. They never need to open each event |
 | Notify only when someone needs to act | Action-needed alerts go out right away. Everything else goes into a digest or the portal's activity feed |
 | Rules are automated as flags, not hard blocks | The office can override with a recorded reason |
-| Mission review only where it matters | New programs, outside groups or speakers, fundraisers, and events above a size or budget threshold. Recurring series are approved once per season |
+| Mission review for every event | The committee's pillar director reviews first, then any one executive gives the final approval. The office doesn't review events. New programs, outside groups or speakers, fundraisers, and large or costly events are flagged for the reviewers. Recurring series are approved once per season |
 | Ready for other masjids from the start | Rooms, groups, priority tiers, fees and policies are settings stored as data. Microsoft sign-in can be added later |
 | Run by the organization, not a person | Shared Drives, a service account and IAR-owned hosting. The admin role is held by a group, not one individual |
 
@@ -54,9 +54,9 @@ One event today can take three separate forms on two platforms. Status lives in 
 Each event is one card. The requester opens it, the portal checks it automatically, it's approved once, and then each team works its own piece until the card closes.
 
 ```
-Submitted ──▶ Auto checks ──▶ Mission review ──▶ Office approval
-(requester    (room hold,     (only when          (within one week)
- owns it)      rule flags)     triggered)               │
+Submitted ──▶ Auto checks ──▶ Director review ──▶ Executive review
+(requester    (room hold,     (pillar director,    (any executive;
+ owns it)      rule flags)     mission review)      within one week)
      ▲                                                  │
      └────────── changes requested ◀────────────────────┤
                                                         ▼
@@ -65,7 +65,7 @@ Closed ◀── Close-out ◀── Event day ◀──────────
             attendance)
 ```
 
-Mission review is the only optional stage. A card that's denied or cancelled leaves the flow and keeps its record.
+Every event gets mission review in two steps: the director of the committee's pillar, then any one executive. Either can approve, request changes or deny. The director step is skipped when the committee has no pillar director, or when the requester is that director; nobody reviews their own event. The IAR office and portal admins don't review events. A card that's denied or cancelled leaves the flow and keeps its record.
 
 **What the requester enters once**, taken from today's Program Request Form:
 
@@ -186,7 +186,7 @@ The 2021 policy needs a short refresh before its rules go into the software. Rul
 - [ ] **Deposit wording:** "fortified" should read forfeited. Set a refund deadline and say who decides
 - [ ] **Who submits:** the policy says only Admin chairs or staff enter reservations. The portal lets committee chairs submit directly
 - [ ] **Gym and outside renters:** no rental rates, insurance requirement or agreement exists. Needed before the public front door
-- [ ] **Mission review:** written criteria, when it is triggered, who decides, and how long the decider has
+- [ ] **Mission review:** written criteria, and how long the director and the executive each have
 - [ ] **Lead times:** the policy has none. Marketing asks for 3 weeks. Set a minimum per event type
 - [ ] **New spaces:** the Community Flex Room, Red Brick rooms and the Women's Prayer Hall appear on the form but not in the policy
 
@@ -244,7 +244,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 | Bookings still made outside the calendar | The portal is the only way to book. The office stops confirming by email once the pilot ends |
 | Office or teams keep working from email | Their queue is the only place approvals happen. Email alerts link straight to the card |
 | Too many alerts, as with the current PO form | Alerts only go to whoever must act; everything else goes in a digest |
-| Mission review turns into gatekeeping | Shura-approved criteria, limited triggers, a time limit for the reviewer |
+| Mission review turns into gatekeeping or a bottleneck | Shura-approved criteria, any executive can give the final approval, a time limit for each reviewer |
 | One builder holds all the knowledge | Repo owned by IAR, written setup guide, admin role held by a group, not a person |
 | Scope creep before Phase 1 ships | Phase 1 is only the shell, POs and event cards. Everything else waits for its gate |
 

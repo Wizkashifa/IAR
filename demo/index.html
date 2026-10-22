@@ -577,7 +577,6 @@ const RULES = [
   { id: "lead", name: "Lead time: office 1 week, marketing 3 weeks", policy: "§4 · Marketing form", on: true },
   { id: "afterhours", name: "After-hours security (2-hour minimum)", policy: "§3", on: true },
   { id: "fees", name: "Community MPH events: $200 fee + $100 deposit", policy: "§3", on: true },
-  { id: "mission", name: "Mission review for new programs, outside speakers, fundraisers, 150+ people or $2,500+ budget", policy: "Proposed · needs Shura approval", on: true },
   { id: "advert", name: "No advertising until approved", policy: "§4", on: true },
 ];
 /* Recurring reservations: every series has an end date, so there is no on/off switch. These two are the adjustable parts. */
@@ -614,25 +613,25 @@ function seed() {
     ],
     cards: [
       ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "bilal", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", serA, recurEnd(serA, 3)), created: now(78),
-        tasks: { security: "todo" }, log: [[now(78), "bilal", "Submitted as a weekly series, 3 months"], [now(76), "hana", "Approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
+        tasks: { security: "todo" }, log: [[now(78), "bilal", "Submitted as a weekly series, 3 months"], [now(77), "tara", "Mission review as director: approved. Sent to the executive"], [now(76), "yasir", "Mission review: approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
       ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", serB, recurEnd(serB, 3)), created: now(33),
-        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 3 months"], [now(31), "hana", "Approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
+        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 3 months"], [now(31), "khalid", "Mission review: approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
       ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "bilal", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
         brief: { subtitle: "A Weekly Halaqa for Teens", text: "Teens ages 13-18 are invited to the Youth Winter Halaqa: a weekly circle on the Seerah, with snacks and games after. Tuesdays this winter at IAR.", flyer: "Title, Tuesdays, ages 13-18, snacks provided", startOn: addDays(tueLater, -21) },
-        log: [[now(5), "bilal", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "hana", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
+        log: [[now(5), "bilal", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "tara", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
       ev({ id: "EV-1031", title: "Youth Family Night", owner: "bilal", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
         brief: { subtitle: "An Evening for the Whole Family", text: "Join the Youth Committee for Family Night: dinner, a youth-led nasheed set, games for kids and a short reminder. Saturday 6:00 - 9:00 PM in the MPH. Free, but please register so we have enough food.", flyer: "Title, date, 6-9 PM, MPH, dinner included, register by Thursday", regLink: "", payment: "", startOn: addDays(satSoon, -14), files: "https://drive.google.com/drive/folders/family-night-photos" },
         avNeeds: { kinds: ["projector", "sound"], includes: ["quran", "laptop", "video"], ack: true, notes: "Slideshow of last year's photos with music at 8 PM." },
         tasks: { marketing: "doing", av: "todo", facilities: "todo", security: "todo" }, linkedPOs: ["PO-11046"],
-        log: [[now(16), "bilal", "Submitted"], [now(15), "hana", "Approved. Room hold confirmed on the IAR calendar"], [now(12), "sara", "Started the flyer"]] }),
+        log: [[now(16), "bilal", "Submitted"], [now(16), "tara", "Mission review as director: approved. Sent to the executive"], [now(15), "yasir", "Mission review: approved. Room hold confirmed on the IAR calendar"], [now(12), "sara", "Started the flyer"]] }),
       ev({ id: "EV-0998", title: "Food drive volunteer briefing", owner: "bilal", committee: "Youth", status: "closeout", date: pastDay, start: "19:00", end: "20:30", room: "r250", attendance: 18, food: true, budget: 250, created: now(24),
         tasks: { security: "done" }, securityResult: "Room left clean, chairs returned", linkedPOs: ["PO-10977"],
-        log: [[now(24), "bilal", "Submitted"], [now(22), "hana", "Approved"], [pastDay, "idris", "Room check after event: clean, chairs returned"]] }),
-      ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "tara", committee: "Women's Committee", status: "office", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
-        log: [[now(2), "tara", "Submitted"], [now(2), "system", "Auto checks passed"]] }),
+        log: [[now(24), "bilal", "Submitted"], [now(23), "tara", "Mission review as director: approved. Sent to the executive"], [now(22), "khalid", "Mission review: approved"], [pastDay, "idris", "Room check after event: clean, chairs returned"]] }),
+      ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "tara", committee: "Women's Committee", status: "mission", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
+        log: [[now(2), "tara", "Submitted"], [now(2), "system", "Auto checks passed"], [now(2), "system", "Requester directs this committee's pillar, so it goes straight to the executive"]] }),
       ev({ id: "EV-1053", title: "Interfaith Open House", owner: "bilal", committee: "Outreach", status: "mission", date: satLater, start: "14:00", end: "17:00", setup: 60, teardown: 60, room: "main", attendance: 200, food: false, isPublic: true, triggers: { outsideSpeaker: true, newProgram: true }, budget: 1800, created: now(3),
         brief: { subtitle: "Meet Your Muslim Neighbors", text: "IAR opens its doors to neighbors of every faith: a tour of the masjid, a panel of local faith leaders, and light refreshments. Saturday 2:00 - 5:00 PM at the Main Prayer Hall. All are welcome.", flyer: "Title, date and time, all faiths welcome, panel speakers' names", other: "Panel: local faith leaders on caring for our neighbors", startOn: addDays(satLater, -21) },
-        log: [[now(3), "bilal", "Submitted"], [now(3), "system", "Mission review needed: new program, outside speakers, 200 expected"]] }),
+        log: [[now(3), "bilal", "Submitted"], [now(3), "system", "Outreach has no pillar director, so it goes straight to the executive"], [now(3), "system", "For the reviewers: new program, outside speaker or group, 200 expected"]] }),
     ],
     pos: [
       po({ id: "PO-11045", owner: "bilal", type: "reimburse", committee: "Youth", payee: PEOPLE.bilal.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Food & Hospitality", 142.5], ["Youth – Supplies", 42]], eventId: "EV-1042", status: "chair", approver: "tara", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
@@ -825,19 +824,16 @@ function runChecks(e, ownerId) {
   if (ruleOn("lead")) {
     const days = daysBetween(TODAY, e.date);
     if (days < 0) add("bad", "That date has already passed.", "");
-    else if (days < 7) add("warn", `Only ${days} days away. The office confirms within a week.`, "Room policy §4");
+    else if (days < 7) add("warn", `Only ${days} days away. Mission review can take up to a week.`, "Room policy §4");
     else if (e.isPublic && days < 21) add("warn", `${days} days away. Marketing asks for 3 weeks to promote public events.`, "Marketing request form");
     else add("ok", `${days} days of lead time.`, "Room policy §4");
   }
   if (ruleOn("afterhours") && e.room !== "offsite" && afterHours(e)) add("warn", "Runs after 10 PM. After-hours security is required (2-hour minimum, charged to the event).", "Room policy §3");
   if (ruleOn("fees") && rm.mph && String(e.committee).startsWith("Community")) add("info", "Community MPH event: $200 non-refundable fee and $100 refundable deposit.", "Room policy §3");
   const mr = missionReasons(e);
-  if (ruleOn("mission")) {
-    if (mr.length) add("info", `Mission review will be added: ${mr.join(", ")}.`, "Proposed rule");
-    else add("ok", "No mission review needed.", "Proposed rule");
-  }
+  if (mr.length) add("info", `Mission review will look closely at this: ${mr.join(", ")}.`, "Proposed rule");
   const dn = String(e.description || "").trim().length;
-  if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule, any speakers, and what you need from each team." : "Add a description. The office, marketing and the teams all read it.", "Program Request Form");
+  if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule, any speakers, and what you need from each team." : "Add a description. The reviewers, marketing and the teams all read it.", "Program Request Form");
   else add("ok", "Description gives reviewers enough to go on.", "Program Request Form");
   if (e.isPublic && ruleOn("advert")) add("info", "Marketing unlocks after approval. No advertising before then.", "Room policy §4");
   const MF = "Marketing request form";
@@ -873,7 +869,7 @@ const TEAM_ROLE = { marketing: "marketing", av: "av", facilities: "facilities", 
 const TEAM_NAME = { marketing: "Marketing", av: "AV", facilities: "Facilities", security: "Security", finance: "Finance" };
 
 const EV_STATUS = {
-  submitted: ["Submitted", "info"], mission: ["Mission review", "info"], office: ["Office review", "info"], changes: ["Changes requested", "warn"],
+  submitted: ["Submitted", "info"], director: ["Director review", "info"], mission: ["Executive review", "info"], changes: ["Changes requested", "warn"],
   approved: ["Approved", "ok"], denied: ["Denied", "bad"], cancelled: ["Cancelled", "bad"], closeout: ["Close-out", "warn"], closed: ["Closed", "accent"],
 };
 const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], books: ["Enter in QuickBooks", "info"], done: ["Complete", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
@@ -885,8 +881,8 @@ function statusPill(c) {
 }
 function waitingOn(c) {
   if (c.kind === "event") {
+    if (c.status === "director") return `${evDirectors(c).map(nameOf).join(", ")} (director): mission review`;
     if (c.status === "mission") return "Executive: mission review";
-    if (c.status === "office") return "IAR office: approval";
     if (c.status === "changes") return `${nameOf(c.owner)}: make changes`;
     if (c.status === "closeout") return `${nameOf(c.owner)}: close-out`;
     if (c.status === "approved") {
@@ -914,8 +910,7 @@ function myActionItems() {
   const p = me();
   for (const c of S.cards) {
     if (c.owner === S.me && ["changes", "closeout"].includes(c.status)) items.push({ c, why: c.status === "changes" ? "Make the requested changes and resubmit" : "Add attendance and close it out" });
-    if (has("office") && c.status === "office") items.push({ c, why: "Approve, request changes or deny" });
-    if (has("executive") && c.status === "mission") items.push({ c, why: "Mission review" });
+    if (canReviewEv(c)) items.push({ c, why: c.status === "director" ? "Mission review as director" : "Mission review" });
   }
   for (const c of S.pos) {
     if (c.owner === S.me && c.status === "returned") items.push({ c, why: "Fix and resubmit" });
@@ -1184,6 +1179,10 @@ function chairStepAs(c) {
   const f = coveringNow().find((p) => p !== c.owner && canChair(p, c));
   return f ? { as: "cover", for: f } : null;
 }
+/* Events: every one gets mission review, first by the committee's pillar director (skipped when there is none, or the requester is the director), then by any executive. Nobody reviews their own event, and the portal admin (who sees everything) never reviews. */
+const evDirectors = (c) => directorsOf(c.committee).filter((d) => d !== c.owner);
+const evFirstStage = (c) => (evDirectors(c).length ? "director" : "mission");
+const canReviewEv = (c) => c.owner !== S.me && S.me !== "admin" && ((c.status === "director" && evDirectors(c).includes(S.me)) || (c.status === "mission" && has("executive")));
 const chairStepNote = (how) => (!how ? "" : how.as === "director" ? " as director" : how.as === "cover" ? ` for ${nameOf(how.for)}` : "");
 
 /* Notifications go to one person or to everyone in a role's group. Email only when someone has to act. */
@@ -1215,7 +1214,7 @@ function poNotify(c, prev) {
 function evNotify(c, prev) {
   const w = `${c.id} “${c.title}”`, o = { card: c.id };
   if (c.status === prev) return;
-  if (c.status === "office") notify("role:office", `${w} needs office review`, { ...o, email: true });
+  if (c.status === "director") evDirectors(c).forEach((d) => notify(d, `${w} needs your mission review as director`, { ...o, email: true, delegable: true }));
   if (c.status === "mission") notify("role:executive", `${w} needs mission review`, { ...o, email: true });
   if (c.status === "changes") notify(c.owner, `${w}: changes requested`, { ...o, email: true });
   if (c.status === "approved") notify(c.owner, `${w} is approved. The room is held on the IAR calendar.`, o);
@@ -1229,8 +1228,8 @@ function seedPortalExtras() {
   notify("tara", `${poLabel(po11045)} needs your chair approval`, { card: po11045.id, email: true, by: "bilal", t: at(20) });
   notify("role:finance", `${poLabel(po11046)} needs finance review`, { card: po11046.id, email: true, by: "tara", t: at(140) });
   notify("role:finance", `${poLabel(po11051)} needs a review of its charges`, { card: po11051.id, email: true, by: "layla", t: at(44) });
-  notify("bilal", `EV-1042 “Youth Halaqa — winter series”: changes requested`, { card: "EV-1042", email: true, by: "hana", t: at(22) });
-  notify("role:office", `EV-1050 “Sisters' Tafsir Circle” needs office review`, { card: "EV-1050", email: true, by: "tara", t: at(46) });
+  notify("bilal", `EV-1042 “Youth Halaqa — winter series”: changes requested`, { card: "EV-1042", email: true, by: "tara", t: at(22) });
+  notify("role:executive", `EV-1050 “Sisters' Tafsir Circle” needs mission review`, { card: "EV-1050", email: true, by: "tara", t: at(46) });
   notify("role:executive", `EV-1053 “Interfaith Open House” needs mission review`, { card: "EV-1053", email: true, by: "bilal", t: at(70) });
   notify("role:marketing", `MK-324 “${getCard("MK-324").title}” is new for the weekly review`, { card: "MK-324", email: true, by: "idris", t: at(20) });
   S.feedback = [{ id: "FB-1", by: "layla", kind: "idea", text: "Could the card receipts form remember the merchants I use every month?", page: "Purchase Requests", t: at(30), done: false }];
@@ -1384,12 +1383,13 @@ function vRequests() {
 }
 
 function vEvents() {
-  const tab = S.arg || (has("office") ? "review" : "upcoming");
-  const tabs = [["upcoming", "Upcoming"], ...(has("office") || has("executive") ? [["review", "Needs review"]] : []), ["mine", "Mine"]];
+  const reviewer = S.me !== "admin" && (has("executive") || directsOf(S.me).length > 0);
+  const tab = S.arg || (reviewer ? "review" : "upcoming");
+  const tabs = [["upcoming", "Upcoming"], ...(reviewer ? [["review", "Needs review"]] : []), ["mine", "Mine"]];
   let list;
-  if (tab === "review") list = S.cards.filter((c) => (has("office") && c.status === "office") || (has("executive") && c.status === "mission"));
+  if (tab === "review") list = S.cards.filter(canReviewEv);
   else if (tab === "mine") list = S.cards.filter((c) => c.owner === S.me);
-  else list = S.cards.filter((c) => ["approved", "office", "mission"].includes(c.status) && c.date >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1));
+  else list = S.cards.filter((c) => ["approved", "director", "mission"].includes(c.status) && c.date >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1));
   return `<div class="head"><div><h1>Events & Rooms</h1><p class="lead">${esc(BLURB.events)}</p></div><button class="btn primary" data-go="newEvent" type="button">New event request</button></div>
   <div class="row">${tabs.map(([k, l]) => `<button class="btn small ${k === tab ? "primary" : ""}" type="button" data-go="events" data-arg="${k}">${l}</button>`).join("")}</div>
   <div class="panel">${list.length ? `<div class="list">${list.map((c) => itemRow(c, waitingOn(c))).join("")}</div>` : `<div class="empty">Nothing here.</div>`}</div>
@@ -1460,7 +1460,7 @@ function vNewEvent() {
   <div class="grid2">
     <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
       <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
-      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from the office, marketing, AV or facilities.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
+      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from marketing, AV or facilities.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
       <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
       <div class="fld"><label for="f_date">${d.recurFreq !== "none" ? "First date" : "Date"}</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
       <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
@@ -1522,7 +1522,7 @@ function paintChecks() {
   document.getElementById("evTl").innerHTML = d.date && d.room !== "offsite" ? timeline(d.date, d.room, d) : `<div class="muted small">Off-site: nothing to check on the calendar.</div>`;
 }
 const DESC_GOOD = 200;
-const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the office approve faster and the teams plan: what happens, who it's for, the schedule, speakers or guests, and what you need.`; };
+const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the reviewers approve faster and the teams plan: what happens, who it's for, the schedule, speakers or guests, and what you need.`; };
 const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${{ ok: "✓", warn: "!", bad: "×", info: "i" }[c.sev]}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
 
 function submitEvent() {
@@ -1531,29 +1531,29 @@ function submitEvent() {
   const ch = runChecks(d, S.me);
   const blocked = ch.find((x) => x.block);
   if (blocked) return toast(blocked.text);
-  const mission = ruleOn("mission") && missionReasons(d).length > 0;
   let c, prevStatus = null;
   if (d.id) {
     c = getCard(d.id);
     prevStatus = c.status;
     Object.assign(c, JSON.parse(JSON.stringify(d)), { kind: "event" });
-    c.status = mission ? "mission" : "office";
+    c.status = evFirstStage(c);
     c.recur = recurOf(d);
     c.tasks = buildTasks(c, {});
     log(c, "Updated and resubmitted");
   } else {
-    c = ev({ ...JSON.parse(JSON.stringify(d)), id: "EV-" + ++S.seq.EV, owner: S.me, status: mission ? "mission" : "office", created: TODAY });
+    c = ev({ ...JSON.parse(JSON.stringify(d)), id: "EV-" + ++S.seq.EV, owner: S.me, created: TODAY });
+    c.status = evFirstStage(c);
     c.recur = recurOf(d);
     log(c, c.recur ? `Submitted as a series: ${recurText(c.recur)}, ${fmtLong(c.recur.start)} to ${fmtLong(c.recur.end)}` : "Submitted");
     S.cards.unshift(c);
     if (d.renews) { const prior = getCard(d.renews); prior.renewedBy = c.id; log(prior, `Renewal requested: ${c.id}`); }
   }
   const flagged = ch.filter((x) => x.sev === "bad" || x.sev === "warn").length;
-  c.log.push({ t: TODAY, who: "system", text: flagged ? `Auto checks: ${flagged} flag${flagged > 1 ? "s" : ""} for the office to review` : "Auto checks passed. Room held on the IAR calendar (tentative)" });
-  if (mission) c.log.push({ t: TODAY, who: "system", text: "Mission review needed: " + missionReasons(c).join(", ") });
+  c.log.push({ t: TODAY, who: "system", text: flagged ? `Auto checks: ${flagged} flag${flagged > 1 ? "s" : ""} for the reviewers` : "Auto checks passed. Room held on the IAR calendar (tentative)" });
+  if (missionReasons(c).length) c.log.push({ t: TODAY, who: "system", text: "For the reviewers: " + missionReasons(c).join(", ") });
   S.draft = null;
   evNotify(c, prevStatus);
-  toast(`${c.id} submitted. ${mission ? "Sent for mission review." : "Sent to the IAR office."}`);
+  toast(`${c.id} submitted. ${c.status === "director" ? `Sent to ${evDirectors(c).map(nameOf).join(", ")} for mission review.` : "Sent to the executive for mission review."}`);
   go("card", c.id);
 }
 
@@ -1582,29 +1582,28 @@ function vCard() {
   if (c.kind === "rental") return vRentalCard(c);
   if (c.kind === "mkt") return vMKCard(c);
   if (String(c.id).startsWith("TK-")) return vTicketCard(c);
-  const canSee = c.owner === S.me || has("office") || has("executive") || has("finance") || has("admins") || c.tasks.some((t) => has(TEAM_ROLE[t.team])) || (has("chairs") && me().committees.includes(c.committee));
+  const canSee = c.owner === S.me || has("office") || has("executive") || has("finance") || has("admins") || directsOf(S.me).includes(c.committee) || c.tasks.some((t) => has(TEAM_ROLE[t.team])) || (has("chairs") && me().committees.includes(c.committee));
   if (!canSee) return `<div class="empty">This event card isn't shared with your groups.</div>`;
   const ch = runChecks(c, c.owner);
-  const mission = missionReasons(c).length > 0 && ruleOn("mission");
-  const order = ["submitted", "checks", "mission", "office", "approved", "eventday", "closeout", "closed"];
-  const labels = { submitted: "Submitted", checks: "Auto checks", mission: "Mission review", office: "Office approval", approved: "Approved", eventday: "Event day", closeout: "Close-out", closed: "Closed" };
-  const at = { mission: 2, office: 3, changes: 3, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
+  const noDirector = !evDirectors(c).length;
+  const order = ["submitted", "checks", "director", "mission", "approved", "eventday", "closeout", "closed"];
+  const labels = { submitted: "Submitted", checks: "Auto checks", director: "Director review", mission: "Executive review", approved: "Approved", eventday: "Event day", closeout: "Close-out", closed: "Closed" };
+  const at = { director: 2, mission: 3, changes: 2, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
   const stages = order.map((k, i) => {
     let cls = i < at ? "done" : i === at ? "now" : "";
-    if (k === "mission" && !mission) cls += " skip";
+    if (k === "director" && noDirector) cls += " skip";
     if (k === "eventday" && c.status === "approved" && c.date <= TODAY) cls = "now";
-    return `<div class="stage ${cls}"><div class="bar"></div>${labels[k]}${k === "mission" && !mission ? " (skipped)" : ""}</div>`;
+    return `<div class="stage ${cls}"><div class="bar"></div>${labels[k]}${k === "director" && noDirector ? " (skipped)" : ""}</div>`;
   }).join("");
   const r = room(c.room);
   const linked = c.linkedPOs.map(getCard).filter(Boolean);
   const spent = linked.filter((p) => ["paid", "to_pay"].includes(p.status)).reduce((a, p) => a + total(p), 0);
   const actions = [];
-  if (c.status === "office" && has("office")) actions.push(`<button class="btn primary" data-act="approve" type="button">Approve</button><button class="btn" data-act="changes" type="button">Request changes</button><button class="btn danger" data-act="deny" type="button">Deny</button>`);
-  if (c.status === "mission" && has("executive")) actions.push(`<button class="btn primary" data-act="missionOk" type="button">Aligned with the mission · send to office</button><button class="btn" data-act="missionAsk" type="button">Ask a question</button><button class="btn danger" data-act="missionNo" type="button">Not aligned · deny</button>`);
+  if (canReviewEv(c)) actions.push(`<button class="btn primary" data-act="approve" type="button">${c.status === "director" ? "Aligned with the mission · send to the executive" : "Aligned with the mission · approve"}</button><button class="btn" data-act="changes" type="button">Request changes</button><button class="btn danger" data-act="deny" type="button">Not aligned · deny</button>`);
   if (c.status === "changes" && c.owner === S.me) actions.push(`<button class="btn primary" data-act="edit" type="button">Edit and resubmit</button>`);
   if (c.status === "approved" && !c.recur && (c.owner === S.me || has("office"))) actions.push(`<button class="btn" data-act="held" type="button">Mark event as held</button>`);
   if (c.status === "approved" && c.owner === S.me) actions.push(`<button class="btn" data-act="linkPO" type="button">Add a purchase request</button>`);
-  const conflictNote = c.status === "office" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
+  const conflictNote = c.status === "mission" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
   const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question/.test(l.text));
   return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / <span class="mono">${c.id}</span></div>
   <div class="head"><div><h1>${esc(c.title)}</h1><p class="lead">${esc(c.committee)} · owned by ${esc(nameOf(c.owner))} · ${c.recur ? `${esc(recurText(c.recur))}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))} · ${esc(r.name)}</p></div>${statusPill(c)}</div>
@@ -2091,7 +2090,7 @@ function vSettings() {
       ${PILLARS.map((x) => `<tr><td><strong>${esc(x.name)}</strong><div class="small muted mono">portal-pillar-${groupSlug(x.name)}@</div></td><td>${esc(nameOf(x.owner))}</td><td>${x.teams.map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div>
       <div class="panel-b small muted">A director sees those committees' requests and can approve at the chair step alongside the chair, but never Social &amp; Welfare's, their own, or finance and executive steps.</div></div>
     <div class="panel"><div class="panel-h"><h2>Role groups</h2><span class="small muted">portal-role-…@ groups</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Unlocks</th><th>Members</th></tr></thead><tbody>
-      ${[["office", "Event review, rentals, run sheet; submits for any committee"], ["finance", "Finance review, payment, QuickBooks, S&W aid; submits for any committee"], ["executive", "Executive offices (Head Imam, Shura chair, CEO): mission review, executive approvals. One person can hold several"], ["admins", "Sees everything and this page; never approves or pays"]].map(([r, u]) => `<tr><td class="mono">${ROLE_GROUP[r]}</td><td>${esc(u)}</td><td>${Object.keys(PEOPLE).filter((k) => k !== "admin" && PEOPLE[k].roles.includes(r)).map((k) => esc(nameOf(k))).join(", ") || '<span class="muted">Admins</span>'}</td></tr>`).join("")}
+      ${[["office", "Rentals, run sheet; submits for any committee"], ["finance", "Finance review, payment, QuickBooks, S&W aid; submits for any committee"], ["executive", "Executive offices (Head Imam, Shura chair, CEO): mission review, executive approvals. One person can hold several"], ["admins", "Sees everything and this page; never approves or pays"]].map(([r, u]) => `<tr><td class="mono">${ROLE_GROUP[r]}</td><td>${esc(u)}</td><td>${Object.keys(PEOPLE).filter((k) => k !== "admin" && PEOPLE[k].roles.includes(r)).map((k) => esc(nameOf(k))).join(", ") || '<span class="muted">Admins</span>'}</td></tr>`).join("")}
       <tr><td class="mono">portal-role-beta@</td><td>During the beta, the only people (with admins) who can sign in</td><td class="muted">Testers</td></tr></tbody></table></div></div>
   <div class="panel"><div class="panel-h"><h2>Committees and teams</h2><span class="small muted">From Google Groups. People are changed in Google Admin, not here</span></div>
     <div class="panel-b small muted">Each is a group named portal-team-…@islam1.org. In the group, the Owner is the chair, a Manager is the vice chair (the backup approver), and Members are members. A role is per team: chairing one never carries over to another. The portal picks up changes within 15 minutes.</div>
@@ -2487,7 +2486,7 @@ function orgHealth(days = 30) {
   const end = addDays(TODAY, days), since = addDays(TODAY, -days);
   const window = (c) => { const out = []; for (let d = TODAY; d <= end; d = addDays(d, 1)) if (occursOn(c, d)) out.push(d); return out; };
   const evLive = S.cards.filter((c) => ["approved", "closeout"].includes(c.status)).map((c) => ({ c, dates: window(c) })).filter((x) => x.dates.length);
-  const evPending = S.cards.filter((c) => ["submitted", "office", "mission", "changes"].includes(c.status));
+  const evPending = S.cards.filter((c) => ["submitted", "director", "mission", "changes"].includes(c.status));
   const rentals = S.rentals.filter((r) => r.status === "approved" && r.date >= TODAY && r.date <= end);
   const cases = (team) => {
     const ts = S.tickets.filter((t) => tkTeam(t) === team && t.itype !== "Sub-task");
@@ -3556,8 +3555,9 @@ function assetDetail(a) {
 /* Demo guide                                                          */
 /* ------------------------------------------------------------------ */
 const STEPS = [
-  { as: "bilal", view: "newEvent", t: "Request an event", p: `${fn("bilal")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; the IAR office is notified.`, reset: () => (S.draft = null) },
-  { as: "hana", view: "events", arg: "review", t: "The office approves", p: `${fn("hana")} in the IAR office sees it under Needs review, with the checks already run. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("bilal")} is notified.` },
+  { as: "bilal", view: "newEvent", t: "Request an event", p: `${fn("bilal")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; every event gets mission review, so ${fn("tara")}, the director over Youth, is notified.`, reset: () => (S.draft = null) },
+  { as: "tara", view: "events", arg: "review", t: "The director reviews it", p: `${fn("tara")} sees it under Needs review, with the checks already run. Open Youth Game Night and approve it as aligned with the mission. It goes on to the executive, who are notified.` },
+  { as: "yasir", view: "events", arg: "review", t: "The executive approves", p: `${fn("yasir")} is in the executive group, and any executive can give the final approval. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("bilal")} is notified.` },
   { as: "sara", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
   { as: "bilal", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("bilal")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
   { as: "sara", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
@@ -3574,8 +3574,8 @@ const STEPS = [
   { as: "idris", view: "runsheet", t: "The daily run sheet", p: `${fn("idris")} is on Facility Maintenance, so he sees one page of what's happening where for each day, built from approved events, with the setup each one needs. The Safety & Security team logs its room checks back to each event card.` },
   { as: "bilal", view: "card", arg: "EV-0998", t: "Close out an event", p: `After the food drive briefing, ${fn("bilal")} adds attendance. Actual spend comes from the linked purchase, and room condition comes from security.` },
   { as: "bilal", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurEnd: recurMax(nextDow(TODAY, 2, 10)), description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week and Repeats until is filled with the latest allowed date, 3 months out. Try a later date: it is rejected, since a series can't pass 3 months. Every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
-  { as: "bilal", view: "card", arg: "EV-1022", t: "Renew a series", p: `The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. ${fn("hana")} (office) approves the renewal like any request.` },
-  { as: "yasir", view: "card", arg: "EV-1053", t: "Mission review, only when needed", p: `The Interfaith Open House has outside speakers and 200 guests, so it needs mission review first, and ${fn("yasir")} is notified. Routine events skip this step.` },
+  { as: "bilal", view: "card", arg: "EV-1022", t: "Renew a series", p: `The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. The renewal goes through mission review like any request.` },
+  { as: "yasir", view: "card", arg: "EV-1053", t: "No director? Straight to the executive", p: `Outreach isn't in a pillar, so the Interfaith Open House skips the director step and ${fn("yasir")} is notified directly. The checks point out what to look at closely: outside speakers, a new program and 200 guests.` },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: `No IAR account needed. Send the request, then switch to ${fn("hana")} and open Facility Rentals to review it against the same calendar.` },
   { as: "yasir", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
   { as: "bilal", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: `${fn("bilal")} chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself.` },
@@ -3707,18 +3707,20 @@ document.addEventListener("click", (e) => {
 function eventAction(a) {
   const c = getCard(S.arg); const note = (document.getElementById("actNote")?.value || "").trim();
   const prevStatus = c.status;
-  if (a === "approve") {
+  if (["approve", "changes", "deny"].includes(a) && !canReviewEv(c)) return toast("This step is waiting on someone else.");
+  if (a === "approve" && c.status === "director") {
+    c.status = "mission";
+    log(c, "Mission review as director: approved. Sent to the executive" + (note ? `. Note: ${note}` : ""));
+    toast("Sent to the executive");
+  } else if (a === "approve") {
     const ch = runChecks(c, c.owner);
     c.status = "approved"; c.tasks = buildTasks(c, {});
-    log(c, "Approved" + (worst(ch) === "bad" ? " with a recorded override of the room conflict" : "") + ". Room hold confirmed on the IAR calendar" + (note ? `. Note: ${note}` : ""));
+    log(c, "Mission review: approved" + (worst(ch) === "bad" ? " with a recorded override of the room conflict" : "") + ". Room hold confirmed on the IAR calendar" + (note ? `. Note: ${note}` : ""));
     toast("Approved. Team tasks unlocked and the room is confirmed.");
   } else if (a === "changes") {
     c.status = "changes"; log(c, "Requested changes: " + (note || "Please adjust the time or room."));
     toast("Sent back to " + nameOf(c.owner));
-  } else if (a === "deny") { c.status = "denied"; log(c, "Denied" + (note ? `: ${note}` : "")); toast("Denied. The room hold was released."); }
-  else if (a === "missionOk") { c.status = "office"; log(c, "Mission review: aligned. Sent to the office" + (note ? `. ${note}` : "")); toast("Sent to the IAR office"); }
-  else if (a === "missionAsk") { log(c, "Question: " + (note || "Who are the outside speakers?")); toast("Question sent to " + nameOf(c.owner)); }
-  else if (a === "missionNo") { c.status = "denied"; log(c, "Mission review: not aligned" + (note ? `. ${note}` : "")); toast("Denied after mission review"); }
+  } else if (a === "deny") { c.status = "denied"; log(c, "Mission review: not aligned, denied" + (note ? `. ${note}` : "")); toast("Denied. The room hold was released."); }
   else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurEnd: c.recur ? c.recur.end : "", renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers, brief: c.brief, avNeeds: c.avNeeds })); return go("newEvent"); }
   else if (a === "renew") {
     const r = c.recur, next = c.renewedBy && getCard(c.renewedBy);
