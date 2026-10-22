@@ -204,7 +204,11 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 
 .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13.5px; }
 .kv dt { color: var(--ink-2); }
-.kv dd { margin: 0; }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+/* Question-and-answer lists: the question sits above its answer, so long questions never squeeze the answer. */
+.kv.stacked { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.kv.stacked dd { margin-bottom: 10px; }
+.kv.stacked dd:last-child { margin-bottom: 0; }
 
 .task { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
 .task:first-child { border-top: 0; padding-top: 0; }
@@ -1957,7 +1961,7 @@ function vMKCard(r) {
     <div class="fld" style="max-width:520px"><label for="mkNote">${r.owner === S.me && r.status === "changes" ? "Your answer" : "Note to include (optional)"}</label><input type="text" id="mkNote" placeholder="${r.owner === S.me && r.status === "changes" ? "Answer marketing's question" : "e.g. Which size: banner or poster?"}"></div></div>` : ""}
   <div class="grid2">
     <div class="stack">
-      <div class="panel"><div class="panel-h"><h2>The request</h2></div><div class="panel-b"><dl class="kv">${t.fields.map(ans).join("")}${linkRow("Files", r.files)}${kvRow("Comments", r.notes, true)}</dl></div></div>
+      <div class="panel"><div class="panel-h"><h2>The request</h2></div><div class="panel-b"><dl class="kv stacked">${t.fields.map(ans).join("")}${linkRow("Files", r.files)}${kvRow("Comments", r.notes, true)}</dl></div></div>
       <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${r.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div>
     </div>
     <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
