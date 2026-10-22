@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
-import { cardsHeldBy } from "@/lib/purchases/settings";
+import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
 import { isPurchaseCard, permission } from "@/lib/purchases/workflow";
-import { resubmitPurchase } from "../../actions";
+import { fundsFor, resubmitPurchase } from "../../actions";
 import PurchaseForm from "../../PurchaseForm";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   if (!permission(card, { email: viewer.email, name: viewer.name, roles: viewer.actingRoles }, "resubmit").ok) redirect(`/purchases/${id}`);
   const p = card.purchase;
   const vendors = await store.listVendors();
+  const ctx = await purchaseContext();
   return (
     <>
       <p className="crumb">
@@ -28,7 +29,8 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
       <PurchaseForm
         action={resubmitPurchase.bind(null, id)}
         requesterName={viewer.name}
-        cards={cardsHeldBy(viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
+        cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
+        funds={await fundsFor(viewer, ctx)}
         vendors={vendors.map((v) => ({ name: v.name, w9OnFile: v.w9OnFile }))}
         existingFiles={p.attachments.map((a) => a.name)}
         submitLabel="Resubmit"

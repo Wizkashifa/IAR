@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["src/lib/purchases/purchases.test.ts", "src/lib/portal.test.ts"]
+  "files": ["src/lib/purchases/purchases.test.ts", "src/lib/portal.test.ts", "src/lib/teams.test.ts"]
 }

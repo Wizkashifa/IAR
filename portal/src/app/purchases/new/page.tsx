@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
-import { cardsHeldBy } from "@/lib/purchases/settings";
-import { createPurchase } from "../actions";
+import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
+import { createPurchase, fundsFor } from "../actions";
 import PurchaseForm from "../PurchaseForm";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function NewPurchase() {
   const viewer = await requireViewer();
   const vendors = await (await cardStore()).listVendors();
+  const ctx = await purchaseContext();
   return (
     <>
       <p className="crumb">
@@ -20,7 +21,8 @@ export default async function NewPurchase() {
       <PurchaseForm
         action={createPurchase}
         requesterName={viewer.name}
-        cards={cardsHeldBy(viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
+        cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
+        funds={await fundsFor(viewer, ctx)}
         vendors={vendors.map((v) => ({ name: v.name, w9OnFile: v.w9OnFile }))}
         submitLabel="Submit request"
       />

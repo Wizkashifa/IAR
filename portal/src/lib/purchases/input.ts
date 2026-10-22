@@ -46,6 +46,8 @@ export type InputContext = {
   cards: { last4: string; fund: string }[];
   /** Saved vendors, to decide whether a W-9 is needed. */
   vendors: { name: string; w9OnFile: boolean }[];
+  /** Funds this person may charge (their committees and teams'). Card receipts follow the card's fund. Unset: any fund. */
+  funds?: string[];
 };
 
 export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments"> } | { ok: false; errors: string[] };
@@ -81,6 +83,7 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
     if (held) card = { last4: held.last4, statementMonth: month };
   }
   if (!FUNDS.includes(fund)) errors.push("Choose the fund or committee this is charged to.");
+  else if (kind !== "card" && ctx.funds && !ctx.funds.includes(fund)) errors.push("You can only charge the funds of committees and teams you're on. Ask a member of that committee to submit it.");
 
   // Payee and check delivery: not for card receipts.
   let payee: string | undefined;

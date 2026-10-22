@@ -133,7 +133,7 @@ async function ensureSeeded() {
   if (mem.seeded) return;
   mem.seeded = true;
   const { samplePurchases, sampleVendors } = await import("./purchases/samples");
-  for (const c of samplePurchases()) {
+  for (const c of await samplePurchases()) {
     mem.cards.set(c.id, c);
     const n = Number(c.id.split("-")[1]);
     if (n >= mem.next.PO) mem.next.PO = n + 1;

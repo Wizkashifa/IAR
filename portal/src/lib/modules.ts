@@ -153,12 +153,12 @@ export const MODULES: PortalModule[] = [
   {
     id: "admin",
     name: "Portal Settings",
-    summary: "Rooms, access groups, policy rules and fees.",
+    summary: "Committees and teams from Google Groups, the fund each team charges, and IAR's cards.",
     visibleTo: ["admins"],
     phase: 1,
-    status: "planned",
-    href: "/m/admin",
-    plannedFeatures: ["Rooms and their calendars", "Group-to-role mapping", "Policy rules and fees as data"],
+    status: "live",
+    href: "/admin",
+    plannedFeatures: ["Rooms and their calendars", "Policy rules and fees as data"],
   },
 ];
 

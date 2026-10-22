@@ -110,7 +110,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified. Facilities is a paid team that works in Jira today; this module brings that work into the portal so requesters can see how their request is progressing | 2 |
 | Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
 | Budget | Chairs (their cost centers), finance, executive, Shura (read) | Built on the FY2026–27 budget (July 1–June 30): IAR General Fund cost centers plus the Page Road campus. Sankey of funding source → cost center → spent, committed, available, with a table. A Revenue tab sorts everything received into three kinds: **unrestricted gifts** to IAR (General Fund), **designated donations** to a committee (e.g. Da'wah) and **program revenue** earned by a committee (e.g. Youth); Page Road tracks tuition, endowment and donations against its plan. Finance imports a QuickBooks export (CSV now, QuickBooks Online connection later); rows are sorted by account and class, and anything without a committee waits for finance to assign it. Expense rows are matched to purchase requests | 3 |
-| Shura / Board dashboard | Shura / board members (group `portal-shura@`) | Organizational health at a glance, counted live from the other modules: events in the next 30 days (and expected attendance, items awaiting review, open close-outs), maintenance cases by kind (repair, preventive, improvement) and IT cases, with late and urgent counts and preventive schedules kept on time; purchase requests in progress and how long they wait; community care as totals only; a short money summary (General Fund cushion, received and spent against the year, committees ahead of pace). A "Needs the Shura" list gathers mission reviews, capital projects, policy drafts and overdue policy reviews, and open Shura requests; a key-dates list covers insurance, inspections, the books review and the annual meeting. Money detail lives in Budget (a Year to date tab), not here. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
+| Shura / Board dashboard | Shura / board members (team group `portal-team-shura@`) | Organizational health at a glance, counted live from the other modules: events in the next 30 days (and expected attendance, items awaiting review, open close-outs), maintenance cases by kind (repair, preventive, improvement) and IT cases, with late and urgent counts and preventive schedules kept on time; purchase requests in progress and how long they wait; community care as totals only; a short money summary (General Fund cushion, received and spent against the year, committees ahead of pace). A "Needs the Shura" list gathers mission reviews, capital projects, policy drafts and overdue policy reviews, and open Shura requests; a key-dates list covers insurance, inspections, the books review and the annual meeting. Money detail lives in Budget (a Year to date tab), not here. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
 | Later | By group | Onboarding/offboarding checklist (groups, cards, keys, Drive), key checkout, volunteer signup, event templates | 4+ |
 
 ## Library
@@ -121,10 +121,10 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 
 | Shared drive | Who has access (group → role) | Contents |
 | --- | --- | --- |
-| IAR Shura | `portal-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
-| IAR Social & Welfare | `portal-sw@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
+| IAR Shura | `portal-team-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
+| IAR Social & Welfare | `portal-team-social-welfare@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
 | IAR Policies | All staff group → Viewer; Shura and executive → Contributor | Approved policies: rooms, purchasing, rentals, volunteer, HR |
-| IAR Finance | `portal-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
+| IAR Finance | `portal-role-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
 | IAR Operations (and per-team drives if needed) | Each team's group → Contributor | Run sheets, contracts, event files, templates |
 
 Exact drives and role levels are open (see questions below).
@@ -145,7 +145,7 @@ Exact drives and role levels are open (see questions below).
 **Technical notes**
 - Sign-in requests the Drive scope so the portal can act as the user. A service account (already planned) is used only for setup tasks such as creating folders and attaching card files.
 - The database holds file IDs, tags, owners and review dates, never file contents. W-9s and other tax-ID documents stay only in the restricted drive, as before.
-- Reusing `portal-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
+- Reusing `portal-team-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
 
 **Risks**
 - Group-based access is only as good as group hygiene. Review membership of restricted groups each quarter and on every offboarding (ties into the onboarding/offboarding checklist in Later).
@@ -219,7 +219,7 @@ The calendar stays the booking record. The database holds everything about the c
 | Line item, vendor, account | The purchase request data model, unchanged (see purchase-requests-plan.md) |
 | Comment, attachment, audit log | Every change, who made it and when; files kept in the Shared Drive |
 
-**Access groups to create** (names are suggestions): `portal-staff`, `portal-committee-chairs`, `portal-office`, `portal-finance`, `portal-cardholders`, `portal-marketing`, `portal-av`, `portal-facilities`, `portal-security`, `portal-sw`, `portal-shura`, `portal-executive`, `portal-admins`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
+**Groups** (see "Committees and teams" below, and `docs/setup.md` §6): one `portal-team-*` group per committee or team, one `portal-pillar-*` group per director, and the role groups `portal-role-office`, `-finance`, `-executive`, `-admin` and `-beta`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
 
 ## Roadmap
 
@@ -294,6 +294,28 @@ Committees and teams work the same way: each is a Google Group, everyone belongs
 Administration · Al-Furqan School · Al-Iman School · An-Noor School · Cemetery · Cleaning · Construction · Da'wah · Education · Events Committee · Facility Maintenance · Fundraising · Health & Wellness · IAR Cafe · Imam Office · IT Services · Marketing · Older Adult Community · Outreach · Page Road · Safety & Security · Shura · Social & Welfare · Sports & Recreation · Volunteer · Women's Committee · Youth
 
 Budget and financial reporting are not part of the initial launch, so this list doesn't follow the budget's cost centers (which combine Marketing & Fundraising, for example). Matching committees to budget lines is left for when Budget is designed.
+
+**Nobody edits code or files to assign people.** Everything about people is set in Google Admin → Groups. The two remaining choices, which fund each team charges and IAR's cards, are made in Portal Settings.
+
+- **One group per team** (`portal-team-<slug>@`; for example "Women's Committee" → `portal-team-women@`). In the group:
+  - The **Owner is the chair**. Several Owners are co-chairs, and any of them can approve.
+  - A **Manager is the vice chair**: the backup approver when the chair submits or is away.
+  - **Members** are members.
+- **Roles are per team.** A chair role never carries over to another team: someone can chair Youth and be a plain member of Education. Each request belongs to one committee, picked when submitting, and only that committee's chairs, vice chair or director act on it.
+- **Approval order** for a committee's request:
+  1. its chair; if the requester is a chair, another chair
+  2. the vice chair
+  3. the director
+  4. finance review
+
+  Nobody approves their own request.
+- **Directors.** Each pillar is a group (`portal-pillar-<slug>@`). Its Owner is the director, and its members are the team groups it covers.
+  - A director sees those committees' requests and can approve at the chair step alongside the chair, recorded "as director".
+  - They can submit for those committees.
+  - They never act on Social & Welfare's restricted requests, their own requests, or finance, payment or executive steps.
+- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta. Executive is the Head Imam, the Shura chair and the CEO.
+- **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Safety & Security, Social & Welfare or Shura gives that team's queue or module.
+- **Funds.** Members charge their own teams' funds; the office and finance can charge any fund. Each team's fund is set in Portal Settings, which suggests one when the names match.
 
 ## Marketing questions
 

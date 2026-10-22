@@ -8,15 +8,25 @@ import { actorFor } from "@/lib/people";
 import { purchaseNotices } from "@/lib/purchases/notices";
 import { checkFiles, filesFrom, saveAttachments } from "@/lib/purchases/drive";
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
-import { cardsHeldBy, routingSettings } from "@/lib/purchases/settings";
+import { FUNDS } from "@/lib/purchases/accounts";
+import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
+import { requestableFunds } from "@/lib/teams";
 import * as wf from "@/lib/purchases/workflow";
 
 export type FormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
-const directorsFor = (c: wf.PurchaseCard) => ({ directors: routingSettings().approversFor(c.purchase.fund).directors });
+const directorsFor = (ctx: PurchaseContext, c: wf.PurchaseCard) => {
+  const a = ctx.routing.approversFor(c.purchase.fund);
+  return { directors: a.directors, chairs: a.chairs };
+};
 
-async function parseForm(viewer: Viewer, form: FormData) {
+/** Funds this person may charge: their teams' and the ones they direct; office and finance any. */
+export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<string[]> {
+  return requestableFunds(personFunds(ctx, viewer.email).request, viewer.actingRoles, FUNDS);
+}
+
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keepFund?: string) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -27,8 +37,10 @@ async function parseForm(viewer: Viewer, form: FormData) {
   const vendors = await store.listVendors();
   const parsed = parsePurchaseInput(raw, {
     requesterName: viewer.name,
-    cards: cardsHeldBy(viewer.email).map((c) => ({ last4: c.last4, fund: c.fund })),
+    cards: cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund })),
     vendors,
+    // Editing a returned request may keep its fund even if the person has since left that committee.
+    funds: [...(await fundsFor(viewer, ctx)), ...(keepFund ? [keepFund] : [])],
   });
   const files = filesFrom(form, "attachments");
   const fileErrors = checkFiles(files);
@@ -39,15 +51,16 @@ async function parseForm(viewer: Viewer, form: FormData) {
 export async function createPurchase(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
-  const r = await parseForm(viewer, form);
+  const ctx = await purchaseContext();
+  const r = await parseForm(viewer, form, ctx);
   if (!r.ok) return { errors: r.errors };
 
   const store = await cardStore();
   const now = nowIso();
-  const routed = wf.submit(wf.newPurchase(r.details, viewer.email, now), actor, routingSettings(), now);
+  const routed = wf.submit(wf.newPurchase(r.details, viewer.email, now), actor, ctx.routing, now);
   const { id: _blank, ...toCreate } = routed;
   const created = (await store.create(toCreate, "PO")) as wf.PurchaseCard;
-  await deliver(purchaseNotices(null, created, actor, directorsFor(created)), actor.email);
+  await deliver(purchaseNotices(null, created, actor, directorsFor(ctx, created)), actor.email);
 
   if (r.files.length) {
     try {
@@ -76,7 +89,8 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   const allowed = wf.permission(card, actor, "resubmit");
   if (!allowed.ok) return { errors: [allowed.reason] };
 
-  const r = await parseForm(viewer, form);
+  const ctx = await purchaseContext();
+  const r = await parseForm(viewer, form, ctx, card.purchase.fund);
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
   let attachments = card.purchase.attachments;
@@ -93,9 +107,9 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     attachments,
   };
   try {
-    const next = wf.resubmit(card, edited, actor, routingSettings(), now);
+    const next = wf.resubmit(card, edited, actor, ctx.routing, now);
     await store.save(next, card.updatedAt);
-    await deliver(purchaseNotices(card, next, actor, directorsFor(next)), actor.email);
+    await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
   } catch (err) {
     return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
@@ -117,7 +131,8 @@ export async function actOnPurchase(form: FormData): Promise<void> {
     redirect(`/purchases/${id}?error=${encodeURIComponent("This request changed while you were looking at it. Check it again before acting.")}`);
   }
 
-  const s = routingSettings();
+  const ctx = await purchaseContext();
+  const s = ctx.routing;
   const now = nowIso();
   let error: string | null = null;
   let ok = action as string;
@@ -154,7 +169,7 @@ export async function actOnPurchase(form: FormData): Promise<void> {
         throw new wf.WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
-    await deliver(purchaseNotices(card, next, actor, directorsFor(next)), actor.email);
+    await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
     // Paying a vendor for the first time puts them in the registry.
     if (action === "pay" && card.purchase.kind === "pay" && card.purchase.payee) {
       const vid = vendorId(card.purchase.payee);

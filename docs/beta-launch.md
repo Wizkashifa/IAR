@@ -6,7 +6,7 @@ How to put the portal on IAR's Google Cloud for a small group of testers. Writte
 - Everything is created under the **islam1.org** Google organization: IAR's Cloud project, IAR's Workspace. Never use a personal Google account or project, and never deploy anywhere except Cloud Run in IAR's project.
 - **Never create or download a service account key.** The portal signs its own tokens.
 - **Stop and ask Kashif before** turning on billing, buying a Workspace license, adding domain-wide delegation scopes, or anything that emails people. These cost money or widen access.
-- **This repo is public.** Never commit people's names, emails or roles, card numbers, tax IDs or passwords. Who approves what lives in the roster file (`roster.json`), which goes only into Secret Manager. Card entries hold only the last four digits.
+- **This repo is public.** Never commit people's names, emails or roles, card numbers, tax IDs or passwords. Who approves what lives in Google Groups (setup §6); which fund each team charges and IAR's cards live in Portal Settings, in Firestore. Card entries hold only the last four digits.
 - Keep the old Requisition Form running during the beta. Nobody loses a way to get paid while we test.
 
 ## What's in the beta
@@ -49,11 +49,16 @@ Each step points to the matching section of setup.md. Do them in order and run t
    Check: `gcloud iam service-accounts keys list --iam-account $SA --managed-by=user` is empty.
 4. **Group lookups** (setup §4): the read-only directory user and its domain-wide delegation entry. *Stop and ask before adding the delegation.*
 5. **Google sign-in** (setup §5): an Internal OAuth consent screen and a web client; secrets go in Secret Manager.
-6. **Access groups** (setup §6), plus **`portal-beta@islam1.org`**. Members come from Kashif's group sheet. Add each tester to `portal-beta@` directly (nested groups aren't checked). Put each tester in their role groups too: chair → `portal-committee-chairs@`, finance → `portal-finance@`, and so on. Two or three people in `portal-admins@`, who always get in.
-7. **Purchase Requests** (setup §7): the PO Records Shared Drive and folder ID, and the restricted W-9 drive (without the service account). Kashif provides `roster.json` and a sheet of who goes in which group. First check every address marked as guessed in Admin console → Directory → Users, and fix any that don't exist. Then upload the roster as the `portal-roster` secret. Don't copy it into the repo.
+6. **Groups** (setup §6). Members come from Kashif's group sheet.
+   - Create the 27 `portal-team-*` groups with their display names. Make each chair an **Owner** and each vice chair a **Manager**; add members as Members.
+   - Create one `portal-pillar-*` group per director. Make the director its Owner, and add the team groups they oversee as members.
+   - Create the role groups: `portal-role-office@`, `-finance@`, `-executive@` (the Head Imam, the Shura chair and the CEO) and `-admin@` (two or three people, who always get in).
+   - Create **`portal-role-beta@islam1.org`** and add each tester to it directly; nested groups aren't checked.
+   - In every team and pillar group, set "Who can manage members" to owners only.
+7. **Purchase Requests** (setup §7): the PO Records Shared Drive and folder ID, and the restricted W-9 drive (without the service account). Before adding people to groups, check every address marked as guessed in Kashif's sheet in Admin console → Directory → Users, and fix any that don't exist. After the first deploy, an admin opens Portal Settings, picks a fund for every team marked "Needs a fund", and adds IAR's cards.
 8. **Email** (setup §8): the sending mailbox, the gmail.send scope and group posting permissions. *Stop and ask before buying the license and before adding the scope.*
 9. **Room calendars, groundwork for Events** (below). The beta doesn't use these yet, but doing it now means Events can be switched on without another round in the Admin console.
-10. **Deploy** (setup §9). Add `PORTAL_ACCESS_GROUP=portal-beta@islam1.org` to `--set-env-vars`. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL, then deploy again.
+10. **Deploy** (setup §9). Add `PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org` to `--set-env-vars`. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL, then deploy again.
 11. **Smoke test** (below), then invite the testers.
 
 ## Room calendars (groundwork for Events)
@@ -69,23 +74,25 @@ Check: in Google Calendar, signed in as an admin, each room calendar shows the s
 
 ## Smoke test after deploy
 
-Use two tester accounts, A (requester) and B (chair of the fund A uses), plus one finance tester. Every step of a request needs someone in `portal-beta@`; anyone else can't sign in to act on it. With the first beta group, that means the bookkeeper in finance and a tester as approver for each fund the requesters use.
+Use two tester accounts, A (a member of a team) and B (that team's chair, an Owner of its group), plus one finance tester. Every step of a request needs someone in `portal-role-beta@`; anyone else can't sign in to act on it. With the first beta group, that means the bookkeeper in finance and a tester as approver for each fund the requesters use.
 
-- [ ] Someone **not** in `portal-beta@` signs in and sees "open to a small group of testers".
+- [ ] Someone **not** in `portal-role-beta@` signs in and sees "open to a small group of testers".
+- [ ] Portal Settings lists all 27 teams with their chairs, and every team has a fund.
+- [ ] A's purchase form offers only A's teams' funds.
 - [ ] A submits a $25 reimbursement with a receipt. The receipt lands in the PO Records drive under `<year> / PO-12001 · <fund>`.
 - [ ] B gets an email and a notification within a minute, and approves.
 - [ ] The finance group address gets the email, and the request is in the finance queue.
 - [ ] Finance returns it for changes; A gets an email.
 - [ ] Searching `12001` from the top bar finds it.
 - [ ] B turns on Out of office with tester C covering. C is emailed, sees B's waiting approvals and approves one; its history says "for B".
-- [ ] Feedback from any page reaches `portal-admins@` and shows at `/feedback`.
+- [ ] Feedback from any page reaches `portal-role-admin@` and shows at `/feedback`.
 - [ ] Cloud Run logs (`gcloud run services logs read iar-portal --region us-east1`) show no "failed" lines.
 
 Delete the test requests' Drive folders afterwards; the requests themselves stay as cancelled.
 
 ## Turning it off
 
-To pause the beta, remove the testers from `portal-beta@`; they lose access within 15 minutes. To take the portal down entirely, delete the service with `gcloud run services delete iar-portal --region us-east1`. Firestore data and Drive files stay and can be reused.
+To pause the beta, remove the testers from `portal-role-beta@`; they lose access within 15 minutes. To take the portal down entirely, delete the service with `gcloud run services delete iar-portal --region us-east1`. Firestore data and Drive files stay and can be reused.
 
 ## After the beta: facilities from Jira
 

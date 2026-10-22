@@ -3,7 +3,7 @@ import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
-import { creditCards } from "@/lib/purchases/settings";
+import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { Flash, PurchaseTable, fmtMoney, fmtMonth } from "./ui";
@@ -71,7 +71,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
       {!overseer && committeeOpen.length > 0 && (
         <>
           <h2>Your committees ({committeeOpen.length} open)</h2>
-          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, back up or direct these committees; directors can also approve them at the chair step.</p>
+          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, vice-chair or direct these committees. Co-chairs and directors can also approve them at the chair step.</p>
           <PurchaseTable cards={committeeOpen} redact={redact} showOwner empty="" />
         </>
       )}
@@ -99,7 +99,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         </>
       )}
 
-      {finance && <CardChecklist cards={recent.filter(isPurchaseCard)} />}
+      {finance && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
 
       <h2>Your requests</h2>
       <PurchaseTable cards={myPurchases} empty="You haven't submitted a purchase request yet." />
@@ -108,8 +108,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
 }
 
 /** Which IAR cards have receipts in for last month. */
-function CardChecklist({ cards }: { cards: PurchaseCard[] }) {
-  const list = creditCards();
+function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCard[] }) {
   if (list.length === 0) return null;
   const d = new Date();
   d.setUTCDate(1);

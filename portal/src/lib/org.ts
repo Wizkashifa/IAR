@@ -12,6 +12,7 @@ export const ROLES = [
   "cardholders",
   "marketing",
   "av",
+  "it",
   "facilities",
   "security",
   "sw",
@@ -28,42 +29,48 @@ export const ORG = {
   name: "Islamic Association of Raleigh",
   shortName: "IAR",
   domain,
-  /** Google Group that grants each role. "member" needs no group. */
+  /**
+   * Role groups (portal-role-<job>@): portal-wide jobs, members only. The
+   * other roles come from a person's teams (see teams.ts): a team's queue
+   * role from being on that team, "chairs" from owning any team group, and
+   * "cardholders" from the card list in Portal Settings.
+   */
   roleGroups: {
-    chairs: `portal-committee-chairs@${domain}`,
-    office: `portal-office@${domain}`,
-    finance: `portal-finance@${domain}`,
-    cardholders: `portal-cardholders@${domain}`,
-    marketing: `portal-marketing@${domain}`,
-    av: `portal-av@${domain}`,
-    facilities: `portal-facilities@${domain}`,
-    security: `portal-security@${domain}`,
-    sw: `portal-sw@${domain}`,
-    executive: `portal-executive@${domain}`,
-    /** Majlis ash-Shura and board members: dashboard and budget, read-only, plus requests to finance and the executive. */
-    shura: `portal-shura@${domain}`,
-    admins: `portal-admins@${domain}`,
-  } satisfies Record<Exclude<Role, "member">, string>,
+    office: `portal-role-office@${domain}`,
+    finance: `portal-role-finance@${domain}`,
+    /** The Head Imam, the Shura chair and the CEO: mission review and executive approvals. */
+    executive: `portal-role-executive@${domain}`,
+    admins: `portal-role-admin@${domain}`,
+  } as Partial<Record<Role, string>>,
 };
+
+/** Where email for a role's queue goes: its role group, or the team group that grants it. */
+export function roleMailbox(role: Role): string | null {
+  const g = ORG.roleGroups[role];
+  if (g) return g;
+  const team: Partial<Record<Role, string>> = { marketing: "marketing", av: "it-services", it: "it-services", facilities: "facility-maintenance", security: "safety-security", sw: "social-welfare", shura: "shura" };
+  return team[role] ? `portal-team-${team[role]}@${domain}` : null;
+}
 
 /**
  * The roles a user's own Google Groups grant, with no admin expansion. Use
  * these to decide who may act (approve, pay): a portal admin is a support
  * role and does not approve or pay anything unless also in that group.
  */
-export function directRolesFromGroups(groupEmails: string[]): Role[] {
+export function directRolesFromGroups(groupEmails: string[], fromTeams: Role[] = []): Role[] {
   const held = new Set(groupEmails.map((g) => g.toLowerCase()));
-  const roles: Role[] = ["member"];
+  const roles = new Set<Role>(["member"]);
   for (const [role, group] of Object.entries(ORG.roleGroups)) {
-    if (held.has(group.toLowerCase())) roles.push(role as Role);
+    if (group && held.has(group.toLowerCase())) roles.add(role as Role);
   }
-  return roles;
+  for (const r of fromTeams) roles.add(r);
+  return ROLES.filter((r) => roles.has(r));
 }
 
 /** Turn a user's Google Group emails into portal roles, for what they can see. */
 /**
  * During a beta, only members of this group (PORTAL_ACCESS_GROUP, e.g.
- * portal-beta@islam1.org) and portal admins can sign in. Unset: every
+ * portal-role-beta@islam1.org) and portal admins can sign in. Unset: every
  * @domain account can. Add testers to the group directly; nested groups
  * aren't checked.
  */
@@ -71,11 +78,11 @@ export function mayUsePortal(groupEmails: string[]): boolean {
   const gate = process.env.PORTAL_ACCESS_GROUP?.trim().toLowerCase();
   if (!gate) return true;
   const held = new Set(groupEmails.map((g) => g.toLowerCase()));
-  return held.has(gate) || held.has(ORG.roleGroups.admins.toLowerCase());
+  return held.has(gate) || held.has(String(ORG.roleGroups.admins).toLowerCase());
 }
 
-export function rolesFromGroups(groupEmails: string[]): Role[] {
-  const roles = directRolesFromGroups(groupEmails);
+export function rolesFromGroups(groupEmails: string[], fromTeams: Role[] = []): Role[] {
+  const roles = directRolesFromGroups(groupEmails, fromTeams);
   // Admins can see every module, for support and setup.
   if (roles.includes("admins")) return [...ROLES];
   return roles;
