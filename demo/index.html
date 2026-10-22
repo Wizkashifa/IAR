@@ -1361,10 +1361,30 @@ function vHome() {
   </div></div>`;
 }
 function itemRow(c, why) {
-  if (String(c.id).startsWith("TK-")) return tkRow(c);
+  if (String(c.id).startsWith("TK-")) why = why ?? (isDone(c) ? c.resolution || "" : c.assignee ? `Assigned to ${nameOf(c.assignee)}` : "Waiting to be picked up");
   const title = c.kind === "rental" ? `Rental: ${c.org}` : c.kind === "po" ? c.desc : c.title;
-  const sub = c.kind === "mkt" ? `${c.id} · ${MK_TYPES[c.type].label} · ${c.committee}${mkDue(c) ? ` · needed by ${fmtDate(mkDue(c))}` : ""}` : c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}${c.recur ? ` · repeats until ${fmtLong(c.recur.end)}` : ""}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
-  return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${statusPill(c)}</div></button>`;
+  const sub = c.kind === "mkt" ? `${c.id} · ${MK_TYPES[c.type].label} · ${c.committee}${mkDue(c) ? ` · needed by ${fmtDate(mkDue(c))}` : ""}` : c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}${c.recur ? ` · repeats until ${fmtLong(c.recur.end)}` : ""}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : String(c.id).startsWith("TK-") ? `${c.id} · ${TK_TEAM[tkTeam(c)].name} · ${roomName(c.room)}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
+  return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${String(c.id).startsWith("TK-") ? stPill(c) : statusPill(c)}</div></button>`;
+}
+/* ---- Module pages ---------------------------------------------------
+   Every request module's main page has the same shape: the head (name, one
+   line on what it's for, the button to start a request), an optional note,
+   work panels for people with a team job, "Your requests", then anything
+   specific to the module. Every list uses itemRow. */
+const modHead = (title, lead, btns) => `<div class="head"><div><h1>${esc(title)}</h1><p class="lead">${esc(lead)}</p></div><div class="row">${btns}</div></div>`;
+function listPanel(title, items, o = {}) {
+  const n = o.count ?? items.length;
+  const right = o.right ?? (o.queue ? (n ? `<span class="pill warn">${n}</span>` : "") : `<span class="small muted">${o.countLabel ? o.countLabel(n) : n}</span>`);
+  return `<div class="panel"><div class="panel-h"><h2>${esc(title)}</h2>${right}</div>${items.length ? `<div class="list">${items.map((c) => itemRow(c, o.why ? o.why(c) : String(c.id).startsWith("TK-") ? undefined : waitingOn(c))).join("")}</div>` : `<div class="empty">${o.empty || "Nothing here."}</div>`}</div>`;
+}
+const FINISHED = ["paid", "done", "rejected", "denied", "cancelled", "declined", "resolved", "closed"];
+const isFinished = (c) => FINISHED.includes(c.status) || (c.kind === "event" && c.status === "approved" && (c.recur ? c.recur.end : c.date) < TODAY);
+/* The person's own requests in a module: still going first, newest first within each. */
+function yourRequests(list, o = {}) {
+  const at = (c) => c.updated || c.created || c.date || "";
+  const mine = list.slice().sort((a, b) => (isFinished(a) - isFinished(b)) || (at(b) > at(a) ? 1 : -1));
+  const open = mine.filter((c) => !isFinished(c)).length;
+  return listPanel("Your requests", mine, { count: open, countLabel: (n) => `${n} open`, empty: o.empty || "You haven't asked for anything here yet.", why: o.why });
 }
 const total = (c) => c.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
 function taskPill(t) {
@@ -1373,26 +1393,18 @@ function taskPill(t) {
 }
 
 function vRequests() {
-  const mine = [...S.cards.filter((c) => c.owner === S.me), ...S.pos.filter((c) => c.owner === S.me), ...S.mreqs.filter((c) => c.owner === S.me)].sort((a, b) => (b.created > a.created ? 1 : -1));
-  return `<div class="head"><div><h1>My Requests</h1><p class="lead">Events, purchases and marketing requests you own. Each one shows who it's waiting on.</p></div>
-    <div class="row"><button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button></div></div>
-  <div class="panel">${mine.length ? `<div class="tablewrap"><table><thead><tr><th>Request</th><th>Status</th><th>Waiting on</th></tr></thead><tbody>
-    ${mine.map((c) => `<tr><td><button class="crumb" style="border:0;background:none;padding:0;cursor:pointer;text-align:left" data-card="${c.id}"><strong style="color:var(--ink)">${esc(c.kind === "po" ? c.desc : c.title)}</strong></button>
-      <div class="small muted">${c.kind === "event" ? "Event" : c.kind === "mkt" ? "Marketing" : "Purchase"} <span class="mono">${c.id}</span> · ${esc(c.committee)}${c.kind === "event" ? " · " + fmtDate(c.date) : c.kind === "mkt" ? " · " + esc(MK_TYPES[c.type].label) : " · " + money(total(c))}</div></td>
-      <td>${statusPill(c)}</td><td>${esc(waitingOn(c)) || '<span class="muted">Nothing</span>'}</td></tr>`).join("")}
-  </tbody></table></div>` : `<div class="empty">You haven't submitted anything yet. Switch to ${esc(PEOPLE.bilal.name)} to see a full list.</div>`}</div>`;
+  const mine = [...S.cards, ...S.pos, ...S.mreqs, ...S.tickets].filter((c) => c.owner === S.me);
+  return `${modHead("My Requests", "Events, purchases, marketing and IT & maintenance requests you own. Each one shows who it's waiting on.", `<button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button>`)}
+  ${yourRequests(mine, { empty: `You haven't submitted anything yet. Switch to ${esc(PEOPLE.bilal.name)} to see a full list.` })}`;
 }
 
 function vEvents() {
-  const tab = S.arg || (has("office") ? "review" : "upcoming");
-  const tabs = [["upcoming", "Upcoming"], ...(has("office") || has("executive") ? [["review", "Needs review"]] : []), ["mine", "Mine"]];
-  let list;
-  if (tab === "review") list = S.cards.filter((c) => (has("office") && c.status === "office") || (has("executive") && c.status === "mission"));
-  else if (tab === "mine") list = S.cards.filter((c) => c.owner === S.me);
-  else list = S.cards.filter((c) => ["approved", "office", "mission"].includes(c.status) && c.date >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1));
-  return `<div class="head"><div><h1>Events & Rooms</h1><p class="lead">${esc(BLURB.events)}</p></div><button class="btn primary" data-go="newEvent" type="button">New event request</button></div>
-  <div class="row">${tabs.map(([k, l]) => `<button class="btn small ${k === tab ? "primary" : ""}" type="button" data-go="events" data-arg="${k}">${l}</button>`).join("")}</div>
-  <div class="panel">${list.length ? `<div class="list">${list.map((c) => itemRow(c, waitingOn(c))).join("")}</div>` : `<div class="empty">Nothing here.</div>`}</div>
+  const review = S.cards.filter((c) => (has("office") && c.status === "office") || (has("executive") && c.status === "mission"));
+  const upcoming = S.cards.filter((c) => ["approved", "office", "mission"].includes(c.status) && (c.recur ? c.recur.end : c.date) >= TODAY).sort((a, b) => (a.date > b.date ? 1 : -1));
+  return `${modHead("Events & Rooms", BLURB.events, `<button class="btn primary" data-go="newEvent" type="button">New event request</button>`)}
+  ${has("office") || has("executive") ? listPanel("Needs your review", review, { queue: true, empty: "Nothing waiting for review." }) : ""}
+  ${yourRequests(S.cards.filter((c) => c.owner === S.me))}
+  ${listPanel("Upcoming at IAR", upcoming, { empty: "Nothing booked yet." })}
   <div class="panel"><div class="panel-h"><h2>Room calendar</h2><span class="small muted">Pick a room and date to see what's booked</span></div><div class="panel-b">${calendarPicker()}</div></div>`;
 }
 function calendarPicker() {
@@ -1731,12 +1743,13 @@ function canActPO(c) {
 }
 function vPurchases() {
   const queue = S.pos.filter(canActPO);
-  const mine = S.pos.filter((p) => p.owner === S.me);
-  return `<div class="head"><div><h1>Purchase Requests</h1><p class="lead">${esc(BLURB.purchases)}</p></div><button class="btn primary" data-go="newPO" type="button">New purchase request</button></div>
-  ${queue.length ? `<div class="panel"><div class="panel-h"><h2>${has("finance") ? "Finance queue" : "Waiting for your approval"}</h2><span class="pill warn">${queue.length}</span></div><div class="list">${queue.map((p) => itemRow(p, waitingOn(p))).join("")}</div></div>` : ""}
+  const d = directsOf(S.me);
+  const theirs = S.pos.filter((p) => d.includes(p.committee) && !restrictedPO(p) && !queue.includes(p) && p.owner !== S.me && !isFinished(p));
+  return `${modHead("Purchase Requests", BLURB.purchases, `<button class="btn primary" data-go="newPO" type="button">New purchase request</button>`)}
+  ${queue.length ? listPanel(has("finance") ? "Finance queue" : "Waiting for your approval", queue, { queue: true }) : ""}
   ${has("finance") ? cardChecklist() + owedPanel() : ""}
-  ${(() => { const d = directsOf(S.me); const open = S.pos.filter((p) => d.includes(p.committee) && !restrictedPO(p) && !queue.includes(p) && !["done", "paid", "rejected"].includes(p.status)); return d.length ? `<div class="panel"><div class="panel-h"><h2>Your committees</h2><span class="small muted">${esc(d.join(", "))}</span></div>${open.length ? `<div class="list">${open.map((p) => itemRow(p, waitingOn(p))).join("")}</div>` : '<div class="empty">No other open requests from your committees.</div>'}</div>` : ""; })()}
-  <div class="panel"><div class="panel-h"><h2>Your purchase requests</h2></div>${mine.length ? `<div class="list">${mine.map((p) => itemRow(p, waitingOn(p))).join("")}</div>` : `<div class="empty">None yet.</div>`}</div>`;
+  ${yourRequests(S.pos.filter((p) => p.owner === S.me))}
+  ${d.length ? listPanel("Your committees", theirs, { right: `<span class="small muted">${esc(d.join(", "))}</span>`, empty: "No other open requests from your committees." }) : ""}`;
 }
 /* Finance: which cards have sent last month's receipts. */
 function cardChecklist() {
@@ -1933,16 +1946,13 @@ function mkNotify(r, prev) {
 
 function vMarketing() {
   const team = has("marketing");
-  const tab = S.arg || (team ? "review" : "mine");
-  const tabs = [...(team ? [["review", "Weekly review"], ["open", "Scheduled and in progress"], ["done", "Done"]] : []), ["mine", "Mine"]];
-  const list = (tab === "review" ? S.mreqs.filter((r) => r.status === "submitted")
-    : tab === "open" ? S.mreqs.filter((r) => ["scheduled", "doing", "changes"].includes(r.status)).sort((a, b) => ((a.doneBy || "9") > (b.doneBy || "9") ? 1 : -1))
-    : tab === "done" ? S.mreqs.filter((r) => ["done", "declined"].includes(r.status))
-    : S.mreqs.filter((r) => r.owner === S.me));
-  return `<div class="head"><div><h1>Marketing Requests</h1><p class="lead">${esc(BLURB.marketing)}</p></div><button class="btn primary" data-go="newMarketing" type="button">New marketing request</button></div>
+  const byDue = (a, b) => ((a.doneBy || "9") > (b.doneBy || "9") ? 1 : -1);
+  return `${modHead("Marketing Requests", BLURB.marketing, `<button class="btn primary" data-go="newMarketing" type="button">New marketing request</button>`)}
   <div class="note info">Marketing an event? Ask for it on the event request: marketing and A/V are part of the same form.</div>
-  <div class="row">${tabs.map(([k, l]) => `<button class="btn small ${k === tab ? "primary" : ""}" type="button" data-go="marketing" data-arg="${k}">${l}</button>`).join("")}</div>
-  <div class="panel">${list.length ? `<div class="list">${list.map((r) => itemRow(r, waitingOn(r))).join("")}</div>` : `<div class="empty">${tab === "review" ? "No new requests to review this week." : "Nothing here."}</div>`}</div>`;
+  ${team ? listPanel("Weekly review", S.mreqs.filter((r) => r.status === "submitted"), { queue: true, empty: "No new requests to review this week." }) : ""}
+  ${team ? listPanel("Scheduled and in progress", S.mreqs.filter((r) => ["scheduled", "doing", "changes"].includes(r.status)).sort(byDue), { empty: "Nothing scheduled." }) : ""}
+  ${yourRequests(S.mreqs.filter((r) => r.owner === S.me))}
+  ${team ? listPanel("Recently done", S.mreqs.filter((r) => ["done", "declined"].includes(r.status)).slice(0, 5), { empty: "Nothing finished yet." }) : ""}`;
 }
 function vNewMarketing() {
   const d = S.mkDraft || (S.mkDraft = { type: null, answers: {}, committee: mkCommittees()[0], files: "", notes: "" });
@@ -3013,23 +3023,19 @@ function vTickets() {
   if (teams.length === 1) tk.team = teams[0];
   if (tk.team !== "all" && teams.length > 1 && !teams.includes(tk.team)) tk.team = "all";
   const unread = S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length;
-  const head = `<div class="head"><div><h1>IT & Maintenance</h1><p class="lead">${worker ? "Track every building and tech issue from report to fix: boards, backlog, sprints, SLAs, preventive schedules and reports." : "Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment."}</p></div>
+  if (!worker) return modHead("IT & Maintenance", "Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment.", `<button class="btn primary" type="button" data-tk2="create">Report a problem</button>`) + vTkMine();
+  const head = `<div class="head"><div><h1>IT & Maintenance</h1><p class="lead">Track every building and tech issue from report to fix: boards, backlog, sprints, SLAs, preventive schedules and reports.</p></div>
     <div class="row">${teams.length > 1 ? `<select id="tkTeam" aria-label="Team"><option value="all" ${tk.team === "all" ? "selected" : ""}>All teams</option>${teams.map((x) => `<option value="${x}" ${tk.team === x ? "selected" : ""}>${TK_TEAM[x].name}</option>`).join("")}</select>` : ""}
     <button class="btn" type="button" data-tk2="notifs" aria-label="Notifications">Notifications${unread ? ` <span class="count">${unread}</span>` : ""}</button>
-    <button class="btn primary" type="button" data-tk2="create">${worker ? "Create" : "Report a problem"}</button></div></div>`;
-  if (!worker) return head + vTkMine();
+    <button class="btn primary" type="button" data-tk2="create">Create</button></div></div>`;
   const tabs = `<div class="btabs tkt" role="tablist">${TK_TABS_W.map(([id, n]) => `<button type="button" role="tab" aria-selected="${tk.tab === id}" class="${tk.tab === id ? "on" : ""}" data-tk2="tab|${id}">${n}</button>`).join("")}</div>`;
   const body = { board: vTkBoard, list: vTkList, backlog: vTkBacklog, calendar: vTkCalendar, timeline: vTkTimeline, reports: vTkReports, schedules: vTkSchedules, settings: vTkSettings }[tk.tab] || vTkBoard;
   return head + tabs + body();
 }
 function vTkMine() {
-  const mine = S.tickets.filter((t) => t.owner === S.me).sort((a, b) => (b.updated > a.updated ? 1 : -1));
-  const watching = S.tickets.filter((t) => t.owner !== S.me && (t.watchers || []).includes(S.me));
-  const open = mine.filter((t) => !isDone(t)), done = mine.filter(isDone);
-  const tbl = (xs) => `<div class="tablewrap"><table><thead><tr><th>Request</th><th>Status</th><th>Assigned to</th><th>Updated</th></tr></thead><tbody>${xs.map((t) => `<tr><td><button class="lnk" type="button" data-card="${t.id}">${typeIcon(t)} ${esc(t.title)}</button><div class="small muted"><span class="mono">${t.id}</span> · ${esc(roomName(t.room))} · ${TK_TEAM[tkTeam(t)].name}</div></td><td>${stPill(t)}${t.resolution ? `<div class="small muted">${esc(t.resolution)}</div>` : ""}</td><td>${t.assignee ? esc(nameOf(t.assignee)) : '<span class="muted">Waiting to be picked up</span>'}</td><td class="small muted">${ago(t.updated)}</td></tr>`).join("")}</tbody></table></div>`;
-  return `<div class="panel"><div class="panel-h"><h2>Your open requests</h2><span class="small muted">${open.length} open</span></div>${open.length ? tbl(open) : `<div class="empty">Nothing open. Use <strong>Report a problem</strong> when something breaks.</div>`}</div>
-  ${watching.length ? `<div class="panel"><div class="panel-h"><h2>Requests you follow</h2></div>${tbl(watching)}</div>` : ""}
-  ${done.length ? `<div class="panel"><div class="panel-h"><h2>Resolved</h2></div>${tbl(done)}</div>` : ""}`;
+  const watching = S.tickets.filter((t) => t.owner !== S.me && (t.watchers || []).includes(S.me) && !isDone(t));
+  return `${yourRequests(S.tickets.filter((t) => t.owner === S.me), { empty: "Nothing yet. Use <strong>Report a problem</strong> when something breaks." })}
+  ${watching.length ? listPanel("Requests you follow", watching) : ""}`;
 }
 
 /* ---- Board ---- */
