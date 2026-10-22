@@ -1394,7 +1394,7 @@ function taskPill(t) {
 
 function vRequests() {
   const mine = [...S.cards, ...S.pos, ...S.mreqs, ...S.tickets].filter((c) => c.owner === S.me);
-  return `${modHead("My Requests", "Events, purchases, marketing and IT & maintenance requests you own. Each one shows who it's waiting on.", `<button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button>`)}
+  return `${modHead("My Requests", "Events, purchases, marketing and IT & maintenance requests you own. Each one shows who it's waiting on.", `<button class="btn" data-go="newEvent" type="button">New event request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-tk2="create" type="button">Report a problem</button>`)}
   ${yourRequests(mine, { empty: `You haven't submitted anything yet. Switch to ${esc(PEOPLE.bilal.name)} to see a full list.` })}`;
 }
 
