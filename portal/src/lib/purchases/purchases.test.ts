@@ -5,7 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ACCOUNTS, FUNDS } from "./accounts";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
-import { purchaseNotices } from "./notices";
+import { checkComment, withComment } from "../comments";
+import { purchaseCommentNotices, purchaseNotices } from "./notices";
 import * as wf from "./workflow";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
@@ -430,4 +431,36 @@ test("co-chairs: the named chair is emailed; the other chairs get a portal notic
   const c = eduRequest(volunteer);
   const ns = purchaseNotices(null, c, volunteer, { chairs: [chair.email, coChair.email] });
   assert.deepEqual(ns.map((n) => [to(n), n.email]), [[chair.email, true], [coChair.email, false]]);
+});
+
+// ---- Comments ---------------------------------------------------------------
+
+test("comments: must have text, under the limit; adding one bumps updatedAt and keeps the stage", () => {
+  assert.equal(checkComment("  ").ok, false);
+  assert.equal(checkComment("x".repeat(2001)).ok, false);
+  assert.ok(checkComment(" Is the invoice attached? ").ok);
+  const c = submitted();
+  const next = withComment(c, { at: T(1), by: "Chair@x.org", name: "Chair", text: "Is the invoice attached?" });
+  assert.equal(next.comments?.length, 1);
+  assert.equal(next.comments?.[0].by, "chair@x.org");
+  assert.equal(next.updatedAt, T(1));
+  assert.equal(next.purchase.stage, c.purchase.stage);
+});
+
+test("comments: the requester, whoever it waits on and earlier commenters hear in the portal, never by email", () => {
+  let c = submitted();
+  c = withComment(c, { at: T(1), by: chair.email, name: chair.name, text: "Which event is this for?" });
+  const fromChair = purchaseCommentNotices(c, chair, "Which event is this for?");
+  assert.deepEqual(fromChair.map((n) => [to(n), n.email]), [[volunteer.email, false]]);
+  c = withComment(c, { at: T(2), by: volunteer.email, name: volunteer.name, text: "Family Night" });
+  assert.deepEqual(purchaseCommentNotices(c, volunteer, "Family Night").map(to), [chair.email]);
+  // At finance, the finance group hears too.
+  const atFinance = withComment(wf.approve(submitted(), chair, settings, T(1)), { at: T(2), by: volunteer.email, name: volunteer.name, text: "Paid by check?" });
+  assert.deepEqual(purchaseCommentNotices(atFinance, volunteer, "Paid by check?").map(to), ["role:finance"]);
+});
+
+test("comments: Social & Welfare comment notices never quote the comment", () => {
+  const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
+  const ns = purchaseCommentNotices(withComment(sw, { at: T(1), by: finance.email, name: finance.name, text: "Family name is…" }), finance, "Family name is…");
+  assert.ok(ns.every((n) => !n.text.includes("Family name")));
 });

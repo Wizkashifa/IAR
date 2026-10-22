@@ -2,6 +2,7 @@ import "server-only";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { ORG } from "./org";
+import type { Comment } from "./comments";
 import type { PurchaseDetails } from "./purchases/types";
 
 /**
@@ -39,6 +40,8 @@ export type Card = {
   createdAt?: string;
   /** Purchase Requests module fields (type "purchase"). */
   purchase?: PurchaseDetails;
+  /** Comments from anyone who can open the request (see comments.ts). */
+  comments?: Comment[];
 };
 
 export const STATUS_LABEL: Record<CardStatus, string> = {
