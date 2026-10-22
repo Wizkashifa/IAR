@@ -150,13 +150,16 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .fld.wide { grid-column: 1 / -1; }
 .fld > label, .fld > .lbl { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
-.fld input[type=text], .fld input[type=email], .fld input[type=number], .fld input[type=date], .fld input[type=time], .fld select, .fld textarea {
+.fld input[type=text], .fld input[type=email], .fld input[type=url], .fld input[type=number], .fld input[type=date], .fld input[type=time], .fld select, .fld textarea {
   background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0;
 }
 .fld textarea { min-height: 64px; resize: vertical; }
 .checks-inline { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .checks-inline label { display: flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 400; color: var(--ink); }
 .hint { font-size: 12px; color: var(--ink-3); }
+.sect { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.sect > .sect-h { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 2px; }
+.ex { font-size: 12px; color: var(--ink-2); background: var(--surface-2); border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; }
 .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
 .checks { display: flex; flex-direction: column; }
@@ -403,7 +406,7 @@ body.modal-open { overflow: hidden; }
   .rail .group { display: none; }
   .rail button { white-space: nowrap; }
   .rail .soon { display: none; }
-  form.f { grid-template-columns: minmax(0, 1fr); }
+  form.f, .sect { grid-template-columns: minmax(0, 1fr); }
   .who select { max-width: 200px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -581,7 +584,7 @@ function seed() {
     arg: null,
     guide: false,
     step: 0,
-    seq: { EV: 1060, PO: 11060, RN: 210, TK: 530 },
+    seq: { EV: 1060, PO: 11060, RN: 210, TK: 530, MK: 324 },
     bookings: [
       { room: "mphAB", date: satSoon, s: toMin("10:00"), e: toMin("13:00"), label: "Youth Basketball League" },
       { room: "f3arabic", date: tueLater, s: toMin("18:30"), e: toMin("20:00"), label: "Adult Arabic class" },
@@ -594,8 +597,11 @@ function seed() {
       ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", serB, recurEnd(serB, 3)), created: now(33),
         tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 3 months"], [now(31), "hana", "Approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
       ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "bilal", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
+        brief: { subtitle: "A Weekly Halaqa for Teens", text: "Teens ages 13-18 are invited to the Youth Winter Halaqa: a weekly circle on the Seerah, with snacks and games after. Tuesdays this winter at IAR.", flyer: "Title, Tuesdays, ages 13-18, snacks provided", startOn: addDays(tueLater, -21) },
         log: [[now(5), "bilal", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "hana", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
       ev({ id: "EV-1031", title: "Youth Family Night", owner: "bilal", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
+        brief: { subtitle: "An Evening for the Whole Family", text: "Join the Youth Committee for Family Night: dinner, a youth-led nasheed set, games for kids and a short reminder. Saturday 6:00 - 9:00 PM in the MPH. Free, but please register so we have enough food.", flyer: "Title, date, 6-9 PM, MPH, dinner included, register by Thursday", regLink: "", payment: "", startOn: addDays(satSoon, -14), files: "https://drive.google.com/drive/folders/family-night-photos" },
+        avNeeds: { kinds: ["projector", "sound"], includes: ["quran", "laptop", "video"], ack: true, notes: "Slideshow of last year's photos with music at 8 PM." },
         tasks: { marketing: "doing", av: "todo", facilities: "todo", security: "todo" }, linkedPOs: ["PO-11046"],
         log: [[now(16), "bilal", "Submitted"], [now(15), "hana", "Approved. Room hold confirmed on the IAR calendar"], [now(12), "sara", "Started the flyer"]] }),
       ev({ id: "EV-0998", title: "Food drive volunteer briefing", owner: "bilal", committee: "Youth", status: "closeout", date: pastDay, start: "19:00", end: "20:30", room: "r250", attendance: 18, food: true, budget: 250, created: now(24),
@@ -604,6 +610,7 @@ function seed() {
       ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "tara", committee: "Women's Committee", status: "office", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
         log: [[now(2), "tara", "Submitted"], [now(2), "system", "Auto checks passed"]] }),
       ev({ id: "EV-1053", title: "Interfaith Open House", owner: "bilal", committee: "Outreach", status: "mission", date: satLater, start: "14:00", end: "17:00", setup: 60, teardown: 60, room: "main", attendance: 200, food: false, isPublic: true, triggers: { outsideSpeaker: true, newProgram: true }, budget: 1800, created: now(3),
+        brief: { subtitle: "Meet Your Muslim Neighbors", text: "IAR opens its doors to neighbors of every faith: a tour of the masjid, a panel of local faith leaders, and light refreshments. Saturday 2:00 - 5:00 PM at the Main Prayer Hall. All are welcome.", flyer: "Title, date and time, all faiths welcome, panel speakers' names", other: "Panel: local faith leaders on caring for our neighbors", startOn: addDays(satLater, -21) },
         log: [[now(3), "bilal", "Submitted"], [now(3), "system", "Mission review needed: new program, outside speakers, 200 expected"]] }),
     ],
     pos: [
@@ -623,6 +630,12 @@ function seed() {
         { day: 6, merchant: "Costco", acct: "Youth – Food & Hospitality", amount: 188.42 },
         { day: 20, merchant: "Target (returned items)", acct: "Youth – Supplies", amount: 41.17, flag: "refund" },
       ] }),
+    ],
+    mreqs: [
+      mkReq({ id: "MK-324", type: "badge", owner: "idris", committee: "Facility Maintenance", status: "submitted", created: now(1), answers: { first: "Maintenance", last: "Staff", title: "Facilities Technician", photo: "onsite" }, notes: "Old badge was lost.", log: [[now(1), "idris", "Submitted"]] }),
+      mkReq({ id: "MK-322", type: "announce", owner: "layla", committee: "Social & Welfare", status: "scheduled", doneBy: addDays(TODAY, 4), created: now(6), answers: { text: "The IAR Food Pantry is now open Wednesdays 10 AM - 12 PM as well as Saturdays. Families in need can visit or call the office. Volunteers are welcome too!", due: addDays(TODAY, 5) }, log: [[now(6), "layla", "Submitted"], [now(3), "sara", "Scheduled at the weekly review, to finish by " + fmtLong(addDays(TODAY, 4))]] }),
+      mkReq({ id: "MK-323", type: "highlight", owner: "bilal", committee: "Youth", status: "doing", doneBy: addDays(TODAY, 2), created: now(8), answers: { desc: "Our youth basketball team won the regional Muslim youth tournament. Shout-out to the players and their coaches.", media: "https://drive.google.com/drive/folders/youth-basketball-final", due: addDays(TODAY, 3) }, log: [[now(8), "bilal", "Submitted"], [now(3), "sara", "Scheduled at the weekly review"], [now(1), "sara", "Started"]] }),
+      mkReq({ id: "MK-319", type: "redirect", owner: "hana", committee: "Administration", status: "done", doneBy: now(10), created: now(20), answers: { from: "raleighmasjid.org/rooms", to: "https://forms.gle/room-request-example" }, log: [[now(20), "hana", "Submitted"], [now(14), "sara", "Scheduled at the weekly review"], [now(10), "sara", "Done"]] }),
     ],
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "League coach", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
@@ -652,8 +665,19 @@ function seed() {
   libSeed();
   seedPortalExtras();
 }
+/* Marketing brief and A/V needs: the event questions from the Marketing/Multimedia/AV Request Form, asked once on the event card. */
+const briefBlank = () => ({ subtitle: "", text: "", flyer: "", other: "", regLink: "", payment: "", startOn: "", files: "", notes: "" });
+const avBlank = () => ({ kinds: [], includes: [], ack: false, notes: "" });
+const AV_KINDS = { stream: "Live streaming", projector: "Projectors on projector screens", tv: "Displaying on TVs", sound: "Sound system support" };
+const AV_INCLUDES = { qa: "Q&A / panel", video: "Video with sound", speaker: "Guest speaker", laptop: "Presentation on laptop", quran: "Quran recitation" };
+const ANNOUNCE_EXAMPLE = "Girls ages 5-13 are invited to join our Saturday Girls' Program starting on September 10th. This program offers fun activities, great company and Islamic reminders. Join us on Saturdays from 2:00 - 4:30. Registration is required!";
+/* Marketing asks for 3 weeks: at least 2 weeks of marketing, plus 1-2 weeks to make the materials. */
+const MK_WEEKS = 2;
+const defaultStartOn = (date) => (date ? addDays(date, -21) : "");
 function ev(o) {
   const c = Object.assign({ kind: "event", setup: 30, teardown: 30, attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, linkedPOs: [], log: [], comments: [] }, o);
+  c.brief = { ...briefBlank(), ...(o.brief || {}) };
+  c.avNeeds = { ...avBlank(), ...(o.avNeeds || {}) };
   c.tasks = buildTasks(c, o.tasks || {});
   c.log = (o.log || []).map(([t, who, text]) => ({ t, who, text }));
   return c;
@@ -680,8 +704,8 @@ function cardPO(o) {
 function buildTasks(c, states) {
   const t = [];
   const st = (k) => states[k] || (["approved", "closeout", "closed"].includes(c.status) ? "todo" : "locked");
-  if (c.isPublic) t.push({ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing", status: st("marketing") });
-  if (c.av) t.push({ id: "av", team: "av", title: "AV: projector, mics and sound check", status: st("av") });
+  if (c.isPublic) t.push({ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing" + (c.brief && c.brief.subtitle ? `: “${c.brief.subtitle}”` : ""), status: st("marketing") });
+  if (c.av) { const k = (c.avNeeds?.kinds || []).map((x) => AV_KINDS[x].toLowerCase()); t.push({ id: "av", team: "av", title: "A/V: " + (k.length ? k.join(", ") : "support requested"), status: st("av") }); }
   if (c.setupNotes) t.push({ id: "facilities", team: "facilities", title: "Room setup: " + c.setupNotes, status: st("facilities") });
   if (c.room !== "offsite") t.push({ id: "security", team: "security", title: "Room check before and after" + (afterHours(c) ? " + after-hours coverage" : ""), status: st("security") });
   if (c.committee.startsWith("Community") && room(c.room).mph) t.push({ id: "payment", team: "finance", title: "Collect $200 fee and $100 deposit", status: st("payment") });
@@ -795,6 +819,23 @@ function runChecks(e, ownerId) {
   if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule, any speakers, and what you need from each team." : "Add a description. The office, marketing and the teams all read it.", "Program Request Form");
   else add("ok", "Description gives reviewers enough to go on.", "Program Request Form");
   if (e.isPublic && ruleOn("advert")) add("info", "Marketing unlocks after approval. No advertising before then.", "Room policy §4");
+  const MF = "Marketing request form";
+  if (e.isPublic) {
+    const b = e.brief || briefBlank(), miss = [];
+    if (!String(b.text).trim()) miss.push("the announcement text");
+    if (!String(b.flyer).trim()) miss.push("what goes on the flyer");
+    if (!b.startOn) miss.push("when to start marketing");
+    if (miss.length) out.push({ sev: "bad", block: true, text: `Marketing needs ${miss.join(", ").replace(/, ([^,]*)$/, " and $1")}.`, rule: MF });
+    else if (b.startOn > e.date) out.push({ sev: "bad", block: true, text: "Marketing has to start before the event.", rule: MF });
+    else if (daysBetween(b.startOn, e.date) < MK_WEEKS * 7) add("warn", `Marketing starts ${daysBetween(b.startOn, e.date)} days before the event. Marketing asks for at least ${MK_WEEKS} weeks.`, MF);
+    else if (b.startOn < TODAY && !["approved", "closeout", "closed"].includes(e.status)) add("warn", "The marketing start date has passed. Marketing will start as soon as the event is approved.", MF);
+    if (b.subtitle && b.subtitle.trim().split(/\s+/).length > 6) add("info", "Keep the one-line subtitle to 5 or 6 words. It goes on the flyer.", MF);
+  }
+  if (e.av) {
+    const a = e.avNeeds || avBlank();
+    if (!a.kinds.length) out.push({ sev: "bad", block: true, text: "Choose the type of A/V support you need.", rule: MF });
+    if (!a.ack) out.push({ sev: "bad", block: true, text: "Confirm you understand A/V support isn't guaranteed.", rule: MF });
+  }
   return out;
 }
 const worst = (checks) => (checks.some((c) => c.sev === "bad") ? "bad" : checks.some((c) => c.sev === "warn") ? "warn" : "ok");
@@ -806,7 +847,7 @@ const me = () => PEOPLE[S.me];
 const has = (r) => me().roles.includes(r) || (S.extra[S.me] || []).includes(r);
 const nameOf = (id) => (id === "system" ? "Portal" : id.startsWith("ext:") ? id.slice(4) : PEOPLE[id]?.name || id);
 const isMine = (c) => c.owner === S.me || (S.me === "admin" && false);
-const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.rentals.find((c) => c.id === id) || S.tickets.find((c) => c.id === id);
+const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.mreqs.find((c) => c.id === id) || S.rentals.find((c) => c.id === id) || S.tickets.find((c) => c.id === id);
 const TEAM_ROLE = { marketing: "marketing", av: "av", facilities: "facilities", security: "security", finance: "finance" };
 const TEAM_NAME = { marketing: "Marketing", av: "AV", facilities: "Facilities", security: "Security", finance: "Finance" };
 
@@ -817,7 +858,7 @@ const EV_STATUS = {
 const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], books: ["Enter in QuickBooks", "info"], done: ["Complete", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
 const RN_STATUS = { submitted: ["Office review", "info"], approved: ["Approved", "ok"], denied: ["Declined", "bad"] };
 function statusPill(c) {
-  const map = c.kind === "event" ? EV_STATUS : c.kind === "po" ? PO_STATUS : RN_STATUS;
+  const map = c.kind === "event" ? EV_STATUS : c.kind === "po" ? PO_STATUS : c.kind === "mkt" ? MK_STATUS : RN_STATUS;
   const [l, k] = map[c.status] || [c.status, ""];
   return `<span class="pill ${k}">${esc(l)}</span>`;
 }
@@ -844,6 +885,7 @@ function waitingOn(c) {
     return "";
   }
   if (c.kind === "rental") return c.status === "submitted" ? "IAR office: review" : "";
+  if (c.kind === "mkt") return { submitted: "Marketing: weekly review", changes: `${nameOf(c.owner)}: answer marketing's question`, scheduled: c.doneBy ? `Marketing: due ${fmtDate(c.doneBy)}` : "Marketing", doing: "Marketing: in progress" }[c.status] || "";
   return "";
 }
 function myActionItems() {
@@ -859,6 +901,10 @@ function myActionItems() {
     if (canActPO(c)) items.push({ c, why: { chair: chairStepAs(c)?.as === "director" ? "Approve as director" : chairStepAs(c)?.as === "cover" ? `Covering for ${nameOf(chairStepAs(c).for)}` : c.approver ? "Approve as backup approver" : "Chair approval", finance: c.type === "card" ? "Review card charges" : "Finance review", to_pay: "Record payment", books: "Enter in QuickBooks" }[c.status] });
   }
   if (has("office")) for (const r of S.rentals) if (r.status === "submitted") items.push({ c: r, why: "Review rental request" });
+  for (const r of S.mreqs) {
+    if (r.owner === S.me && r.status === "changes") items.push({ c: r, why: "Answer marketing's question" });
+    if (has("marketing") && r.status === "submitted" && r.owner !== S.me) items.push({ c: r, why: "Weekly review" });
+  }
   for (const t of S.tickets) {
     if (canWorkTk(t) && !isDone(t) && t.itype !== "Epic" && (t.assignee === S.me || (!t.assignee && (t.status === "open" || t.status === "reopened")))) items.push({ c: t, why: t.assignee === S.me ? "Assigned to you" : "Unassigned: pick it up" });
     else if (t.owner === S.me && t.status === "resolved") items.push({ c: t, why: "Resolved: confirm it's fixed" });
@@ -1050,6 +1096,7 @@ const MODULES = [
   { id: "requests", name: "My Requests", vis: ["member"], group: "" },
   { id: "events", name: "Events & Rooms", vis: ["member"], group: "Request" },
   { id: "purchases", name: "Purchase Requests", vis: ["member"], group: "Request" },
+  { id: "marketing", name: "Marketing Requests", vis: ["member"], group: "Request" },
   { id: "tickets", name: "IT & Maintenance", vis: ["member"], group: "Request" },
   { id: "queues", name: "Team Queue", vis: ["marketing", "av", "facilities", "security", "finance", "office"], group: "Work" },
   { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
@@ -1067,6 +1114,7 @@ const BLURB = {
   requests: "Everything you own, where it stands, and who it's waiting on.",
   events: "Request a program or event. Rooms are checked against the IAR calendar as you type.",
   purchases: "Pay a vendor, get reimbursed, or submit card receipts, split across sub-accounts.",
+  marketing: "Graphics, signs, announcements, highlights, webpages, short links and staff badges. Event marketing is part of the event request.",
   queues: "Your team's tasks across every event, unlocked when an event is approved.",
   runsheet: "One printable page of what's happening where today.",
   rentals: "Outside groups' requests for the gym and halls.",
@@ -1155,6 +1203,7 @@ function seedPortalExtras() {
   notify("bilal", `EV-1042 “Youth Halaqa — winter series”: changes requested`, { card: "EV-1042", email: true, by: "hana", t: at(22) });
   notify("role:office", `EV-1050 “Sisters' Tafsir Circle” needs office review`, { card: "EV-1050", email: true, by: "tara", t: at(46) });
   notify("role:executive", `EV-1053 “Interfaith Open House” needs mission review`, { card: "EV-1053", email: true, by: "bilal", t: at(70) });
+  notify("role:marketing", `MK-324 “${getCard("MK-324").title}” is new for the weekly review`, { card: "MK-324", email: true, by: "idris", t: at(20) });
   S.feedback = [{ id: "FB-1", by: "layla", kind: "idea", text: "Could the card receipts form remember the merchants I use every month?", page: "Purchase Requests", t: at(30), done: false }];
 }
 
@@ -1167,13 +1216,14 @@ function canSeeCard(c) {
   }
   if (c.kind === "event") return c.owner === S.me || has("office") || has("executive") || me().committees.includes(c.committee) || directsOf(S.me).includes(c.committee) || c.tasks.some((t) => has(TEAM_ROLE[t.team]) && t.status !== "locked");
   if (c.kind === "rental") return has("office");
+  if (c.kind === "mkt") return canSeeMK(c);
   return false;
 }
 function searchCards(q) {
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) return [];
-  const hay = (c) => [c.id, c.title, c.desc, c.org, c.committee, c.payee, nameOf(c.owner || ""), ...(c.lines || []).flatMap((l) => [l.merchant, l.acct, l.note])].filter(Boolean).join(" ").toLowerCase();
-  return [...S.cards, ...S.pos, ...S.rentals].filter((c) => canSeeCard(c) && words.every((w) => hay(c).includes(w)));
+  const hay = (c) => [c.id, c.title, c.desc, c.org, c.committee, c.payee, nameOf(c.owner || ""), ...(c.lines || []).flatMap((l) => [l.merchant, l.acct, l.note]), ...Object.values(c.answers || {})].filter(Boolean).join(" ").toLowerCase();
+  return [...S.cards, ...S.pos, ...S.mreqs, ...S.rentals].filter((c) => canSeeCard(c) && words.every((w) => hay(c).includes(w)));
 }
 function vSearch() {
   const q = S.arg || "";
@@ -1247,11 +1297,11 @@ function saveAway(f) {
 function renderRail() {
   const rail = document.getElementById("rail");
   if (S.me === "renter") { rail.innerHTML = `<div class="group">Public</div><button class="on" type="button">Request the gym</button>`; return; }
-  const counts = { budget: srOpenFor().length, home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length, tickets: S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length };
+  const counts = { budget: srOpenFor().length, marketing: S.mreqs.filter((r) => (has("marketing") && r.status === "submitted" && r.owner !== S.me) || (r.owner === S.me && r.status === "changes")).length, home: myActionItems().length, queues: myTasks().filter((x) => x.t.status !== "done").length, tickets: S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length };
   let html = "", lastGroup = null;
   for (const m of MODULES.filter(visible)) {
     if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
-    const on = S.view === m.id || (S.view === "card" && m.id === "requests" && !String(S.arg).startsWith("TK-")) || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
+    const on = S.view === m.id || (S.view === "card" && m.id === "requests" && !/^(TK|MK)-/.test(String(S.arg))) || (S.view === "newMarketing" && m.id === "marketing") || (S.view === "card" && String(S.arg).startsWith("MK-") && m.id === "marketing") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
     html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
   }
   const hidden = MODULES.filter((m) => !visible(m)).length;
@@ -1284,7 +1334,7 @@ function vHome() {
 function itemRow(c, why) {
   if (String(c.id).startsWith("TK-")) return tkRow(c);
   const title = c.kind === "rental" ? `Rental: ${c.org}` : c.kind === "po" ? c.desc : c.title;
-  const sub = c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}${c.recur ? ` · repeats until ${fmtLong(c.recur.end)}` : ""}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
+  const sub = c.kind === "mkt" ? `${c.id} · ${MK_TYPES[c.type].label} · ${c.committee}${mkDue(c) ? ` · needed by ${fmtDate(mkDue(c))}` : ""}` : c.kind === "event" ? `${c.id} · ${c.committee} · ${fmtDate(c.date)}${c.recur ? ` · repeats until ${fmtLong(c.recur.end)}` : ""}` : c.kind === "po" ? `${c.id} · ${c.committee} · ${money(total(c))}` : `${c.id} · ${room(c.room).name} · ${fmtDate(c.date)}`;
   return `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}${why ? ` · <strong>${esc(why)}</strong>` : ""}</div></div><div class="r">${statusPill(c)}</div></button>`;
 }
 const total = (c) => c.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
@@ -1294,12 +1344,12 @@ function taskPill(t) {
 }
 
 function vRequests() {
-  const mine = [...S.cards.filter((c) => c.owner === S.me), ...S.pos.filter((c) => c.owner === S.me)].sort((a, b) => (b.created > a.created ? 1 : -1));
-  return `<div class="head"><div><h1>My Requests</h1><p class="lead">Events and purchases you own. Each one shows who it's waiting on.</p></div>
-    <div class="row"><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button></div></div>
+  const mine = [...S.cards.filter((c) => c.owner === S.me), ...S.pos.filter((c) => c.owner === S.me), ...S.mreqs.filter((c) => c.owner === S.me)].sort((a, b) => (b.created > a.created ? 1 : -1));
+  return `<div class="head"><div><h1>My Requests</h1><p class="lead">Events, purchases and marketing requests you own. Each one shows who it's waiting on.</p></div>
+    <div class="row"><button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn primary" data-go="newEvent" type="button">New event request</button></div></div>
   <div class="panel">${mine.length ? `<div class="tablewrap"><table><thead><tr><th>Request</th><th>Status</th><th>Waiting on</th></tr></thead><tbody>
     ${mine.map((c) => `<tr><td><button class="crumb" style="border:0;background:none;padding:0;cursor:pointer;text-align:left" data-card="${c.id}"><strong style="color:var(--ink)">${esc(c.kind === "po" ? c.desc : c.title)}</strong></button>
-      <div class="small muted">${c.kind === "event" ? "Event" : "Purchase"} <span class="mono">${c.id}</span> · ${esc(c.committee)}${c.kind === "event" ? " · " + fmtDate(c.date) : " · " + money(total(c))}</div></td>
+      <div class="small muted">${c.kind === "event" ? "Event" : c.kind === "mkt" ? "Marketing" : "Purchase"} <span class="mono">${c.id}</span> · ${esc(c.committee)}${c.kind === "event" ? " · " + fmtDate(c.date) : c.kind === "mkt" ? " · " + esc(MK_TYPES[c.type].label) : " · " + money(total(c))}</div></td>
       <td>${statusPill(c)}</td><td>${esc(waitingOn(c)) || '<span class="muted">Nothing</span>'}</td></tr>`).join("")}
   </tbody></table></div>` : `<div class="empty">You haven't submitted anything yet. Switch to ${esc(PEOPLE.bilal.name)} to see a full list.</div>`}</div>`;
 }
@@ -1333,10 +1383,43 @@ function timeline(date, roomId, req) {
 }
 
 function defaultDraft() {
-  return { id: null, title: "Youth Game Night", committee: "Youth", date: nextDow(TODAY, 0, 22), start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents." };
+  const date = nextDow(TODAY, 0, 22);
+  return { id: null, title: "Youth Game Night", committee: "Youth", date, start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents.",
+    brief: { ...briefBlank(), subtitle: "Games and Dinner for Families", text: "Youth and parents are invited to Youth Game Night: board games, a trivia round with prizes, and dinner together. Free and open to all families.", flyer: "Title, date and time, full gym (MPH), dinner included, free for families", startOn: defaultStartOn(date) },
+    avNeeds: { ...avBlank(), kinds: ["projector", "sound"], includes: ["laptop"], ack: true }, final: true };
+}
+/* The event marketing questions from the Marketing/Multimedia/AV Request Form. Shown when the event is open to the public. */
+function briefSection(d) {
+  const b = d.brief;
+  const ta = (k, label, o = {}) => `<div class="fld ${o.half ? "" : "wide"}"><label for="b_${k}">${label}</label>${o.ex ? `<div class="ex">${esc(o.ex)}</div>` : ""}<textarea id="b_${k}" name="b_${k}" rows="${o.rows || 3}" placeholder="${esc(o.ph || "")}">${esc(b[k])}</textarea>${o.hint ? `<span class="hint">${esc(o.hint)}</span>` : ""}</div>`;
+  return `<div class="sect" id="briefSect"><div class="sect-h"><h3>For marketing</h3><span class="hint">Replaces the Marketing/AV request form. Marketing asks for 3 weeks' notice: at least 2 weeks of marketing, and 1–2 weeks to make the materials. Requests are reviewed weekly.</span></div>
+    <div class="fld wide"><label for="b_subtitle">One-line subtitle (5–6 words)</label><input type="text" id="b_subtitle" name="b_subtitle" value="${esc(b.subtitle)}" placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters · A Weekly Boys' Halaqah"><span class="hint">Used on the flyer and in other marketing.</span></div>
+    ${ta("text", "Announcement text to publish", { rows: 4, ex: "Example: " + ANNOUNCE_EXAMPLE, hint: "Include the critical details: date, time and location. IAR Marketing may edit it for clarity, grammar and professionalism." })}
+    ${ta("flyer", "What goes on the flyer", { ph: "Title, date and time, location, who it's for. Anything that MUST be on it: bring a water bottle, late registration cost, Q&A at the end." })}
+    ${ta("other", "Other information to publish (optional)", { ph: "For example, the topics covered in a class" })}
+    ${d.registration ? `<div class="fld wide"><label for="b_regLink">Registration link and instructions</label><input type="text" id="b_regLink" name="b_regLink" value="${esc(b.regLink)}" placeholder="https://… and how to sign up"></div>` : ""}
+    ${ta("payment", "Payment info and instructions (if any)", { rows: 2, ph: "Cost, how to pay, deadlines" })}
+    <div class="fld"><label for="b_startOn">Start marketing on</label><input type="date" id="b_startOn" name="b_startOn" value="${b.startOn}"><span class="hint">At least ${MK_WEEKS} weeks before the event.</span></div>
+    <div class="fld"><label for="b_files">Google Drive link to files (optional)</label><input type="url" id="b_files" name="b_files" value="${esc(b.files)}" placeholder="https://drive.google.com/…"><span class="hint">Logos, photos, speaker bios. Share with “Everyone at Islamic Association of Raleigh”.</span></div>
+    ${ta("notes", "Comments for marketing (optional)", { rows: 2 })}
+  </div>`;
+}
+/* The event A/V questions from the same form. Shown when A/V support is checked. */
+function avSection(d) {
+  const a = d.avNeeds;
+  const boxes = (group, opts, on) => Object.entries(opts).map(([k, l]) => `<label><input type="checkbox" name="a_${group}" value="${k}" ${on.includes(k) ? "checked" : ""}> ${esc(l)}</label>`).join("");
+  return `<div class="sect" id="avSect"><div class="sect-h"><h3>For A/V</h3><span class="hint">We can't promise every A/V request. The A/V team will contact you about whether they can support the event.</span></div>
+    <div class="fld wide"><span class="lbl">What A/V support do you need? Check all that apply.</span><div class="checks-inline">${boxes("kinds", AV_KINDS, a.kinds)}</div></div>
+    <div class="fld wide"><span class="lbl">Will the event include any of these?</span><div class="checks-inline">${boxes("includes", AV_INCLUDES, a.includes)}</div></div>
+    <div class="fld wide"><label for="a_notes">Comments for A/V (optional)</label><textarea id="a_notes" name="a_notes" rows="2">${esc(a.notes)}</textarea></div>
+    <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="a_ack" name="a_ack" ${a.ack ? "checked" : ""}> I understand A/V support isn't guaranteed and the A/V team will contact me about this request.</label></div>
+  </div>`;
 }
 function vNewEvent() {
   const d = S.draft || (S.draft = defaultDraft());
+  d.brief = { ...briefBlank(), ...(d.brief || {}) };
+  d.avNeeds = { ...avBlank(), ...(d.avNeeds || {}) };
+  if (d.isPublic && !d.brief.startOn) d.brief.startOn = defaultStartOn(d.date);
   const p = me();
   const committees = p.roles.includes("office") || p.roles.includes("admins") ? COMMITTEES : [...p.committees.filter((c) => COMMITTEES.includes(c)), "Community member (private event)"];
   if (!committees.includes(d.committee)) d.committee = committees[0];
@@ -1364,15 +1447,18 @@ function vNewEvent() {
         <label><input type="checkbox" id="f_food" name="food" ${d.food ? "checked" : ""}> Food served</label>
         <label><input type="checkbox" id="f_isPublic" name="isPublic" ${d.isPublic ? "checked" : ""}> Open to the public (needs marketing)</label>
         <label><input type="checkbox" id="f_registration" name="registration" ${d.registration ? "checked" : ""}> Registration needed</label>
-        <label><input type="checkbox" id="f_av" name="av" ${d.av ? "checked" : ""}> AV support</label>
+        <label><input type="checkbox" id="f_av" name="av" ${d.av ? "checked" : ""}> A/V support</label>
       </div></div>
+      ${d.isPublic ? briefSection(d) : ""}
+      ${d.av ? avSection(d) : ""}
       <div class="fld wide"><label for="f_setupNotes">Setup needed</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage, projector"></div>
       <div class="fld wide"><span class="lbl">Does any of this apply?</span><div class="checks-inline">
         <label><input type="checkbox" id="f_newProgram" name="newProgram" ${d.triggers.newProgram ? "checked" : ""}> New program</label>
         <label><input type="checkbox" id="f_outsideSpeaker" name="outsideSpeaker" ${d.triggers.outsideSpeaker ? "checked" : ""}> Outside speaker or group</label>
         <label><input type="checkbox" id="f_fundraiser" name="fundraiser" ${d.triggers.fundraiser ? "checked" : ""}> Fundraiser</label>
       </div></div>
-      <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_agree" checked> I've read the room reservation policy and accept its rules and liability statement.</label></div>
+      <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_agree" checked> I've read the room reservation policy and accept its rules and liability statement.</label>
+        ${d.isPublic ? `<label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_final" ${d.final ? "checked" : ""}> The details I've given are final and confirmed, so marketing can publish them.</label>` : ""}</div>
       <div class="actions"><button class="btn" type="button" data-go="events">Cancel</button><button class="btn primary" type="submit">${editing ? "Resubmit" : "Submit request"}</button></div>
     </form></div></div>
     <div class="stack">
@@ -1384,6 +1470,12 @@ function vNewEvent() {
 function readDraft() {
   const f = document.getElementById("evForm"); if (!f) return;
   const v = (n) => f.elements[n].value, c = (n) => f.elements[n].checked;
+  if (f.elements.b_text) for (const k of Object.keys(briefBlank())) if (f.elements["b_" + k]) S.draft.brief[k] = v("b_" + k);
+  if (f.elements.a_notes) {
+    const picked = (n) => [...f.querySelectorAll(`input[name=${n}]:checked`)].map((x) => x.value);
+    Object.assign(S.draft.avNeeds, { kinds: picked("a_kinds"), includes: picked("a_includes"), ack: c("a_ack"), notes: v("a_notes") });
+  }
+  if (f.elements.f_final) S.draft.final = f.elements.f_final.checked;
   Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), recurFreq: v("recurFreq"), recurEnd: v("recurEnd"), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
 }
 function paintChecks() {
@@ -1459,6 +1551,7 @@ function vCard() {
   if (!c) return `<div class="empty">Not found.</div>`;
   if (c.kind === "po") return vPOCard(c);
   if (c.kind === "rental") return vRentalCard(c);
+  if (c.kind === "mkt") return vMKCard(c);
   if (String(c.id).startsWith("TK-")) return vTicketCard(c);
   const canSee = c.owner === S.me || has("office") || has("executive") || has("finance") || has("admins") || c.tasks.some((t) => has(TEAM_ROLE[t.team])) || (has("chairs") && me().committees.includes(c.committee));
   if (!canSee) return `<div class="empty">This event card isn't shared with your groups.</div>`;
@@ -1494,6 +1587,8 @@ function vCard() {
     <div class="stack">
       ${c.recur ? seriesPanel(c) : ""}
       ${c.description ? `<div class="panel"><div class="panel-h"><h2>About this event</h2></div><div class="panel-b" style="white-space:pre-wrap">${esc(c.description)}</div></div>` : ""}
+      ${c.isPublic ? briefPanel(c) : ""}
+      ${c.av ? avPanel(c) : ""}
       <div class="panel"><div class="panel-h"><h2>Team tasks</h2><span class="small muted">${c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "Unlocked" : "Unlock on approval"}</span></div><div class="panel-b">
         ${c.tasks.length ? c.tasks.map((t) => `<div class="task"><div><div>${esc(t.title)}</div><div class="small muted">${TEAM_NAME[t.team]}${t.result ? " · " + esc(t.result) : ""}</div></div><div class="row">${taskPill(t)}${taskButtons(c, t)}</div></div>`).join("") : `<div class="muted">No team tasks for this event.</div>`}
       </div></div>
@@ -1513,6 +1608,22 @@ function vCard() {
       </dl></div></div>
     </div>
   </div>`;
+}
+/* What the requester told marketing and A/V, shown on the card so the teams never need a separate form. */
+const kvRow = (k, v, pre) => (v ? `<dt>${esc(k)}</dt><dd${pre ? ' style="white-space:pre-wrap"' : ""}>${esc(v)}</dd>` : "");
+const linkRow = (k, v) => (v ? `<dt>${esc(k)}</dt><dd>${/^https?:\/\//.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v)}</dd>` : "");
+function briefPanel(c) {
+  const b = c.brief;
+  return `<div class="panel"><div class="panel-h"><h2>Marketing brief</h2>${b.startOn ? `<span class="small muted">Start marketing ${fmtDate(b.startOn)}</span>` : ""}</div><div class="panel-b"><dl class="kv">
+    ${kvRow("Subtitle", b.subtitle)}${kvRow("Announcement", b.text, true)}${kvRow("On the flyer", b.flyer, true)}${kvRow("Also publish", b.other, true)}
+    ${linkRow("Registration", b.regLink)}${kvRow("Payment", b.payment, true)}${linkRow("Files", b.files)}${kvRow("Comments", b.notes, true)}
+  </dl></div></div>`;
+}
+function avPanel(c) {
+  const a = c.avNeeds;
+  return `<div class="panel"><div class="panel-h"><h2>A/V needs</h2></div><div class="panel-b"><dl class="kv">
+    ${kvRow("Support", a.kinds.map((k) => AV_KINDS[k]).join(", ") || "Not specified")}${kvRow("Includes", a.includes.map((k) => AV_INCLUDES[k]).join(", "))}${kvRow("Comments", a.notes, true)}
+  </dl></div></div>`;
 }
 function taskButtons(c, t) {
   if (!has(TEAM_ROLE[t.team]) || t.status === "locked" || t.status === "done") return "";
@@ -1669,13 +1780,198 @@ function vQueues() {
   const all = S.cards.flatMap((c) => c.tasks.filter((t) => t.team === team).map((t) => ({ c, t })));
   const col = (st, label) => {
     const xs = all.filter((x) => x.t.status === st);
-    return `<div class="col"><h3><span>${label}</span><span class="mono">${xs.length}</span></h3>${xs.map(({ c, t }) => `<div class="tcard"><strong>${esc(t.title)}</strong><div class="small muted">${esc(c.title)} · ${fmtDate(c.date)} · ${esc(room(c.room).name)}</div><div class="row">${taskButtons(c, t)}<button class="btn small" type="button" data-card="${c.id}">Open event</button></div></div>`).join("") || '<div class="small muted">Empty</div>'}</div>`;
+    return `<div class="col"><h3><span>${label}</span><span class="mono">${xs.length}</span></h3>${xs.map(({ c, t }) => `<div class="tcard"><strong>${esc(t.title)}</strong><div class="small muted">${esc(c.title)} · ${fmtDate(c.date)} · ${esc(room(c.room).name)}${t.team === "marketing" && c.brief?.startOn ? ` · start marketing ${fmtDate(c.brief.startOn)}` : ""}</div><div class="row">${taskButtons(c, t)}<button class="btn small" type="button" data-card="${c.id}">Open event</button></div></div>`).join("") || '<div class="small muted">Empty</div>'}</div>`;
   };
   const locked = all.filter((x) => x.t.status === "locked").length;
   return `<div><h1>Team Queue</h1><p class="lead">${esc(BLURB.queues)}</p></div>
   ${teams.length > 1 ? `<div class="row">${teams.map((t) => `<button class="btn small ${t === team ? "primary" : ""}" type="button" data-go="queues" data-arg="${t}">${TEAM_NAME[t]}</button>`).join("")}</div>` : ""}
   <div class="board">${col("todo", "To do")}${col("doing", "In progress")}${col("done", "Done")}</div>
-  ${locked ? `<div class="note info">${locked} more ${TEAM_NAME[team].toLowerCase()} task${locked > 1 ? "s are" : " is"} waiting on event approval and will appear here when unlocked.</div>` : ""}`;
+  ${locked ? `<div class="note info">${locked} more ${TEAM_NAME[team].toLowerCase()} task${locked > 1 ? "s are" : " is"} waiting on event approval and will appear here when unlocked.</div>` : ""}
+  ${team === "marketing" ? mkBoard() : ""}`;
+}
+/* Marketing's other work: requests that aren't tied to an event. */
+function mkBoard() {
+  const col = (sts, label) => {
+    const xs = S.mreqs.filter((r) => sts.includes(r.status));
+    return `<div class="col"><h3><span>${label}</span><span class="mono">${xs.length}</span></h3>${xs.map((r) => `<div class="tcard"><strong>${esc(r.title)}</strong><div class="small muted">${esc(MK_TYPES[r.type].label)} · ${esc(r.committee)}${r.doneBy ? ` · due ${fmtDate(r.doneBy)}` : mkDue(r) ? ` · needed by ${fmtDate(mkDue(r))}` : ""}</div><div class="row"><button class="btn small" type="button" data-card="${r.id}">Open request</button></div></div>`).join("") || '<div class="small muted">Empty</div>'}</div>`;
+  };
+  return `<div class="head"><div><h2>Marketing requests</h2><p class="small muted">Not tied to an event. New ones wait for the weekly review.</p></div><button class="btn small" type="button" data-go="marketing">Open Marketing Requests</button></div>
+  <div class="board">${col(["submitted", "changes"], "Weekly review")}${col(["scheduled"], "Scheduled")}${col(["doing"], "In progress")}</div>`;
+}
+
+/* ---- Marketing requests (not tied to an event) ------------------- */
+/* Each type asks the same questions as its branch of the Marketing/Multimedia/AV Request Form.
+   Event marketing and event A/V are not here: they are part of the event request. */
+const MKF = (k, label, kind, o = {}) => ({ k, label, kind, ...o });
+const MK_DUE_HINT = "Marketing takes 1–2 weeks. Give at least 2 weeks if you can.";
+const MK_TYPES = {
+  graphic: { label: "Graphic design", blurb: "A sign, certificate, shirt, table cover, infographic, backdrop or logo.", fields: [
+    MKF("desc", "Describe the design in detail. Link any examples or resources that help.", "textarea", { req: true }),
+    MKF("due", "When is this design needed by?", "date", { req: true, hint: MK_DUE_HINT })] },
+  signage: { label: "Physical signage", blurb: "Signs for the building: directions, room names, notices.", fields: [
+    MKF("desc", "Describe the request", "textarea", { req: true }),
+    MKF("due", "When does this need to be sent by?", "date", { req: true, hint: MK_DUE_HINT })] },
+  announce: { label: "Announcement or community update", blurb: "A notice for the newsletter, website, social media or after prayers.", fields: [
+    MKF("text", "Suggested announcement text to publish", "textarea", { req: true, ex: "Example: " + ANNOUNCE_EXAMPLE, hint: "IAR Marketing may edit it for clarity, grammar and professionalism." }),
+    MKF("due", "When does this need to be published by?", "date", { req: true })] },
+  highlight: { label: "Highlight an event, accomplishment or team member", blurb: "Share something that already happened with the community.", fields: [
+    MKF("desc", "Share the details of the event, accomplishment or team member(s) you'd like to highlight.", "textarea", { req: true }),
+    MKF("media", "Google Drive folder of raw (unedited) photos or videos", "url", { ph: "https://drive.google.com/…", hint: "IAR Marketing may choose not to publish edited media it wasn't involved in." }),
+    MKF("due", "When does this need to be posted by?", "date", { req: true })] },
+  webpage: { label: "New webpage", blurb: "Create or design a new page on the IAR website.", fields: [
+    MKF("desc", "Share all the details of the webpage you need.", "textarea", { req: true })] },
+  webedit: { label: "Small website update", blurb: "A change to a page that already exists.", fields: [
+    MKF("url", "Link to the page you want changed", "url", { req: true, ph: "https://raleighmasjid.org/…" }),
+    MKF("desc", "Describe the change", "textarea", { req: true })] },
+  redirect: { label: "Custom short link or redirect", blurb: "A short address that sends people to a page or form, like raleighmasjid.org/po.",
+    note: "For a quick short link, enter your link at iar.to/new: you'll get an email with the short link and a QR code within seconds. Use this request for a custom redirect.", fields: [
+    MKF("from", "Link to redirect from", "text", { req: true, ph: "raleighmasjid.org/post", hint: "Valid domains: raleighmasjid.org, islam1.org or iar.to" }),
+    MKF("to", "Link to send people to", "url", { req: true, ph: "https://forms.gle/…" })] },
+  badge: { label: "Staff badge", blurb: "A name badge for IAR staff.", fields: [
+    MKF("first", "First name on badge", "text", { req: true, half: true }),
+    MKF("last", "Last name on badge", "text", { req: true, half: true }),
+    MKF("title", "Staff title on badge", "text"),
+    MKF("photo", "Would you like your badge picture taken at IAR?", "radio", { req: true, opts: { onsite: "Yes, take my picture at IAR", mine: "I already have a picture I'd like to use", none: "I don't want my picture on my badge" } })] },
+  custom: { label: "Something else", blurb: "Any other request or project for marketing or multimedia.", fields: [
+    MKF("desc", "Share all the details of your request.", "textarea", { req: true })] },
+};
+const MK_STATUS = { submitted: ["Weekly review", "info"], changes: ["Question for you", "warn"], scheduled: ["Scheduled", "info"], doing: ["In progress", "warn"], done: ["Done", "ok"], declined: ["Declined", "bad"] };
+const mkCommittees = () => [...new Set([...me().committees, ...COMMITTEES.filter((c) => !c.startsWith("Community")), "IAR staff"])];
+function mkTitle(r) {
+  const a = r.answers, short = (t) => { t = String(t || "").trim().replace(/\s+/g, " "); return t.length > 60 ? t.slice(0, 57) + "…" : t; };
+  if (r.type === "badge") return `Staff badge: ${a.first} ${a.last}`;
+  if (r.type === "redirect") return `Redirect ${a.from}`;
+  if (r.type === "webedit") return `Website update: ${short(a.desc)}`;
+  return short(a.desc || a.text) || MK_TYPES[r.type].label;
+}
+const mkDue = (r) => r.answers.due || "";
+function mkReq(o) {
+  const r = { kind: "mkt", files: "", notes: "", log: [], ...o };
+  r.title = mkTitle(r);
+  r.log = (o.log || []).map(([t, who, text]) => ({ t, who, text }));
+  return r;
+}
+const canSeeMK = (r) => r.owner === S.me || has("marketing") || has("office") || has("admins");
+function mkNotify(r, prev) {
+  const w = `${r.id} “${r.title}”`, o = { card: r.id };
+  if (r.status === prev) return;
+  if (r.status === "submitted") notify("role:marketing", prev ? `${w}: ${nameOf(r.owner)} answered your question` : `${w} is new for the weekly review`, { ...o, email: true });
+  if (r.status === "changes") notify(r.owner, `${w}: marketing has a question`, { ...o, email: true });
+  if (r.status === "scheduled") notify(r.owner, `${w} is scheduled. Marketing aims to finish by ${fmtLong(r.doneBy)}.`, o);
+  if (r.status === "done") notify(r.owner, `${w} is done`, o);
+  if (r.status === "declined") notify(r.owner, `${w} was declined`, { ...o, email: true });
+}
+
+function vMarketing() {
+  const team = has("marketing");
+  const tab = S.arg || (team ? "review" : "mine");
+  const tabs = [...(team ? [["review", "Weekly review"], ["open", "Scheduled and in progress"], ["done", "Done"]] : []), ["mine", "Mine"]];
+  const list = (tab === "review" ? S.mreqs.filter((r) => r.status === "submitted")
+    : tab === "open" ? S.mreqs.filter((r) => ["scheduled", "doing", "changes"].includes(r.status)).sort((a, b) => ((a.doneBy || "9") > (b.doneBy || "9") ? 1 : -1))
+    : tab === "done" ? S.mreqs.filter((r) => ["done", "declined"].includes(r.status))
+    : S.mreqs.filter((r) => r.owner === S.me));
+  return `<div class="head"><div><h1>Marketing Requests</h1><p class="lead">${esc(BLURB.marketing)}</p></div><button class="btn primary" data-go="newMarketing" type="button">New marketing request</button></div>
+  <div class="note info">Marketing an event? Ask for it on the event request: marketing and A/V are part of the same form.</div>
+  <div class="row">${tabs.map(([k, l]) => `<button class="btn small ${k === tab ? "primary" : ""}" type="button" data-go="marketing" data-arg="${k}">${l}</button>`).join("")}</div>
+  <div class="panel">${list.length ? `<div class="list">${list.map((r) => itemRow(r, waitingOn(r))).join("")}</div>` : `<div class="empty">${tab === "review" ? "No new requests to review this week." : "Nothing here."}</div>`}</div>`;
+}
+function vNewMarketing() {
+  const d = S.mkDraft || (S.mkDraft = { type: null, answers: {}, committee: me().committees[0] || "IAR staff", files: "", notes: "" });
+  const head = `<div class="crumb"><button type="button" data-go="marketing">Marketing Requests</button> / New request</div>`;
+  if (!d.type) return `${head}<div><h1>What do you need from marketing?</h1><p class="lead">Requests are reviewed and prioritized each week by the team that oversees IAR Marketing.</p></div>
+    <div class="note info">Marketing a program or event? Put it on the <button class="lnk" type="button" data-go="newEvent">event request</button>. It asks marketing's questions and unlocks marketing once the event is approved.</div>
+    <div class="tiles">${Object.entries(MK_TYPES).map(([k, t]) => `<button class="tile" type="button" data-mktype="${k}"><h3>${esc(t.label)}</h3><p>${esc(t.blurb)}</p></button>`).join("")}</div>`;
+  const t = MK_TYPES[d.type], a = d.answers;
+  const fld = (f) => {
+    const id = "mk_" + f.k, lab = `${esc(f.label)}${f.req ? "" : " (optional)"}`, ex = f.ex ? `<div class="ex">${esc(f.ex)}</div>` : "", hint = f.hint ? `<span class="hint">${esc(f.hint)}</span>` : "";
+    const wide = f.half ? "" : "wide";
+    if (f.kind === "textarea") return `<div class="fld wide"><label for="${id}">${lab}</label>${ex}<textarea id="${id}" name="${id}" rows="5" placeholder="${esc(f.ph || "")}">${esc(a[f.k] || "")}</textarea>${hint}</div>`;
+    if (f.kind === "radio") return `<div class="fld wide"><span class="lbl">${lab}</span><div class="stack" style="gap:4px">${Object.entries(f.opts).map(([v, l]) => `<label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="radio" name="${id}" value="${v}" ${a[f.k] === v ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div>${hint}</div>`;
+    return `<div class="fld ${f.kind === "date" ? "" : wide}"><label for="${id}">${lab}</label><input type="${f.kind}" id="${id}" name="${id}" value="${esc(a[f.k] || "")}" placeholder="${esc(f.ph || "")}" ${f.kind === "date" ? `min="${TODAY}"` : ""}>${hint}</div>`;
+  };
+  return `${head}<div class="head"><div><h1>${esc(t.label)}</h1><p class="lead">${esc(t.blurb)}</p></div><button class="btn" type="button" data-mktype="">Change type</button></div>
+  ${t.note ? `<div class="note info">${esc(t.note)}</div>` : ""}
+  <div class="panel"><div class="panel-b"><form class="f" id="mkForm" autocomplete="off">
+    ${t.fields.map(fld).join("")}
+    <div class="fld"><label for="mk_committee">Requesting committee or team</label><select id="mk_committee" name="mk_committee">${mkCommittees().map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="fld"><label for="mk_files">Google Drive link to files (optional)</label><input type="url" id="mk_files" name="mk_files" value="${esc(d.files)}" placeholder="https://drive.google.com/…"><span class="hint">Share with “Everyone at Islamic Association of Raleigh”.</span></div>
+    <div class="fld wide"><label for="mk_notes">Comments (optional)</label><textarea id="mk_notes" name="mk_notes" rows="2">${esc(d.notes)}</textarea></div>
+    <div class="actions"><button class="btn" type="button" data-go="marketing">Cancel</button><button class="btn primary" type="submit">Submit request</button></div>
+  </form></div></div>`;
+}
+function readMK() {
+  const f = document.getElementById("mkForm"); if (!f || !S.mkDraft) return;
+  const d = S.mkDraft;
+  for (const fd of MK_TYPES[d.type].fields) {
+    if (fd.kind === "radio") d.answers[fd.k] = (f.querySelector(`input[name=mk_${fd.k}]:checked`) || {}).value || "";
+    else d.answers[fd.k] = f.elements["mk_" + fd.k].value.trim();
+  }
+  d.committee = f.elements.mk_committee.value; d.files = f.elements.mk_files.value.trim(); d.notes = f.elements.mk_notes.value.trim();
+}
+function submitMK() {
+  readMK();
+  const d = S.mkDraft, t = MK_TYPES[d.type];
+  const miss = t.fields.find((f) => f.req && !d.answers[f.k]);
+  if (miss) return toast(`Please answer: ${miss.label}`);
+  if (d.answers.due && d.answers.due < TODAY) return toast("That date has already passed.");
+  const r = mkReq({ id: "MK-" + ++S.seq.MK, type: d.type, owner: S.me, committee: d.committee, answers: { ...d.answers }, files: d.files, notes: d.notes, status: "submitted", created: TODAY });
+  log(r, "Submitted");
+  const due = mkDue(r);
+  if (due && daysBetween(TODAY, due) < 14) r.log.push({ t: TODAY, who: "system", text: `Needed in ${daysBetween(TODAY, due)} days. Marketing usually takes 1–2 weeks, so this may not be ready in time.` });
+  S.mreqs.unshift(r);
+  mkNotify(r, null);
+  S.mkDraft = null;
+  toast(`${r.id} submitted. Marketing reviews new requests each week.`);
+  go("card", r.id);
+}
+function vMKCard(r) {
+  if (!canSeeMK(r)) return `<div class="empty">This request isn't shared with your groups.</div>`;
+  const t = MK_TYPES[r.type], team = has("marketing");
+  const order = ["submitted", "scheduled", "doing", "done"], labels = { submitted: "Weekly review", scheduled: "Scheduled", doing: "In progress", done: "Done" };
+  const at = { submitted: 0, changes: 0, declined: 0, scheduled: 1, doing: 2, done: 3 }[r.status];
+  const stages = order.map((k, i) => `<div class="stage ${i < at || r.status === "done" ? "done" : i === at ? "now" : ""}"><div class="bar"></div>${labels[k]}</div>`).join("");
+  const actions = [];
+  if (team && r.status === "submitted") actions.push(`<button class="btn primary" data-mk="schedule" type="button">Schedule</button><button class="btn" data-mk="ask" type="button">Ask a question</button><button class="btn danger" data-mk="decline" type="button">Decline</button>`);
+  if (team && r.status === "scheduled") actions.push(`<button class="btn primary" data-mk="start" type="button">Start</button>`);
+  if (team && r.status === "doing") actions.push(`<button class="btn primary" data-mk="done" type="button">Mark done</button>`);
+  if (r.owner === S.me && r.status === "changes") actions.push(`<button class="btn primary" data-mk="reply" type="button">Send answer</button>`);
+  const due = mkDue(r), tight = due && !["done", "declined"].includes(r.status) && daysBetween(TODAY, due) < 14;
+  const lastAsk = [...r.log].reverse().find((l) => /^Question:/.test(l.text));
+  const ans = (f) => {
+    const v = r.answers[f.k];
+    if (!v) return "";
+    const shown = f.kind === "radio" ? f.opts[v] : f.kind === "date" ? fmtLong(v) : v;
+    return f.kind === "url" ? linkRow(f.label, v) : kvRow(f.label, shown, f.kind === "textarea");
+  };
+  return `<div class="crumb"><button type="button" data-go="marketing">Marketing Requests</button> / <span class="mono">${r.id}</span></div>
+  <div class="head"><div><h1>${esc(r.title)}</h1><p class="lead">${esc(t.label)} · ${esc(r.committee)} · from ${esc(nameOf(r.owner))}${due ? ` · needed by ${fmtDate(due)}` : ""}</p></div>${statusPill(r)}</div>
+  <div class="panel panel-b"><div class="stages">${stages}</div></div>
+  ${r.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Question: /, ""))}</div>` : ""}
+  ${tight ? `<div class="note warn">Needed in ${daysBetween(TODAY, due)} days. Marketing usually takes 1–2 weeks.</div>` : ""}
+  ${actions.length ? `<div class="panel panel-b stack"><div class="row">${actions.join("")}</div>
+    ${team && r.status === "submitted" ? `<div class="fld" style="max-width:260px"><label for="mkDoneBy">Done by (when scheduling)</label><input type="date" id="mkDoneBy" value="${due || addDays(TODAY, 14)}" min="${TODAY}"></div>` : ""}
+    <div class="fld" style="max-width:520px"><label for="mkNote">${r.owner === S.me && r.status === "changes" ? "Your answer" : "Note to include (optional)"}</label><input type="text" id="mkNote" placeholder="${r.owner === S.me && r.status === "changes" ? "Answer marketing's question" : "e.g. Which size: banner or poster?"}"></div></div>` : ""}
+  <div class="grid2">
+    <div class="stack">
+      <div class="panel"><div class="panel-h"><h2>The request</h2></div><div class="panel-b"><dl class="kv">${t.fields.map(ans).join("")}${linkRow("Files", r.files)}${kvRow("Comments", r.notes, true)}</dl></div></div>
+      <div class="panel"><div class="panel-h"><h2>Activity</h2></div><div class="panel-b log">${r.log.map((l) => `<div><span class="when">${l.t.slice(5)}</span><strong>${esc(nameOf(l.who))}</strong> ${esc(l.text)}</div>`).join("")}</div></div>
+    </div>
+    <div class="stack"><div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b"><dl class="kv">
+      <dt>Type</dt><dd>${esc(t.label)}</dd><dt>Submitted</dt><dd>${fmtLong(r.created)}</dd>${r.doneBy ? `<dt>Marketing aims to finish</dt><dd>${fmtLong(r.doneBy)}</dd>` : ""}<dt>Waiting on</dt><dd>${esc(waitingOn(r)) || "Nothing"}</dd>
+    </dl></div></div></div>
+  </div>`;
+}
+function mkAction(a) {
+  const r = getCard(S.arg), prev = r.status, note = (document.getElementById("mkNote")?.value || "").trim();
+  if (a === "reply") { if (r.owner !== S.me) return; if (!note) return toast("Write your answer first."); r.status = "submitted"; log(r, "Answered: " + note); toast("Sent back to marketing"); }
+  else if (!has("marketing")) return toast("This step is for the marketing team.");
+  else if (a === "schedule") { r.doneBy = document.getElementById("mkDoneBy").value || addDays(TODAY, 14); r.status = "scheduled"; log(r, `Scheduled at the weekly review, to finish by ${fmtLong(r.doneBy)}` + (note ? `. ${note}` : "")); toast(`Scheduled. ${nameOf(r.owner)} is notified.`); }
+  else if (a === "ask") { r.status = "changes"; log(r, "Question: " + (note || "Can you share more details?")); toast("Question sent to " + nameOf(r.owner)); }
+  else if (a === "decline") { r.status = "declined"; log(r, "Declined" + (note ? `: ${note}` : "")); toast("Declined. " + nameOf(r.owner) + " is emailed."); }
+  else if (a === "start") { r.status = "doing"; log(r, "Started" + (note ? `: ${note}` : "")); toast("Started"); }
+  else if (a === "done") { r.status = "done"; log(r, "Done" + (note ? `: ${note}` : "")); toast("Done. " + nameOf(r.owner) + " is notified."); }
+  mkNotify(r, prev);
+  render();
 }
 
 /* ---- Run sheet ---------------------------------------------------- */
@@ -1745,7 +2041,7 @@ function vAid() {
   </tbody></table></div></div>`;
 }
 function vSettings() {
-  const groups = [["portal-committee-chairs@", "Chair approvals"], ["portal-office@", "Event review, queues, run sheet, rentals"], ["portal-finance@", "Finance review, payments, S&W aid"], ["portal-cardholders@", "Card receipts"], ["portal-marketing@", "Marketing queue"], ["portal-av@", "AV queue"], ["portal-facilities@", "Facilities queue, run sheet"], ["portal-security@", "Security queue, run sheet"], ["portal-sw@", "S&W aid"], ["portal-executive@", "Mission review, executive approvals"], ["portal-shura@", "Shura / board dashboard, budget (read-only)"], ["portal-admins@", "Everything, plus these settings"], ["portal-beta@", "During the beta: only this group and admins can sign in"]];
+  const groups = [["portal-committee-chairs@", "Chair approvals"], ["portal-office@", "Event review, queues, run sheet, rentals"], ["portal-finance@", "Finance review, payments, S&W aid"], ["portal-cardholders@", "Card receipts"], ["portal-marketing@", "Marketing queue and weekly review of marketing requests"], ["portal-av@", "AV queue"], ["portal-facilities@", "Facilities queue, run sheet"], ["portal-security@", "Security queue, run sheet"], ["portal-sw@", "S&W aid"], ["portal-executive@", "Mission review, executive approvals"], ["portal-shura@", "Shura / board dashboard, budget (read-only)"], ["portal-admins@", "Everything, plus these settings"], ["portal-beta@", "During the beta: only this group and admins can sign in"]];
   return `<div><h1>Portal Settings</h1><p class="lead">Rooms, groups and rules are settings, not code. Another masjid would change these and nothing else.</p></div>
   <div class="panel"><div class="panel-h"><h2>Policy rules</h2><span class="small muted">Switch one off and the event form's checks change immediately</span></div><div class="panel-b"><div class="list">
     ${RULES.map((r) => `<div class="task"><div><div>${esc(r.name)}</div><div class="small muted">${esc(r.policy)}</div></div><label class="toggle" title="Turn this rule on or off"><input type="checkbox" id="rule_${r.id}" data-rule="${r.id}" ${r.on ? "checked" : ""} aria-label="${esc(r.name)}"><span></span></label></div>`).join("")}
@@ -3222,9 +3518,11 @@ function assetDetail(a) {
 /* Demo guide                                                          */
 /* ------------------------------------------------------------------ */
 const STEPS = [
-  { as: "bilal", view: "newEvent", t: "Request an event", p: `${fn("bilal")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM, then submit. The IAR office is notified.`, reset: () => (S.draft = null) },
+  { as: "bilal", view: "newEvent", t: "Request an event", p: `${fn("bilal")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; the IAR office is notified.`, reset: () => (S.draft = null) },
   { as: "hana", view: "events", arg: "review", t: "The office approves", p: `${fn("hana")} in the IAR office sees it under Needs review, with the checks already run. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("bilal")} is notified.` },
-  { as: "sara", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue with no new form to fill in. Start it, then mark it done." },
+  { as: "sara", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
+  { as: "bilal", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("bilal")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
+  { as: "sara", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
   { as: "bilal", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("bilal")}: add a purchase request linked to Game Night, split across two sub-accounts, and submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("tara")}, the director over Youth.` },
   { as: "tara", view: "home", t: "A director approves", p: `${fn("tara")} directs Youth, Women, Older Adults, Sports and Volunteer. The request is waiting on her home page and in her notifications. Open it and approve; the history says "as director". She can also approve any of her committees' requests alongside their chairs.` },
   { as: "omar", view: "purchases", t: "Finance pays", p: `${fn("omar")} approves it for payment and records the check. ${fn("bilal")} is notified, and the event card now shows what's been spent against its budget.` },
@@ -3298,7 +3596,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
   document.getElementById("main").innerHTML = (V[S.view] || vHome)();
   renderRail();
   renderGuide();
@@ -3315,13 +3613,13 @@ function render() {
   if (S.tk.focus) { const f = document.getElementById(S.tk.focus); if (f && f.elements && f.elements[0]) f.elements[0].focus(); S.tk.focus = null; }
 }
 
-document.getElementById("persona").addEventListener("change", (e) => { S.me = e.target.value; S.draft = null; S.poDraft = null; go(S.me === "renter" ? "public" : "home"); });
+document.getElementById("persona").addEventListener("change", (e) => { S.me = e.target.value; S.draft = null; S.poDraft = null; S.mkDraft = null; go(S.me === "renter" ? "public" : "home"); });
 document.getElementById("guideBtn").addEventListener("click", () => { S.guide = !S.guide; render(); });
 
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button, [data-card]"); if (!b) return;
   const ds = b.dataset;
-  if (ds.go) { if (ds.budtab) { S.budTab = ds.budtab; S.budScope = "IAR"; } if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
+  if (ds.go) { if (ds.budtab) { S.budTab = ds.budtab; S.budScope = "IAR"; } if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "newMarketing") S.mkDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
   if (ds.card) return go("card", ds.card);
   if (ds.nopen) { const n = S.notifs.find((x) => x.id === Number(ds.nopen)); if (!n) return; if (!n.readBy.includes(S.me)) n.readBy.push(S.me); return n.card ? go("card", n.card) : go(n.view || "home"); }
   if (ds.nallread) { myNotifs().forEach((n) => { if (!n.readBy.includes(S.me)) n.readBy.push(S.me); }); S.tkx.notifs.filter((n) => n.to === S.me).forEach((n) => (n.read = true)); return render(); }
@@ -3358,6 +3656,8 @@ document.addEventListener("click", (e) => {
     return render();
   }
   if (ds.act) return eventAction(ds.act);
+  if (ds.mk) return mkAction(ds.mk);
+  if ("mktype" in ds) { if (S.mkDraft && S.mkDraft.type) readMK(); S.mkDraft = { ...(S.mkDraft || { committee: me().committees[0] || "IAR staff", files: "", notes: "" }), type: ds.mktype || null, answers: {} }; return render(); }
   if (ds.po) return poAction(ds.po);
   if (ds.rn) {
     const r = getCard(S.arg); r.status = ds.rn === "approve" ? "approved" : "denied";
@@ -3380,14 +3680,15 @@ function eventAction(a) {
   else if (a === "missionOk") { c.status = "office"; log(c, "Mission review: aligned. Sent to the office" + (note ? `. ${note}` : "")); toast("Sent to the IAR office"); }
   else if (a === "missionAsk") { log(c, "Question: " + (note || "Who are the outside speakers?")); toast("Question sent to " + nameOf(c.owner)); }
   else if (a === "missionNo") { c.status = "denied"; log(c, "Mission review: not aligned" + (note ? `. ${note}` : "")); toast("Denied after mission review"); }
-  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurEnd: c.recur ? c.recur.end : "", renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers })); return go("newEvent"); }
+  else if (a === "edit") { S.draft = JSON.parse(JSON.stringify({ id: c.id, title: c.title, description: c.description || "", committee: c.committee, date: c.date, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: c.recur ? c.recur.freq : "none", recurEnd: c.recur ? c.recur.end : "", renews: c.renews || null, attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers, brief: c.brief, avNeeds: c.avNeeds })); return go("newEvent"); }
   else if (a === "renew") {
     const r = c.recur, next = c.renewedBy && getCard(c.renewedBy);
     if (!r) return;
     if (TODAY < renewOpens(r)) return toast(`Renewal opens ${fmtLong(renewOpens(r))}.`);
     if (next && !["denied", "cancelled"].includes(next.status)) return toast(`Already requested: ${next.id}`);
     let first = addDays(r.end, 1); while (!occursOn({ recur: { ...r, end: null } }, first)) first = addDays(first, 1);
-    S.draft = JSON.parse(JSON.stringify({ id: null, renews: c.id, title: c.title, description: c.description || "", committee: c.committee, date: first, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: r.freq, recurEnd: recurMax(first), attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers }));
+    S.draft = JSON.parse(JSON.stringify({ id: null, renews: c.id, title: c.title, description: c.description || "", committee: c.committee, date: first, start: c.start, end: c.end, setup: c.setup, teardown: c.teardown, room: c.room, recurFreq: r.freq, recurEnd: recurMax(first), attendance: c.attendance, food: c.food, isPublic: c.isPublic, registration: c.registration, av: c.av, setupNotes: c.setupNotes, budget: c.budget, triggers: c.triggers, brief: c.brief, avNeeds: c.avNeeds }));
+    S.draft.brief.startOn = defaultStartOn(first);
     return go("newEvent");
   }
   else if (a === "held") { c.status = "closeout"; log(c, "Event held. Close-out opened for the owner"); toast("Close-out opened for " + nameOf(c.owner)); }
@@ -3433,7 +3734,7 @@ document.addEventListener("change", (e) => {
   if (e.target.dataset.qbrow) { S.qb.pick[e.target.dataset.qbrow] = e.target.value; return render(); }
   if (e.target.id === "budScope") { S.budScope = e.target.value; return render(); }
   if (e.target.id === "budMode") { S.budMode = e.target.value; return render(); }
-  if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
+  if (e.target.closest("#evForm")) { readDraft(); if (["f_isPublic", "f_av", "f_registration"].includes(e.target.id)) return render(); paintChecks(); }
   if (e.target.name === "type" && e.target.closest("#poForm")) {
     readPO(); const d = S.poDraft;
     if (d.type === "card") { const k = myCards()[0]; d.card = d.card || k.last4; d.month = d.month || lastMonthYm(); d.desc = d.desc || `Card receipts — ${fmtYm(d.month)}`; d.lines = d.lines.map((l) => ({ ...cardBlankLine(), ...l })); d.eventId = ""; }
@@ -3462,8 +3763,10 @@ document.addEventListener("submit", (e) => {
   if (e.target.id === "evForm") {
     if (!document.getElementById("f_agree").checked) return toast("Please accept the room reservation policy first.");
     if (!e.target.elements.title.value.trim()) return toast("Give the program a title.");
+    if (document.getElementById("f_final") && !document.getElementById("f_final").checked) return toast("Confirm the details are final so marketing can publish them.");
     return submitEvent();
   }
+  if (e.target.id === "mkForm") return submitMK();
   if (e.target.id === "poForm") {
     readPO(); const d = S.poDraft;
     if (!d.desc.trim()) return toast("Say what the purchase is for.");

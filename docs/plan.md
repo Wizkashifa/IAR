@@ -31,7 +31,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 ### The forms being replaced
 
 - **Program Request Form** (Microsoft Forms): requester name/email/mobile; program title and description; event start/end date and time; room (25 options with capacities, plus off-site); room reservation start/end including setup and teardown; registration required (yes/no); further pages (registration details, fire pit waiver) not yet reviewed. Approval = a confirmation email from the office.
-- **Marketing/Multimedia/AV Request Form** (Google Forms, IAR account): email; request type — program/event to market, non-event graphic, new webpage, event A/V support, announcement, highlight, minor web update, staff badge, custom. Branches by type. Asks for 3 weeks' notice; reviewed weekly by the marketing team.
+- **Marketing/Multimedia/AV Request Form** (Google Forms, IAR account): email; request type — program/event to market, non-event graphic, new webpage, event A/V support, announcement, highlight, minor web update, staff badge, custom. Branches by type; two more sections (custom redirect, physical signage) exist but no choice leads to them. Asks for 3 weeks' notice; reviewed weekly by the marketing team. How each question maps to the portal: see "Marketing questions" below.
 - **Requisition Form** (Google Forms + Form Approvals): see purchase-requests-plan.md.
 - **Gym reservation form**: external-facing; not yet reviewed.
 
@@ -73,6 +73,8 @@ Mission review is the only optional stage. A card that's denied or cancelled lea
 - Event start and end, plus a room reservation window that covers setup and teardown
 - Room or rooms, expected attendance, whether food is served, public or internal, whether registration is needed
 - Optional budget estimate
+- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, when to start marketing, a Drive link to files, and a "details are final" confirmation
+- If A/V support is needed: the kinds of support, what the event includes, and an acknowledgement that A/V isn't guaranteed
 
 **Tasks added to the card**, each prefilled from the card:
 
@@ -98,6 +100,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
 | Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
+| Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
@@ -283,3 +286,26 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - Each session is checked against the calendar; conflicts list how many dates clash.
 - Renewal: a committee may request its next period no earlier than 30 days before the current end date (adjustable). The renewal starts after the current series ends and goes through normal approval.
 - In production, school hours, prayers, Jumuah and the food pantry come from the IAR Google Calendar, so the standing-hold rules above are demo-only.
+
+## Marketing questions
+
+Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26) is asked somewhere in the portal, or answered by it. Event marketing and event A/V go on the event request; everything else is a Marketing Request. The demo (`demo/index.html`, `briefSection`, `avSection` and `MK_TYPES`) uses the form's wording.
+
+| Form questions | In the portal |
+| --- | --- |
+| Email, name, committee/team (Q1, 67–72) | From sign-in; committee picked from the person's groups |
+| Approved through the Program Request form? (Q41, 53) | Dropped. Marketing unlocks when the event is approved |
+| Committee + event name, date(s), time(s), room, public, recurring (Q31–36, 42, 45, 54, 56–58) | Already on the event card |
+| One-liner subtitle, detailed description, announcement text, flyer content, other info, must-include on flyer, registration, payment, start marketing, details final, comments (Q43–52, 55, 59–66) | Event card, "For marketing" section (public events) |
+| A/V support type, event includes, A/V not guaranteed, comments (Q37–40) | Event card, "For A/V" section |
+| Is this an IAR event / IAR school event (Q33) | Not asked; school events aren't booked through the portal |
+| Non-event graphic (Q25–27) | Marketing request: Graphic design |
+| Physical signage (Q22–24) | Marketing request: Physical signage |
+| Announcement or community update (Q28–30) | Marketing request: Announcement |
+| Highlight (Q18–21) | Marketing request: Highlight |
+| New webpage (Q16–17) | Marketing request: New webpage |
+| Minor website update (Q3–5) | Marketing request: Small website update |
+| Custom redirect, with the iar.to/new self-service note (Q8–10) | Marketing request: Custom short link or redirect |
+| Staff badge (Q11–15) | Marketing request: Staff badge |
+| Custom request (Q6–7) | Marketing request: Something else |
+| File upload, Google Drive link (Q73–74) | Drive link on every marketing request and on the event's marketing brief |
