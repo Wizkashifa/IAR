@@ -287,6 +287,14 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - Renewal: a committee may request its next period no earlier than 30 days before the current end date (adjustable). The renewal starts after the current series ends and goes through normal approval.
 - In production, school hours, prayers, Jumuah and the food pantry come from the IAR Google Calendar, so the standing-hold rules above are demo-only.
 
+## Committees and teams
+
+Committees and teams work the same way: each is a Google Group, everyone belongs to at least one, and a person requests events, marketing and purchases for their own committees and teams, plus any committee they direct. The list for the initial launch:
+
+Administration · Al-Furqan School · Al-Iman School · An-Noor School · Cemetery · Cleaning · Construction · Da'wah · Education · Events Committee · Facility Maintenance · Fundraising · Health & Wellness · IAR Cafe · Imam Office · IT Services · Marketing · Older Adult Community · Outreach · Safety & Security · Shura · Social & Welfare · Sports & Recreation · Volunteer · Women's Committee · Youth
+
+Budget and financial reporting are not part of the initial launch, so this list doesn't follow the budget's cost centers (which combine Marketing & Fundraising, for example). Matching committees to budget lines is left for when Budget is designed.
+
 ## Marketing questions
 
 Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26) is asked somewhere in the portal, or answered by it. Event marketing and event A/V go on the event request; everything else is a Marketing Request. The demo (`demo/index.html`, `briefSection`, `avSection` and `MK_TYPES`) uses the form's wording.

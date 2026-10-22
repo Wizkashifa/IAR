@@ -510,7 +510,8 @@ const PEOPLE = {
 };
 /* First name for guide text and greetings ("first" is set when names are real). */
 const fn = (id) => PEOPLE[id].first || PEOPLE[id].name;
-const COMMITTEES = ["Youth", "Social & Welfare", "Facility Maintenance", "Outreach", "Education", "Women's Committee", "Older Adult Community", "Sports & Recreation", "Volunteer", "Da'wah", "Administration", "Imam Office", "Marketing", "IT Services", "Shura", "Community member (private event)"];
+/* Committees and teams work the same way: each is a Google Group. The last entry is for outside groups' private events. */
+const COMMITTEES = ["Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education", "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing", "Older Adult Community", "Outreach", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer", "Women's Committee", "Youth", "Community member (private event)"];
 
 /* ------------------------------------------------------------------ */
 /* Rooms (from the Program Request Form) and room rules                */
