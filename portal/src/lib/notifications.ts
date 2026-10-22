@@ -3,7 +3,7 @@ import { isActive, todayLocal } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { mailEnabled, sendMail } from "./mail";
-import { ORG, type Role } from "./org";
+import { roleMailbox, type Role } from "./org";
 import { peopleStore } from "./people";
 import type { Notice } from "./purchases/notices";
 import type { Viewer } from "./viewer";
@@ -111,7 +111,7 @@ export async function markRead(viewer: Viewer, ids: string[] | "all"): Promise<v
 }
 
 const portalUrl = (href: string) => `${(process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}${href}`;
-const roleGroup = (r: Role) => (r === "member" ? null : ORG.roleGroups[r]);
+const roleGroup = (r: Role) => (r === "member" ? null : roleMailbox(r));
 
 /**
  * Deliver notices: write them to the bell and email the ones marked for it.

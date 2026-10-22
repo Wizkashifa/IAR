@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { ACCOUNTS, FUNDS, accountLabel, accountsForFund, shortFund } from "@/lib/purchases/accounts";
+import { ACCOUNTS, accountLabel, accountsForFund, shortFund } from "@/lib/purchases/accounts";
 import { DELIVERY_LABEL, KIND_LABEL, type DeliveryMethod, type PurchaseKind } from "@/lib/purchases/types";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { FormState } from "./actions";
@@ -13,6 +13,8 @@ export type FormProps = {
   initial?: PurchaseInput;
   requesterName: string;
   cards: { last4: string; fund: string }[];
+  /** Funds this person may charge: their committees and teams' (all of them for office and finance). */
+  funds: string[];
   vendors: { name: string; w9OnFile: boolean }[];
   /** Files already on the request (editing). */
   existingFiles?: string[];
@@ -34,7 +36,8 @@ const lastMonth = () => {
 let keySeq = 1;
 const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note: "", date: "", merchant: "", hasReceipt: true, flag: "", repayBy: "" });
 
-export default function PurchaseForm({ action, initial, requesterName, cards, vendors, existingFiles = [], submitLabel }: FormProps) {
+export default function PurchaseForm({ action, initial, requesterName, cards, funds, vendors, existingFiles = [], submitLabel }: FormProps) {
+  const fundChoices = initial?.fund && !funds.includes(initial.fund) ? [initial.fund, ...funds] : funds;
   const [state, formAction] = useActionState(action, { errors: [] });
   const [kind, setKind] = useState<PurchaseKind>((initial?.kind as PurchaseKind) ?? "pay");
   const [fund, setFund] = useState(initial?.fund ?? "");
@@ -129,13 +132,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, ve
             <label className="field">
               <span>Fund / committee</span>
               <select value={fund} onChange={(e) => setFund(e.target.value)} required>
-                <option value="">Choose…</option>
-                {FUNDS.map((f) => (
+                <option value="">{fundChoices.length ? "Choose…" : "You're not on a committee yet"}</option>
+                {fundChoices.map((f) => (
                   <option key={f} value={f}>
                     {f}
                   </option>
                 ))}
               </select>
+              {fundChoices.length === 0 && <small>You can charge your own committees&apos; and teams&apos; funds. Ask a portal admin to add you to your committee in Google Groups.</small>}
             </label>
           )}
           <label className="field">

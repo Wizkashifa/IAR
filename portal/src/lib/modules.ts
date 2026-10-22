@@ -53,7 +53,23 @@ export const MODULES: PortalModule[] = [
       "Room holds placed on IAR's Google Calendar, with setup and teardown time",
       "Room policy rules flagged automatically (school hours, prayers, MPH cleaning gap, food rooms, fees)",
       "Marketing, AV, facilities and security tasks added to the card, unlocked on approval",
+      "Marketing and A/V questions asked on the event request, so there's no separate marketing form",
       "Mission review only for new programs, outside speakers, fundraisers and large events",
+    ],
+  },
+  {
+    id: "marketing-requests",
+    name: "Marketing Requests",
+    summary: "Graphics, signs, announcements, highlights, webpages, short links and staff badges.",
+    visibleTo: ["member"],
+    phase: 2,
+    status: "planned",
+    href: "/m/marketing-requests",
+    plannedFeatures: [
+      "For marketing work that isn't an event. Event marketing is part of the event request",
+      "Each request type asks the same questions as today's Marketing/AV form",
+      "Weekly review by the marketing team: schedule with a done-by date, ask a question, or decline",
+      "Requesters follow each request in My Requests and get notified when it's done",
     ],
   },
   {
@@ -137,12 +153,12 @@ export const MODULES: PortalModule[] = [
   {
     id: "admin",
     name: "Portal Settings",
-    summary: "Rooms, access groups, policy rules and fees.",
+    summary: "Committees and teams from Google Groups, the fund each team charges, and IAR's cards.",
     visibleTo: ["admins"],
     phase: 1,
-    status: "planned",
-    href: "/m/admin",
-    plannedFeatures: ["Rooms and their calendars", "Group-to-role mapping", "Policy rules and fees as data"],
+    status: "live",
+    href: "/admin",
+    plannedFeatures: ["Rooms and their calendars", "Policy rules and fees as data"],
   },
 ];
 

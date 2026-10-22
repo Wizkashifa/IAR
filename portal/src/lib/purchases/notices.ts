@@ -56,7 +56,7 @@ const isOpen = (c: PurchaseCard) => c.status === "in_review" || c.status === "ap
  * Notices for one change, from the card before (null for a new request) to
  * after. The actor never notifies themselves.
  */
-export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard, actor: Actor, opts: { directors?: string[] } = {}): Notice[] {
+export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard, actor: Actor, opts: { directors?: string[]; chairs?: string[] } = {}): Notice[] {
   const out: Notice[] = [];
   const href = `/purchases/${after.id}`;
   const what = label(after);
@@ -93,7 +93,13 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
     // QuickBooks entry is batch work finance does from its queue; no email for it.
     add(next, ask, stage !== "books", "email" in next);
   }
-  // Directors can take the chair step too: a notice in the portal, no email (the chair is emailed).
+  // Co-chairs and directors can take the chair step too: a notice in the portal, no email (the named chair is emailed).
+  if (stage === "chair") {
+    for (const c of opts.chairs ?? []) {
+      if (!same(c, after.purchase.approverEmail) && !same(c, after.ownerEmail))
+        add({ email: c }, `${what} is waiting for chair approval. As one of the committee's chairs you can approve it too.`, false);
+    }
+  }
   if (stage === "chair" && !after.purchase.restricted) {
     for (const d of opts.directors ?? []) {
       if (!same(d, after.purchase.approverEmail) && !same(d, after.ownerEmail))

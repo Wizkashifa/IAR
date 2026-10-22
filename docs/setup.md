@@ -70,7 +70,7 @@ gcloud iam service-accounts add-iam-policy-binding $SA --member=serviceAccount:$
 
 ### 4. Let the portal read group membership
 
-The portal reads which Google Groups a person is in, read-only.
+The portal reads, read-only, which Google Groups a person is in, and who is in each `portal-team-*` and `portal-pillar-*` group with their role (Owner, Manager, Member). The same "Groups → Read" privilege and scope cover both.
 
 1. Create a Workspace user just for this, for example `portal-directory@islam1.org`. Give it a custom admin role that can only **read groups** (Admin console → Account → Admin roles → create role → Admin API privileges → Groups → Read). Don't use a super admin.
 2. Find the service account's numeric **Unique ID** (`gcloud iam service-accounts describe $SA --format='value(uniqueId)'`).
@@ -88,37 +88,86 @@ printf '%s' "<client secret>" | gcloud secrets create google-client-secret --dat
 openssl rand -base64 32 | tr -d '\n' | gcloud secrets create nextauth-secret --data-file=-
 ```
 
-### 6. Access groups
+### 6. Groups: committees, teams, directors and roles
 
-Create these Google Groups in the Admin console. Membership decides what each person sees; anyone with an islam1.org account gets My Requests, Purchase Requests and Events without a group.
+Everything about people lives in Google Groups. Nobody edits code or files to assign anyone: add, remove or promote people in Admin console → Directory → Groups, and the portal picks it up within 15 minutes. Anyone with an islam1.org account gets My Requests and the request modules without a group.
+
+Every portal group is named **`portal-<kind>-<slug>@islam1.org`**. The slug comes from the display name: lowercase it, drop apostrophes, "&" and the word "Committee", and join the words with hyphens ("Women's Committee" → `women`, "Health & Wellness" → `health-wellness`). The group's display name is exactly what the portal shows.
+
+**Team groups: one per committee or team** (`portal-team-<slug>@`). Committees and teams work the same way. In each group:
+
+| Group role | In the portal |
+| --- | --- |
+| Owner | Chair: approves the committee's requests and sees all of them. Several Owners are co-chairs; any of them can approve |
+| Manager | Vice chair: the backup approver when the chair submits a request or is away; sees all of them |
+| Member | Member: can request events, marketing and purchases for the committee |
+
+A person can be on any number of teams, with a different role in each. Chairing one never makes them chair of another. The portal finds every `portal-team-*` group by itself, so a new committee is just a new group. Then pick its fund in Portal Settings (step 7).
+
+The launch list (27):
+
+| Team | Group | Also gives |
+| --- | --- | --- |
+| Administration | portal-team-administration@ | |
+| Al-Furqan School | portal-team-al-furqan-school@ | |
+| Al-Iman School | portal-team-al-iman-school@ | |
+| An-Noor School | portal-team-an-noor-school@ | |
+| Cemetery | portal-team-cemetery@ | |
+| Cleaning | portal-team-cleaning@ | |
+| Construction | portal-team-construction@ | |
+| Da'wah | portal-team-dawah@ | |
+| Education | portal-team-education@ | |
+| Events Committee | portal-team-events@ | |
+| Facility Maintenance | portal-team-facility-maintenance@ | Facilities queue, run sheet |
+| Fundraising | portal-team-fundraising@ | |
+| Health & Wellness | portal-team-health-wellness@ | |
+| IAR Cafe | portal-team-iar-cafe@ | |
+| Imam Office | portal-team-imam-office@ | |
+| IT Services | portal-team-it-services@ | IT queue and A/V queue |
+| Marketing | portal-team-marketing@ | Marketing queue, weekly review |
+| Older Adult Community | portal-team-older-adult-community@ | |
+| Outreach | portal-team-outreach@ | |
+| Page Road | portal-team-page-road@ | |
+| Safety & Security | portal-team-safety-security@ | Security queue, run sheet |
+| Shura | portal-team-shura@ | Shura dashboard (later) |
+| Social & Welfare | portal-team-social-welfare@ | S&W aid and restricted S&W requests |
+| Sports & Recreation | portal-team-sports-recreation@ | |
+| Volunteer | portal-team-volunteer@ | |
+| Women's Committee | portal-team-women@ | |
+| Youth | portal-team-youth@ | |
+
+The six teams in the last column switch on modules, so their slugs are the only team names in the code (`QUEUE_ROLES` in `portal/src/lib/teams.ts`). Renaming one of those six means a code change; any other team can be renamed or added freely.
+
+**Pillar groups: one per director** (`portal-pillar-<slug>@`). The Owner is the director (several Owners are co-directors). The members are the team groups the pillar covers: add the team groups themselves as members, not people. A director:
+- sees every request from those committees, except Social & Welfare's restricted ones
+- can approve at the chair step alongside the chair, recorded "as director"
+- gets the request when the committee has no chair, or when the chair submitted it and there's no vice chair
+- can submit for those committees without being a member
+- never approves their own request, and never finance, payment or executive steps
+
+To change a director, change the pillar's Owner. To move a committee to another pillar, move its group.
+
+**Role groups: portal-wide jobs** (`portal-role-<job>@`). Members only.
 
 | Group | Unlocks |
 | --- | --- |
-| portal-committee-chairs@ | Chair approvals |
-| portal-office@ | Event review, team queues, run sheet, rentals |
-| portal-finance@ | Finance review, S&W aid (with S&W) |
-| portal-cardholders@ | Marks IAR cardholders. Who can submit receipts for which card comes from the card list in Purchase Requests settings |
-| portal-marketing@, portal-av@, portal-facilities@, portal-security@ | That team's queue; facilities and security also see the run sheet |
-| portal-sw@ | Social & Welfare aid |
-| portal-executive@ | Executive approvals |
-| portal-shura@ | Shura / board: dashboard and budget (read-only) and requests to finance and the executive. Never approves or pays |
-| portal-admins@ | Everything, plus portal settings. Keep to two or three people |
-| portal-beta@ | During the beta only: with `PORTAL_ACCESS_GROUP` set, only this group and portal-admins@ can sign in. Add testers directly, not through nested groups |
+| portal-role-office@ | Event review, rentals, run sheet; can submit for any committee |
+| portal-role-finance@ | Finance review, payment, QuickBooks entry, S&W aid; can submit for any fund |
+| portal-role-executive@ | Whoever holds an executive office (Head Imam, Shura chair, CEO; one person can hold several): mission review and executive approvals. When an office changes hands, change the group's members |
+| portal-role-admin@ | Every module and Portal Settings, for support. Never approves or pays. Keep to two or three people |
+| portal-role-beta@ | During the beta only: with `PORTAL_ACCESS_GROUP` set, only this group and the admins can sign in. Add testers directly, not through nested groups |
 
-Group-to-role mapping lives in `portal/src/lib/org.ts`. Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group itself (`actingRoles` in `portal/src/lib/viewer.ts`).
+**Group settings.** In every team and pillar group, set "Who can manage members" to owners only (or admins only). Otherwise a manager could add people to a committee, which would let them request from its fund.
+
+**If older groups exist** (`portal-office@` and the like, from an earlier setup), rename them in the Admin console rather than making new ones. Google keeps the old address as an alias.
+
+Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group or team itself (`actingRoles` in `portal/src/lib/viewer.ts`). The rules are plain functions with tests in `portal/src/lib/teams.ts`.
 
 ### 7. Purchase Requests
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
-2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
-3. **Approvers, directors and cards.** These come from a roster file that never goes in the repo (the repo is public). Its format is at the top of `portal/src/lib/purchases/roster.ts`: each fund's chair and backup, directors who can see and approve a set of funds' requests (at the chair step, alongside the chair), and IAR cards (last four digits only). Store it in Secret Manager and mount it as a file:
-
-```
-gcloud secrets create portal-roster --data-file=roster.json
-gcloud secrets add-iam-policy-binding portal-roster --member=serviceAccount:$SA --role=roles/secretmanager.secretAccessor
-```
-
-   The deploy command mounts it at `/secrets/roster.json`. To change people later, add a new version (`gcloud secrets versions add portal-roster --data-file=roster.json`) and redeploy so a new revision reads it. Addresses that fail a check are left out and logged as `roster:` lines in Cloud Run's logs. Without the file, every request goes to finance review and nobody can submit card receipts. This moves to Portal Settings later.
+2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-role-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
+3. **Funds and cards: Portal Settings.** Signed in as a portal admin, open Portal Settings (`/admin`). It lists every team found in Google with its chair, vice chair, director and head count. Pick the fund each team charges; teams whose name matches a fund have it suggested, and the rest show "Needs a fund". Add IAR's cards there too (last four digits, holder, fund). Both are saved in Firestore at `orgs/iar/settings/portal`. There's no file to edit or upload. A team with no fund can't submit purchase requests yet, and a fund no team charges goes straight to finance review.
 4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
 5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
 
@@ -129,7 +178,7 @@ The portal emails whoever has to act next: an approver when a request reaches th
 1. Create a mailbox for the portal to send from, for example `portal@islam1.org` (it needs a Gmail license; a shared mailbox nobody signs in to is fine).
 2. Admin console → Security → API controls → Domain-wide delegation: edit the portal's entry from step 4 and add the scope `https://www.googleapis.com/auth/gmail.send` (keep the groups scope; separate them with a comma).
 3. Set `PORTAL_MAIL_FROM=portal@islam1.org` when deploying.
-4. Let `portal@islam1.org` post to the groups the portal emails (`portal-finance@`, `portal-executive@`, `portal-admins@`): in each group's settings, "Who can post" must include that address or the whole organization.
+4. Let `portal@islam1.org` post to the groups the portal emails (`portal-role-finance@`, `portal-role-executive@`, `portal-role-admin@`, and the team groups with a queue, such as `portal-team-marketing@`): in each group's settings, "Who can post" must include that address or the whole organization.
 
 Be aware: domain-wide delegation applies to the service account, not to one mailbox, so the gmail.send scope would let it send as any islam1.org user. The portal only ever sends as `PORTAL_MAIL_FROM`, the service account has no key file, and only the Cloud Run service runs as it. Keep the project's owners to the two named in "Who owns what".
 
@@ -142,8 +191,8 @@ From the repo root:
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-beta@islam1.org,PORTAL_ROSTER_FILE=/secrets/roster.json \
-  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest,/secrets/roster.json=portal-roster:latest
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org \
+  --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 
 Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
@@ -152,4 +201,4 @@ Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1
 
 - Google Cloud project: owned by the islam1.org organization, with at least two project owners.
 - Repo: move from the personal GitHub account to an IAR GitHub organization before production.
-- Admin role in the portal: the `portal-admins` group, not a named person.
+- Admin role in the portal: the `portal-role-admin` group, not a named person.

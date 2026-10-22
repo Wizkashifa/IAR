@@ -90,11 +90,11 @@ test("beta gate: only the access group and portal admins get in while it's set",
   try {
     delete process.env.PORTAL_ACCESS_GROUP;
     assert.equal(mayUsePortal([]), true);
-    process.env.PORTAL_ACCESS_GROUP = "Portal-Beta@islam1.org";
+    process.env.PORTAL_ACCESS_GROUP = "Portal-Role-Beta@islam1.org";
     assert.equal(mayUsePortal([]), false);
-    assert.equal(mayUsePortal(["portal-beta@islam1.org"]), true);
-    assert.equal(mayUsePortal(["portal-admins@islam1.org"]), true);
-    assert.equal(mayUsePortal(["portal-finance@islam1.org"]), false);
+    assert.equal(mayUsePortal(["portal-role-beta@islam1.org"]), true);
+    assert.equal(mayUsePortal(["portal-role-admin@islam1.org"]), true);
+    assert.equal(mayUsePortal(["portal-role-finance@islam1.org"]), false);
   } finally {
     if (before === undefined) delete process.env.PORTAL_ACCESS_GROUP;
     else process.env.PORTAL_ACCESS_GROUP = before;

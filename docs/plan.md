@@ -31,7 +31,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 ### The forms being replaced
 
 - **Program Request Form** (Microsoft Forms): requester name/email/mobile; program title and description; event start/end date and time; room (25 options with capacities, plus off-site); room reservation start/end including setup and teardown; registration required (yes/no); further pages (registration details, fire pit waiver) not yet reviewed. Approval = a confirmation email from the office.
-- **Marketing/Multimedia/AV Request Form** (Google Forms, IAR account): email; request type — program/event to market, non-event graphic, new webpage, event A/V support, announcement, highlight, minor web update, staff badge, custom. Branches by type. Asks for 3 weeks' notice; reviewed weekly by the marketing team.
+- **Marketing/Multimedia/AV Request Form** (Google Forms, IAR account): email; request type — program/event to market, non-event graphic, new webpage, event A/V support, announcement, highlight, minor web update, staff badge, custom. Branches by type; two more sections (custom redirect, physical signage) exist but no choice leads to them. Asks for 3 weeks' notice; reviewed weekly by the marketing team. How each question maps to the portal: see "Marketing questions" below.
 - **Requisition Form** (Google Forms + Form Approvals): see purchase-requests-plan.md.
 - **Gym reservation form**: external-facing; not yet reviewed.
 
@@ -73,6 +73,8 @@ Mission review is the only optional stage. A card that's denied or cancelled lea
 - Event start and end, plus a room reservation window that covers setup and teardown
 - Room or rooms, expected attendance, whether food is served, public or internal, whether registration is needed
 - Optional budget estimate
+- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, when to start marketing, a Drive link to files, and a "details are final" confirmation
+- If A/V support is needed: the kinds of support, what the event includes, and an acknowledgement that A/V isn't guaranteed
 
 **Tasks added to the card**, each prefilled from the card:
 
@@ -98,6 +100,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
 | Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
+| Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
@@ -107,7 +110,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified. Facilities is a paid team that works in Jira today; this module brings that work into the portal so requesters can see how their request is progressing | 2 |
 | Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
 | Budget | Chairs (their cost centers), finance, executive, Shura (read) | Built on the FY2026–27 budget (July 1–June 30): IAR General Fund cost centers plus the Page Road campus. Sankey of funding source → cost center → spent, committed, available, with a table. A Revenue tab sorts everything received into three kinds: **unrestricted gifts** to IAR (General Fund), **designated donations** to a committee (e.g. Da'wah) and **program revenue** earned by a committee (e.g. Youth); Page Road tracks tuition, endowment and donations against its plan. Finance imports a QuickBooks export (CSV now, QuickBooks Online connection later); rows are sorted by account and class, and anything without a committee waits for finance to assign it. Expense rows are matched to purchase requests | 3 |
-| Shura / Board dashboard | Shura / board members (group `portal-shura@`) | Organizational health at a glance, counted live from the other modules: events in the next 30 days (and expected attendance, items awaiting review, open close-outs), maintenance cases by kind (repair, preventive, improvement) and IT cases, with late and urgent counts and preventive schedules kept on time; purchase requests in progress and how long they wait; community care as totals only; a short money summary (General Fund cushion, received and spent against the year, committees ahead of pace). A "Needs the Shura" list gathers mission reviews, capital projects, policy drafts and overdue policy reviews, and open Shura requests; a key-dates list covers insurance, inspections, the books review and the annual meeting. Money detail lives in Budget (a Year to date tab), not here. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
+| Shura / Board dashboard | Shura / board members (team group `portal-team-shura@`) | Organizational health at a glance, counted live from the other modules: events in the next 30 days (and expected attendance, items awaiting review, open close-outs), maintenance cases by kind (repair, preventive, improvement) and IT cases, with late and urgent counts and preventive schedules kept on time; purchase requests in progress and how long they wait; community care as totals only; a short money summary (General Fund cushion, received and spent against the year, committees ahead of pace). A "Needs the Shura" list gathers mission reviews, capital projects, policy drafts and overdue policy reviews, and open Shura requests; a key-dates list covers insurance, inspections, the books review and the annual meeting. Money detail lives in Budget (a Year to date tab), not here. Shura members can send requests: a report from finance, a budget amendment or a spending review from the executive. Approved amendments are applied in QuickBooks and re-imported | 3 |
 | Later | By group | Onboarding/offboarding checklist (groups, cards, keys, Drive), key checkout, volunteer signup, event templates | 4+ |
 
 ## Library
@@ -118,10 +121,10 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 
 | Shared drive | Who has access (group → role) | Contents |
 | --- | --- | --- |
-| IAR Shura | `portal-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
-| IAR Social & Welfare | `portal-sw@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
+| IAR Shura | `portal-team-shura@` → Content manager or Viewer by need | Minutes, resolutions, board packets, budget approvals |
+| IAR Social & Welfare | `portal-team-social-welfare@` → Contributor; a few named managers | Case files and aid records. Most restricted drive |
 | IAR Policies | All staff group → Viewer; Shura and executive → Contributor | Approved policies: rooms, purchasing, rentals, volunteer, HR |
-| IAR Finance | `portal-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
+| IAR Finance | `portal-role-finance@` → Content manager | Receipts, W-9s, invoices, QuickBooks exports |
 | IAR Operations (and per-team drives if needed) | Each team's group → Contributor | Run sheets, contracts, event files, templates |
 
 Exact drives and role levels are open (see questions below).
@@ -142,7 +145,7 @@ Exact drives and role levels are open (see questions below).
 **Technical notes**
 - Sign-in requests the Drive scope so the portal can act as the user. A service account (already planned) is used only for setup tasks such as creating folders and attaching card files.
 - The database holds file IDs, tags, owners and review dates, never file contents. W-9s and other tax-ID documents stay only in the restricted drive, as before.
-- Reusing `portal-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
+- Reusing `portal-team-shura@` for both the Shura module and the Shura drive keeps one place to manage membership. If someone ever needs the module without the documents, split into a second group.
 
 **Risks**
 - Group-based access is only as good as group hygiene. Review membership of restricted groups each quarter and on every offboarding (ties into the onboarding/offboarding checklist in Later).
@@ -216,7 +219,7 @@ The calendar stays the booking record. The database holds everything about the c
 | Line item, vendor, account | The purchase request data model, unchanged (see purchase-requests-plan.md) |
 | Comment, attachment, audit log | Every change, who made it and when; files kept in the Shared Drive |
 
-**Access groups to create** (names are suggestions): `portal-staff`, `portal-committee-chairs`, `portal-office`, `portal-finance`, `portal-cardholders`, `portal-marketing`, `portal-av`, `portal-facilities`, `portal-security`, `portal-sw`, `portal-shura`, `portal-executive`, `portal-admins`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
+**Groups** (see "Committees and teams" below, and `docs/setup.md` §6): one `portal-team-*` group per committee or team, one `portal-pillar-*` group per director, and the role groups `portal-role-office`, `-finance`, `-executive`, `-admin` and `-beta`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
 
 ## Roadmap
 
@@ -283,3 +286,56 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - Each session is checked against the calendar; conflicts list how many dates clash.
 - Renewal: a committee may request its next period no earlier than 30 days before the current end date (adjustable). The renewal starts after the current series ends and goes through normal approval.
 - In production, school hours, prayers, Jumuah and the food pantry come from the IAR Google Calendar, so the standing-hold rules above are demo-only.
+
+## Committees and teams
+
+Committees and teams work the same way: each is a Google Group, everyone belongs to at least one, and a person requests events, marketing and purchases for their own committees and teams, plus any committee they direct. The list for the initial launch:
+
+Administration · Al-Furqan School · Al-Iman School · An-Noor School · Cemetery · Cleaning · Construction · Da'wah · Education · Events Committee · Facility Maintenance · Fundraising · Health & Wellness · IAR Cafe · Imam Office · IT Services · Marketing · Older Adult Community · Outreach · Page Road · Safety & Security · Shura · Social & Welfare · Sports & Recreation · Volunteer · Women's Committee · Youth
+
+Budget and financial reporting are not part of the initial launch, so this list doesn't follow the budget's cost centers (which combine Marketing & Fundraising, for example). Matching committees to budget lines is left for when Budget is designed.
+
+**Nobody edits code or files to assign people.** Everything about people is set in Google Admin → Groups. The two remaining choices, which fund each team charges and IAR's cards, are made in Portal Settings.
+
+- **One group per team** (`portal-team-<slug>@`; for example "Women's Committee" → `portal-team-women@`). In the group:
+  - The **Owner is the chair**. Several Owners are co-chairs, and any of them can approve.
+  - A **Manager is the vice chair**: the backup approver when the chair submits or is away.
+  - **Members** are members.
+- **Roles are per team.** A chair role never carries over to another team: someone can chair Youth and be a plain member of Education. Each request belongs to one committee, picked when submitting, and only that committee's chairs, vice chair or director act on it.
+- **Approval order** for a committee's request:
+  1. its chair; if the requester is a chair, another chair
+  2. the vice chair
+  3. the director
+  4. finance review
+
+  Nobody approves their own request.
+- **Directors.** Each pillar is a group (`portal-pillar-<slug>@`). Its Owner is the director, and its members are the team groups it covers.
+  - A director sees those committees' requests and can approve at the chair step alongside the chair, recorded "as director".
+  - They can submit for those committees.
+  - They never act on Social & Welfare's restricted requests, their own requests, or finance, payment or executive steps.
+- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta. The executive group holds whoever has an executive office (Head Imam, Shura chair, CEO). One person can hold several, and nothing about the offices is in code.
+- **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Safety & Security, Social & Welfare or Shura gives that team's queue or module.
+- **Funds.** Members charge their own teams' funds; the office and finance can charge any fund. Each team's fund is set in Portal Settings, which suggests one when the names match.
+
+## Marketing questions
+
+Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26) is asked somewhere in the portal, or answered by it. Event marketing and event A/V go on the event request; everything else is a Marketing Request. The demo (`demo/index.html`, `briefSection`, `avSection` and `MK_TYPES`) uses the form's wording.
+
+| Form questions | In the portal |
+| --- | --- |
+| Email, name, committee/team (Q1, 67–72) | From sign-in. Everyone belongs to at least one committee or team (a Google Group). The requester picks from their own committees and teams, plus any committee they direct |
+| Approved through the Program Request form? (Q41, 53) | Dropped. Marketing unlocks when the event is approved |
+| Committee + event name, date(s), time(s), room, public, recurring (Q31–36, 42, 45, 54, 56–58) | Already on the event card |
+| One-liner subtitle, detailed description, announcement text, flyer content, other info, must-include on flyer, registration, payment, start marketing, details final, comments (Q43–52, 55, 59–66) | Event card, "For marketing" section (public events) |
+| A/V support type, event includes, A/V not guaranteed, comments (Q37–40) | Event card, "For A/V" section |
+| Is this an IAR event / IAR school event (Q33) | Not asked; school events aren't booked through the portal |
+| Non-event graphic (Q25–27) | Marketing request: Graphic design |
+| Physical signage (Q22–24) | Marketing request: Physical signage |
+| Announcement or community update (Q28–30) | Marketing request: Announcement |
+| Highlight (Q18–21) | Marketing request: Highlight |
+| New webpage (Q16–17) | Marketing request: New webpage |
+| Minor website update (Q3–5) | Marketing request: Small website update |
+| Custom redirect, with the iar.to/new self-service note (Q8–10) | Marketing request: Custom short link or redirect |
+| Staff badge (Q11–15) | Marketing request: Staff badge |
+| Custom request (Q6–7) | Marketing request: Something else |
+| File upload, Google Drive link (Q73–74) | Drive link on every marketing request and on the event's marketing brief |

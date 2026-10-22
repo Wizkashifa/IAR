@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { DEV_PERSONAS, isDevAuth } from "@/lib/dev";
+import { DEV_PERSONAS, devDirectory, isDevAuth } from "@/lib/dev";
 import { rolesFromGroups } from "@/lib/org";
+import { directedTeamGroups, membershipsOf, teamRoles } from "@/lib/teams";
 import { devOutbox } from "@/lib/mail";
 import { fmtDateTime } from "../purchases/ui";
 import { choosePersona } from "./actions";
@@ -11,6 +12,8 @@ export const dynamic = "force-dynamic";
 export default async function DevPage() {
   if (!isDevAuth()) notFound();
   const current = (await cookies()).get("dev_persona")?.value ?? DEV_PERSONAS[0].id;
+  const dir = devDirectory();
+  const ROLE = { chair: "chair", vice: "vice chair", member: "member" } as const;
   return (
     <>
       <h1>Choose a sample user</h1>
@@ -21,7 +24,11 @@ export default async function DevPage() {
             <input type="hidden" name="persona" value={p.id} />
             <div>
               <strong>{p.name}</strong> <span className="sub">· {p.title}</span>
-              <div className="sub">Roles: {rolesFromGroups(p.groups).join(", ")}</div>
+              <div className="sub">Roles: {rolesFromGroups(p.groups, teamRoles(membershipsOf(dir, p.email))).join(", ")}</div>
+              <div className="sub">
+                Teams: {membershipsOf(dir, p.email).map((m) => `${m.name} (${ROLE[m.role]})`).join(", ") || "none"}
+                {directedTeamGroups(dir, p.email).length > 0 && ` · Directs ${directedTeamGroups(dir, p.email).length} committees`}
+              </div>
             </div>
             <button className="button secondary" type="submit">
               {p.id === current ? "Current" : "Use"}

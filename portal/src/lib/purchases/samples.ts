@@ -3,7 +3,7 @@ import type { Card, Vendor } from "../cards";
 import { vendorId } from "../cards";
 import type { Role } from "../org";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
-import { routingSettings } from "./settings";
+import { purchaseContext } from "./settings";
 import * as wf from "./workflow";
 
 /**
@@ -30,8 +30,8 @@ export function sampleVendors(): Vendor[] {
   ];
 }
 
-export function samplePurchases(): Card[] {
-  const s = routingSettings();
+export async function samplePurchases(): Promise<Card[]> {
+  const s = (await purchaseContext()).routing;
   const vendors = sampleVendors();
   const t = (daysAgo: number, hour = 10) => {
     const d = new Date(Date.now() - daysAgo * 864e5);
