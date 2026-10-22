@@ -1138,6 +1138,8 @@ const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 /* ------------------------------------------------------------------ */
 const directsOf = (pid) => PEOPLE[pid]?.directs || [];
 const directorsOf = (committee) => Object.keys(PEOPLE).filter((p) => directsOf(p).includes(committee));
+/* Committees the signed-in person is on, plus the ones they direct. */
+const myCommittees = () => [...new Set([...me().committees, ...directsOf(S.me)])].filter((c) => COMMITTEES.includes(c));
 const restrictedPO = (c) => c.committee === "Social & Welfare";
 const awayNow = (pid) => { const a = S.away[pid]; return a && a.from <= TODAY && TODAY <= a.until ? a : null; };
 const coveringNow = () => Object.keys(S.away).filter((p) => S.away[p].delegate === S.me && awayNow(p));
@@ -1421,7 +1423,7 @@ function vNewEvent() {
   d.avNeeds = { ...avBlank(), ...(d.avNeeds || {}) };
   if (d.isPublic && !d.brief.startOn) d.brief.startOn = defaultStartOn(d.date);
   const p = me();
-  const committees = p.roles.includes("office") || p.roles.includes("admins") ? COMMITTEES : [...p.committees.filter((c) => COMMITTEES.includes(c)), "Community member (private event)"];
+  const committees = p.roles.includes("office") || p.roles.includes("admins") ? COMMITTEES : [...myCommittees(), "Community member (private event)"];
   if (!committees.includes(d.committee)) d.committee = committees[0];
   const editing = d.id ? getCard(d.id) : null;
   const prior = d.renews && getCard(d.renews);
@@ -1836,7 +1838,8 @@ const MK_TYPES = {
     MKF("desc", "Share all the details of your request.", "textarea", { req: true })] },
 };
 const MK_STATUS = { submitted: ["Weekly review", "info"], changes: ["Question for you", "warn"], scheduled: ["Scheduled", "info"], doing: ["In progress", "warn"], done: ["Done", "ok"], declined: ["Declined", "bad"] };
-const mkCommittees = () => [...new Set([...me().committees, ...COMMITTEES.filter((c) => !c.startsWith("Community")), "IAR staff"])];
+/* A request comes from a committee the person is on or directs. Staff on no committee request as IAR staff. */
+const mkCommittees = () => { const c = myCommittees(); return c.length ? c : ["IAR staff"]; };
 function mkTitle(r) {
   const a = r.answers, short = (t) => { t = String(t || "").trim().replace(/\s+/g, " "); return t.length > 60 ? t.slice(0, 57) + "…" : t; };
   if (r.type === "badge") return `Staff badge: ${a.first} ${a.last}`;
@@ -1876,7 +1879,8 @@ function vMarketing() {
   <div class="panel">${list.length ? `<div class="list">${list.map((r) => itemRow(r, waitingOn(r))).join("")}</div>` : `<div class="empty">${tab === "review" ? "No new requests to review this week." : "Nothing here."}</div>`}</div>`;
 }
 function vNewMarketing() {
-  const d = S.mkDraft || (S.mkDraft = { type: null, answers: {}, committee: me().committees[0] || "IAR staff", files: "", notes: "" });
+  const d = S.mkDraft || (S.mkDraft = { type: null, answers: {}, committee: mkCommittees()[0], files: "", notes: "" });
+  if (!mkCommittees().includes(d.committee)) d.committee = mkCommittees()[0];
   const head = `<div class="crumb"><button type="button" data-go="marketing">Marketing Requests</button> / New request</div>`;
   if (!d.type) return `${head}<div><h1>What do you need from marketing?</h1><p class="lead">Requests are reviewed and prioritized each week by the team that oversees IAR Marketing.</p></div>
     <div class="note info">Marketing a program or event? Put it on the <button class="lnk" type="button" data-go="newEvent">event request</button>. It asks marketing's questions and unlocks marketing once the event is approved.</div>
@@ -3657,7 +3661,7 @@ document.addEventListener("click", (e) => {
   }
   if (ds.act) return eventAction(ds.act);
   if (ds.mk) return mkAction(ds.mk);
-  if ("mktype" in ds) { if (S.mkDraft && S.mkDraft.type) readMK(); S.mkDraft = { ...(S.mkDraft || { committee: me().committees[0] || "IAR staff", files: "", notes: "" }), type: ds.mktype || null, answers: {} }; return render(); }
+  if ("mktype" in ds) { if (S.mkDraft && S.mkDraft.type) readMK(); S.mkDraft = { ...(S.mkDraft || { committee: mkCommittees()[0], files: "", notes: "" }), type: ds.mktype || null, answers: {} }; return render(); }
   if (ds.po) return poAction(ds.po);
   if (ds.rn) {
     const r = getCard(S.arg); r.status = ds.rn === "approve" ? "approved" : "denied";
