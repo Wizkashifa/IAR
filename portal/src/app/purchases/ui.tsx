@@ -104,6 +104,7 @@ export function Flash({ ok, error }: { ok?: string; error?: string }) {
     books: "Marked as entered in QuickBooks.",
     resolve: "Recorded.",
     cancel: "Request cancelled.",
+    commented: "Comment added. The people on this request can see it.",
   };
   if (error) return <div className="error" role="alert">{error}</div>;
   if (ok && okText[ok]) return <div className="flash" role="status">{okText[ok]}</div>;

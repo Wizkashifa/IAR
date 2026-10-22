@@ -5,7 +5,8 @@ import { cardStore, ConflictError, vendorId } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
-import { purchaseNotices } from "@/lib/purchases/notices";
+import { checkComment, withComment } from "@/lib/comments";
+import { purchaseCommentNotices, purchaseNotices } from "@/lib/purchases/notices";
 import { checkFiles, filesFrom, saveAttachments } from "@/lib/purchases/drive";
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
@@ -193,4 +194,35 @@ export async function actOnPurchase(form: FormData): Promise<void> {
 export async function actOnPurchaseWith(action: wf.Action, form: FormData): Promise<void> {
   form.set("action", action);
   return actOnPurchase(form);
+}
+
+/** A comment from anyone who can open the request. Never changes its stage. */
+export async function commentOnPurchase(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = await actorFor(viewer);
+  const id = String(form.get("id") ?? "");
+  const store = await cardStore();
+  const check = checkComment(form.get("text"));
+  let error: string | null = check.ok ? null : check.error;
+  if (check.ok) {
+    // Retry once if someone else saved the request at the same moment: a comment never needs to wait.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const card = await store.get(id);
+      if (!wf.isPurchaseCard(card) || !wf.canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/purchases");
+      const next = withComment(card, { at: nowIso(), by: actor.email, name: viewer.name, text: check.text });
+      try {
+        await store.save(next, card.updatedAt);
+        await deliver(purchaseCommentNotices(next, actor, check.text), actor.email);
+        error = null;
+        break;
+      } catch (err) {
+        if (!(err instanceof ConflictError) || attempt === 1) {
+          if (!(err instanceof ConflictError)) console.error("comment failed", err);
+          error = "Your comment couldn't be saved. Try again.";
+        }
+      }
+    }
+  }
+  revalidatePath(`/purchases/${id}`);
+  redirect(error ? `/purchases/${id}?error=${encodeURIComponent(error)}#comments` : `/purchases/${id}?ok=commented#comments`);
 }

@@ -7,7 +7,8 @@ import { isActive, todayLocal } from "@/lib/away";
 import { accountLabel, findAccount } from "@/lib/purchases/accounts";
 import { DELIVERY_LABEL, KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "@/lib/purchases/types";
 import { approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, type Action } from "@/lib/purchases/workflow";
-import { actOnPurchase, actOnPurchaseWith } from "../actions";
+import { actOnPurchase, actOnPurchaseWith, commentOnPurchase } from "../actions";
+import { COMMENT_MAX } from "@/lib/comments";
 import { Flash, StatusPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -167,6 +168,29 @@ export default async function PurchaseDetail({
 
         <aside>
           <Actions />
+          <h2 id="comments">Comments</h2>
+          {(card.comments ?? []).length === 0 ? (
+            <p className="note">No comments yet. Ask a question or add context; everyone who can open this request sees it.</p>
+          ) : (
+            <ol className="history">
+              {(card.comments ?? []).map((c) => (
+                <li key={c.id}>
+                  <div><strong>{c.name}</strong> <span className="sub">{fmtDateTime(c.at)}</span></div>
+                  <div className="hnote pre">{c.text}</div>
+                </li>
+              ))}
+            </ol>
+          )}
+          <form action={commentOnPurchase} className="stack">
+            {hidden("id", card.id)}
+            <label className="field">
+              <span>Add a comment</span>
+              <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
+            </label>
+            <div>
+              <button className="button secondary" type="submit">Comment</button>
+            </div>
+          </form>
           <h2>History</h2>
           <ol className="history">
             {[...p.history].reverse().map((h, i) => (
