@@ -3168,6 +3168,7 @@ function vTkSettings() {
 }
 
 /* ---- Issue view ---- */
+const roRow = (label, html) => `<div class="kvr"><span class="l">${label}</span><span>${html}</span></div>`;
 const TK_NEXT = { open: "inprogress", reopened: "inprogress", inprogress: "resolved", waiting: "inprogress", review: "resolved", resolved: "closed", closed: "reopened" };
 function vTicketCard(t) {
   if (!canSeeTk(t)) return `<div class="empty">This ticket isn't shared with you. Only the reporter, watchers and the ${TK_TEAM[tkTeam(t)].name} team can open it.</div>`;
@@ -3211,7 +3212,7 @@ function vTicketCard(t) {
       <div class="acts">${actHtml}</div></div></div>
    </div>
    <aside class="stack side">
-    <div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b kvl">
+    ${worker ? `<div class="panel"><div class="panel-h"><h2>Details</h2></div><div class="panel-b kvl">
       ${sel("assignee", [["", "Unassigned"], ...people], t.assignee, "Assignee")}
       ${worker && t.assignee !== S.me && canWorkTk(t) ? `<div class="kvr"><span></span><button type="button" class="lnk small" data-tk2="assignme|${t.id}">Assign to me</button></div>` : ""}
       <div class="kvr"><span class="l">Reporter</span><span class="row" style="gap:6px">${avatar(t.owner)}${esc(nameOf(t.owner))}</span></div>
@@ -3228,7 +3229,17 @@ function vTicketCard(t) {
       ${t.itype === "Sub-task" || t.itype === "Epic" ? "" : sel("sprint", [["", "Backlog"], ...S.tkx.sprints.filter((s) => s.state !== "done").map((s) => [s.id, s.name])], t.sprint, "Sprint")}
       <div class="kvr"><label for="f_vendor">Vendor</label><input type="text" id="f_vendor" value="${esc(t.vendor)}" data-tkf="vendor|${t.id}" ${worker ? "" : "disabled"} placeholder="None"></div>
       <div class="kvr"><label for="f_cost">Cost ($)</label><input type="number" id="f_cost" min="0" step="0.01" value="${t.cost || ""}" data-tkf="cost|${t.id}" ${worker ? "" : "disabled"} placeholder="0"></div>
-    </div></div>
+    </div></div>` : `<div class="panel"><div class="panel-h"><h2>Details</h2><span class="small muted">Set by the ${TK_TEAM[tkTeam(t)].name} team</span></div><div class="panel-b kvl">
+      ${roRow("Assigned to", t.assignee ? `<span class="row" style="gap:6px">${avatar(t.assignee)}${esc(nameOf(t.assignee))}</span>` : '<span class="muted">Waiting to be picked up</span>')}
+      ${roRow("Reporter", `<span class="row" style="gap:6px">${avatar(t.owner)}${esc(nameOf(t.owner))}</span>`)}
+      ${roRow("Priority", `${priIcon(t.priority)} ${esc(t.priority)}`)}
+      ${roRow("Team", esc(TK_TEAM[tkTeam(t)].name))}
+      ${roRow("Issue type", esc(t.itype))}
+      ${t.comps.length ? roRow("Category", t.comps.map((c) => `<span class="tag">${esc(c)}</span>`).join(" ")) : ""}
+      ${roRow("Location", esc(roomName(t.room)))}
+      ${a ? roRow("Equipment", `${esc(a.id)} · ${esc(a.name)}`) : ""}
+      ${t.due ? roRow("Due date", esc(fmtDate(t.due))) : ""}
+    </div></div>`}
     ${worker ? `<div class="panel"><div class="panel-h"><h2>Time tracking</h2><button type="button" class="btn small" data-tk2="worklog|${t.id}">Log work</button></div><div class="panel-b stack"><div class="bar2 slim"><span style="width:${pct}%" class="${est && logged > est ? "over" : ""}"></span></div><div class="small">${logged}h logged${est ? ` of ${est}h estimated · ${Math.max(0, Math.round((est - logged) * 10) / 10)}h remaining` : ""}</div>
       <div class="kvr"><label for="f_est">Original estimate (h)</label><input type="number" id="f_est" min="0" step="0.25" value="${t.est || ""}" data-tkf="est|${t.id}" placeholder="0"></div></div></div>
     ${tkHasSla(t) ? `<div class="panel"><div class="panel-h"><h2>SLA</h2><span class="small muted">${t.priority} · ${TK_SLA[t.priority][0]}h / ${TK_SLA[t.priority][1] >= 48 ? TK_SLA[t.priority][1] / 24 + "d" : TK_SLA[t.priority][1] + "h"}</span></div><div class="panel-b stack"><div class="row"><span class="small muted" style="width:90px">First response</span>${slaPill(sla.resp)}</div><div class="row"><span class="small muted" style="width:90px">Resolution</span>${slaPill(sla.res)}</div></div></div>` : `<div class="panel"><div class="panel-h"><h2>SLA</h2></div><div class="panel-b small muted">SLAs apply to Problems and Requests. ${esc(t.itype)}s are planned work.</div></div>`}` : `<div class="panel"><div class="panel-h"><h2>What happens next</h2></div><div class="panel-b small stack"><div>${t.assignee ? `${esc(nameOf(t.assignee))} is on it.` : "Waiting to be picked up by the " + TK_TEAM[tkTeam(t)].name + " team."}</div>${isDone(t) ? "<div>If it isn't fixed, use Reopen above.</div>" : ""}</div></div>`}
@@ -3473,6 +3484,8 @@ function tkChange(e) {
   }
   if (!k) return;
   const [f, id, extra] = k.split("|"), t = tkGet(id), v = el.value;
+  // Only the ticket's team changes its details; a reporter can only add files.
+  if (t && f !== "attach" && !canWorkTk(t)) return toast(`Only the ${TK_TEAM[tkTeam(t)].name} team can change this.`);
   if (f === "attach") { const names = [...el.files].map((x) => x.name); t.attach.push(...names); tkLog(t, { k: "change", f: "Attachment", from: "", to: names.join(", ") }); return render(); }
   if (f === "sprintmove") { if (!v) return; tkSet(tkGet(id), "sprint", v === "__none" ? "" : v); return render(); }
   if (f === "schedon") { S.tkx.schedules.find((s) => s.id === id).on = el.checked; return render(); }
