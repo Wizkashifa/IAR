@@ -54,7 +54,7 @@ export const MODULES: PortalModule[] = [
       "Room policy rules flagged automatically (school hours, prayers, MPH cleaning gap, food rooms, fees)",
       "Marketing, AV, facilities and security tasks added to the card, unlocked on approval",
       "Marketing and A/V questions asked on the event request, so there's no separate marketing form",
-      "Mission review only for new programs, outside speakers, fundraisers and large events",
+      "Mission review for every event: the pillar director first, then any executive",
     ],
   },
   {

@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
 const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "S&W aid", shura: "Shura", it: "IT queue", av: "A/V queue" };
 const ROLE_LABEL: Record<string, string> = {
-  office: "Event review, rentals, run sheet; submits for any committee",
+  office: "Rentals, run sheet; submits for any committee",
   finance: "Finance review, payment, QuickBooks, S&W aid; submits for any fund",
-  executive: "Executive offices (Head Imam, Shura chair, CEO): mission review and executive approvals. One person can hold several",
+  executive: "Executive offices (Head Imam, Shura chair, CEO): final mission review of events, and executive approvals. One person can hold several",
   admins: "Sees everything and this page; never approves or pays",
 };
 
