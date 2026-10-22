@@ -500,17 +500,17 @@ const PEOPLE = {
   hana:   { name: "Office Admin", title: "IAR office admin", roles: ["member", "office", "cardholders"], committees: ["Administration"] },
   omar:   { name: "Bookkeeper", title: "Bookkeeper, finance office", roles: ["member", "finance", "cardholders"], committees: ["Administration"] },
   layla:  { name: "S&W Chair", title: "Social & Welfare chair", roles: ["member", "chairs", "sw", "cardholders"], committees: ["Social & Welfare"] },
-  sara:   { name: "Marketing team", title: "Marketing (chair seat open)", roles: ["member", "marketing"], committees: [] },
-  maryam: { name: "IT Chair", title: "IT Services chair", roles: ["member", "it"], committees: [] },
-  zaid:   { name: "IT team", title: "IT Services team", roles: ["member", "it"], committees: [] },
-  khalid: { name: "Shura Chair", title: "Shura / board chair", roles: ["member", "shura"], committees: [] },
-  yasir:  { name: "Imam", title: "Imam · mission review", roles: ["member", "executive"], committees: [] },
+  sara:   { name: "Marketing team", title: "Marketing (chair seat open)", roles: ["member", "marketing"], committees: ["Marketing"] },
+  maryam: { name: "IT Chair", title: "IT Services chair", roles: ["member", "it"], committees: ["IT Services"] },
+  zaid:   { name: "IT team", title: "IT Services team", roles: ["member", "it"], committees: ["IT Services"] },
+  khalid: { name: "Shura Chair", title: "Shura / board chair", roles: ["member", "shura"], committees: ["Shura"] },
+  yasir:  { name: "Imam", title: "Imam · mission review", roles: ["member", "executive"], committees: ["Imam Office"] },
   admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "chairs", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "shura", "admins"], committees: ["Youth", "Social & Welfare", "Administration"] },
   renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], committees: [] },
 };
 /* First name for guide text and greetings ("first" is set when names are real). */
 const fn = (id) => PEOPLE[id].first || PEOPLE[id].name;
-const COMMITTEES = ["Youth", "Social & Welfare", "Facility Maintenance", "Outreach", "Education", "Women's Committee", "Older Adult Community", "Sports & Recreation", "Volunteer", "Da'wah", "Administration", "Community member (private event)"];
+const COMMITTEES = ["Youth", "Social & Welfare", "Facility Maintenance", "Outreach", "Education", "Women's Committee", "Older Adult Community", "Sports & Recreation", "Volunteer", "Da'wah", "Administration", "Imam Office", "Marketing", "IT Services", "Shura", "Community member (private event)"];
 
 /* ------------------------------------------------------------------ */
 /* Rooms (from the Program Request Form) and room rules                */
@@ -1142,7 +1142,7 @@ const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 /* ------------------------------------------------------------------ */
 const directsOf = (pid) => PEOPLE[pid]?.directs || [];
 const directorsOf = (committee) => Object.keys(PEOPLE).filter((p) => directsOf(p).includes(committee));
-/* Committees the signed-in person is on, plus the ones they direct. */
+/* Committees and teams the signed-in person is on, plus the committees they direct. */
 const myCommittees = () => [...new Set([...me().committees, ...directsOf(S.me)])].filter((c) => COMMITTEES.includes(c));
 const restrictedPO = (c) => c.committee === "Social & Welfare";
 const awayNow = (pid) => { const a = S.away[pid]; return a && a.from <= TODAY && TODAY <= a.until ? a : null; };
@@ -1842,8 +1842,8 @@ const MK_TYPES = {
     MKF("desc", "Share all the details of your request.", "textarea", { req: true })] },
 };
 const MK_STATUS = { submitted: ["Weekly review", "info"], changes: ["Question for you", "warn"], scheduled: ["Scheduled", "info"], doing: ["In progress", "warn"], done: ["Done", "ok"], declined: ["Declined", "bad"] };
-/* A request comes from a committee the person is on or directs. Staff on no committee request as IAR staff. */
-const mkCommittees = () => { const c = myCommittees(); return c.length ? c : ["IAR staff"]; };
+/* A request comes from a committee or team the person is on, or a committee they direct. Everyone is on at least one. */
+const mkCommittees = () => myCommittees();
 function mkTitle(r) {
   const a = r.answers, short = (t) => { t = String(t || "").trim().replace(/\s+/g, " "); return t.length > 60 ? t.slice(0, 57) + "…" : t; };
   if (r.type === "badge") return `Staff badge: ${a.first} ${a.last}`;

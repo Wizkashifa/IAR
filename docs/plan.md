@@ -293,7 +293,7 @@ Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26
 
 | Form questions | In the portal |
 | --- | --- |
-| Email, name, committee/team (Q1, 67–72) | From sign-in; committee picked from the person's groups |
+| Email, name, committee/team (Q1, 67–72) | From sign-in. Everyone belongs to at least one committee or team (a Google Group). The requester picks from their own committees and teams, plus any committee they direct |
 | Approved through the Program Request form? (Q41, 53) | Dropped. Marketing unlocks when the event is approved |
 | Committee + event name, date(s), time(s), room, public, recurring (Q31–36, 42, 45, 54, 56–58) | Already on the event card |
 | One-liner subtitle, detailed description, announcement text, flyer content, other info, must-include on flyer, registration, payment, start marketing, details final, comments (Q43–52, 55, 59–66) | Event card, "For marketing" section (public events) |
