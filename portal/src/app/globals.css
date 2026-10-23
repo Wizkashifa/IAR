@@ -230,3 +230,19 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outl
   .user { flex-wrap: wrap; }
 }
 .section > .field { margin-top: 12px; }
+
+/* ---- IT & Maintenance ------------------------------------------------- */
+.spacer { flex: 1; }
+.spaced { margin-top: 12px; }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.board { display: grid; grid-template-columns: repeat(5, minmax(190px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.bcol { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; min-height: 140px; }
+.bcol h3 { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin: 0 0 8px; }
+.bcard { display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 13px; color: var(--ink); }
+.bcard:hover { border-color: var(--gold); text-decoration: none; }
+.bcard .sub { color: var(--ink-2); font-size: 12px; }
+.assignform { align-items: flex-end; margin-top: 8px; }
+.assignform select, .assignform .field { flex: 1 1 160px; }
+.photoform { margin-top: 10px; align-items: center; }
+.watchform { margin: 12px 0 0; }
+.steps { margin: 0 0 12px; padding-left: 20px; font-size: 14px; }
