@@ -7,6 +7,7 @@ import { isPurchaseCard, permission } from "@/lib/purchases/workflow";
 import { fundsFor, resubmitPurchase } from "../../actions";
 import PurchaseForm from "../../PurchaseForm";
 import { vendorFormProps } from "../../formData";
+import { linkableEventsFor } from "@/lib/events/context";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
         cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
         funds={await fundsFor(viewer, ctx)}
         {...await vendorFormProps(viewer)}
+        events={await linkableEventsFor(viewer)}
         existingFiles={p.attachments.map((a) => a.name)}
         existingW9={p.w9Uploaded?.name}
         submitLabel="Resubmit"
@@ -58,6 +60,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
             repayBy: l.repayBy ?? "",
           })),
           attestationName: p.attestation.name,
+          eventCardId: p.eventCardId,
         }}
       />
     </>

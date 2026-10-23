@@ -5,6 +5,7 @@ import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountLabel, accountsForFund, findAccou
 import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, PAYMENT_METHOD_LABEL, type DeliveryMethod, type PaymentMethod, type PurchaseKind } from "@/lib/purchases/types";
 import type { VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
+import type { EventChoice } from "@/lib/events/link";
 import type { FormState } from "./actions";
 
 type Line = LineInput & { key: number };
@@ -26,6 +27,8 @@ export type FormProps = {
   existingFiles?: string[];
   /** A W-9 was already uploaded with this request (editing). */
   existingW9?: string;
+  /** Events this person can link the purchase to (their own and their committees'). */
+  events?: EventChoice[];
   submitLabel: string;
 };
 
@@ -46,7 +49,9 @@ const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note:
 
 const fmtW9Date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
 
-export default function PurchaseForm({ action, initial, requesterName, cards, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, submitLabel }: FormProps) {
+export default function PurchaseForm({ action, initial, requesterName, cards, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, events = [], submitLabel }: FormProps) {
+  const eventChoices = initial?.eventCardId && !events.some((e) => e.id === initial.eventCardId) ? [{ id: initial.eventCardId, label: initial.eventCardId }, ...events] : events;
+  const [eventCardId, setEventCardId] = useState(initial?.eventCardId ?? "");
   const fundChoices = initial?.fund && !funds.includes(initial.fund) ? [initial.fund, ...funds] : funds;
   const [state, formAction] = useActionState(action, { errors: [] });
   const [kind, setKind] = useState<PurchaseKind>((initial?.kind as PurchaseKind) ?? "pay");
@@ -109,6 +114,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
     statementMonth: card ? statementMonth : undefined,
     lines: lines.map(({ key: _k, ...l }) => l),
     attestationName,
+    eventCardId,
   };
 
   return (
@@ -178,6 +184,20 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
             <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={card ? "Card statement receipts" : "e.g. Youth night supplies"} maxLength={200} required />
           </label>
         </div>
+        {(eventChoices.length > 0 || eventCardId) && (
+          <label className="field">
+            <span>Which event is this for? (optional)</span>
+            <select value={eventCardId} onChange={(e) => setEventCardId(e.target.value)}>
+              <option value="">Not for an event</option>
+              {eventChoices.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.label}
+                </option>
+              ))}
+            </select>
+            <small>Linking it adds this cost to the event, so its final costs add up when it&apos;s closed out.</small>
+          </label>
+        )}
         {chargeFund === "Social & Welfare" && (
           <p className="note">Social &amp; Welfare requests are visible only to S&amp;W and the finance office.</p>
         )}

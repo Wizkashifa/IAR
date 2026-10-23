@@ -12,6 +12,7 @@ import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
 import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
 import { roomById } from "@/lib/events/rooms";
+import { taskUnlockNotices } from "@/lib/events/tasks";
 import { type Clash, eventChecks } from "@/lib/events/rules";
 import { addDays } from "@/lib/events/series";
 import * as sr from "@/lib/events/slot-requests";
@@ -180,7 +181,7 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
   } catch (err) {
     return { errors: [err instanceof ConflictError ? err.message : "Something went wrong saving the request."] };
   }
-  await deliver([...eventNotices(before, trouble.card, actor, directors), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
+  await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
   revalidatePath("/events");
   redirect(`/events/${card.id}?ok=${card0 ? "resubmitted" : created ? "asked" : "submitted"}`);
 }
@@ -214,7 +215,7 @@ export async function actOnEvent(form: FormData): Promise<void> {
     const synced = await syncHolds(next, ctx);
     const trouble = calendarTrouble(synced.card, synced.error);
     await store.save(trouble.card, card.updatedAt);
-    const notices = [...eventNotices(card, trouble.card, actor, directors), ...trouble.notices];
+    const notices = [...eventNotices(card, trouble.card, actor, directors), ...taskUnlockNotices(card, trouble.card), ...trouble.notices];
     if (action === "cancel") notices.push(...(await withdrawOpenAsks(card.id, actor, now)));
     await deliver(notices, actor.email);
   } catch (err) {
@@ -308,6 +309,12 @@ export async function decideAsk(form: FormData): Promise<void> {
   await deliver(notices, actor.email);
   revalidatePath("/events");
   redirect(error ? `${back}?error=${encodeURIComponent(error)}` : `${back}?ok=decided`);
+}
+
+/** For the ask's buttons: a button's own name/value doesn't reach a server action, so each binds its choice. */
+export async function decideAskWith(choice: sr.SlotChoice, form: FormData): Promise<void> {
+  form.set("choice", choice);
+  return decideAsk(form);
 }
 
 /** The requester takes back their ask; their request goes back to them to pick another time. */

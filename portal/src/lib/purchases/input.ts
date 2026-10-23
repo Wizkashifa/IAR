@@ -52,6 +52,8 @@ export type InputContext = {
   vendors: { name: string; w9OnFile: boolean }[];
   /** Funds this person may charge (their committees and teams'). Card receipts follow the card's fund. Unset: any fund. */
   funds?: string[];
+  /** Event cards (EV-…) this person may link the purchase to. Unset: any (sample data). */
+  events?: string[];
 };
 
 export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments"> } | { ok: false; errors: string[] };
@@ -154,6 +156,10 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
     relatedParty = Boolean(raw.relatedParty);
   }
 
+  // Optional link to an event: only one of the events the form offered.
+  const eventCardId = str(raw.eventCardId, 20) || undefined;
+  if (eventCardId && (!/^EV-\d+$/.test(eventCardId) || (ctx.events && !ctx.events.includes(eventCardId)))) errors.push("Choose one of your events from the list, or leave the event blank.");
+
   if (errors.length) return { ok: false, errors };
 
   return {
@@ -172,7 +178,7 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
       card,
       lines,
       attestation: { name: attestation, at: "" },
-      eventCardId: str(raw.eventCardId, 20) || undefined,
+      eventCardId,
     },
   };
 }

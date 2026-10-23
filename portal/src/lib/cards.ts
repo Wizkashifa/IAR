@@ -127,6 +127,8 @@ export interface CardStore {
   listOpenPurchases(): Promise<Card[]>;
   /** Purchase cards created since an ISO time, any status (for the card receipts checklist). */
   listPurchasesSince(iso: string): Promise<Card[]>;
+  /** Purchase cards linked to an event card (purchase.eventCardId), any status. */
+  listPurchasesForEvent(eventId: string): Promise<Card[]>;
   /** The most recently updated cards of any type (for search). */
   listRecent(limit: number): Promise<Card[]>;
   /** Cards of one type in any of these statuses (default: the open ones), for queues and lists. */
@@ -176,10 +178,11 @@ async function seed() {
   }
   for (const v of sampleVendors()) mem.vendors.set(v.id, v);
   const { sampleEvents } = await import("./events/samples");
+  // Event samples include a purchase linked to an event, so count each ID under its own prefix.
   for (const c of await sampleEvents()) {
     mem.cards.set(c.id, c);
-    const n = Number(c.id.split("-")[1]);
-    if (n >= mem.next.EV) mem.next.EV = n + 1;
+    const [prefix, num] = c.id.split("-");
+    if (Number(num) >= (mem.next[prefix] ?? 0)) mem.next[prefix] = Number(num) + 1;
   }
   const { sampleMarketing } = await import("./marketing/samples");
   for (const c of sampleMarketing()) {
@@ -209,6 +212,10 @@ const memoryStore: CardStore = {
   async listPurchasesSince(iso) {
     await ensureSeeded();
     return [...mem.cards.values()].filter((c) => c.type === "purchase" && (c.createdAt ?? c.updatedAt) >= iso).map(clone);
+  },
+  async listPurchasesForEvent(eventId) {
+    await ensureSeeded();
+    return [...mem.cards.values()].filter((c) => c.type === "purchase" && c.purchase?.eventCardId === eventId).map(clone);
   },
   async listRecent(limit) {
     await ensureSeeded();
@@ -285,6 +292,11 @@ async function getFirestoreStore(): Promise<CardStore> {
     },
     async listPurchasesSince(iso) {
       const snap = await cards.where("type", "==", "purchase").where("createdAt", ">=", iso).limit(1000).get();
+      return snap.docs.map(toCard);
+    },
+    async listPurchasesForEvent(eventId) {
+      // Equality on two fields: served by Firestore's single-field indexes, no composite index needed.
+      const snap = await cards.where("type", "==", "purchase").where("purchase.eventCardId", "==", eventId).limit(200).get();
       return snap.docs.map(toCard);
     },
     async listRecent(limit) {

@@ -52,10 +52,7 @@ export const MODULES: PortalModule[] = [
     phase: 1,
     status: "live",
     href: "/events",
-    plannedFeatures: [
-      "Marketing, A/V, facilities and security tasks added to the card, unlocked on approval",
-      "Close-out after the event: attendance, actual spend from linked purchases, room condition",
-    ],
+    plannedFeatures: [],
   },
   {
     id: "marketing-requests",
@@ -93,13 +90,13 @@ export const MODULES: PortalModule[] = [
     nav: "Queues",
     name: "Team Queues",
     summary: "Your team's open tasks across every event and request.",
-    visibleTo: ["office", "finance", "marketing", "av", "facilities", "security"],
+    visibleTo: ["office", "marketing", "av", "facilities", "security"],
     phase: 2,
-    status: "planned",
-    href: "/m/team-queues",
+    status: "live",
+    href: "/queues",
     plannedFeatures: [
-      "Board and list views filtered to your team",
-      "Due dates, owners and escalation for overdue tasks",
+      "A board view, alongside the list",
+      "Reminders and escalation for overdue tasks",
     ],
   },
   {
@@ -109,11 +106,10 @@ export const MODULES: PortalModule[] = [
     summary: "One printable page of what's happening where, per day and campus.",
     visibleTo: ["office", "facilities", "security"],
     phase: 2,
-    status: "planned",
-    href: "/m/run-sheet",
+    status: "live",
+    href: "/run-sheet",
     plannedFeatures: [
-      "Time, room, event, contact, setup notes and after-hours flags",
-      "Security check-in and check-out recorded back to the event card",
+      "Approved facility rentals on the sheet, once rentals move into the portal",
     ],
   },
   {

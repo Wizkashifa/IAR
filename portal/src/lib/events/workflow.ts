@@ -20,6 +20,7 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG, type Role } from "../org";
 import { eventDates, recurText, longDate, dayText } from "./series";
+import { newlyUnlockedTeams, planTasks, syncTasks, teamList } from "./tasks";
 import type { Check, EventApproval, EventDetails, EventHistoryEntry, EventInput, EventStage } from "./types";
 
 export type EventCard = Card & { type: "event"; event: EventDetails };
@@ -145,8 +146,27 @@ function must(card: EventCard, actor: EventActor, action: EventAction, directors
 
 const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 
-function withStage(card: EventCard, e: EventDetails, now: string, directors: string[], status?: CardStatus): EventCard {
-  const next: EventCard = { ...card, event: e, status: status ?? statusForStage(e.stage), updatedAt: now };
+/**
+ * Team tasks follow the card: an approved event gets the tasks it needs
+ * (keeping any already worked on), and a cancelled or denied one has none.
+ */
+function withTasks(e: EventDetails, status: CardStatus, now: string): EventDetails {
+  if (status === "cancelled" || status === "denied") {
+    if (!e.tasks) return e;
+    const { tasks: _dropped, ...rest } = e;
+    return { ...rest, history: _dropped.length ? [...e.history, entry("portal", now, "Team tasks dropped")] : e.history };
+  }
+  if (status !== "approved" || e.stage !== "approved") return e;
+  const tasks = syncTasks(e.tasks, planTasks(e), now);
+  const added = newlyUnlockedTeams(e.tasks, tasks);
+  return { ...e, tasks, history: added.length ? [...e.history, entry("portal", now, `Team tasks unlocked: ${teamList(added)}`)] : e.history };
+}
+
+/** The card with new event details and status; also sets the fields lists and search read. Used by every transition. */
+export function withStage(card: EventCard, e0: EventDetails, now: string, directors: string[], status?: CardStatus): EventCard {
+  const st = status ?? statusForStage(e0.stage);
+  const e = withTasks(e0, st, now);
+  const next: EventCard = { ...card, event: e, status: st, updatedAt: now };
   next.waitingOn = waitingOnFor(next, directors);
   next.title = e.title;
   next.committee = e.committeeName;

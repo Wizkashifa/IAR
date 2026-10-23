@@ -37,6 +37,7 @@ export default async function PurchaseDetail({
   const coveringFor = coveringApprover(pc, actor);
   const approverAway = live && p.stage === "chair" && p.approverEmail ? await (await peopleStore()).getAway(p.approverEmail) : null;
   const awayNow = approverAway && isActive(approverAway, todayLocal()) ? approverAway : null;
+  const linkedEvent = p.eventCardId ? await (await cardStore()).get(p.eventCardId) : null;
   const finance = actor.roles.includes("finance");
   const hidden = (name: string, value: string) => <input type="hidden" name={name} value={value} />;
   const base = (
@@ -106,6 +107,7 @@ export default async function PurchaseDetail({
           <dl className="facts">
             <div><dt>Requester</dt><dd>{p.attestation.name} <span className="sub">{card.ownerEmail}</span></dd></div>
             <div><dt>Fund</dt><dd>{p.fund}</dd></div>
+            {p.eventCardId && <div><dt>Event</dt><dd><Link href={`/events/${p.eventCardId}`}>{linkedEvent?.title ?? p.eventCardId}</Link><div className="sub">{p.eventCardId}{linkedEvent?.eventDate ? ` · ${fmtDate(`${linkedEvent.eventDate}T12:00:00Z`)}` : ""}</div></dd></div>}
             {p.card && <div><dt>Card</dt><dd>···{p.card.last4} · {fmtMonth(p.card.statementMonth)} statement</dd></div>}
             {p.payee && <div><dt>Payee</dt><dd>{p.payee}</dd></div>}
             {p.invoiceNumber && <div><dt>Invoice</dt><dd>{p.invoiceNumber}</dd></div>}
