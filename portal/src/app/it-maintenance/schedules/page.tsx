@@ -3,6 +3,7 @@ import { todayLocal } from "@/lib/away";
 import { requireViewer } from "@/lib/viewer";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { locationChoices } from "@/lib/tickets/locations";
+import { googleRooms } from "@/lib/rooms-google";
 import { scheduleStore } from "@/lib/tickets/schedule-store";
 import { FREQUENCIES, FREQUENCY_LABEL, type TicketSchedule } from "@/lib/tickets/schedules";
 import { TEAM_LABEL, TEAM_NAME, URGENCIES, URGENCY } from "@/lib/tickets/types";
@@ -14,6 +15,7 @@ import { FLASH, fmtDay } from "../ui";
 export const dynamic = "force-dynamic";
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; error?: string }> }) {
+  const locations = locationChoices((await googleRooms()).map((r) => r.name));
   const sp = await searchParams;
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
@@ -150,7 +152,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
               <span>Where</span>
               <input name="room" list="ticket-locations" defaultValue={s?.room} required maxLength={120} />
               <datalist id="ticket-locations">
-                {locationChoices().map((l) => (
+                {locations.map((l) => (
                   <option key={l} value={l} />
                 ))}
               </datalist>

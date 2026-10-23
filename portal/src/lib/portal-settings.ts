@@ -74,7 +74,9 @@ async function getFirestoreStore(): Promise<SettingsStore> {
       return d.exists ? { ...EMPTY_SETTINGS, ...(d.data() as PortalSettings) } : structuredClone(EMPTY_SETTINGS);
     },
     async save(s) {
-      await doc.set(clean(s));
+      // Replace only the fields the portal edits, so anything go-live or a later version added stays.
+      const data = clean(s);
+      await doc.set(data, { mergeFields: Object.keys(data) });
     },
   };
   return fsStore;

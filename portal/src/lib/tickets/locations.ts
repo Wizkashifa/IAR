@@ -35,7 +35,11 @@ export const LOCATIONS: string[] = [
 /** Where it goes when nothing better is known (an imported Jira issue with no location). */
 export const UNKNOWN_LOCATION = "Other";
 
-/** The locations to offer, today the fixed list. Swap this for rooms from Google when Events has them. */
-export function locationChoices(): string[] {
-  return LOCATIONS;
+/** Places that aren't rooms: always offered. */
+const NOT_ROOMS = ["Admin office", "Outside / parking", "Whole building", "Other"];
+
+/** The locations to offer: IAR's rooms from Google (every room, bookable or not), then places that aren't rooms. The fixed list until Google has rooms. */
+export function locationChoices(roomNames: string[] = []): string[] {
+  if (!roomNames.length) return LOCATIONS;
+  return [...new Set([...roomNames, ...NOT_ROOMS])];
 }
