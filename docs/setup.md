@@ -105,7 +105,7 @@ openssl rand -base64 32 | tr -d '\n' | gcloud secrets create nextauth-secret --d
 
 Everything about people lives in Google Groups. Nobody edits code or files to assign anyone: add, remove or promote people in Admin console → Directory → Groups, and the portal picks it up within 15 minutes. Anyone with an islam1.org account gets My Requests and the request modules without a group.
 
-Every portal group is named **`portal-<kind>-<slug>@islam1.org`**. The slug comes from the display name: lowercase it, drop apostrophes, "&" and the word "Committee", and join the words with hyphens ("Women's Committee" → `women`, "Health & Wellness" → `health-wellness`). The group's display name is exactly what the portal shows.
+Every portal group is named **`portal-<kind>-<slug>@islam1.org`**. The launch teams' slugs are the ones IAR chose (below; some are short, like `tech` for IT Services). For a team added later, or a pillar, the slug comes from the name: lowercase it, drop apostrophes, "&" and the word "Committee", and join the words with hyphens ("Women's Committee" → `women`). The group's display name is exactly what the portal shows.
 
 **Team groups: one per committee or team** (`portal-team-<slug>@`). Committees and teams work the same way. In each group:
 
@@ -117,7 +117,7 @@ Every portal group is named **`portal-<kind>-<slug>@islam1.org`**. The slug come
 
 A person can be on any number of teams, with a different role in each. Chairing one never makes them chair of another. The portal finds every `portal-team-*` group by itself, so a new committee is just a new group. Then pick its fund in Portal Settings (step 7).
 
-The launch list (27):
+The launch list (26; Outreach is part of Da'wah):
 
 | Team | Group | Also gives |
 | --- | --- | --- |
@@ -131,25 +131,24 @@ The launch list (27):
 | Da'wah | portal-team-dawah@ | |
 | Education | portal-team-education@ | |
 | Events Committee | portal-team-events@ | |
-| Facility Maintenance | portal-team-facility-maintenance@ | Facilities queue, run sheet |
+| Facility Maintenance | portal-team-maintenance@ | IT & Maintenance (facilities), run sheet |
 | Fundraising | portal-team-fundraising@ | |
-| Health & Wellness | portal-team-health-wellness@ | |
-| IAR Cafe | portal-team-iar-cafe@ | |
-| Imam Office | portal-team-imam-office@ | |
-| IT Services | portal-team-it-services@ | IT queue and A/V queue |
-| Marketing | portal-team-marketing@ | Marketing queue, weekly review |
-| Older Adult Community | portal-team-older-adult-community@ | |
-| Outreach | portal-team-outreach@ | |
-| Page Road | portal-team-page-road@ | |
-| Safety & Security | portal-team-safety-security@ | Security queue, run sheet |
+| Health & Wellness | portal-team-hw@ | |
+| IAR Cafe | portal-team-cafe@ | |
+| Imam Office | portal-team-imams@ | |
+| IT Services | portal-team-tech@ | IT & Maintenance (IT), A/V tasks |
+| Marketing | portal-team-marketing@ | Marketing requests and tasks, weekly review |
+| Older Adult Community | portal-team-seniors@ | |
+| Page Road | portal-team-page@ | |
+| Safety & Security | portal-team-security@ | Security tasks and room checks, run sheet |
 | Shura | portal-team-shura@ | Shura dashboard (later) |
-| Social & Welfare | portal-team-social-welfare@ | Restricted S&W purchase requests and payees |
-| Sports & Recreation | portal-team-sports-recreation@ | |
+| Social & Welfare | portal-team-welfare@ | Restricted S&W purchase requests and payees |
+| Sports & Recreation | portal-team-sports@ | |
 | Volunteer | portal-team-volunteer@ | |
 | Women's Committee | portal-team-women@ | |
 | Youth | portal-team-youth@ | |
 
-The six teams in the last column switch on modules, so their slugs are the only team names in the code (`QUEUE_ROLES` in `portal/src/lib/teams.ts`). Renaming one of those six means a code change; any other team can be renamed or added freely.
+The six teams in the last column switch on modules, so their slugs are in the code (`QUEUE_ROLES` in `portal/src/lib/teams.ts`): changing one of those six addresses means a code change. The launch list itself (`TEAM_SLUGS`) is only what go-live creates; the portal reads every team from Google, so any other team can be renamed or added freely.
 
 **Pillar groups: one per director** (`portal-pillar-<slug>@`). The Owner is the director (several Owners are co-directors). The members are the team groups the pillar covers: add the team groups themselves as members, not people. A director:
 - sees every request from those committees, except Social & Welfare's restricted ones

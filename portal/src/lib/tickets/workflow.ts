@@ -67,7 +67,7 @@ export const TEAM_ROLES: Record<TicketTeam, Role[]> = { it: ["it", "av"], facili
 export const TEAM_ROLE: Record<TicketTeam, Role> = { it: "it", facilities: "facilities" };
 
 /** Each team's Google Group slug (portal-team-<slug>@). */
-const TEAM_SLUG: Record<TicketTeam, string> = { it: "it-services", facilities: "facility-maintenance" };
+const TEAM_SLUG: Record<TicketTeam, string> = { it: "tech", facilities: "maintenance" };
 
 /** The team's Google Group address: its members can work its tickets. */
 export function teamGroup(team: TicketTeam): string {

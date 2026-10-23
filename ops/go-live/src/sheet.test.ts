@@ -12,7 +12,9 @@ const blank = () => Object.fromEntries(templateTabs(D).map((t) => [t.name, [t.he
 test("template: every launch team and role group is listed, with no people", () => {
   const tabs = templateTabs(D);
   const groups = tabs.find((t) => t.name === TAB.groups)!;
-  assert.equal(groups.rows.length, 27 + 4);
+  assert.equal(groups.rows.length, 26 + 4);
+  assert.ok(groups.rows.some((r) => r[1] === "portal-team-tech@x.org"));
+  assert.ok(!groups.rows.some((r) => r[0] === "Outreach"));
   assert.ok(groups.rows.some((r) => r[1] === "portal-team-women@x.org"));
   assert.ok(groups.rows.some((r) => r[1] === "portal-role-admin@x.org"));
   assert.ok(groups.rows.every((r) => r[2] === ""), "no emails in the template");
@@ -37,6 +39,7 @@ test("parse: members, pillars, cards and testers come back checked", () => {
   t[TAB.pillars] = [t[TAB.pillars][0], ["Community", "dir@x.org", "Youth, Women's Committee"]];
   t[TAB.cards] = [t[TAB.cards][0], ["2093", "Holder", "holder@x.org", "Youth Expenses"]];
   t[TAB.testers] = [t[TAB.testers][0], ["chair@x.org", "Chair", "chair"]];
+  t[TAB.groups].push(["Outreach", "portal-team-outreach@x.org", "dawah1@x.org", "Member", ""]);
   const r = parseSheet(t, D);
   assert.ok(r.ok, r.ok ? "" : r.errors.join("\n"));
   if (!r.ok) return;
@@ -44,6 +47,7 @@ test("parse: members, pillars, cards and testers come back checked", () => {
     ["portal-team-youth@x.org", "chair@x.org", "OWNER"],
     ["portal-team-youth@x.org", "vice@x.org", "MANAGER"],
     ["portal-role-finance@x.org", "books@x.org", "MEMBER"],
+    ["portal-team-dawah@x.org", "dawah1@x.org", "MEMBER"],
   ]);
   assert.deepEqual(r.plan.pillars, [{ name: "Community", group: "portal-pillar-community@x.org", directors: ["dir@x.org"], teams: ["portal-team-youth@x.org", "portal-team-women@x.org"] }]);
   assert.deepEqual(r.plan.testers, ["chair@x.org"]);

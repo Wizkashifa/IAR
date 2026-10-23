@@ -6,13 +6,16 @@
  */
 import { slugOf, teamGroupEmail, PILLAR_PREFIX, ROLE_PREFIX } from "../../../portal/src/lib/teams";
 
-/** The launch list (docs/setup.md §6). Display names are exactly what the portal shows. */
+/** The launch list (docs/setup.md §6). Display names are exactly what the portal shows; addresses come from TEAM_SLUGS in teams.ts. Outreach is part of Da'wah. */
 export const LAUNCH_TEAMS = [
   "Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education",
   "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing",
-  "Older Adult Community", "Outreach", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
+  "Older Adult Community", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
   "Women's Committee", "Youth",
 ];
+
+/** Teams merged into another: rows for them in an older Sheet count for the team they joined. */
+export const TEAM_ALIASES: Record<string, string> = { Outreach: "Da'wah" };
 
 export type RoleGroup = { key: string; name: string; local: string; what: string };
 

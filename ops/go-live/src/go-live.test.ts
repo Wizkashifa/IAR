@@ -160,7 +160,7 @@ test("apply from nothing creates everything, then a second run plans no changes"
   assert.ok(fake.users.get("portal@x.org")?.license);
   assert.ok(fake.users.has("portal-directory@x.org"));
   assert.deepEqual(fake.roleHolders.get(fake.roles[0].id), ["portal-directory@x.org"]);
-  assert.equal(fake.groups.size, 27 + 1 + 5);
+  assert.equal(fake.groups.size, 26 + 1 + 5);
   assert.equal(fake.groupSettings.get("portal-team-youth@x.org")?.whoCanModerateMembers, "OWNERS_ONLY");
   assert.equal(fake.groupSettings.get("portal-role-finance@x.org")?.whoCanPostMessage, "ALL_IN_DOMAIN_CAN_POST");
   assert.deepEqual(fake.members.get("portal-team-youth@x.org")?.map((m) => `${m.email}:${m.role}`), ["chair@x.org:OWNER", "vice@x.org:MANAGER", "member@x.org:MEMBER"]);

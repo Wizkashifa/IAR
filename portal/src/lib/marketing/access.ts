@@ -7,7 +7,7 @@
  */
 import type { Card } from "../cards";
 import type { Viewing } from "../access";
-import { groupSlug, slugOf } from "../teams";
+import { groupSlug, teamSlug } from "../teams";
 
 const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
@@ -15,6 +15,6 @@ export function canViewMarketing(card: Card, v: Viewing): boolean {
   if (same(card.ownerEmail, v.email) || v.seeAll) return true;
   if (v.roles.some((r) => r === "marketing" || r === "office" || r === "executive")) return true;
   // The request names its committee; the viewer's chair, vice-chair and director roles are by team group.
-  if (card.committee && v.leads?.some((g) => groupSlug(g) === slugOf(card.committee))) return true;
+  if (card.committee && v.leads?.some((g) => groupSlug(g) === teamSlug(card.committee))) return true;
   return Boolean(card.marketing?.history.some((h) => same(h.by, v.email)));
 }

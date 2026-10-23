@@ -32,9 +32,9 @@ export type Membership = { name: string; group: string; role: TeamRole };
 const lc = (s: string) => s.trim().toLowerCase();
 
 /**
- * A group's slug from its display name: lowercase, apostrophes, "&" and the
- * word "Committee" dropped, words joined with hyphens.
- * "Women's Committee" → "women", "Health & Wellness" → "health-wellness".
+ * A slug from a name: lowercase, apostrophes, "&" and the word "Committee"
+ * dropped, words joined with hyphens. "Women's Committee" → "women". Used for
+ * pillar groups and any team that isn't in TEAM_SLUGS.
  */
 export function slugOf(name: string): string {
   return name
@@ -47,7 +47,44 @@ export function slugOf(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export const teamGroupEmail = (name: string, domain: string) => `${TEAM_PREFIX}${slugOf(name)}@${domain}`;
+/**
+ * The launch teams' group slugs, as IAR named them (docs/setup.md §6). Some
+ * are short ("IT Services" → tech), so they aren't worked out from the name.
+ * The portal itself reads every team from Google by its address; this list
+ * is for go-live, which creates the groups, and for sample data.
+ */
+export const TEAM_SLUGS: Record<string, string> = {
+  Administration: "administration",
+  "Al-Furqan School": "al-furqan-school",
+  "Al-Iman School": "al-iman-school",
+  "An-Noor School": "an-noor-school",
+  Cemetery: "cemetery",
+  Cleaning: "cleaning",
+  Construction: "construction",
+  "Da'wah": "dawah",
+  Education: "education",
+  "Events Committee": "events",
+  "Facility Maintenance": "maintenance",
+  Fundraising: "fundraising",
+  "Health & Wellness": "hw",
+  "IAR Cafe": "cafe",
+  "Imam Office": "imams",
+  "IT Services": "tech",
+  Marketing: "marketing",
+  "Older Adult Community": "seniors",
+  "Page Road": "page",
+  "Safety & Security": "security",
+  Shura: "shura",
+  "Social & Welfare": "welfare",
+  "Sports & Recreation": "sports",
+  Volunteer: "volunteer",
+  "Women's Committee": "women",
+  Youth: "youth",
+};
+
+/** A team's slug: from TEAM_SLUGS, or worked out from its name for a team added later. */
+export const teamSlug = (name: string) => TEAM_SLUGS[name] ?? slugOf(name);
+export const teamGroupEmail = (name: string, domain: string) => `${TEAM_PREFIX}${teamSlug(name)}@${domain}`;
 export const isTeamGroup = (email: string) => lc(email).startsWith(TEAM_PREFIX);
 export const isPillarGroup = (email: string) => lc(email).startsWith(PILLAR_PREFIX);
 /** The slug part of a team or pillar group's address. */
@@ -109,11 +146,11 @@ export function pillarsOf(dir: Directory): { name: string; group: string; direct
  */
 export const QUEUE_ROLES: Record<string, Role[]> = {
   marketing: ["marketing"],
-  "facility-maintenance": ["facilities"],
-  "safety-security": ["security"],
-  "social-welfare": ["sw"],
+  maintenance: ["facilities"],
+  security: ["security"],
+  welfare: ["sw"],
   shura: ["shura"],
-  "it-services": ["it", "av"],
+  tech: ["it", "av"],
 };
 
 /** Roles that come from a person's teams: queue roles, and "chairs" for anyone who chairs a team. */

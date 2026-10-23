@@ -49,7 +49,7 @@ export const DEV_PERSONAS: DevPersona[] = [
 const DEV_TEAMS = [
   "Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education",
   "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing",
-  "Older Adult Community", "Outreach", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
+  "Older Adult Community", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
   "Women's Committee", "Youth",
 ];
 const DEV_PILLARS = [{ name: "Programs", owner: "director@dev.local", teams: ["Youth", "Women's Committee", "Sports & Recreation", "Older Adult Community", "Volunteer"] }];

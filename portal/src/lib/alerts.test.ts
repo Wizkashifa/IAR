@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { type Alert, alertEmail, chatMessage, fallbackFor, routeAlerts } from "./alerts";
 import type { Role } from "./org";
 
-const box = (r: Role) => (r === "finance" ? "portal-role-finance@x.org" : r === "it" || r === "av" ? "portal-team-it-services@x.org" : null);
+const box = (r: Role) => (r === "finance" ? "portal-role-finance@x.org" : r === "it" || r === "av" ? "portal-team-tech@x.org" : null);
 const spaces = { finance: "spaces/FIN", it: "spaces/IT", av: "spaces/IT" };
 const a = (to: string, text = "PO-12001 needs your chair approval."): Alert => ({ to, text, href: "/purchases/PO-12001", cardId: "PO-12001" });
 

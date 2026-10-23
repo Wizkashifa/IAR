@@ -7,7 +7,7 @@
  */
 import { FUNDS } from "../../../portal/src/lib/purchases/accounts";
 import { suggestFund } from "../../../portal/src/lib/teams";
-import { LAUNCH_ROOMS, LAUNCH_TEAMS, ROLE_GROUPS, pillarGroup, roleGroup, teamGroup } from "./launch";
+import { LAUNCH_ROOMS, LAUNCH_TEAMS, ROLE_GROUPS, TEAM_ALIASES, pillarGroup, roleGroup, teamGroup } from "./launch";
 
 export type Tab = {
   name: string;
@@ -122,6 +122,8 @@ export function parseSheet(tabs: Record<string, string[][]>, domain: string): { 
   const at = (tab: string, i: number) => `${tab}, row ${i + 2}`;
   const inDomain = (e: string) => EMAIL.test(e) && e.endsWith(`@${domain}`);
   const teamByName = new Map(LAUNCH_TEAMS.map((t) => [t.toLowerCase(), t]));
+  // Names from older copies of the template that now go to another team.
+  for (const [old, now] of Object.entries(TEAM_ALIASES)) teamByName.set(old.toLowerCase(), now);
   const roleByName = new Map(ROLE_GROUPS.map((g) => [g.name.toLowerCase(), g]));
 
   const members: MemberRow[] = [];
