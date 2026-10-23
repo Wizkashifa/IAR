@@ -306,6 +306,8 @@ test("visibility: requester, marketing, office, executive, admins and anyone who
   assert.ok(sees(admin, true));
   assert.equal(sees(chair), false);
   assert.equal(sees(admin), false);
+  // The requesting committee's chairs, vice chairs and director see it.
+  assert.ok(canViewMarketing(c, { ...chair, leads: [`portal-team-${c.committee.toLowerCase().replace(/[^a-z0-9]+/g, "-")}@x.org`] }));
   // Someone who left the marketing team still sees what they worked on.
   const s = wf.schedule(c, mk, T(1), "2026-11-04");
   assert.ok(canViewMarketing(s, { ...mk, roles: ["member"] }));
