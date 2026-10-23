@@ -12,6 +12,7 @@ import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
 import { requestableFunds } from "@/lib/teams";
+import { linkableEventsFor } from "@/lib/events/context";
 import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
 import type { PurchaseDetails } from "@/lib/purchases/types";
 import * as wf from "@/lib/purchases/workflow";
@@ -30,7 +31,7 @@ export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<st
 }
 
 /** `keep`: the fund and W-9 already on a request being edited; the W-9 needn't be uploaded again. */
-async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { fund: string; w9?: PurchaseDetails["w9Uploaded"] }) {
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string }) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -49,6 +50,8 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
       vendors,
       // Editing a returned request may keep its fund even if the person has since left that committee.
       funds: [...(await fundsFor(viewer, ctx)), ...(keep ? [keep.fund] : [])],
+      // The events the form offered; a request being edited may keep the event it was linked to.
+      events: [...(await linkableEventsFor(viewer)).map((e) => e.id), ...(keep?.eventCardId ? [keep.eventCardId] : [])],
     },
   );
   const files = filesFrom(form, "attachments");
@@ -115,7 +118,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   if (!allowed.ok) return { errors: [allowed.reason] };
 
   const ctx = await purchaseContext();
-  const r = await parseForm(viewer, form, ctx, { fund: card.purchase.fund, w9: card.purchase.w9Uploaded });
+  const r = await parseForm(viewer, form, ctx, { fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId });
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
   const w9 = await storeW9(r.details.payee, r.w9File, now);

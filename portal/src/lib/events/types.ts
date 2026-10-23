@@ -82,6 +82,48 @@ export type EventInput = {
   teamNotes: string;
 };
 
+/** The teams that get tasks on an approved event (lib/events/tasks.ts). Each is a queue role. */
+export type TaskTeam = "marketing" | "av" | "facilities" | "security";
+
+/** "locked" until the event is approved; then to do → in progress → done. */
+export type TaskStatus = "locked" | "todo" | "doing" | "done";
+
+/** One team's job for the event (for a series, security has one per date). */
+export type EventTask = {
+  id: string;
+  team: TaskTeam;
+  title: string;
+  status: TaskStatus;
+  /** Who on the team took it. */
+  assignee?: string;
+  /** "YYYY-MM-DD". */
+  dueDate: string;
+  /** Security: the event date this task is for. */
+  date?: string;
+  /** Left by the team when they finished it. */
+  note?: string;
+  history: EventHistoryEntry[];
+};
+
+/** Security's room check before or after the event, on one of its dates. */
+export type RoomCheck = { date: string; when: "before" | "after"; ok: boolean; note?: string; by: string; at: string };
+
+/** What the requester (or the office) filled in after the event. */
+export type CloseOut = {
+  attendance?: number;
+  notes: string;
+  /** The requester confirmed the final costs (the purchases linked to the event). */
+  costsConfirmed: boolean;
+  /** Spent, from the linked purchase requests, when it was closed. */
+  spent: number;
+  /** A deposit should be refunded (the finance office was told). */
+  depositRefund?: boolean;
+  by: string;
+  at: string;
+  /** Closed by the office for the requester. */
+  byOffice?: boolean;
+};
+
 export type EventDetails = EventInput & {
   /** Every date it happens on, sorted (one for a one-time event), minus dates given up. */
   dates: string[];
@@ -102,4 +144,12 @@ export type EventDetails = EventInput & {
   releasedFor?: string;
   /** Dates given up to someone else's ask. */
   released?: string[];
+  /** Team tasks, added when it's approved (lib/events/tasks.ts). */
+  tasks?: EventTask[];
+  /** Security's room checks, per date. */
+  roomChecks?: RoomCheck[];
+  /** When the event went to close-out, and when the requester was reminded. */
+  closeOutSince?: string;
+  closeOutNudged?: string;
+  closeOut?: CloseOut;
 };

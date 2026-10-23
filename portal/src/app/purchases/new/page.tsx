@@ -4,6 +4,7 @@ import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
 import { createPurchase, fundsFor } from "../actions";
 import PurchaseForm from "../PurchaseForm";
 import { vendorFormProps } from "../formData";
+import { linkableEventsFor } from "@/lib/events/context";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function NewPurchase() {
         cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
         funds={await fundsFor(viewer, ctx)}
         {...await vendorFormProps(viewer)}
+        events={await linkableEventsFor(viewer)}
         submitLabel="Submit request"
       />
     </>

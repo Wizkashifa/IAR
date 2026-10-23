@@ -4,10 +4,16 @@ import type { Card } from "../cards";
 import { ORG } from "../org";
 import { DEV_ROOMS, DEV_ROOM_SETTINGS } from "../rooms-google";
 import { teamGroupEmail } from "../teams";
+import { parsePurchaseInput } from "../purchases/input";
+import { purchaseContext } from "../purchases/settings";
+import * as pw from "../purchases/workflow";
+import { startCloseOut } from "./closeout";
 import type { EventContext } from "./context";
 import { syncHolds } from "./holds";
+import { recordRoomCheck } from "./roomchecks";
 import { mergeRooms } from "./rooms";
 import { addDays, dayOfWeek, todayInRaleigh } from "./series";
+import { actOnTask } from "./tasks";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
 
@@ -98,8 +104,86 @@ export async function sampleEvents(): Promise<Card[]> {
   );
   const family = wf.returnForChanges(family0, director, DIRECTORS, at(3), "Room 220 is in use for school until 3:30 and doesn't allow food. Try the MPH or the cafe.");
 
+  // Approved without a director (the committee has none): straight to the executive.
+  const approveNoDirector = (c: wf.EventCard, owner: wf.EventActor, daysAgo: number) => wf.approve(wf.submit(c, owner, [], at(daysAgo)), exec, [], at(daysAgo - 1));
+
+  // Last week, now waiting on the requester to close it out, with a purchase linked to it.
+  const movie0 = wf.submit(
+    make("EV-1105", input({
+      title: "Youth Movie Night",
+      description: "A family-friendly film on the big screen for youth, with pizza and a short reflection afterwards. Youth volunteers set up the chairs and clean up.",
+      date: addDays(today, -6), start: "18:30", end: "21:00", rooms: ["dev-mphA"], attendance: 45, budget: 300, food: true, av: true,
+      avNeeds: { kinds: ["projector", "sound"], includes: ["video"], ack: true },
+      setupNotes: "Rows of chairs facing the screen, two tables at the back for food.",
+    }), chair, 30),
+    chair, DIRECTORS, at(30),
+  );
+  let movie = wf.approve(wf.approve(movie0, director, DIRECTORS, at(28)), exec, DIRECTORS, at(27));
+  const it: wf.EventActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
+  const facilities: wf.EventActor = { email: "facilities@dev.local", name: "Sample Facilities", roles: ["member", "facilities"] };
+  const security: wf.EventActor = { email: "security@dev.local", name: "Sample Security", roles: ["member", "security"] };
+  movie = actOnTask(movie, "av", it, "done", at(6), "Projector and two speakers set up; returned to the A/V closet.");
+  movie = actOnTask(movie, "facilities", facilities, "done", at(6));
+  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "before", ok: true });
+  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "after", ok: false, note: "Pizza boxes left by the back door and the floor needed sweeping." });
+  movie = startCloseOut(movie, at(5));
+
+  // Yesterday, still approved: the daily job moves it to close-out.
+  const parents = approveNoDirector(
+    make("EV-1106", input({
+      ...education,
+      title: "Weekend school parents' meeting",
+      description: "The start-of-term meeting for weekend school parents: the year's schedule, volunteering and questions for the teachers.",
+      date: addDays(today, -1), start: "18:00", end: "19:30", setup: 15, teardown: 15, rooms: ["dev-r250"], attendance: 18,
+    }), volunteer, 20),
+    volunteer, 20,
+  );
+
+  // Coming up: public, with A/V, a setup plan and after-hours security, so every team has a task.
+  const dinnerDate = next(6, 29);
+  const dinner = approveNoDirector(
+    make("EV-1107", input({
+      committeeGroup: teamGroupEmail("Events Committee", ORG.domain), committeeName: "Events Committee",
+      title: "Community Fall Dinner",
+      description: "An evening dinner for the whole community: a short talk, dinner served at the tables and a children's corner. Tickets help us plan the food; volunteers serve and clean up.",
+      date: dinnerDate, start: "18:30", end: "21:30", setup: 90, teardown: 60, rooms: ["dev-mphAB"], attendance: 160, budget: 2400, food: true, isPublic: true, registration: true, av: true,
+      brief: { subtitle: "Dinner Together This Fall", text: "Join us for the Community Fall Dinner: a short talk, dinner and a children's corner. Tickets are $10 for adults and free for children.", flyer: "Tickets $10 · children free", regLink: "https://example.org/fall-dinner", payment: "$10 per adult, paid on the registration page", startOn: addDays(today, 2), files: "", final: true },
+      avNeeds: { kinds: ["sound", "projector"], includes: ["mics", "laptop"], ack: true },
+      setupNotes: "20 round tables with 8 chairs each, a small stage at the front, two serving tables by the kitchen.",
+    }), chair, 4),
+    chair, 4,
+  );
+
+  // Tonight: on today's run sheet.
+  const tonight = approveNoDirector(
+    make("EV-1108", input({
+      ...education,
+      title: "Weekend school teachers' meeting",
+      description: "Monthly meeting of the weekend school's volunteer teachers: the term plan, materials and new teachers to welcome.",
+      date: today, start: "19:00", end: "20:30", setup: 15, teardown: 15, rooms: ["dev-flex"], attendance: 12, setupNotes: "Chairs in a circle.",
+    }), chair, 10),
+    chair, 10,
+  );
+
   const ctx = { rooms: mergeRooms(DEV_ROOMS, DEV_ROOM_SETTINGS), calendar: roomCalendar() } as EventContext;
   const out: Card[] = [];
-  for (const c of [gameNight, halaqa, arabic, family]) out.push((await syncHolds(c, ctx)).card);
+  for (const c of [gameNight, halaqa, arabic, family, movie, parents, dinner, tonight]) out.push((await syncHolds(c, ctx)).card);
+  out.push(await linkedPurchase("EV-1105", at));
   return out;
+}
+
+/** A reimbursement for the movie night's food, linked to it, approved by the chair and waiting on finance. */
+async function linkedPurchase(eventId: string, at: (daysAgo: number) => string): Promise<Card> {
+  const s = (await purchaseContext()).routing;
+  const vol: pw.Actor = { email: volunteer.email, name: volunteer.name, roles: ["member"] };
+  const ch: pw.Actor = { email: chair.email, name: chair.name, roles: ["member", "chairs"] };
+  const r = parsePurchaseInput(
+    { kind: "reimburse", fund: "Youth Expenses", description: "Movie night pizza and drinks", delivery: "office_pickup", mailingAddress: "20 Sample Ln, Cary, NC 27511", lines: [{ accountId: "a39", amount: "186.40", note: "Pizza and drinks" }], attestationName: vol.name, eventCardId: eventId },
+    { requesterName: vol.name, cards: [], vendors: [] },
+  );
+  if (!r.ok) throw new Error(`Bad sample: ${r.errors.join("; ")}`);
+  const draft = pw.newPurchase(r.details, vol.email, at(5), [{ name: "receipt-pizza.jpg", size: 120_000 }]);
+  // Numbered well after the purchase samples so the two never collide.
+  draft.id = "PO-12090";
+  return pw.approve(pw.submit(draft, vol, s, at(5)), ch, s, at(4));
 }
