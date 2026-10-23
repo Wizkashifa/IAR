@@ -52,6 +52,7 @@ export const MODULES: PortalModule[] = [
       "One event card replaces the Program Request and Marketing/AV forms",
       "Room holds placed on IAR's Google Calendar, with setup and teardown time",
       "Room policy rules flagged automatically (school hours, prayers, MPH cleaning gap, food rooms, fees)",
+      "Ask another committee to give up a booked time; a moved event needs only the director's approval",
       "Marketing, AV, facilities and security tasks added to the card, unlocked on approval",
       "Marketing and A/V questions asked on the event request, so there's no separate marketing form",
       "Mission review for every event: the pillar director first, then any executive",

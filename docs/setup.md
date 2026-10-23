@@ -55,7 +55,7 @@ gcloud firestore indexes composite create --collection-group=notifications \
   --field-config=field-path=at,order=descending
 ```
 
-Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, and beta feedback at `orgs/iar/feedback`. If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback at `orgs/iar/feedback`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
