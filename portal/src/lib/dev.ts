@@ -38,7 +38,10 @@ export const DEV_PERSONAS: DevPersona[] = [
   { id: "director", name: "Sample Director", email: "director@dev.local", title: "Directs the Programs pillar: Youth, Women, Sports, Older Adults, Volunteer", groups: [] },
   { id: "executive", name: "Sample Executive", email: "exec@dev.local", title: "Executive (Head Imam, Shura chair or CEO)", groups: [g.executive], teams: { "Imam Office": "member" } },
   { id: "shura", name: "Sample Shura Member", email: "shura@dev.local", title: "Shura / board member", groups: [], teams: { Shura: "member" } },
-  { id: "security", name: "Sample Security", email: "security@dev.local", title: "Safety & Security and Facility Maintenance", groups: [], teams: { "Safety & Security": "member", "Facility Maintenance": "member" } },
+  { id: "marketing", name: "Sample Marketing", email: "marketing@dev.local", title: "Marketing team", groups: [], teams: { Marketing: "member" } },
+  { id: "it", name: "Sample IT", email: "it@dev.local", title: "IT Services (IT and A/V)", groups: [], teams: { "IT Services": "member" } },
+  { id: "facilities", name: "Sample Facilities", email: "facilities@dev.local", title: "Facility Maintenance staff", groups: [], teams: { "Facility Maintenance": "member" } },
+  { id: "security", name: "Sample Security", email: "security@dev.local", title: "Safety & Security", groups: [], teams: { "Safety & Security": "member" } },
   { id: "admin", name: "Sample Admin", email: "admin@dev.local", title: "Portal admin", groups: [g.admins], teams: { Administration: "member" } },
 ];
 

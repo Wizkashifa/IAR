@@ -8,6 +8,7 @@ import { isActive, todayLocal } from "@/lib/away";
 import { peopleStore } from "@/lib/people";
 import { Suspense } from "react";
 import { FeedbackLink } from "./FeedbackLink";
+import { navModules } from "@/lib/modules";
 
 export const metadata: Metadata = {
   title: `${ORG.shortName} Portal`,
@@ -42,7 +43,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav className="nav">
                 <Link href="/">Home</Link>
                 <Link href="/requests">My Requests</Link>
-                <Link href="/purchases">Purchases</Link>
+                {navModules(viewer.roles).map((m) => (
+                  <Link key={m.id} href={m.href}>
+                    {m.nav}
+                  </Link>
+                ))}
               </nav>
             )}
             {viewer && (

@@ -4,6 +4,7 @@ import { actorFor, peopleStore } from "@/lib/people";
 import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
 import { visibleModules } from "@/lib/modules";
 import { cardStore, NEEDS_OWNER, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
+import { hrefOf } from "@/lib/card-links";
 import { STAGE_LABEL } from "@/lib/purchases/types";
 import { actionableBy, approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
 
@@ -52,8 +53,8 @@ export default async function Home() {
             <ul>
               {needsYou.map((c) => (
                 <li key={c.id}>
-                  {c.type === "purchase" ? (
-                    <Link href={`/purchases/${c.id}`}>
+                  {hrefOf(c) ? (
+                    <Link href={hrefOf(c)!}>
                       <strong>{c.title}</strong>
                     </Link>
                   ) : (

@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Away, checkAway, coveringFor, isActive, todayLocal } from "./away";
 import type { Card } from "./cards";
+import { hrefOf } from "./card-links";
 import { internalPath } from "./links";
 import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";
@@ -66,6 +67,21 @@ test("search: request numbers are read however people type them", () => {
   assert.equal(requestNumber("12001"), "PO-12001");
   assert.equal(requestNumber("ev-1042"), "EV-1042");
   assert.equal(requestNumber("youth night"), null);
+  assert.equal(requestNumber("1101"), null, "below the PO range there's no prefix to guess");
+});
+
+test("search: a bare number finds the event, marketing or ticket with it", () => {
+  const cards = [card("EV-1101", "Family Night", { type: "event" }), card("TK-1101", "Leak in Room 250", { type: "ticket" }), card("PO-12001", "Supplies")];
+  assert.deepEqual(matchCards(cards, "1101").map((c) => c.id).sort(), ["EV-1101", "TK-1101"]);
+  assert.deepEqual(matchCards(cards, "ev 1101").map((c) => c.id), ["EV-1101"]);
+});
+
+test("links: each kind of request opens its own page", () => {
+  assert.equal(hrefOf({ id: "PO-12001", type: "purchase" }), "/purchases/PO-12001");
+  assert.equal(hrefOf({ id: "EV-1101", type: "event" }), "/events/EV-1101");
+  assert.equal(hrefOf({ id: "MK-1001", type: "marketing" }), "/marketing/MK-1001");
+  assert.equal(hrefOf({ id: "TK-1001", type: "ticket" }), "/it-maintenance/TK-1001");
+  assert.equal(hrefOf({ id: "RN-1", type: "rental" }), null);
 });
 
 test("search: every word must match; the exact number comes first", () => {

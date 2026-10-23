@@ -9,6 +9,8 @@ export type PortalModule = {
   phase: 1 | 2 | 3 | 4;
   /** "live" modules link to a working page; others show what is coming. */
   status: "live" | "building" | "planned";
+  /** Short name for the top menu, shown once the module is live. */
+  nav?: string;
   href: string;
   plannedFeatures: string[];
 };
@@ -26,6 +28,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "purchase-requests",
+    nav: "Purchases",
     name: "Purchase Requests",
     summary: "Pay a vendor, get reimbursed, or submit IAR credit card receipts.",
     visibleTo: ["member"],
@@ -42,6 +45,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "events",
+    nav: "Events",
     name: "Events & Rooms",
     summary: "Request a program or event; rooms are checked against the IAR calendar automatically.",
     visibleTo: ["member"],
@@ -60,6 +64,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "marketing-requests",
+    nav: "Marketing",
     name: "Marketing Requests",
     summary: "Graphics, signs, announcements, highlights, webpages, short links and staff badges.",
     visibleTo: ["member"],
@@ -74,7 +79,25 @@ export const MODULES: PortalModule[] = [
     ],
   },
   {
+    id: "it-maintenance",
+    nav: "IT & Maintenance",
+    name: "IT & Maintenance",
+    summary: "Report a building or tech problem and follow it until it's fixed.",
+    visibleTo: ["member"],
+    phase: 2,
+    status: "building",
+    href: "/m/it-maintenance",
+    plannedFeatures: [
+      "Report a problem with a room or a piece of equipment, with urgency and a photo",
+      "IT and facilities queues: assign, in progress, waiting on parts, resolved",
+      "The reporter is notified at each step and confirms the fix",
+      "Preventive maintenance schedules that open tickets on time",
+      "Open Jira issues imported once, so facilities works in one place",
+    ],
+  },
+  {
     id: "team-queues",
+    nav: "Queues",
     name: "Team Queues",
     summary: "Your team's open tasks across every event and request.",
     visibleTo: ["office", "finance", "marketing", "av", "facilities", "security"],
@@ -88,6 +111,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "run-sheet",
+    nav: "Run sheet",
     name: "Daily Run Sheet",
     summary: "One printable page of what's happening where, per day and campus.",
     visibleTo: ["office", "facilities", "security"],
@@ -155,6 +179,11 @@ export const MODULES: PortalModule[] = [
 
 export function visibleModules(roles: Role[]): PortalModule[] {
   return MODULES.filter((m) => m.visibleTo.some((r) => roles.includes(r)));
+}
+
+/** Top-menu links: live modules this person can see. */
+export function navModules(roles: Role[]): PortalModule[] {
+  return visibleModules(roles).filter((m) => m.status === "live" && m.nav);
 }
 
 export function findModule(id: string): PortalModule | undefined {
