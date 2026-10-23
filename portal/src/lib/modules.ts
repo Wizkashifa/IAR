@@ -35,13 +35,7 @@ export const MODULES: PortalModule[] = [
     phase: 1,
     status: "live",
     href: "/purchases",
-    plannedFeatures: [
-      "Three request types: pay a vendor or person, reimburse me, card receipts",
-      "Line items split across sub-accounts, picked from the chart of accounts",
-      "Vendor registry with W-9 on file, stored in a restricted Shared Drive",
-      "Chair and finance approval queues, morning digest, overdue escalation",
-      "Link a purchase to an event card so event costs roll up",
-    ],
+    plannedFeatures: [],
   },
   {
     id: "events",

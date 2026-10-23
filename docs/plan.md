@@ -240,7 +240,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | Phase | Scope | Gate to start the next phase |
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
-| 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags; pilot with a few committees | Pilot runs clean; old Requisition and Program Request forms retired |
+| 1 · Shell, Purchase Requests, Event cards (beta) | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. The beta also brings in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; pilot with a small group of testers | Pilot runs clean; old Requisition and Program Request forms retired |
 | 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
 | 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
@@ -254,8 +254,8 @@ The biggest risk is people, not code. The portal only works if every booking goe
 | Risk | Mitigation |
 | --- | --- |
 | Bookings still made outside the calendar | The portal is the only way to book. The office stops confirming by email once the pilot ends |
-| Office or teams keep working from email | Their queue is the only place approvals happen. Email alerts link straight to the card |
-| Too many alerts, as with the current PO form | Alerts only go to whoever must act; everything else goes in a digest |
+| Office or teams keep working from email | Their queue is the only place approvals happen. Chat alerts link straight to the card |
+| Too many alerts, as with the current PO form | Chat alerts only go to whoever must act; a weekday morning digest; everything else stays in the portal's notifications |
 | Mission review turns into gatekeeping or a bottleneck | Shura-approved criteria, any executive can give the final approval, a time limit for each reviewer |
 | One builder holds all the knowledge | Repo owned by IAR, written setup guide, admin role held by a group, not a person |
 | Scope creep before Phase 1 ships | Phase 1 is only the shell, POs and event cards. Everything else waits for its gate |
@@ -263,7 +263,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 **Open questions**
 
 - [ ] Who approves events today, and does it vary by room or campus?
-- [ ] Is IAR's calendar one shared calendar, or one per room? Per-room calendars make conflict checks reliable
+- [x] Is IAR's calendar one shared calendar, or one per room? One per room: IAR already has a room resource and calendar for each
 - [ ] What happens to the raleighmasjid.org reservation page: retire it, or feed it from the calendar?
 - [ ] Who runs the marketing weekly review, and who owns AV?
 - [ ] Gym rental rates, deposit and insurance terms
@@ -279,13 +279,16 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Connect the existing repo (`wizkashifa/iar`)
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
-- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation (`docs/setup.md`)
+- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/beta-launch.md`)
 - [x] Purchase Requests module on the shell (design in purchase-requests-plan.md)
-- [x] Portal-wide notifications (bell plus email to whoever acts next), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
-- [ ] Set up the portal's sending mailbox and the gmail.send scope (`docs/setup.md`, step 8)
-- [ ] Event cards with calendar holds and rule flags
-- [ ] Create the access groups and a service account in Google Workspace
-- [ ] Pull the room list and calendar IDs from IAR's Google Calendar
+- [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
+- [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
+- [x] Event cards with calendar holds and rule flags, and asking for a booked time
+- [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built for the beta ahead of their phases
+- [x] The daily job: purchase reminders and morning digest, ask reminders and escalation, close-out, preventive maintenance
+- [x] `go-live`: one command that sets up Workspace and Cloud after showing every change, and the members template
+- [ ] Office fills in the members Sheet; go-live creates the groups and service accounts
+- [ ] Office checks the room list against IAR's room resources; go-live shares the room calendars with the portal
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)
