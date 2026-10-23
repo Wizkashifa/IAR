@@ -1,5 +1,6 @@
+import { statusText } from "@/lib/status-text";
 import Link from "next/link";
-import { cardStore, STATUS_LABEL, TYPE_LABEL, type Card } from "@/lib/cards";
+import { cardStore, TYPE_LABEL, type Card } from "@/lib/cards";
 import { actorFor } from "@/lib/people";
 import { canOpenCard } from "@/lib/access";
 import { hrefOf } from "@/lib/card-links";
@@ -64,7 +65,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                         {c.ownerEmail.toLowerCase() !== actor.email && ` · ${c.ownerEmail}`}
                       </div>
                     </td>
-                    <td><span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span></td>
+                    <td><span className={`pill ${c.status}`}>{statusText(c)}</span></td>
                     <td>{c.waitingOn ?? <span className="sub">Nothing</span>}</td>
                     <td className="sub nowrap">{fmtDate(c.updatedAt)}</td>
                   </tr>

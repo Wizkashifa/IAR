@@ -1,9 +1,10 @@
+import { statusText } from "@/lib/status-text";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor, peopleStore } from "@/lib/people";
 import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
 import { visibleModules } from "@/lib/modules";
-import { cardStore, NEEDS_OWNER, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
+import { cardStore, NEEDS_OWNER, TYPE_LABEL } from "@/lib/cards";
 import { hrefOf } from "@/lib/card-links";
 import { STAGE_LABEL } from "@/lib/purchases/types";
 import { actionableBy, approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
@@ -60,7 +61,7 @@ export default async function Home() {
                   ) : (
                     <strong>{c.title}</strong>
                   )}{" "}
-                  <span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                  <span className={`pill ${c.status}`}>{statusText(c)}</span>
                   <div className="what">
                     {TYPE_LABEL[c.type]} {c.id} · {c.waitingOn}
                   </div>

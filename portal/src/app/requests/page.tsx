@@ -1,6 +1,7 @@
+import { statusText } from "@/lib/status-text";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
-import { cardStore, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
+import { cardStore, TYPE_LABEL } from "@/lib/cards";
 import { hrefOf } from "@/lib/card-links";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function MyRequests() {
                     </div>
                   </td>
                   <td>
-                    <span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                    <span className={`pill ${c.status}`}>{statusText(c)}</span>
                   </td>
                   <td>{c.waitingOn ?? <span className="sub">Nothing</span>}</td>
                   <td className="sub">{fmtDate(c.updatedAt)}</td>
