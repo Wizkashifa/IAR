@@ -2,17 +2,20 @@
  * Checks for what admins save in Portal Settings: which fund each team
  * charges, and IAR's credit cards. Plain functions so they can be tested.
  */
+import type { Role } from "./org";
 
 export type CreditCard = { last4: string; holderEmail: string; holderName: string; fund: string };
 export type PortalSettings = {
   /** Team group → fund it charges. Teams not listed use the suggested fund. */
   teamFunds: Record<string, string>;
   cards: CreditCard[];
+  /** Role → its Google Chat space ("spaces/AAAA…"), where alerts for that role are posted. Set by go-live. */
+  chatSpaces?: Partial<Record<Role, string>>;
   updatedAt?: string;
   updatedBy?: string;
 };
 
-export const EMPTY_SETTINGS: PortalSettings = { teamFunds: {}, cards: [] };
+export const EMPTY_SETTINGS: PortalSettings = { teamFunds: {}, cards: [], chatSpaces: {} };
 
 const EMAIL = /^[^\s@<>(),;:"\\]+@[^\s@<>(),;:"\\]+$/;
 

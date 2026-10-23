@@ -117,7 +117,6 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
-| Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
 | IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified. Facilities is a paid team that works in Jira today; this module brings that work into the portal so requesters can see how their request is progressing | 2 |
 | Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
@@ -243,7 +242,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
 | 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags; pilot with a few committees | Pilot runs clean; old Requisition and Program Request forms retired |
 | 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
-| 3 · Gym rentals, S&W aid, public calendar | Public front door for outside renters; private aid cases; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
+| 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
 
 Purchase Requests and Event cards share the shell, so building them together costs little more than building one.

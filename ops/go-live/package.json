@@ -1,0 +1,20 @@
+{
+  "name": "iar-go-live",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sets up IAR's Google Workspace and Cloud for the portal, after showing every change. Run on an IAR super admin's computer; see docs/beta-launch.md.",
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "start": "npm run build && node dist/ops/go-live/src/main.js",
+    "template:xlsx": "npm run build && node dist/ops/go-live/src/make-template.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test $(find dist/ops -name '*.test.js' | sort)"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

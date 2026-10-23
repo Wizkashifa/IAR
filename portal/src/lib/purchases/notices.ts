@@ -1,10 +1,10 @@
 /**
- * Who hears about a purchase request when it moves, and whether by email.
+ * Who hears about a purchase request when it moves, and whether they get an alert.
  *
  * The plan's rule: alert only the person who has to act next. Approvers get
- * an email the moment a request reaches them; the requester gets one when it
- * comes back for changes. Everything else (approved, paid, rejected) is an
- * in-portal notice only. A committee's director hears in the portal when one
+ * a Google Chat message the moment a request reaches them; the requester gets
+ * one when it comes back for changes. Everything else (approved, paid,
+ * rejected) is an in-portal notice only. A committee's director hears in the portal when one
  * of its requests reaches the chair step. Plain functions so they can be tested.
  */
 import { commenters, preview } from "../comments";
@@ -21,8 +21,8 @@ export type Notice = {
   cardId?: string;
   href: string;
   text: string;
-  /** Also send an email (only when the recipient has to act). */
-  email: boolean;
+  /** Also send an alert in Google Chat (only when the recipient has to act). See lib/alerts.ts. */
+  alert: boolean;
   /** Pass to whoever covers for the recipient while they're away. */
   delegable: boolean;
 };
@@ -63,9 +63,9 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
   const out: Notice[] = [];
   const href = `/purchases/${after.id}`;
   const what = label(after);
-  const add = (to: Recipient, text: string, email: boolean, delegable = false) => {
+  const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
     if ("email" in to && same(to.email, actor.email)) return;
-    out.push({ to, cardId: after.id, href, text, email, delegable });
+    out.push({ to, cardId: after.id, href, text, alert, delegable });
   };
   const owner = { email: after.ownerEmail };
 
@@ -100,10 +100,10 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
       stage === "payment" ? `${what} is approved and ready to pay.` :
       stage === "books" ? `${what} is paid and ready to enter in QuickBooks.` :
       `${what} needs your ${STAGE_LABEL[stage].toLowerCase()}.`;
-    // QuickBooks entry is batch work finance does from its queue; no email for it.
+    // QuickBooks entry is batch work finance does from its queue; no alert for it.
     add(next, ask, stage !== "books", "email" in next);
   }
-  // Co-chairs and directors can take the chair step too: a notice in the portal, no email (the named chair is emailed).
+  // Co-chairs and directors can take the chair step too: a notice in the portal, no alert (the named chair gets one).
   if (stage === "chair") {
     for (const c of opts.chairs ?? []) {
       if (!same(c, after.purchase.approverEmail) && !same(c, after.ownerEmail))
@@ -126,7 +126,7 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
 
 /**
  * A new comment: the requester, whoever the request is waiting on, and
- * earlier commenters hear about it in the portal. No email: a comment asks
+ * earlier commenters hear about it in the portal. No alert: a comment asks
  * nothing of anyone by itself.
  */
 export function purchaseCommentNotices(card: PurchaseCard, by: Actor, text: string): Notice[] {
@@ -143,7 +143,7 @@ export function purchaseCommentNotices(card: PurchaseCard, by: Actor, text: stri
     const key = "email" in r ? r.email.toLowerCase() : `role:${r.role}`;
     if (seen.has(key) || ("email" in r && same(r.email, by.email))) continue;
     seen.add(key);
-    out.push({ to: r, cardId: card.id, href, text: msg, email: false, delegable: false });
+    out.push({ to: r, cardId: card.id, href, text: msg, alert: false, delegable: false });
   }
   return out;
 }

@@ -32,7 +32,7 @@ export async function sendFeedback(_prev: FeedbackFormState, form: FormData): Pr
   });
   const preview = message.length > 140 ? `${message.slice(0, 140)}…` : message;
   await deliver(
-    [{ to: { role: "admins" }, href: "/feedback", text: `Portal feedback (${FEEDBACK_KIND_LABEL[kind].toLowerCase()}) from ${viewer.name} on ${page}: ${preview}`, email: true, delegable: false, cardId: saved.id }],
+    [{ to: { role: "admins" }, href: "/feedback", text: `Portal feedback (${FEEDBACK_KIND_LABEL[kind].toLowerCase()}) from ${viewer.name} on ${page}: ${preview}`, alert: true, delegable: false, cardId: saved.id }],
     viewer.email,
   );
   redirect(`/feedback?ok=1&from=${encodeURIComponent(page)}`);

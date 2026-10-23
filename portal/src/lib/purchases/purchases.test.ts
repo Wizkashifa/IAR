@@ -253,8 +253,8 @@ test("send back to an earlier step: from finance to the chair, and from the pay 
   assert.equal(c.purchase.approvals.length, 0);
   assert.equal(c.waitingOn, `Chair approval: ${chair.email} (sent back: Which event is this for?)`);
   const notes = purchaseNotices(before, c, finance);
-  assert.ok(notes.some((n) => "email" in n.to && n.to.email === chair.email && n.email && n.text.includes("sent back")));
-  assert.ok(notes.some((n) => "email" in n.to && n.to.email === volunteer.email && !n.email));
+  assert.ok(notes.some((n) => "email" in n.to && n.to.email === chair.email && n.alert && n.text.includes("sent back")));
+  assert.ok(notes.some((n) => "email" in n.to && n.to.email === volunteer.email && !n.alert));
 
   c = wf.approve(c, chair, settings, T(3));
   assert.equal(c.purchase.returnNote, undefined);
@@ -389,23 +389,23 @@ const to = (n: { to: { email: string } | { role: string } }) => ("email" in n.to
 test("notices: each step emails whoever acts next; the requester hears when it comes back", () => {
   const c = submitted();
   const sub = purchaseNotices(null, c, volunteer);
-  assert.deepEqual(sub.map((n) => [to(n), n.email, n.delegable]), [[chair.email, true, true]]);
+  assert.deepEqual(sub.map((n) => [to(n), n.alert, n.delegable]), [[chair.email, true, true]]);
   assert.match(sub[0].text, /PO-1 .*needs your chair approval/);
 
   const atFinance = wf.approve(c, chair, settings, T(1));
-  assert.deepEqual(purchaseNotices(c, atFinance, chair).map((n) => [to(n), n.email]), [["role:finance", true]]);
+  assert.deepEqual(purchaseNotices(c, atFinance, chair).map((n) => [to(n), n.alert]), [["role:finance", true]]);
 
   const toPay = wf.approve(atFinance, finance, settings, T(2));
-  assert.deepEqual(purchaseNotices(atFinance, toPay, finance).map((n) => [to(n), n.email]), [["role:finance", true], [volunteer.email, false]]);
+  assert.deepEqual(purchaseNotices(atFinance, toPay, finance).map((n) => [to(n), n.alert]), [["role:finance", true], [volunteer.email, false]]);
 
   const paid = wf.recordPayment(toPay, office, T(3), "Check", "20431");
   const paidN = purchaseNotices(toPay, paid, office);
-  assert.deepEqual(paidN.map((n) => [to(n), n.email]), [["role:finance", false], [volunteer.email, false]]);
+  assert.deepEqual(paidN.map((n) => [to(n), n.alert]), [["role:finance", false], [volunteer.email, false]]);
   assert.match(paidN[1].text, /paid \(Check 20431\)/);
 
   const back = wf.returnForChanges(c, chair, T(1), "Attach the invoice");
   const backN = purchaseNotices(c, back, chair);
-  assert.deepEqual(backN.map((n) => [to(n), n.email]), [[volunteer.email, true]]);
+  assert.deepEqual(backN.map((n) => [to(n), n.alert]), [[volunteer.email, true]]);
   assert.match(backN[0].text, /Attach the invoice/);
 });
 
@@ -486,10 +486,10 @@ test("directors: never their own request, never S&W", () => {
 test("directors: told in the portal (no email) when a committee request waits on the chair", () => {
   const c = routed({}, volunteer);
   const ns = purchaseNotices(null, c, volunteer, { directors: [dir.email] });
-  assert.deepEqual(ns.map((n) => [to(n), n.email]), [[chair.email, true], [dir.email, false]]);
+  assert.deepEqual(ns.map((n) => [to(n), n.alert]), [[chair.email, true], [dir.email, false]]);
   // Routed to the director by name: one email, no duplicate notice.
   const noChair = routed({ fund: "Women Expenses" }, volunteer);
-  assert.deepEqual(purchaseNotices(null, noChair, volunteer, { directors: [dir.email] }).map((n) => [to(n), n.email]), [[dir.email, true]]);
+  assert.deepEqual(purchaseNotices(null, noChair, volunteer, { directors: [dir.email] }).map((n) => [to(n), n.alert]), [[dir.email, true]]);
 });
 
 // ---- Co-chairs and vice chairs --------------------------------------------
@@ -540,7 +540,7 @@ test("vice chairs: approve only when the chair can't (the chair's own request), 
 test("co-chairs: the named chair is emailed; the other chairs get a portal notice", () => {
   const c = eduRequest(volunteer);
   const ns = purchaseNotices(null, c, volunteer, { chairs: [chair.email, coChair.email] });
-  assert.deepEqual(ns.map((n) => [to(n), n.email]), [[chair.email, true], [coChair.email, false]]);
+  assert.deepEqual(ns.map((n) => [to(n), n.alert]), [[chair.email, true], [coChair.email, false]]);
 });
 
 // ---- Comments ---------------------------------------------------------------
@@ -561,7 +561,7 @@ test("comments: the requester, whoever it waits on and earlier commenters hear i
   let c = submitted();
   c = withComment(c, { at: T(1), by: chair.email, name: chair.name, text: "Which event is this for?" });
   const fromChair = purchaseCommentNotices(c, chair, "Which event is this for?");
-  assert.deepEqual(fromChair.map((n) => [to(n), n.email]), [[volunteer.email, false]]);
+  assert.deepEqual(fromChair.map((n) => [to(n), n.alert]), [[volunteer.email, false]]);
   c = withComment(c, { at: T(2), by: volunteer.email, name: volunteer.name, text: "Family Night" });
   assert.deepEqual(purchaseCommentNotices(c, volunteer, "Family Night").map(to), [chair.email]);
   // At finance, the finance group hears too.

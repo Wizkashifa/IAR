@@ -2,7 +2,7 @@
 
 One internal portal for the Islamic Association of Raleigh, signed into with an @islam1.org Google account. It replaces the Requisition Form (Google Forms + Form Approvals), the Program Request Form (Microsoft Forms) and the Marketing/AV Request Form with request cards that move through clear stages, owned by the requester and worked by each team from its own queue. Google Groups decide which modules each person sees.
 
-Phase 1 modules: **My Requests**, **Purchase Requests** (payments, reimbursements, card receipts) and **Event cards** (room holds checked against IAR's Google Calendar, policy rules flagged automatically). Later: team queues, a daily run sheet, event close-out, gym rentals, Social & Welfare aid, and more.
+Phase 1 modules: **My Requests**, **Purchase Requests** (payments, reimbursements, card receipts) and **Event cards** (room holds checked against IAR's Google Calendar, policy rules flagged automatically). Later: team queues, a daily run sheet, event close-out, gym rentals and more. Social & Welfare aid goes through Purchase Requests, restricted to S&W and finance.
 
 **Status: early build.** The portal shell (sign-in, group-based tools, My Requests) and the Purchase Requests module run locally with sample data; nothing is deployed yet.
 

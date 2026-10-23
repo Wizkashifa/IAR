@@ -1,4 +1,5 @@
 import { listNotifications } from "@/lib/notifications";
+import { chatEnabled } from "@/lib/chat";
 import { mailEnabled } from "@/lib/mail";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
@@ -18,7 +19,11 @@ export default async function NotificationsPage() {
           <h1>Notifications</h1>
           <p className="lead">
             Requests that reached you or changed.{" "}
-            {mailEnabled() ? "When something is waiting on you, you also get an email." : "Email alerts aren't switched on yet, so check here and on your home page."}
+            {chatEnabled()
+              ? "When something is waiting on you, you also get a Google Chat message from IAR Portal."
+              : mailEnabled()
+                ? "When something is waiting on you, you also get an email."
+                : "Alerts aren't switched on yet, so check here and on your home page."}
           </p>
         </div>
         {unread > 0 && (

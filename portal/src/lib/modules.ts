@@ -114,16 +114,6 @@ export const MODULES: PortalModule[] = [
     ],
   },
   {
-    id: "sw-aid",
-    name: "Social & Welfare Aid",
-    summary: "Private aid cases and payments, visible only to S&W and finance.",
-    visibleTo: ["sw", "finance"],
-    phase: 3,
-    status: "planned",
-    href: "/m/sw-aid",
-    plannedFeatures: ["Case records kept out of general purchase requests", "Aid payments with restricted visibility"],
-  },
-  {
     id: "budget",
     name: "Budget",
     summary: "Where the money comes from and where it stands, by committee or for all of IAR.",

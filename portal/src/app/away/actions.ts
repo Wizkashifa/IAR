@@ -32,7 +32,7 @@ export async function saveAway(_prev: AwayFormState, form: FormData): Promise<Aw
         to: { email: r.away.delegate },
         href: "/",
         text: `${viewer.name} asked you to cover their approvals from ${fmtDay(r.away.from)} to ${fmtDay(r.away.until)}${r.away.note ? `: “${r.away.note}”` : "."}`,
-        email: true,
+        alert: true,
         delegable: false,
       }],
       viewer.email,
@@ -48,7 +48,7 @@ export async function clearAway(): Promise<void> {
   const before = await people.getAway(viewer.email);
   await people.clearAway(viewer.email);
   if (before) {
-    await deliver([{ to: { email: before.delegate }, href: "/", text: `${viewer.name} is back. You're no longer covering their approvals.`, email: false, delegable: false }], viewer.email);
+    await deliver([{ to: { email: before.delegate }, href: "/", text: `${viewer.name} is back. You're no longer covering their approvals.`, alert: false, delegable: false }], viewer.email);
   }
   revalidatePath("/", "layout");
   redirect("/away?ok=cleared");
