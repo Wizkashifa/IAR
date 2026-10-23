@@ -235,13 +235,28 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .hint { font-size: 12px; color: var(--ink-3); }
 .sect { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
 .sect > .sect-h { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 2px; }
+.sect.plain { border: 0; padding: 0; }
+.sect { scroll-margin-top: calc(var(--top-h, 64px) + 16px); }
+.sect-h h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.sn { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-family: var(--font-head); font-size: 12px; font-weight: 600; flex: none; }
+.sn .ic-svg { width: 12px; height: 12px; stroke-width: 3; }
+.evgrid .sticky { position: sticky; top: calc(var(--top-h, 64px) + 16px); }
+.form-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.form-steps .lnk { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 500; }
+.form-steps li:not(.done) .sn { background: var(--surface-2); color: var(--ink-2); }
+.form-steps li.done .sn { background: var(--ok); color: var(--surface); }
+.agree { gap: 8px; }
+.agree label { font-weight: 400 !important; color: var(--ink) !important; display: flex; gap: 8px; align-items: flex-start; font-size: 14px !important; }
+.agree input { margin-top: 4px; }
+.actions #submitNote { margin-right: auto; align-self: center; }
 .ex { font-size: 12px; color: var(--ink-2); background: var(--surface-2); border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; }
 .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
 .checks { display: flex; flex-direction: column; }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 9px 0; border-top: 1px solid var(--line); }
 .check:first-child { border-top: 0; padding-top: 0; }
-.check .ic { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
+.check .ic { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; }
+.check .ic .ic-svg { width: 12px; height: 12px; stroke-width: 2.75; }
 .check.ok .ic { background: var(--ok-soft); color: var(--ok); }
 .check.warn .ic { background: var(--warn-soft); color: var(--warn); }
 .check.bad .ic { background: var(--bad-soft); color: var(--bad); }
@@ -249,7 +264,7 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .check .rule { font-size: 11.5px; color: var(--ink-3); }
 
 .tl { position: relative; height: 34px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
-.tl .blk { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; font-size: 10.5px; padding: 0 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 26px; color: var(--ink); }
+.tl .blk { position: absolute; top: 4px; height: 26px; border-radius: 4px; font-size: 10.5px; padding: 0 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 26px; color: var(--ink); }
 .tl .blk.standing { background: var(--hold-standing); }
 .tl .blk.booking, .tl .blk.tentative { background: var(--hold-booking); }
 .tl .blk.tentative { background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,0.25) 5px 10px); }
@@ -372,9 +387,11 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
 .tag.flag { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
 .tag.epic { background: var(--accent-soft); color: var(--accent-text); }
-.ti { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 4px; font-size: 11px; font-weight: 700; flex: none; vertical-align: -3px; }
+.ti { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; flex: none; vertical-align: -4px; }
+.ti .ic-svg { width: 12px; height: 12px; stroke-width: 2.5; }
 .ti.bad { background: var(--bad-soft); color: var(--bad); } .ti.info { background: var(--info-soft); color: var(--info); } .ti.accent { background: var(--accent-soft); color: var(--accent-text); } .ti.ok { background: var(--ok-soft); color: var(--ok); } .ti.warn { background: var(--warn-soft); color: var(--warn); }
-.pri { font-size: 10.5px; font-weight: 700; letter-spacing: -1px; }
+.pri { display: inline-flex; }
+.pri .ic-svg { stroke-width: 2.75; }
 .pri.bad { color: var(--bad); } .pri.warn { color: var(--warn); } .pri.info { color: var(--info); }
 .av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); font-size: 10px; font-weight: 700; flex: none; }
 .av.big { width: 30px; height: 30px; font-size: 12px; }
@@ -408,7 +425,8 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .brow { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; background: var(--surface); }
 .brow.dragging { opacity: .4; }
 .brow .bt { flex: 1 1 200px; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
-.brow .grip { color: var(--ink-3); cursor: grab; letter-spacing: -2px; }
+.brow .grip { color: var(--ink-3); cursor: grab; display: inline-flex; }
+.brow .grip .ic-svg { stroke-width: 3; }
 .brow .mv { max-width: 130px; }
 .blist .empty { padding: 14px; }
 .bar2 { height: 6px; background: var(--surface-2); margin: 0 16px 8px; border-radius: 3px; overflow: hidden; }
@@ -485,6 +503,8 @@ body.modal-open { overflow: hidden; }
 
 @media (max-width: 860px) {
   .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .evgrid .sticky { position: static; }
+  .evgrid .sticky > :first-child { display: none; }
   .board { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
@@ -493,7 +513,10 @@ body.modal-open { overflow: hidden; }
   .top .desk { display: none !important; }
   .menu-btn { display: inline-flex !important; }
   .brand .mark { height: 34px; }
-  .who-t { display: none; }
+  .who-t, .demo-tag .long { display: none; }
+  .item, .item:has(> .chev) { grid-template-columns: minmax(0, 1fr); }
+  .item .r { flex-direction: row; align-items: center; justify-content: flex-start; }
+  .item > .chev { display: none; }
   .top .who-btn { padding: 0 6px 0 4px; }
   .shell { grid-template-columns: minmax(0, 1fr); }
   .rail { position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(300px, 86vw); overflow-y: auto; transform: translateX(-102%); transition: transform .2s ease-out; box-shadow: var(--shadow-2); padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-left: max(12px, env(safe-area-inset-left, 0px)); visibility: hidden; }
@@ -517,7 +540,7 @@ body.modal-open { overflow: hidden; }
 <header class="top">
   <div class="top-inner">
     <button class="btn icon menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="rail"></button>
-    <div class="brand"><img class="mark" src="data:image/png;base64,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" alt="Islamic Association of Raleigh"> Portal <span class="demo-tag">Demo · sample data</span></div>
+    <div class="brand"><img class="mark" src="data:image/png;base64,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" alt="Islamic Association of Raleigh"> Portal <span class="demo-tag">Demo<span class="long"> · sample data</span></span></div>
     <div class="spacer"></div>
     <form id="topSearch" class="desk" role="search"><input type="search" name="q" placeholder="Search requests" aria-label="Search requests"></form>
     <button class="btn icon" id="bellBtn" type="button" data-go="notifs" title="Notifications"></button>
@@ -987,7 +1010,7 @@ function runChecks(e, ownerId) {
   const mr = missionReasons(e);
   if (mr.length) add("info", `Mission review will look closely at this: ${mr.join(", ")}.`, "Proposed rule");
   const dn = String(e.description || "").trim().length;
-  if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule, any speakers, and what you need from each team." : "Add a description. The reviewers, marketing and the teams all read it.", "Program Request Form");
+  if (dn < DESC_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule and any speakers." : "Add a description. The reviewers, marketing and the teams all read it.", "Program Request Form");
   else add("ok", "Description gives reviewers enough to go on.", "Program Request Form");
   if (e.isPublic && ruleOn("advert")) add("info", "Marketing unlocks after approval. No advertising before then.", "Room policy §4");
   const MF = "Marketing request form";
@@ -1005,7 +1028,6 @@ function runChecks(e, ownerId) {
   if (e.av) {
     const a = e.avNeeds || avBlank();
     if (!a.kinds.length) out.push({ sev: "bad", block: true, text: "Choose the type of A/V support you need.", rule: MF });
-    if (!a.ack) out.push({ sev: "bad", block: true, text: "Confirm you understand A/V support isn't guaranteed.", rule: MF });
   }
   return out;
 }
@@ -1601,10 +1623,15 @@ function timeline(date, roomId, req) {
   const S0 = 7 * 60, S1 = 23 * 60, span = S1 - S0;
   const pos = (m) => ((Math.max(S0, Math.min(S1, m)) - S0) / span) * 100;
   const hs = roomId === "offsite" ? [] : holdsOn(date, req?.id).filter((h) => roomsOverlap(h.room, roomId));
-  let blks = hs.map((h) => `<div class="blk ${h.kind}" style="left:${pos(h.s)}%;width:${pos(h.e) - pos(h.s)}%" title="${esc(h.label)} ${fmtRange(h.s, h.e)}">${esc(h.label)}</div>`).join("");
-  if (req) { const a = toMin(req.start) - req.setup, b = toMin(req.end) + req.teardown; if (b > a) blks += `<div class="blk req" style="left:${pos(a)}%;width:${pos(b) - pos(a)}%" title="Your request">Your request</div>`; }
+  // The same hold can cover several parts of a room (MPH A, B and A&B); show it once.
+  const seen = new Set(), items = hs.filter((h) => { const k = `${h.label}|${h.s}|${h.e}`; return !seen.has(k) && seen.add(k); }).map((h) => ({ s: h.s, e: h.e, cls: h.kind, label: h.label, title: `${h.label} ${fmtRange(h.s, h.e)}` }));
+  if (req) { const a = toMin(req.start) - req.setup, b = toMin(req.end) + req.teardown; if (b > a) items.push({ s: a, e: b, cls: "req", label: "Your request", title: `Your request ${fmtRange(a, b)}, with setup and cleanup` }); }
+  // Overlapping bookings go on separate rows, so each label stays readable.
+  const ends = [];
+  for (const x of items.slice().sort((p, q) => p.s - q.s)) { let i = ends.findIndex((e) => e <= x.s); if (i < 0) i = ends.length; ends[i] = x.e; x.lane = i; }
+  const blks = items.map((x) => `<div class="blk ${x.cls}" style="left:${pos(x.s)}%;width:${pos(x.e) - pos(x.s)}%;top:${4 + x.lane * 30}px" title="${esc(x.title)}">${esc(x.label)}</div>`).join("");
   return `<div class="small" style="margin-bottom:6px"><strong>${esc(room(roomId).name)}</strong> · ${fmtDate(date)}</div>
-    <div class="tl">${blks}</div><div class="tl-axis"><span>7 AM</span><span>11 AM</span><span>3 PM</span><span>7 PM</span><span>11 PM</span></div>
+    <div class="tl" style="height:${Math.max(1, ...items.map((x) => x.lane + 1)) * 30 + 4}px">${blks}</div><div class="tl-axis"><span>7 AM</span><span>11 AM</span><span>3 PM</span><span>7 PM</span><span>11 PM</span></div>
     <div class="legend" style="margin-top:8px"><span><i style="background:var(--hold-standing)"></i>Standing hold (policy)</span><span><i style="background:var(--hold-booking)"></i>Booked or pending</span>${req ? `<span><i style="border:2px solid var(--hold-request)"></i>Your request, with setup and cleanup</span>` : ""}</div>`;
 }
 
@@ -1613,34 +1640,41 @@ function defaultDraft() {
   if (!myCommittees().includes("Youth")) { const date = nextDow(TODAY, 4, 25); return { id: null, title: "", committee: myCommittees()[0] || "", date, start: "18:30", end: "20:00", setup: 30, teardown: 30, room: "r250", attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, recurFreq: "none", recurEnd: "", description: "", brief: briefBlank(), avNeeds: avBlank(), final: false }; }
   const date = nextDow(TODAY, 0, 22);
   return { id: null, title: "Youth Game Night", committee: "Youth", date, start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables; Youth volunteers set up and clean up", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents.",
-    brief: { ...briefBlank(), subtitle: "Games and Dinner for Families", text: "Youth and parents are invited to Youth Game Night: board games, a trivia round with prizes, and dinner together. Free and open to all families.", flyer: "Title, date and time, full gym (MPH), dinner included, free for families", startOn: defaultStartOn(date) },
-    avNeeds: { ...avBlank(), kinds: ["projector", "sound"], includes: ["laptop"], ack: true }, final: true };
+    brief: { ...briefBlank(), subtitle: "Games and Dinner for Families", text: "Youth and parents are invited to Youth Game Night: board games, a trivia round with prizes, and dinner together. Free and open to all families.", flyer: "Dinner included, free for families", startOn: defaultStartOn(date) },
+    avNeeds: { ...avBlank(), kinds: ["projector", "sound"], includes: ["laptop"] }, final: false };
+}
+/* The event request form has up to four numbered sections; marketing and A/V appear only when they're needed. */
+function evSections(d) {
+  const b = d.brief, a = d.avNeeds;
+  return [
+    { id: "evSect", n: "Event and room", done: Boolean(d.title && d.description && d.date && d.room) },
+    d.isPublic && { id: "briefSect", n: "Marketing", done: Boolean(b.subtitle && b.text && b.startOn) },
+    d.av && { id: "avSect", n: "A/V", done: a.kinds.length > 0 },
+    { id: "confirmSect", n: "Confirm", done: Boolean(d.agree && (!d.av || a.ack) && (!d.isPublic || d.final)) },
+  ].filter(Boolean);
 }
 /* The event marketing questions from the Marketing/Multimedia/AV Request Form. Shown when the event is open to the public. */
-function briefSection(d) {
+function briefSection(d, sectH) {
   const b = d.brief;
   const ta = (k, label, o = {}) => `<div class="fld ${o.half ? "" : "wide"}"><label for="b_${k}">${label}</label>${o.ex ? `<div class="ex">${esc(o.ex)}</div>` : ""}<textarea id="b_${k}" name="b_${k}" rows="${o.rows || 3}" placeholder="${esc(o.ph || "")}">${esc(b[k])}</textarea>${o.hint ? `<span class="hint">${esc(o.hint)}</span>` : ""}</div>`;
-  return `<div class="sect" id="briefSect"><div class="sect-h"><h3>For marketing</h3><span class="hint">Replaces the Marketing/AV request form. Marketing asks for 3 weeks' notice: at least 2 weeks of marketing, and 1–2 weeks to make the materials. Requests are reviewed weekly.</span></div>
+  return `<div class="sect" id="briefSect">${sectH("briefSect", "Marketing", "Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.")}
     <div class="fld wide"><label for="b_subtitle">One-line subtitle (5–6 words)</label><input type="text" id="b_subtitle" name="b_subtitle" value="${esc(b.subtitle)}" placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters · A Weekly Boys' Halaqah"><span class="hint">Used on the flyer and in other marketing.</span></div>
-    ${ta("text", "Announcement text to publish", { rows: 4, ex: "Example: " + ANNOUNCE_EXAMPLE, hint: "Include the critical details: date, time and location. IAR Marketing may edit it for clarity, grammar and professionalism." })}
-    ${ta("flyer", "What goes on the flyer", { ph: "Title, date and time, location, who it's for. Anything that MUST be on it: bring a water bottle, late registration cost, Q&A at the end." })}
-    ${ta("other", "Other information to publish (optional)", { ph: "For example, the topics covered in a class" })}
+    ${ta("text", "Announcement text to publish", { rows: 4, ex: "Example: " + ANNOUNCE_EXAMPLE, hint: "Marketing already has the date, time and room from above, and may edit the text for clarity." })}
+    ${ta("flyer", "Anything else the flyer or announcement must say (optional)", { ph: "Bring a water bottle, late registration cost, Q&A at the end, topics covered" })}
     ${d.registration ? `<div class="fld wide"><label for="b_regLink">Registration link and instructions</label><input type="text" id="b_regLink" name="b_regLink" value="${esc(b.regLink)}" placeholder="https://… and how to sign up"></div>` : ""}
     ${ta("payment", "Payment info and instructions (if any)", { rows: 2, ph: "Cost, how to pay, deadlines" })}
     <div class="fld"><label for="b_startOn">Start marketing on</label><input type="date" id="b_startOn" name="b_startOn" value="${b.startOn}"><span class="hint">At least ${MK_WEEKS} weeks before the event.</span></div>
     <div class="fld"><label for="b_files">Google Drive link to files (optional)</label><input type="url" id="b_files" name="b_files" value="${esc(b.files)}" placeholder="https://drive.google.com/…"><span class="hint">Logos, photos, speaker bios. Share with “Everyone at Islamic Association of Raleigh”.</span></div>
-    ${ta("notes", "Comments for marketing (optional)", { rows: 2 })}
   </div>`;
 }
-/* The event A/V questions from the same form. Shown when A/V support is checked. */
-function avSection(d) {
+/* The event A/V questions from the same form. Shown when A/V support is checked. A guest speaker is asked once, under Details. */
+function avSection(d, sectH) {
   const a = d.avNeeds;
   const boxes = (group, opts, on) => Object.entries(opts).map(([k, l]) => `<label><input type="checkbox" name="a_${group}" value="${k}" ${on.includes(k) ? "checked" : ""}> ${esc(l)}</label>`).join("");
-  return `<div class="sect" id="avSect"><div class="sect-h"><h3>For A/V</h3><span class="hint">We can't promise every A/V request. The A/V team will contact you about whether they can support the event.</span></div>
+  const includes = Object.fromEntries(Object.entries(AV_INCLUDES).filter(([k]) => k !== "speaker"));
+  return `<div class="sect" id="avSect">${sectH("avSect", "A/V", "The A/V team will contact you about what they can support.")}
     <div class="fld wide"><span class="lbl">What A/V support do you need? Check all that apply.</span><div class="checks-inline">${boxes("kinds", AV_KINDS, a.kinds)}</div></div>
-    <div class="fld wide"><span class="lbl">Will the event include any of these?</span><div class="checks-inline">${boxes("includes", AV_INCLUDES, a.includes)}</div></div>
-    <div class="fld wide"><label for="a_notes">Comments for A/V (optional)</label><textarea id="a_notes" name="a_notes" rows="2">${esc(a.notes)}</textarea></div>
-    <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="a_ack" name="a_ack" ${a.ack ? "checked" : ""}> I understand A/V support isn't guaranteed and the A/V team will contact me about this request.</label></div>
+    <div class="fld wide"><span class="lbl">Will the event include any of these?</span><div class="checks-inline">${boxes("includes", includes, a.includes)}</div></div>
   </div>`;
 }
 function vNewEvent() {
@@ -1653,44 +1687,54 @@ function vNewEvent() {
   if (!committees.includes(d.committee)) d.committee = committees[0];
   const editing = d.id ? getCard(d.id) : null;
   const prior = d.renews && getCard(d.renews);
+  d.teamNotes ??= d.brief.notes || d.avNeeds.notes || "";
+  const secs = evSections(d), num = (id) => secs.findIndex((x) => x.id === id) + 1;
+  const sectH = (id, title, hint) => `<div class="sect-h"><h3><span class="sn">${num(id)}</span>${title}</h3>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
   return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / ${editing ? "Edit " + esc(d.id) : "New request"}</div>
-  <div><h1>${editing ? "Update and resubmit" : prior ? "Renew a recurring series" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing and A/V. The checks on the right update as you type.</p></div>
+  <div><h1>${editing ? "Update and resubmit" : prior ? "Renew a recurring series" : "New event request"}</h1><p class="lead">The room, approval, marketing and A/V in one request.</p></div>
   ${prior ? `<div class="note info">Next period for <span class="mono">${prior.id}</span>, which ends ${fmtLong(prior.recur.end)}. It goes through the same checks and approval as any new request.</div>` : ""}
-  <div class="grid2">
+  <div class="grid2 evgrid">
     <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
+      <div class="sect plain" id="evSect">${sectH("evSect", "Event and room")}
       <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
-      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from marketing or A/V.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
-      <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
+      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="5" placeholder="What will happen and who it's for. Include the schedule and any speakers or guests.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
+      <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_date">${d.recurFreq !== "none" ? "First date" : "Date"}</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
       <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
       <div class="fld"><label for="f_end">Event ends</label><input type="time" id="f_end" name="end" value="${d.end}" step="900"></div>
       <div class="fld"><label for="f_setup">Setup before (minutes)</label><input type="number" id="f_setup" name="setup" value="${d.setup}" min="0" step="15"></div>
       <div class="fld"><label for="f_teardown">Cleanup after (minutes)</label><input type="number" id="f_teardown" name="teardown" value="${d.teardown}" min="0" step="15"></div>
-      <div class="fld wide"><span class="hint">You and your committee set up and clean up. This time is held on the calendar for you.</span></div>
+      <div class="fld wide"><span class="hint">You set up and clean up yourselves. This time is held on the calendar for you.</span></div>
       <div class="fld"><label for="f_recurFreq">Repeats</label><select id="f_recurFreq" name="recurFreq"><option value="none" ${d.recurFreq === "none" ? "selected" : ""}>Does not repeat</option>${Object.entries(RECUR_FREQ).map(([k, l]) => `<option value="${k}" ${d.recurFreq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_recurEnd">Repeats until</label><input type="date" id="f_recurEnd" name="recurEnd" value="${d.recurEnd || ""}"><span class="hint" id="recurHint"></span></div>
       <div class="fld wide"><label for="f_room">Room</label><select id="f_room" name="room">${ROOMS.map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}${r.cap ? ` (${r.cap})` : ""}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_attendance">Expected attendance</label><input type="number" id="f_attendance" name="attendance" value="${d.attendance}" min="1"></div>
       <div class="fld"><label for="f_budget">Budget estimate ($)</label><input type="number" id="f_budget" name="budget" value="${d.budget}" min="0" step="50"></div>
+      <div class="fld wide"><label for="f_setupNotes">Your setup plan (optional)</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage"></div>
       <div class="fld wide"><span class="lbl">Details</span><div class="checks-inline">
         <label><input type="checkbox" id="f_food" name="food" ${d.food ? "checked" : ""}> Food served</label>
         <label><input type="checkbox" id="f_isPublic" name="isPublic" ${d.isPublic ? "checked" : ""}> Open to the public (needs marketing)</label>
         <label><input type="checkbox" id="f_registration" name="registration" ${d.registration ? "checked" : ""}> Registration needed</label>
         <label><input type="checkbox" id="f_av" name="av" ${d.av ? "checked" : ""}> A/V support</label>
-      </div></div>
-      ${d.isPublic ? briefSection(d) : ""}
-      ${d.av ? avSection(d) : ""}
-      <div class="fld wide"><label for="f_setupNotes">Your setup plan (optional)</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage"><span class="hint">For the room check and Today at IAR. IAR staff don't set up rooms; only A/V and marketing are offered as services.</span></div>
-      <div class="fld wide"><span class="lbl">Does any of this apply?</span><div class="checks-inline">
+        <label><input type="checkbox" id="f_outsideSpeaker" name="outsideSpeaker" ${d.triggers.outsideSpeaker ? "checked" : ""}> Outside speaker or guest</label>
         <label><input type="checkbox" id="f_newProgram" name="newProgram" ${d.triggers.newProgram ? "checked" : ""}> New program</label>
-        <label><input type="checkbox" id="f_outsideSpeaker" name="outsideSpeaker" ${d.triggers.outsideSpeaker ? "checked" : ""}> Outside speaker or group</label>
         <label><input type="checkbox" id="f_fundraiser" name="fundraiser" ${d.triggers.fundraiser ? "checked" : ""}> Fundraiser</label>
       </div></div>
-      <div class="fld wide"><label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_agree" checked> I've read the room reservation policy and accept its rules and liability statement.</label>
-        ${d.isPublic ? `<label style="font-weight:400;color:var(--ink);display:flex;gap:6px"><input type="checkbox" id="f_final" ${d.final ? "checked" : ""}> The details I've given are final and confirmed, so marketing can publish them.</label>` : ""}</div>
-      <div class="actions"><button class="btn" type="button" data-go="events">Cancel</button><button class="btn primary" type="submit">${editing ? "Resubmit" : "Submit request"}</button></div>
+      </div>
+      ${d.isPublic ? briefSection(d, sectH) : ""}
+      ${d.av ? avSection(d, sectH) : ""}
+      <div class="sect" id="confirmSect">${sectH("confirmSect", "Confirm")}
+      <div class="fld wide"><label for="f_teamNotes">Notes for the teams (optional)</label><textarea id="f_teamNotes" name="teamNotes" rows="2" placeholder="Anything marketing or A/V should know">${esc(d.teamNotes)}</textarea></div>
+      <div class="fld wide agree">
+        <label><input type="checkbox" id="f_agree" name="agree" ${d.agree ? "checked" : ""}> I've read the room reservation policy and accept its rules and liability statement.</label>
+        ${d.av ? `<label><input type="checkbox" id="a_ack" name="a_ack" ${d.avNeeds.ack ? "checked" : ""}> I understand A/V support isn't guaranteed and the A/V team will contact me.</label>` : ""}
+        ${d.isPublic ? `<label><input type="checkbox" id="f_final" name="final" ${d.final ? "checked" : ""}> The details I've given are final, so marketing can publish them.</label>` : ""}
+      </div>
+      </div>
+      <div class="actions"><span class="small" id="submitNote"></span><button class="btn" type="button" data-go="events">Cancel</button><button class="btn primary" type="submit">${editing ? "Resubmit" : "Submit request"}</button></div>
     </form></div></div>
-    <div class="stack">
+    <div class="stack sticky">
+      <div class="panel"><div class="panel-b"><ol class="form-steps" id="formSteps"></ol></div></div>
       <div class="panel"><div class="panel-h"><h2>Checks</h2><span id="checkSum"></span></div><div class="panel-b"><div class="checks" id="checks"></div></div></div>
       <div class="panel"><div class="panel-h"><h2>IAR calendar that day</h2></div><div class="panel-b" id="evTl"></div></div>
     </div>
@@ -1698,13 +1742,18 @@ function vNewEvent() {
 }
 function readDraft() {
   const f = document.getElementById("evForm"); if (!f) return;
-  const v = (n) => f.elements[n].value, c = (n) => f.elements[n].checked;
+  const v = (n) => f.elements[n].value, c = (n) => Boolean(f.elements[n]?.checked);
   if (f.elements.b_text) for (const k of Object.keys(briefBlank())) if (f.elements["b_" + k]) S.draft.brief[k] = v("b_" + k);
-  if (f.elements.a_notes) {
+  const notes = v("teamNotes").trim();
+  S.draft.teamNotes = v("teamNotes"); S.draft.brief.notes = notes; S.draft.avNeeds.notes = notes;
+  S.draft.agree = c("agree");
+  if (f.elements.f_final) S.draft.final = c("final");
+  if (f.elements.a_ack) S.draft.avNeeds.ack = c("a_ack");
+  if (document.getElementById("avSect")) {
     const picked = (n) => [...f.querySelectorAll(`input[name=${n}]:checked`)].map((x) => x.value);
-    Object.assign(S.draft.avNeeds, { kinds: picked("a_kinds"), includes: picked("a_includes"), ack: c("a_ack"), notes: v("a_notes") });
+    S.draft.avNeeds.kinds = picked("a_kinds");
+    S.draft.avNeeds.includes = [...picked("a_includes"), ...(c("outsideSpeaker") ? ["speaker"] : [])];
   }
-  if (f.elements.f_final) S.draft.final = f.elements.f_final.checked;
   Object.assign(S.draft, { title: v("title"), description: v("description"), committee: v("committee"), date: v("date"), start: v("start") || "00:00", end: v("end") || "00:00", setup: Number(v("setup") || 0), teardown: Number(v("teardown") || 0), room: v("room"), recurFreq: v("recurFreq"), recurEnd: v("recurEnd"), attendance: Number(v("attendance") || 0), budget: Number(v("budget") || 0), food: c("food"), isPublic: c("isPublic"), registration: c("registration"), av: c("av"), setupNotes: v("setupNotes"), triggers: { newProgram: c("newProgram"), outsideSpeaker: c("outsideSpeaker"), fundraiser: c("fundraiser") } });
 }
 function paintChecks() {
@@ -1718,12 +1767,15 @@ function paintChecks() {
   document.getElementById("descHint").textContent = descHint(d.description);
   document.getElementById("checks").innerHTML = checksHtml(ch);
   const w = worst(ch);
-  document.getElementById("checkSum").innerHTML = `<span class="pill ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
+  document.getElementById("checkSum").innerHTML = `<span class="pill dot ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
+  const bad = ch.filter((x) => x.sev === "bad").length;
+  document.getElementById("submitNote").innerHTML = bad ? `<span class="pill dot bad">${bad} conflict${bad > 1 ? "s" : ""}, see Checks</span>` : "";
+  document.getElementById("formSteps").innerHTML = evSections(d).map((x, i) => `<li class="${x.done ? "done" : ""}"><button type="button" class="lnk" data-jump="${x.id}"><span class="sn">${x.done ? icon("check") : i + 1}</span>${esc(x.n)}</button></li>`).join("");
   document.getElementById("evTl").innerHTML = d.date && d.room !== "offsite" ? timeline(d.date, d.room, d) : `<div class="muted small">Off-site: nothing to check on the calendar.</div>`;
 }
 const DESC_GOOD = 200;
-const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the reviewers approve faster and the teams plan: what happens, who it's for, the schedule, speakers or guests, and what you need.`; };
-const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${{ ok: "✓", warn: "!", bad: "×", info: "i" }[c.sev]}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
+const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the reviewers approve faster: what happens, who it's for, the schedule and any speakers.`; };
+const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${icon({ ok: "check", warn: "alert", bad: "x", info: "info" }[c.sev])}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
 
 function submitEvent() {
   readDraft();
@@ -2742,7 +2794,7 @@ function budYearToDate() {
     <div class="panel"><div class="panel-h"><h2>Restricted and self-funded money</h2></div><div class="tablewrap"><table><thead><tr><th>Fund</th><th class="num">In (incl. carry-over)</th><th class="num">Spent</th><th class="num">Committed</th><th class="num">Held</th></tr></thead><tbody>${held2.map((h) => `<tr><td>${esc(h.name)}</td><td class="num">${kfmt(h.r)}</td><td class="num">${kfmt(h.sp)}</td><td class="num">${kfmt(h.cm)}</td><td class="num"><strong>${kfmt(h.bal)}</strong></td></tr>`).join("")}</tbody></table></div></div>
   </div>
   <div class="panel"><div class="panel-h"><h2>How last year closed</h2><span class="small muted">FY2025–26 General Fund, from the budget vs. actuals report</span></div><div class="tablewrap"><table><thead><tr><th>Cost center</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Used</th><th class="num">This year's budget</th></tr></thead><tbody>
-    ${last.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${kfmt(x.b)}</td><td class="num">${kfmt(x.a)}</td><td class="num">${Math.round(x.pct * 100)}% ${x.pct > 1.03 ? '<span class="pill bad">Over</span>' : ""}</td><td class="num">${kfmt(x.nb)}${x.nb > x.b ? " ▲" : x.nb < x.b ? " ▼" : ""}</td></tr>`).join("")}
+    ${last.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${kfmt(x.b)}</td><td class="num">${kfmt(x.a)}</td><td class="num">${Math.round(x.pct * 100)}% ${x.pct > 1.03 ? '<span class="pill bad">Over</span>' : ""}</td><td class="num">${kfmt(x.nb)}${x.nb > x.b ? " " + icon("up", "sm") : x.nb < x.b ? " " + icon("down", "sm") : ""}</td></tr>`).join("")}
     <tr><td><strong>Total (excl. self-funded carry-over)</strong></td><td class="num"><strong>${kfmt(lastTot.b)}</strong></td><td class="num"><strong>${kfmt(lastTot.a)}</strong></td><td class="num"><strong>${Math.round((lastTot.a / lastTot.b) * 100)}%</strong></td><td class="num"><strong>${kfmt(lastTot.nb)}</strong></td></tr>
   </tbody></table></div></div>`;
 }
@@ -2862,9 +2914,9 @@ const fmtH = (h) => { h = Math.abs(h); if (h < 1) return Math.max(1, Math.round(
 const initials = (id) => (nameOf(id).replace(/^Dr\. /, "").split(/\s+/).map((w) => w[0]).slice(0, 2).join("") || "?").toUpperCase();
 
 const TK_PRI = ["Highest", "High", "Medium", "Low", "Lowest"];
-const TK_PRI_ICON = { Highest: ["▲▲", "bad"], High: ["▲", "bad"], Medium: ["◆", "warn"], Low: ["▼", "info"], Lowest: ["▼▼", "info"] };
+const TK_PRI_ICON = { Highest: ["chevUU", "bad"], High: ["chevU", "bad"], Medium: ["equal", "warn"], Low: ["chevD", "info"], Lowest: ["chevDD", "info"] };
 const TK_SLA = { Highest: [2, 24], High: [8, 72], Medium: [24, 168], Low: [72, 336], Lowest: [168, 720] }; // hours to first response, hours to resolve
-const TK_TYPES = { Problem: ["!", "bad"], Request: ["?", "info"], Task: ["✓", "accent"], Preventive: ["⟳", "ok"], Epic: ["⚡", "warn"], "Sub-task": ["↳", "info"] };
+const TK_TYPES = { Problem: ["alert", "bad"], Request: ["help", "info"], Task: ["check", "accent"], Preventive: ["repeat", "ok"], Epic: ["zap", "warn"], "Sub-task": ["sub", "info"] };
 const TK_RESOLUTIONS = ["Fixed", "Done", "Won't fix", "Duplicate", "Cannot reproduce", "Withdrawn by reporter"];
 const TK_ST = {
   open: { n: "Open", c: "todo", cls: "info" }, reopened: { n: "Reopened", c: "todo", cls: "bad" },
@@ -3216,8 +3268,8 @@ function tkSort(list, order) {
 }
 
 /* ---- small view pieces ---- */
-const typeIcon = (t) => { const [g, c] = TK_TYPES[t.itype] || TK_TYPES.Task; return `<span class="ti ${c}" title="${esc(t.itype)}">${g}</span>`; };
-const priIcon = (p) => `<span class="pri ${TK_PRI_ICON[p][1]}" title="${esc(p)} priority">${TK_PRI_ICON[p][0]}</span>`;
+const typeIcon = (t) => { const [g, c] = TK_TYPES[t.itype] || TK_TYPES.Task; return `<span class="ti ${c}" title="${esc(t.itype)}">${icon(g)}</span>`; };
+const priIcon = (p) => `<span class="pri ${TK_PRI_ICON[p][1]}" title="${esc(p)} priority">${icon(TK_PRI_ICON[p][0], "sm")}</span>`;
 const avatar = (id, big) => (id ? `<span class="av ${big ? "big" : ""}" title="${esc(nameOf(id))}">${esc(initials(id))}</span>` : `<span class="av none ${big ? "big" : ""}" title="Unassigned">?</span>`);
 const stPill = (t) => `<span class="pill dot ${TONE[toneOf(t)]}">${TK_ST[t.status].n}</span>`;
 const dueChip = (t) => (t.due ? `<span class="due ${tkOverdue(t) ? "late" : ""}" title="Due ${esc(fmtDate(t.due))}">${tkOverdue(t) ? "Overdue · " : ""}${MON[parseD(t.due).getMonth()]} ${parseD(t.due).getDate()}</span>` : "");
@@ -3230,8 +3282,8 @@ function kcard(t) {
   const sla = !isDone(t) && tkHasSla(t) ? tkSla(t) : null, hot = sla && (sla.res.state === "breach" || sla.resp.state === "breach");
   return `<div class="kc ${hot ? "hot" : ""} ${t.flagged ? "flag" : ""}" draggable="${canWorkTk(t)}" data-drag="${t.id}" data-tk2="open|${t.id}" tabindex="0" role="button" aria-label="${esc(t.id + " " + t.title)}">
     <div class="kc-t">${esc(t.title)}</div>
-    ${epic || t.labels.length || t.flagged || tkBlocked(t) ? `<div class="kc-tags">${t.flagged ? '<span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${epic ? `<span class="tag epic">${esc(epic.title.length > 22 ? epic.title.slice(0, 21) + "…" : epic.title)}</span>` : ""}${t.labels.slice(0, 2).map((l) => `<span class="tag">${esc(l)}</span>`).join("")}</div>` : ""}
-    <div class="kc-f">${typeIcon(t)}<span class="mono key">${t.id}</span>${priIcon(t.priority)}${kids.length ? `<span class="sub" title="Sub-tasks done">↳ ${done}/${kids.length}</span>` : ""}${dueChip(t)}${hot ? '<span class="tag bad" title="SLA breached">SLA</span>' : ""}<span class="spacer"></span>${avatar(t.assignee)}</div></div>`;
+    ${epic || t.labels.length || t.flagged || tkBlocked(t) ? `<div class="kc-tags">${t.flagged ? `<span class="tag flag">${icon("flag", "sm")} Flagged</span>` : ""}${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${epic ? `<span class="tag epic">${esc(epic.title.length > 22 ? epic.title.slice(0, 21) + "…" : epic.title)}</span>` : ""}${t.labels.slice(0, 2).map((l) => `<span class="tag">${esc(l)}</span>`).join("")}</div>` : ""}
+    <div class="kc-f">${typeIcon(t)}<span class="mono key">${t.id}</span>${priIcon(t.priority)}${kids.length ? `<span class="sub" title="Sub-tasks done">${icon("sub", "sm")} ${done}/${kids.length}</span>` : ""}${dueChip(t)}${hot ? '<span class="tag bad" title="SLA breached">SLA</span>' : ""}<span class="spacer"></span>${avatar(t.assignee)}</div></div>`;
 }
 
 /* ---- main tickets view ---- */
@@ -3305,7 +3357,7 @@ function vTkList() {
   let xs = r.list;
   if (!r.ordered) xs = tkSort(xs, [{ f: tk.sort.f, dir: tk.sort.dir }]);
   const sel = tk.sel.filter((id) => xs.some((t) => t.id === id)); tk.sel = sel;
-  const th = (f, n) => `<th><button type="button" class="thb" data-tk2="sort|${f}">${n}${tk.sort.f === f ? (tk.sort.dir > 0 ? " ▲" : " ▼") : ""}</button></th>`;
+  const th = (f, n) => `<th><button type="button" class="thb" data-tk2="sort|${f}">${n}${tk.sort.f === f ? " " + icon(tk.sort.dir > 0 ? "chevU" : "chevD", "sm") : ""}</button></th>`;
   const people = [...new Set(myTeams().flatMap(tkPeople))];
   return `<div class="panel panel-b stack">
     <div class="row"><input type="search" id="tkq" class="srch wide" placeholder='Search, or use JQL: status = "In Progress" AND assignee = me ORDER BY priority DESC' value="${esc(tk.q)}" aria-label="Search or JQL"><button type="button" class="btn small" data-tk2="savefilter">Save filter</button><button type="button" class="btn small" disabled title="Not available in the demo">Export CSV</button></div>
@@ -3329,8 +3381,8 @@ function vTkBacklog() {
   const xs = tkVisible().filter((t) => t.itype !== "Epic" && t.itype !== "Sub-task");
   const sprints = S.tkx.sprints.filter((s) => s.state !== "done");
   const hrs = (l) => l.reduce((a, t) => a + (Number(t.est) || 0), 0);
-  const row = (t) => `<div class="brow" draggable="true" data-drag="${t.id}"><span class="grip" aria-hidden="true">⋮⋮</span>${typeIcon(t)}<button type="button" class="lnk key mono" data-card="${t.id}">${t.id}</button><button type="button" class="lnk bt" data-card="${t.id}">${esc(t.title)}</button>${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${stPill(t)}${t.est ? `<span class="small muted">${t.est}h</span>` : ""}${priIcon(t.priority)}${avatar(t.assignee)}
-    <span class="row" style="gap:2px"><button type="button" class="btn small" aria-label="Move ${t.id} up" data-tk2="rank|${t.id}|-1">↑</button><button type="button" class="btn small" aria-label="Move ${t.id} down" data-tk2="rank|${t.id}|1">↓</button></span>
+  const row = (t) => `<div class="brow" draggable="true" data-drag="${t.id}"><span class="grip" aria-hidden="true">${icon("grip")}</span>${typeIcon(t)}<button type="button" class="lnk key mono" data-card="${t.id}">${t.id}</button><button type="button" class="lnk bt" data-card="${t.id}">${esc(t.title)}</button>${tkBlocked(t) ? '<span class="tag bad">Blocked</span>' : ""}${stPill(t)}${t.est ? `<span class="small muted">${t.est}h</span>` : ""}${priIcon(t.priority)}${avatar(t.assignee)}
+    <span class="row" style="gap:2px"><button type="button" class="btn small" aria-label="Move ${t.id} up" data-tk2="rank|${t.id}|-1">${icon("up", "sm")}</button><button type="button" class="btn small" aria-label="Move ${t.id} down" data-tk2="rank|${t.id}|1">${icon("down", "sm")}</button></span>
     <select class="mv" aria-label="Move ${t.id} to" data-tkf="sprintmove|${t.id}"><option value="">Move to…</option><option value="__none">Backlog</option>${sprints.map((s) => `<option value="${s.id}" ${t.sprint === s.id ? "disabled" : ""}>${esc(s.name)}</option>`).join("")}</select></div>`;
   const sec = (s) => {
     const l = xs.filter((t) => (s ? t.sprint === s.id : !t.sprint && !isDone(t))).sort((a, b) => (a.rank || 0) - (b.rank || 0));
@@ -3354,10 +3406,10 @@ function vTkCalendar() {
   for (let i = 0; i < Math.ceil((startPad + days) / 7) * 7; i++) {
     const dn = i - startPad + 1, ok = dn >= 1 && dn <= days, ds = ok ? `${y}-${pad(m)}-${pad(dn)}` : "";
     const ts = ok ? xs.filter((t) => t.due === ds) : [], ss = ok ? sc.filter((s) => s.next === ds) : [];
-    cells += `<div class="cal ${ok ? "" : "off"} ${ds === TODAY ? "today" : ""}">${ok ? `<div class="dn">${dn}</div>` : ""}${ts.slice(0, 3).map((t) => `<button type="button" class="ce ${isDone(t) ? "done" : tkOverdue(t) ? "late" : ""}" data-card="${t.id}" title="${esc(t.title)}">${esc(t.title)}</button>`).join("")}${ts.length > 3 ? `<div class="small muted">+${ts.length - 3} more</div>` : ""}${ss.map((s) => `<div class="ce pm" title="Scheduled: ${esc(s.name)}">⟳ ${esc(s.name)}</div>`).join("")}</div>`;
+    cells += `<div class="cal ${ok ? "" : "off"} ${ds === TODAY ? "today" : ""}">${ok ? `<div class="dn">${dn}</div>` : ""}${ts.slice(0, 3).map((t) => `<button type="button" class="ce ${isDone(t) ? "done" : tkOverdue(t) ? "late" : ""}" data-card="${t.id}" title="${esc(t.title)}">${esc(t.title)}</button>`).join("")}${ts.length > 3 ? `<div class="small muted">+${ts.length - 3} more</div>` : ""}${ss.map((s) => `<div class="ce pm" title="Scheduled: ${esc(s.name)}">${icon("repeat", "sm")} ${esc(s.name)}</div>`).join("")}</div>`;
   }
-  return `<div class="panel"><div class="panel-h"><h2>${MON[m - 1]} ${y}</h2><div class="row"><button type="button" class="btn small" data-tk2="cal|${prev}">‹ Prev</button><button type="button" class="btn small" data-tk2="cal|${TODAY.slice(0, 7)}">Today</button><button type="button" class="btn small" data-tk2="cal|${next}">Next ›</button></div></div>
-    <div class="panel-b"><div class="calg">${DOW.map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div><div class="hint" style="margin-top:8px">Due dates of open and resolved tickets. ⟳ marks the next date of a preventive-maintenance schedule.</div></div></div>`;
+  return `<div class="panel"><div class="panel-h"><h2>${MON[m - 1]} ${y}</h2><div class="row"><button type="button" class="btn small" data-tk2="cal|${prev}">${icon("chevL", "sm")}Prev</button><button type="button" class="btn small" data-tk2="cal|${TODAY.slice(0, 7)}">Today</button><button type="button" class="btn small" data-tk2="cal|${next}">Next${icon("chevR", "sm")}</button></div></div>
+    <div class="panel-b"><div class="calg">${DOW.map((d) => `<div class="dh">${d}</div>`).join("")}${cells}</div><div class="hint" style="margin-top:8px">Due dates of open and resolved tickets. Dashed entries are the next date of a preventive-maintenance schedule.</div></div></div>`;
 }
 
 /* ---- Timeline (epics and sprints) ---- */
@@ -3464,7 +3516,7 @@ function vTicketCard(t) {
     titleForm: tk.editing === "title" && edit ? `<form id="tkTitleForm" class="row" data-id="${t.id}"><input type="text" name="title" value="${esc(t.title)}" class="srch wide" aria-label="Summary" required><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></form>` : "",
     title: `${typeIcon(t)} ${esc(t.title)} ${edit ? `<button type="button" class="lnk small" data-tk2="edit|title">Edit</button>` : ""}`,
     lead: [t.itype, TK_TEAM[tkTeam(t)].name, `from ${nameOf(t.owner)}`, roomName(t.room), t.sched ? `from schedule ${t.sched}` : ""],
-    pills: `${stPill(t)}${t.resolution ? ` <span class="pill">${esc(t.resolution)}</span>` : ""}${t.flagged ? ' <span class="tag flag">⚑ Flagged</span>' : ""}${tkBlocked(t) ? ' <span class="tag bad">Blocked</span>' : ""}`,
+    pills: `${stPill(t)}${t.resolution ? ` <span class="pill">${esc(t.resolution)}</span>` : ""}${t.flagged ? ` <span class="tag flag">${icon("flag", "sm")} Flagged</span>` : ""}${tkBlocked(t) ? ' <span class="tag bad">Blocked</span>' : ""}`,
     stages: reqStages(["Open", "In Progress", "In Review", "Resolved"], at),
     actions: btns ? `<div class="row">${btns}</div>` : "",
     main: `<div class="panel"><div class="panel-h"><h2>Description</h2>${edit && tk.editing !== "desc" ? '<button type="button" class="btn small" data-tk2="edit|desc">Edit</button>' : ""}</div><div class="panel-b">${tk.editing === "desc" && edit ? `<form id="tkDescForm" data-id="${t.id}" class="stack"><textarea name="desc" rows="5" class="ta" aria-label="Description">${esc(t.desc)}</textarea><div class="row"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-tk2="canceledit">Cancel</button></div></form>` : `<div class="ctext">${t.desc ? tkMentionHtml(t.desc) : '<span class="muted">No description.</span>'}</div>`}</div></div>
@@ -3517,7 +3569,7 @@ function vTicketCard(t) {
 const mField = (label, inner, wide, id) => `<div class="fld ${wide ? "wide" : ""}"><label${id ? ` for="${id}"` : ""}>${label}</label>${inner}</div>`;
 const mOpts = (opts, cur) => opts.map(([v, n]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(n)}</option>`).join("");
 function tkModalShell(title, body, o = {}) {
-  return `<div class="ov" data-tk2="closemodal"><div class="dlg ${o.wide ? "w" : ""}" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="dlg-h"><h2 id="dlgT">${title}</h2><button type="button" class="btn small" data-tk2="closemodal" aria-label="Close">✕</button></div><div class="dlg-b">${body}</div></div></div>`;
+  return `<div class="ov" data-tk2="closemodal"><div class="dlg ${o.wide ? "w" : ""}" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="dlg-h"><h2 id="dlgT">${title}</h2><button type="button" class="btn small" data-tk2="closemodal" aria-label="Close">${icon("x")}</button></div><div class="dlg-b">${body}</div></div></div>`;
 }
 function tkCreateBody(d) {
   const worker = anyWorker(), teams = worker ? myTeams() : ["facilities", "it"];
@@ -3835,7 +3887,7 @@ function assetDetail(a) {
 /* Demo guide                                                          */
 /* ------------------------------------------------------------------ */
 const STEPS = [
-  { as: "youthChair", view: "newEvent", t: "Request an event", p: `${fn("youthChair")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; every event gets mission review, so ${fn("commDirector")}, the director over Youth, is notified.`, reset: () => (S.draft = null) },
+  { as: "youthChair", view: "newEvent", t: "Request an event", p: `${fn("youthChair")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Tick the boxes under Confirm and submit; every event gets mission review, so ${fn("commDirector")}, the director over Youth, is notified.`, reset: () => (S.draft = null) },
   { as: "commDirector", view: "events", arg: "review", t: "The director reviews it", p: `${fn("commDirector")} sees it under Needs review, with the checks already run. Open Youth Game Night and approve it as aligned with the mission. It goes on to the executive, who are notified.` },
   { as: "headImam", view: "events", arg: "review", t: "The executive approves", p: `${fn("headImam")} is in the executive group, and any executive can give the final approval. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("youthChair")} is notified.` },
   { as: "mktTeam", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
@@ -3886,7 +3938,7 @@ function renderGuide() {
   document.body.classList.toggle("guide-open", S.guide);
   if (!S.guide) return;
   g.innerHTML = `<div class="guide-h"><h2>Demo guide</h2><div class="row"><button class="btn small" type="button" data-reset="1">Reset demo</button><button class="btn small" type="button" data-closeguide="1" aria-label="Close guide">Close</button></div></div>
-  <div class="guide-b">${STEPS.map((s, i) => `<div class="step ${i === S.step ? "cur" : ""}"><span class="n">${i + 1}</span><div><strong>${esc(s.t)}</strong><div class="as">As ${esc(who(s.as))}${PEOPLE[s.as].tester ? " ★" : ""}</div><p>${esc(s.p)}</p><button class="btn small ${i === S.step ? "primary" : ""}" type="button" data-step="${i}">Go to this step</button></div></div>`).join("")}</div>`;
+  <div class="guide-b">${STEPS.map((s, i) => `<div class="step ${i === S.step ? "cur" : ""}"><span class="n">${i + 1}</span><div><strong>${esc(s.t)}</strong><div class="as">As ${esc(who(s.as))}${PEOPLE[s.as].tester ? " " + icon("star", "sm") : ""}</div><p>${esc(s.p)}</p><button class="btn small ${i === S.step ? "primary" : ""}" type="button" data-step="${i}">Go to this step</button></div></div>`).join("")}</div>`;
 }
 function doStep(i) {
   const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
@@ -3983,6 +4035,7 @@ document.addEventListener("click", (e) => {
   if (ds.guide) { setNav(false); S.guide = !S.guide; return render(); }
   if (ds.themeNext) return nextTheme();
   if (ds.reqkind) { S.reqKind = ds.reqkind; return render(); }
+  if (ds.jump) { const el = document.getElementById(ds.jump); el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); el.querySelector("input, select, textarea")?.focus({ preventScroll: true }); return; }
   if (ds.go) { if (ds.budtab) { S.budTab = ds.budtab; S.budScope = "IAR"; } if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "newMarketing") S.mkDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
   if (ds.card) return go("card", ds.card);
   if (ds.nopen) { const n = S.notifs.find((x) => x.id === Number(ds.nopen)); if (!n) return; if (!n.readBy.includes(S.me)) n.readBy.push(S.me); return n.card ? go("card", n.card) : go(n.view || "home"); }
@@ -4141,6 +4194,7 @@ document.addEventListener("submit", (e) => {
   }
   if (e.target.id === "evForm") {
     if (!document.getElementById("f_agree").checked) return toast("Please accept the room reservation policy first.");
+    if (document.getElementById("a_ack") && !document.getElementById("a_ack").checked) return toast("Please confirm you understand A/V support isn't guaranteed.");
     if (!e.target.elements.title.value.trim()) return toast("Give the program a title.");
     if (document.getElementById("f_final") && !document.getElementById("f_final").checked) return toast("Confirm the details are final so marketing can publish them.");
     return submitEvent();
