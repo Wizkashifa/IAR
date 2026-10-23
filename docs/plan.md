@@ -200,7 +200,7 @@ The 2021 policy needs a short refresh before its rules go into the software. Rul
 - [ ] **Gym and outside renters:** no rental rates, insurance requirement or agreement exists. Needed before the public front door
 - [ ] **Mission review:** written criteria, and how long the director and the executive each have
 - [ ] **Lead times:** the policy has none. Marketing asks for 3 weeks. Set a minimum per event type
-- [ ] **Room conflicts:** the policy makes the CEO's decision binding. The portal sends an unanswered ask to the holder's pillar director first, and to the executive only when there's no director. Confirm this, and whether a holder who answers "keep it" can be overruled
+- [ ] **Room conflicts:** replace "the CEO's decision is binding" with the portal's flow: the requester asks the holder, who gives the time up or keeps it; no answer in 6 days goes to the holder's pillar director, or the executive when there's none; a moved event needs only the director's approval
 - [ ] **New spaces:** the Community Flex Room, Red Brick rooms and the Women's Prayer Hall appear on the form but not in the policy
 
 ## Architecture
