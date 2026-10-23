@@ -142,6 +142,11 @@ export function findAccount(id: string): Account | undefined {
   return ACCOUNTS.find((a) => a.id === id);
 }
 
+/** Pay for people's work (temp labor, salary, speaker honoraria): the payee needs a W-9 on file. */
+export function isLaborAccount(a: Account | undefined): boolean {
+  return Boolean(a && /labor|payroll|salary|honorarium/i.test(a.name));
+}
+
 export function accountsForFund(fund: string): Account[] {
   return ACCOUNTS.filter((a) => a.fund === fund);
 }

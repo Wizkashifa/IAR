@@ -180,6 +180,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, tex
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.choices.spaced { margin-top: 12px; margin-bottom: 4px; }
 .choice { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; font-size: 14px; }
 .choice.on { border-color: var(--gold); background: var(--accent-soft); }
 .choice.disabled { opacity: 0.55; cursor: not-allowed; }
@@ -228,3 +229,4 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outl
   .topsearch { order: 4; flex-basis: 100%; }
   .user { flex-wrap: wrap; }
 }
+.section > .field { margin-top: 12px; }

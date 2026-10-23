@@ -5,8 +5,8 @@ import { requireViewer } from "@/lib/viewer";
 import { actorFor, peopleStore } from "@/lib/people";
 import { isActive, todayLocal } from "@/lib/away";
 import { accountLabel, findAccount } from "@/lib/purchases/accounts";
-import { DELIVERY_LABEL, KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "@/lib/purchases/types";
-import { approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, type Action } from "@/lib/purchases/workflow";
+import { KIND_LABEL, STAGE_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
+import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, returnTargets, type Action } from "@/lib/purchases/workflow";
 import { actOnPurchase, actOnPurchaseWith, commentOnPurchase } from "../actions";
 import { COMMENT_MAX } from "@/lib/comments";
 import { Flash, StatusPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
@@ -37,6 +37,7 @@ export default async function PurchaseDetail({
   const coveringFor = coveringApprover(pc, actor);
   const approverAway = live && p.stage === "chair" && p.approverEmail ? await (await peopleStore()).getAway(p.approverEmail) : null;
   const awayNow = approverAway && isActive(approverAway, todayLocal()) ? approverAway : null;
+  const finance = actor.roles.includes("finance");
   const hidden = (name: string, value: string) => <input type="hidden" name={name} value={value} />;
   const base = (
     <>
@@ -67,7 +68,19 @@ export default async function PurchaseDetail({
       {p.relatedParty && (
         <div className="callout warn">The requester says the payee is a Shura or committee member, a relative of one, or a business one owns. Review it with that in mind.</div>
       )}
-      {p.w9Required && <div className="callout warn">W-9 needed before payment: {p.isLabor ? "this is labor or services" : "IAR hasn't paid this payee before"}.</div>}
+      {p.w9Required && (
+        <div className="callout warn">
+          W-9 needed before payment: this is labor or services.{" "}
+          {p.w9Uploaded ? (
+            <>
+              The requester uploaded it to the restricted W-9 drive ({finance && p.w9Uploaded.driveFileId ? <a href={`https://drive.google.com/file/d/${p.w9Uploaded.driveFileId}/view`} target="_blank" rel="noreferrer">{p.w9Uploaded.name}</a> : p.w9Uploaded.name}). Finance checks it before approving.
+            </>
+          ) : (
+            "None was uploaded with this request."
+          )}
+        </div>
+      )}
+      {live && p.returnNote && <div className="callout warn"><strong>Sent back:</strong> {p.returnNote}</div>}
       {card.status === "changes_requested" && p.returnNote && (
         <div className="callout warn">
           <strong>Returned for changes:</strong> {p.returnNote}
@@ -96,7 +109,7 @@ export default async function PurchaseDetail({
             {p.card && <div><dt>Card</dt><dd>···{p.card.last4} · {fmtMonth(p.card.statementMonth)} statement</dd></div>}
             {p.payee && <div><dt>Payee</dt><dd>{p.payee}</dd></div>}
             {p.invoiceNumber && <div><dt>Invoice</dt><dd>{p.invoiceNumber}</dd></div>}
-            {p.delivery && <div><dt>Payment</dt><dd>{DELIVERY_LABEL[p.delivery]}{p.mailingAddress && <div className="sub pre">{p.mailingAddress}</div>}</dd></div>}
+            {p.delivery && <div><dt>Payment</dt><dd>{paymentLabel(p.delivery)}{p.mailingAddress && <div className="sub pre">{p.mailingAddress}</div>}</dd></div>}
             <div><dt>Submitted</dt><dd>{fmtDate(card.createdAt ?? p.attestation.at)}</dd></div>
             <div>
               <dt>Now</dt>
@@ -211,9 +224,40 @@ export default async function PurchaseDetail({
     const pay = can("pay");
     const books = can("books");
     const cancel = can("cancel");
-    if (!approve && !pay && !books && !cancel) {
+    const sendBack = can("return");
+    const targets = returnTargets(pc);
+    const returnTo = (
+      <label className="field">
+        <span>Send back to</span>
+        <select name="returnTo" defaultValue="requester">
+          {targets.map((t) => (
+            <option key={t} value={t}>
+              {RETURN_TARGET_LABEL[t]}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+    if (!approve && !pay && !books && !cancel && !sendBack) {
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
       return why && !why.ok ? <div className="panel sub">{why.reason}</div> : null;
+    }
+    function SendBack() {
+      return (
+        <>
+          <h3>Something wrong?</h3>
+          <form action={actOnPurchase} className="stack">
+            {base}
+            {hidden("action", "return")}
+            {returnTo}
+            <label className="field">
+              <span>What needs fixing?</span>
+              <textarea name="note" rows={2} maxLength={1000} required />
+            </label>
+            <button className="button secondary" type="submit">Send back</button>
+          </form>
+        </>
+      );
     }
     return (
       <div className="panel actions">
@@ -223,7 +267,7 @@ export default async function PurchaseDetail({
             <form action={actOnPurchase} className="stack">
               {base}
               <label className="field">
-                <span>Note (required to return or reject)</span>
+                <span>Note (required to send back or reject)</span>
                 <textarea name="note" rows={2} maxLength={1000} />
               </label>
               {p.stage === "finance" && p.w9Required && (
@@ -231,9 +275,10 @@ export default async function PurchaseDetail({
                   <input type="checkbox" name="w9Received" /> W-9 is on file in the restricted W-9 drive
                 </label>
               )}
+              {targets.length > 1 && returnTo}
               <div className="row">
                 <button className="button" formAction={actOnPurchaseWith.bind(null, "approve")} type="submit">Approve</button>
-                <button className="button secondary" formAction={actOnPurchaseWith.bind(null, "return")} type="submit">Return for changes</button>
+                <button className="button secondary" formAction={actOnPurchaseWith.bind(null, "return")} type="submit">Send back</button>
                 <button className="button secondary danger" formAction={actOnPurchaseWith.bind(null, "reject")} type="submit">Reject</button>
               </div>
             </form>
@@ -257,10 +302,12 @@ export default async function PurchaseDetail({
                 <span>Check number or ACH reference</span>
                 <input name="reference" required maxLength={60} />
               </label>
+              {p.payment && <p className="note">Already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.</p>}
               <button className="button" type="submit">Mark paid</button>
             </form>
           </>
         )}
+        {sendBack && !approve && <SendBack />}
         {books && (
           <>
             <h3>QuickBooks</h3>

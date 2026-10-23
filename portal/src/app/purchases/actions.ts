@@ -1,17 +1,19 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { cardStore, ConflictError, vendorId } from "@/lib/cards";
+import { cardStore, ConflictError } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { checkComment, withComment } from "@/lib/comments";
 import { purchaseCommentNotices, purchaseNotices } from "@/lib/purchases/notices";
-import { checkFiles, filesFrom, saveAttachments } from "@/lib/purchases/drive";
+import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/purchases/drive";
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
 import { requestableFunds } from "@/lib/teams";
+import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
+import type { PurchaseDetails } from "@/lib/purchases/types";
 import * as wf from "@/lib/purchases/workflow";
 
 export type FormState = { errors: string[] };
@@ -27,7 +29,8 @@ export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<st
   return requestableFunds(personFunds(ctx, viewer.email).request, viewer.actingRoles, FUNDS);
 }
 
-async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keepFund?: string) {
+/** `keep`: the fund and W-9 already on a request being edited; the W-9 needn't be uploaded again. */
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { fund: string; w9?: PurchaseDetails["w9Uploaded"] }) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -35,19 +38,37 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
     return { ok: false as const, errors: ["The form couldn't be read. Reload the page and try again."] };
   }
   const store = await cardStore();
-  const vendors = await store.listVendors();
-  const parsed = parsePurchaseInput(raw, {
-    requesterName: viewer.name,
-    cards: cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund })),
-    vendors,
-    // Editing a returned request may keep its fund even if the person has since left that committee.
-    funds: [...(await fundsFor(viewer, ctx)), ...(keepFund ? [keepFund] : [])],
-  });
+  // Only the list this person may see, and for S&W requests only S&W payees: the W-9 check matches what the form showed.
+  const vendors = vendorsForFund(await store.listVendors(), viewer.actingRoles, String(raw.fund ?? ""));
+  const w9Files = filesFrom(form, "w9");
+  const parsed = parsePurchaseInput(
+    { ...raw, w9Attached: w9Files.length > 0 || Boolean(keep?.w9) },
+    {
+      requesterName: viewer.name,
+      cards: cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund })),
+      vendors,
+      // Editing a returned request may keep its fund even if the person has since left that committee.
+      funds: [...(await fundsFor(viewer, ctx)), ...(keep ? [keep.fund] : [])],
+    },
+  );
   const files = filesFrom(form, "attachments");
-  const fileErrors = checkFiles(files);
+  const fileErrors = [...checkFiles(files), ...checkW9(w9Files)];
   if (!parsed.ok || fileErrors.length) return { ok: false as const, errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors] };
-  return { ok: true as const, details: parsed.details, files };
+  return { ok: true as const, details: parsed.details, files, w9File: parsed.details.w9Required ? w9Files[0] : undefined };
 }
+
+/** Upload the W-9 first: if it fails, nothing is submitted and the requester can try again. */
+async function storeW9(payee: string | undefined, file: File | undefined, now: string): Promise<PurchaseDetails["w9Uploaded"] | "failed" | undefined> {
+  if (!file || !payee) return undefined;
+  try {
+    const saved = await saveW9(payee, file);
+    return { name: saved.name, at: now, ...(saved.driveFileId ? { driveFileId: saved.driveFileId } : {}) };
+  } catch (err) {
+    console.error("W-9 upload failed", err);
+    return "failed";
+  }
+}
+const W9_FAILED = "The W-9 didn't upload, so nothing was submitted. Try again, or ask the finance office for help.";
 
 export async function createPurchase(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
@@ -58,7 +79,10 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
 
   const store = await cardStore();
   const now = nowIso();
-  const routed = wf.submit(wf.newPurchase(r.details, viewer.email, now), actor, ctx.routing, now);
+  const w9 = await storeW9(r.details.payee, r.w9File, now);
+  if (w9 === "failed") return { errors: [W9_FAILED] };
+  const draft = wf.newPurchase(w9 ? { ...r.details, w9Uploaded: w9 } : r.details, viewer.email, now);
+  const routed = wf.submit(draft, actor, ctx.routing, now);
   const { id: _blank, ...toCreate } = routed;
   const created = (await store.create(toCreate, "PO")) as wf.PurchaseCard;
   await deliver(purchaseNotices(null, created, actor, directorsFor(ctx, created)), actor.email);
@@ -91,9 +115,11 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   if (!allowed.ok) return { errors: [allowed.reason] };
 
   const ctx = await purchaseContext();
-  const r = await parseForm(viewer, form, ctx, card.purchase.fund);
+  const r = await parseForm(viewer, form, ctx, { fund: card.purchase.fund, w9: card.purchase.w9Uploaded });
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
+  const w9 = await storeW9(r.details.payee, r.w9File, now);
+  if (w9 === "failed") return { errors: [W9_FAILED] };
   let attachments = card.purchase.attachments;
   try {
     attachments = [...attachments, ...(await saveAttachments(card.id, r.details.fund, r.files))];
@@ -106,6 +132,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     ...r.details,
     attestation: { name: r.details.attestation.name, at: now },
     attachments,
+    w9Uploaded: w9 ?? card.purchase.w9Uploaded,
   };
   try {
     const next = wf.resubmit(card, edited, actor, ctx.routing, now);
@@ -143,14 +170,15 @@ export async function actOnPurchase(form: FormData): Promise<void> {
       case "approve": {
         const w9Received = form.get("w9Received") === "on";
         next = wf.approve(card, actor, s, now, { note: note || undefined, w9Received });
-        if (w9Received && card.purchase.payee) {
-          await store.saveVendor({ id: vendorId(card.purchase.payee), name: card.purchase.payee, w9OnFile: true, w9Date: now });
-        }
+        const v = w9Received && card.purchase.w9Required ? vendorWithW9(await store.listVendors(), card.purchase, now) : null;
+        if (v) await store.saveVendor(v);
         break;
       }
-      case "return":
-        next = wf.returnForChanges(card, actor, now, note);
+      case "return": {
+        const to = String(form.get("returnTo") ?? "requester") as wf.ReturnTarget;
+        next = wf.returnForChanges(card, actor, now, note, to);
         break;
+      }
       case "reject":
         next = wf.reject(card, actor, now, note);
         break;
@@ -171,11 +199,10 @@ export async function actOnPurchase(form: FormData): Promise<void> {
     }
     await store.save(next, card.updatedAt);
     await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
-    // Paying a vendor for the first time puts them in the registry.
-    if (action === "pay" && card.purchase.kind === "pay" && card.purchase.payee) {
-      const vid = vendorId(card.purchase.payee);
-      const known = (await store.listVendors()).find((v) => v.id === vid);
-      if (!known) await store.saveVendor({ id: vid, name: card.purchase.payee, w9OnFile: false });
+    // Paying a vendor saves them (address, fund, count) for every committee; S&W payees on their own restricted record.
+    if (action === "pay") {
+      const v = vendorAfterPayment(await store.listVendors(), card.purchase, now);
+      if (v) await store.saveVendor(v);
     }
   } catch (err) {
     if (err instanceof wf.WorkflowError || err instanceof ConflictError) error = err.message;

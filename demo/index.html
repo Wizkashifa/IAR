@@ -819,11 +819,11 @@ function seed() {
         log: [[now(2), "commDirector", "Submitted"], [now(2), "system", "Auto checks passed"], [now(2), "system", "Requester directs this committee's pillar, so it goes straight to the executive"]] }),
     ],
     pos: [
-      po({ id: "PO-11045", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Program", 142.5, "Snacks for the halaqa"], ["Youth – Admin", 42, "Printing and name tags"]], eventId: "EV-1042", status: "chair", approver: "commDirector", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
-      po({ id: "PO-11046", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Program", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "commDirector", created: now(6) }),
-      po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Pizza and water — food drive briefing", lines: [["Youth – Program", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
-      po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Program", 1200]], status: "to_pay", w9: true, created: now(4) }),
-      po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Program", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
+      po({ id: "PO-11045", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, pay: "check", checkTo: "box", address: "100 Sample St, Raleigh, NC 27601", desc: "Halaqa snacks and supplies", lines: [["Youth – Program", 142.5, "Snacks for the halaqa"], ["Youth – Admin", 42, "Printing and name tags"]], eventId: "EV-1042", status: "chair", approver: "commDirector", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
+      po({ id: "PO-11046", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", pay: "ach", desc: "Sound system rental — Family Night", lines: [["Youth – Program", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "commDirector", created: now(6) }),
+      po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, pay: "check", checkTo: "box", address: "100 Sample St, Raleigh, NC 27601", desc: "Pizza and water — food drive briefing", lines: [["Youth – Program", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
+      po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", pay: "check", checkTo: "mail", address: "500 Camp Rd, Sample Town, NC 27500", desc: "Youth retreat deposit", lines: [["Youth – Program", 1200]], status: "to_pay", w9: true, chairBy: "commDirector", created: now(4) }),
+      po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, pay: "check", checkTo: "office", address: "200 Sample Ave, Cary, NC 27511", desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Program", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
       cardPO({ id: "PO-11051", owner: "swChair", last4: "3051", status: "finance", created: now(2), lines: [
         { day: 3, merchant: "Food Lion — pantry restock", acct: "Social & Welfare – Program", amount: 286.4 },
         { day: 9, merchant: "Costco — pantry staples", acct: "Social & Welfare – Program", amount: 214.18 },
@@ -867,6 +867,7 @@ function seed() {
   seedMoney();
   tkSeed();
   S.extra = {};
+  S.vendors = seedVendors();
   libSeed();
   seedPortalExtras();
 }
@@ -894,7 +895,8 @@ function po(o) {
   const sample = (i) => `${String(o.id).toLowerCase()}-receipt-${i + 1}.pdf`;
   c.lines = o.lines.map((l, i) => (Array.isArray(l) ? { acct: l[0], amount: l[1], note: l[2] || "", flag: l[3] || "", receipt: l[4] ?? sample(i) } : { note: "", flag: "", repayBy: "", noReceipt: false, resolved: false, ...l, receipt: l.receipt ?? (l.noReceipt ? "" : sample(i)) }));
   c.log = [{ t: o.created, who: o.owner, text: "Submitted" }];
-  if (o.status === "finance" && o.type !== "card") c.log.push({ t: o.created, who: o.chairBy || "youthChair", text: o.chairBy === "commDirector" ? "Approved as director" : "Chair approved" });
+  if (["finance", "to_pay"].includes(o.status) && o.type !== "card") c.log.push({ t: o.created, who: o.chairBy || "youthChair", text: o.chairBy === "commDirector" ? "Approved as director" : "Chair approved" });
+  if (o.status === "to_pay") c.log.push({ t: o.created, who: "bookkeeper", text: "Finance approved for payment" });
   if (o.note) c.log.push({ t: o.created, who: "system", text: o.note });
   if (o.status === "paid") c.log.push({ t: o.created, who: "bookkeeper", text: "Paid by check #20418" });
   if (o.type === "card" && ["books", "done"].includes(o.status)) c.log.push({ t: o.created, who: "bookkeeper", text: "Finance reviewed the charges" });
@@ -1415,7 +1417,14 @@ const poLabel = (c) => (restrictedPO(c) ? `${c.id} (Social & Welfare request)` :
 function poNotify(c, prev) {
   const w = poLabel(c), o = { card: c.id };
   if (c.status === prev) return;
-  if (c.status === "returned") return notify(c.owner, `${w} was returned for changes`, { ...o, email: true });
+  if (c.sentBack) {
+    c.sentBack = false;
+    const why = `: ${c.backNote}`;
+    if (c.status === "chair") chairsOf(c).forEach((p) => notify(p, `${w} was sent back for your chair approval${why}`, { ...o, email: true, delegable: true }));
+    if (c.status === "finance") notify("role:finance", `${w} was sent back for finance review${why}`, { ...o, email: true });
+    return notify(c.owner, `${w} was sent back to ${PO_STATUS[c.status][0].toLowerCase()}${why}`, o);
+  }
+  if (c.status === "returned") return notify(c.owner, `${w} was returned for changes${c.backNote ? `: ${c.backNote}` : ""}`, { ...o, email: true });
   if (c.status === "chair") {
     chairsOf(c).forEach((p) => notify(p, `${w} needs your chair approval`, { ...o, email: true, delegable: true }));
     if (!restrictedPO(c)) directorsOf(c.committee).filter((d) => d !== c.owner && d !== c.approver).forEach((d) => notify(d, `${w} is waiting for chair approval. As the committee's director you can approve it too.`, o));
@@ -1490,7 +1499,7 @@ function vNotifs() {
 const FB_KIND = { problem: "Something's wrong", idea: "An idea", question: "A question" };
 function vFeedback() {
   const from = S.arg && S.arg !== "feedback" ? S.arg : "home";
-  const page = (MODULES.find((m) => m.id === from) || { name: { card: "A request", search: "Search", notifs: "Notifications", newEvent: "New event request", newPO: "New purchase request" }[from] || "Home" }).name;
+  const page = (MODULES.find((m) => m.id === from) || { name: { card: "A request", search: "Search", notifs: "Notifications", newEvent: "New event request", newPO: "New purchase request", vendors: "Saved vendors" }[from] || "Home" }).name;
   const admin = has("admins");
   return `<div><h1>Send feedback</h1><p class="lead">The portal is in beta. Tell us about anything broken, confusing or missing. It goes straight to the portal admins.</p></div>
   ${S.fbSent ? `<div class="note ok">Thank you, it's been sent. <button class="lnk" type="button" data-go="${esc(from)}">Back to where you were</button></div>` : `<div class="panel panel-b"><form id="fbForm" class="stack" data-page="${esc(page)}">
@@ -2014,6 +2023,45 @@ const DEMO_UPLOAD_TIP = "Demo only: no file is uploaded. In the portal, the rece
 /* A purchase charges only its committee's sub-accounts. Card charges can be for any committee. */
 const acctsFor = (committee) => ACCOUNTS.filter((x) => x.committee === committee).map((x) => x.name);
 const PO_TYPE = { vendor: "Pay a vendor or person", reimburse: "Reimburse me", card: "IAR credit card receipts" };
+/* Payment: a check (and where it's left) or ACH. Every check records a mailing address, wherever it goes. Same rules as portal/src/lib/purchases/input.ts. */
+const CHECK_TO = { box: "Leave in the committee's box (EC Room #280)", office: "Pick up at the Admin office", security: "Leave with the security office", mail: "Mail to the payee" };
+const payLabel = (c) => (c.pay === "ach" ? "ACH (bank transfer)" : c.pay === "check" ? `Check · ${CHECK_TO[c.checkTo] || "destination not chosen"}` : "");
+/* Labor sub-accounts: paying for someone's work needs their W-9 on file. W-9s are needed only for labor. */
+const isLaborAcct = (a) => / – Labor$/.test(a);
+const poLabor = (d) => d.type === "vendor" && (Boolean(d.labor) || d.lines.some((l) => isLaborAcct(l.acct)));
+/* Saved vendors: one list every committee shares. Social & Welfare payees are separate, seen only by S&W and finance, and only matched on S&W requests. */
+const seesSWVendors = () => has("sw") || has("finance");
+const vendorsFor = (committee) => S.vendors.filter((v) => (committee === "Social & Welfare" ? v.restricted && seesSWVendors() : !v.restricted));
+const findVendor = (committee, name) => { const n = String(name || "").trim().toLowerCase(); return n ? vendorsFor(committee).find((v) => v.name.toLowerCase() === n) : null; };
+const w9NeededFor = (d) => poLabor(d) && Boolean(String(d.payee || "").trim()) && !findVendor(d.committee, d.payee)?.w9;
+const lastAddress = () => S.pos.find((p) => p.owner === S.me && p.type === "reimburse" && p.pay === "check" && p.address)?.address || "";
+const w9Old = (v) => v.w9 && addDays(v.w9, 3 * 365) < TODAY;
+function payeeStatus(d) {
+  if (d.type === "reimburse") return '<span class="pill">Reimbursement · no W-9 needed</span>';
+  if (!String(d.payee || "").trim()) return "";
+  const v = findVendor(d.committee, d.payee), need = w9NeededFor(d);
+  if (!v) return `<span class="pill ${need ? "warn" : ""}">New payee${need ? " · W-9 required because this is labor" : ""}</span>`;
+  const used = v.funds.length ? ` · used by ${v.funds.join(", ")}` : "";
+  return `<span class="pill ${need ? "warn" : "ok"}">Saved vendor${esc(used)} · ${v.w9 ? `W-9 on file (${fmtYm(v.w9.slice(0, 7))})` : `no W-9 on file${need ? ", needed because this is labor" : ""}`}</span>`;
+}
+/* The vendor record once a request to it is paid: S&W payees get their own restricted record. */
+function vendorRecord(c) {
+  const restricted = restrictedPO(c), n = c.payee.trim();
+  let v = S.vendors.find((x) => Boolean(x.restricted) === restricted && x.name.toLowerCase() === n.toLowerCase());
+  if (!v) S.vendors.push((v = { name: n, address: "", w9: "", funds: [], timesPaid: 0, lastPaid: "", restricted }));
+  return v;
+}
+function seedVendors() {
+  const ago = (d) => addDays(TODAY, -d);
+  const v = (name, o) => ({ name, address: "", w9: "", funds: [], timesPaid: 0, lastPaid: "", restricted: false, ...o });
+  return [
+    v("Triangle Sound & Stage", { address: "77 Sample Blvd, Raleigh, NC 27604", w9: ago(240), funds: ["Youth", "Events Committee"], timesPaid: 3, lastPaid: ago(30) }),
+    v("Camp Cedar Ridge", { address: "500 Camp Rd, Sample Town, NC 27500", w9: ago(1300), funds: ["Youth"], timesPaid: 2, lastPaid: ago(300) }),
+    v("Carolina Air Systems", { address: "12 Sample Pkwy, Raleigh, NC 27610", funds: ["Facility Maintenance"], timesPaid: 4, lastPaid: ago(45) }),
+    v("Triangle Locksmith", { funds: ["Facility Maintenance", "Safety & Security"], timesPaid: 1, lastPaid: ago(120) }),
+    v("Sample aid recipient", { restricted: true, address: "PO Box 100, Raleigh, NC 27601", funds: ["Social & Welfare"], timesPaid: 1, lastPaid: ago(40) }),
+  ];
+}
 /* IAR credit cards: each one is assigned to one person. Only the last four digits are ever stored. */
 const IAR_CARDS = [
   { last4: "4417", holder: "officeAdmin", committee: "Administration", label: "Office card" },
@@ -2037,7 +2085,7 @@ function vPurchases() {
   const queue = S.pos.filter(canActPO);
   const d = directsOf(S.me);
   const theirs = S.pos.filter((p) => d.includes(p.committee) && !restrictedPO(p) && !queue.includes(p) && p.owner !== S.me && !isFinished(p));
-  return `${modHead("Purchase Requests", BLURB.purchases, `<button class="btn primary" data-go="newPO" type="button">New purchase request</button>`)}
+  return `${modHead("Purchase Requests", BLURB.purchases, `<div class="row"><button class="btn" data-go="vendors" type="button">Saved vendors</button><button class="btn primary" data-go="newPO" type="button">New purchase request</button></div>`)}
   ${queue.length ? listPanel(has("finance") ? "Finance queue" : "Waiting for your approval", queue, { queue: true }) : ""}
   ${has("finance") ? cardChecklist() + owedPanel() : ""}
   ${yourRequests(S.pos.filter((p) => p.owner === S.me))}
@@ -2060,11 +2108,28 @@ function owedPanel() {
     ${rows.map(({ p, l }) => `<button class="item" type="button" data-card="${p.id}"><div><div class="t">${esc(l.merchant || l.note || l.acct)}</div><div class="s">${p.id} · card ···${p.card ? p.card.last4 : "—"} · ${l.flag === "refund" ? "refund from the merchant" : "to be repaid by " + esc(l.repayBy)}</div></div><div class="r"><strong>${money(l.amount)}</strong></div></button>`).join("")}
   </div></div>`;
 }
+/* Saved vendors: shared by every committee; Social & Welfare payees in their own section for S&W and finance only. No tax ID numbers anywhere. */
+function vVendors() {
+  const table = (list) => `<div class="tablewrap"><table><thead><tr><th>Vendor</th><th>Used by</th><th>W-9</th><th>Last paid</th><th class="num">Times paid</th></tr></thead><tbody>
+    ${list.map((v) => `<tr><td><strong>${esc(v.name)}</strong>${v.address ? `<div class="small muted">${esc(v.address)}</div>` : ""}</td><td class="small">${esc(v.funds.join(", ") || "—")}</td>
+      <td>${v.w9 ? `<span class="pill ${w9Old(v) ? "warn" : "ok"}">${w9Old(v) ? "On file, over 3 years old" : "On file"} · ${fmtDate(v.w9)}</span>` : '<span class="pill">None on file</span>'}</td>
+      <td class="small">${v.lastPaid ? fmtDate(v.lastPaid) : "—"}</td><td class="num">${v.timesPaid}</td></tr>`).join("") || '<tr><td colspan="5" class="muted">No saved vendors yet.</td></tr>'}
+  </tbody></table></div>`;
+  const sw = S.vendors.filter((v) => v.restricted);
+  return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / Saved vendors</div>
+  <div><h1>Saved vendors</h1><p class="lead">Every committee shares this list. Once a vendor is paid, the next request to them fills in their address and W-9 status. A W-9 is needed only for labor, and only once.</p></div>
+  <div class="panel"><div class="panel-h"><h2>Vendors</h2><span class="small muted">${S.vendors.filter((v) => !v.restricted).length}</span></div>${table(S.vendors.filter((v) => !v.restricted))}</div>
+  ${seesSWVendors() ? `<div class="panel"><div class="panel-h"><h2>Social &amp; Welfare payees</h2><span class="pill bad">Restricted</span></div><p class="small muted" style="margin:0 0 8px">Only Social &amp; Welfare and the finance office see these. They're never offered on other committees' requests, so nobody can find out who received aid.</p>${table(sw)}</div>` : ""}
+  ${has("finance") ? '<div class="note info">The finance office can fix a vendor\'s name, address or contact, and merge two records for the same vendor.</div>' : ""}`;
+}
 function vNewPO() {
   const d = S.poDraft || (S.poDraft = { type: "reimburse", committee: poCommittees()[0] || "", payee: me().name, desc: "", eventId: S.arg || "", lines: [{ acct: acctsFor(poCommittees()[0])[0], amount: "", note: "", receipt: "" }] });
   if (d.type !== "card" && !poCommittees().includes(d.committee)) d.committee = poCommittees()[0] || "";
   if (d.type === "card" && !myCards().length) d.type = "reimburse";
+  // Drafts set up elsewhere (the guide) may not say how to pay yet: reimbursements default to a check to the requester's last address.
+  if (d.pay === undefined) Object.assign(d, { pay: d.type === "reimburse" ? "check" : "", checkTo: d.checkTo || "", address: d.address ?? (d.type === "reimburse" ? lastAddress() : "") });
   const card = d.type === "card";
+  const reimb = d.type === "reimburse", laborLine = d.type === "vendor" && d.lines.some((l) => isLaborAcct(l.acct));
   // A purchase only charges its own committee's sub-accounts, so switching committee resets lines from another one.
   const accts = card ? ACCT_NAMES : acctsFor(d.committee);
   if (!card) d.lines.forEach((l) => { if (!accts.includes(l.acct)) l.acct = accts[0]; });
@@ -2093,8 +2158,13 @@ function vNewPO() {
       ? `<div class="fld"><label for="p_card">Card</label><select id="p_card" name="card">${myCards().map((k) => `<option value="${k.last4}" ${k.last4 === d.card ? "selected" : ""}>···${k.last4} · ${esc(k.label)} (${esc(k.committee)})</option>`).join("")}</select></div>
          <div class="fld"><label for="p_month">Statement month</label><input type="month" id="p_month" name="month" value="${esc(d.month)}"></div>`
       : `<div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${poCommittees().map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">${has("office") || has("finance") ? "The office and finance can submit for any committee." : ""}</span></div>
-         <div class="fld"><label for="p_payee">Pay to</label><input type="text" id="p_payee" name="payee" value="${esc(d.payee)}"></div>`}
+         <div class="fld"><label for="p_payee">${reimb ? "Pay to (you)" : "Payee"}</label><input type="text" id="p_payee" name="payee" list="vendorList" value="${esc(d.payee)}" ${reimb ? "readonly" : 'placeholder="Start typing to find a saved vendor"'}><datalist id="vendorList">${vendorsFor(d.committee).map((v) => `<option value="${esc(v.name)}"></option>`).join("")}</datalist><span class="hint" id="payeeStatus">${payeeStatus(d)}</span></div>`}
     <div class="fld wide"><label for="p_desc">What is it for?</label><input type="text" id="p_desc" name="desc" value="${esc(d.desc)}" placeholder="${card ? "Card receipts" : "Snacks and supplies for Youth Game Night"}"></div>
+    ${card ? "" : `<div class="fld wide"><span class="lbl">How should it be paid?</span><div class="checks-inline">${[["check", "Check"], ["ach", "ACH (bank transfer)"]].map(([k, l]) => `<label><input type="radio" name="pay" value="${k}" ${d.pay === k ? "checked" : ""}> ${l}</label>`).join("")}</div>${d.pay === "ach" ? `<span class="hint">The finance office gets the bank details from ${reimb ? "you" : "the payee"} directly. Don't type bank details here.</span>` : ""}</div>
+      ${d.pay === "check" ? `<div class="fld"><label for="p_checkTo">Where should the check go?</label><select id="p_checkTo" name="checkTo"><option value="">Choose…</option>${Object.entries(CHECK_TO).map(([k, l]) => `<option value="${k}" ${d.checkTo === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+      <div class="fld"><label for="p_address">${reimb ? "Your mailing address" : "Payee's mailing address"}</label><input type="text" id="p_address" name="address" value="${esc(d.address)}" placeholder="Street, city, state, ZIP"><span class="hint">Needed for every check, even one picked up in person.</span></div>` : ""}
+      ${d.type === "vendor" ? `<div class="fld wide"><div class="checks-inline"><label><input type="checkbox" name="labor" ${poLabor(d) ? "checked" : ""} ${laborLine ? "disabled" : ""}> This payment is for labor or services</label></div>${laborLine ? '<span class="hint">A line is charged to a Labor sub-account.</span>' : ""}
+        ${w9NeededFor(d) ? `<div class="row" style="margin-top:6px">${d.w9Uploaded ? `<span class="pill ok">${esc(d.w9Uploaded)}</span><button class="x" type="button" data-w9del="1" aria-label="Remove W-9">×</button>` : `<button class="btn small" type="button" data-w9up="1" data-tip="${esc(DEMO_UPLOAD_TIP)}">Upload W-9</button>`}</div><span class="hint">Labor needs the payee's W-9 on file before IAR can pay. It goes only to the finance office's restricted W-9 drive; you won't be able to open it after you submit.</span>` : ""}</div>` : ""}`}
     ${card ? "" : `<div class="fld wide"><label for="p_event">Link to an event (optional)</label><select id="p_event" name="eventId"><option value="">No event</option>${myEvents.map((c) => `<option value="${c.id}" ${c.id === d.eventId ? "selected" : ""}>${c.id} · ${esc(c.title)}</option>`).join("")}</select></div>`}
     <div class="fld wide"><span class="lbl">${card ? "Charges" : "Line items"}</span><div class="tablewrap"><table class="lines${card ? " card-lines" : ""}"><thead><tr>${head}</tr></thead><tbody>
       ${lineRows}
@@ -2111,14 +2181,17 @@ function vPOCard(c) {
   const at = isCard ? { finance: 1, books: 2, done: 3 }[c.status] ?? 0 : { chair: 1, finance: 2, to_pay: 3, paid: 4, returned: 0 }[c.status] ?? 0;
   let act = "";
   const how = chairStepAs(c);
-  if (canAct && c.status === "chair") act = `<button class="btn primary" data-po="approveChair" type="button">Approve${how?.as === "director" ? " as director" : how?.as === "cover" ? ` for ${esc(nameOf(how.for))}` : c.approver ? " as backup approver" : " as chair"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "chair") act = `<button class="btn primary" data-po="approveChair" type="button">Approve${how?.as === "director" ? " as director" : how?.as === "cover" ? ` for ${esc(nameOf(how.for))}` : c.approver ? " as backup approver" : " as chair"}</button>`;
   const awayChair = c.status === "chair" ? chairsOf(c).map((p) => [p, awayNow(p)]).find(([, a]) => a) : null;
   const actNote = how?.as === "director" && !canChair(S.me, c) ? `<div class="note info">This waits on the ${esc(c.committee)} chair. As the committee's director you can approve or return it too; it's recorded as your decision as director.</div>`
     : how?.as === "cover" ? `<div class="note info">You're covering approvals for ${esc(nameOf(how.for))} while they're away. Your approval is recorded as on their behalf.</div>`
     : awayChair ? `<div class="note info">${esc(nameOf(awayChair[0]))} is away until ${fmtLong(awayChair[1].until)}. ${esc(nameOf(awayChair[1].delegate))} is covering their approvals.</div>` : "";
-  if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${isCard ? "Approve the charges" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
+  if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${isCard ? "Approve the charges" : "Approve for payment"}</button>`;
   if (canAct && c.status === "to_pay") act = `<button class="btn primary" data-po="paid" type="button">Record payment (check #20431)</button>`;
   if (canAct && c.status === "books") act = `<button class="btn primary" data-po="books" type="button">Mark entered in QuickBooks</button>`;
+  // Whoever acts at a step can send the request back: to the requester, or to an earlier step it passed.
+  if (act) act += `</div><div class="row" style="margin-top:8px"><label class="small muted" for="poBackTo">Something wrong?</label><select id="poBackTo" aria-label="Send back to">${poBackTargets(c).map((t) => `<option value="${t}">${PO_BACK_LABEL[t]}</option>`).join("")}</select><input type="text" class="mini" id="poBackNote" placeholder="What needs fixing?" aria-label="What needs fixing?" style="flex:1;min-width:180px"><button class="btn" data-po="back" type="button">Send back</button>`;
+  const backNote = c.backNote && !["returned", "rejected", "paid", "done"].includes(c.status) ? `<div class="note warn"><strong>Sent back:</strong> ${esc(c.backNote)}</div>` : "";
   const owed = owedLines(c);
   const tag = (l, i) => [
     l.noReceipt || !l.receipt ? '<span class="pill warn">No receipt</span>' : `<span class="pill">${esc(l.receipt)}</span>`,
@@ -2139,14 +2212,15 @@ function vPOCard(c) {
     pills: statusPill(c) + (restrictedPO(c) ? ' <span class="pill bad">Restricted</span>' : ""),
     stages: reqStages(steps, at),
     next: nextStep(c),
-    notes: actNote,
+    notes: backNote + actNote,
     actions: act ? `<div class="row">${act}</div>` : "",
     main: `<div class="panel"><div class="panel-h"><h2>${isCard ? "Charges" : "Line items"}</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table>${lineTable}</table></div></div>
       ${commentsPanel(c.id, c.comments)}
       ${logHistory(c.log)}`,
     side: detailsPanel(`<dt>Requested by</dt><dd>${esc(nameOf(c.owner))}</dd><dt>Committee</dt><dd>${esc(c.committee)}</dd><dt>Waiting on</dt><dd>${esc(waitingOn(c)) || "Nothing"}</dd>
       ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
-      ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
+      ${c.pay ? `<dt>Payment</dt><dd>${esc(payLabel(c))}${c.address ? `<div class="small muted">${esc(c.address)}</div>` : ""}</dd>` : ""}
+      ${c.labor ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : c.w9Uploaded ? '<span class="pill info">Uploaded by requester · finance checks it</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
       ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
       <dt>Receipts</dt><dd>${(() => { const n = c.lines.filter((l) => l.receipt).length; return `<span class="pill ${n === c.lines.length ? "ok" : "warn"}">${n} of ${c.lines.length} attached</span>`; })()}</dd>`),
   });
@@ -3936,9 +4010,12 @@ const STEPS = [
   { as: "mktTeam", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
   { as: "youthChair", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("youthChair")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
   { as: "mktTeam", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
-  { as: "youthChair", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("youthChair")}: add a purchase request linked to Game Night, split across two sub-accounts (Program and Admin). Click Upload receipt on each line (in the demo nothing is uploaded), then submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("commDirector")}, the director over Youth.` },
+  { as: "youthChair", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("youthChair")}: add a purchase request linked to Game Night, split across two sub-accounts (Program and Admin). It's paid by check: choose where the check should go (your address is filled in from your last reimbursement). Click Upload receipt on each line (in the demo nothing is uploaded), then submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("commDirector")}, the director over Youth.` },
   { as: "commDirector", view: "home", t: "A director approves", p: `${fn("commDirector")} is the Community Director, over Youth, Women, Older Adults, Sports and Volunteer. The request is waiting on their home page and in their notifications. Open it and approve; the history says "as director". She can also approve any of her committees' requests alongside their chairs.` },
   { as: "bookkeeper", view: "purchases", t: "Finance pays", p: `${fn("bookkeeper")} approves it for payment and records the check. ${fn("youthChair")} is notified, and the event card now shows what's been spent against its budget.` },
+  { as: "youthChair", view: "newPO", labor: true, t: "Paying for labor needs a W-9", p: `${fn("youthChair")} pays a basketball coach. The line is charged to Youth – Labor, so the form ticks "labor" and asks for the coach's W-9: a new payee has none on file. Click Submit to see the form stop, then Upload W-9 (in the demo nothing is uploaded) and submit. The W-9 goes only to finance's restricted drive. Supplies from a new vendor never need one.` },
+  { as: "bookkeeper", view: "vendors", t: "Saved vendors", p: `Every committee shares one list of vendors: once Youth has paid Triangle Sound & Stage, Events picks it and gets the address and W-9 status. Social & Welfare payees are a separate, restricted section. ${fn("bookkeeper")} and ${fn("swChair")} see it; switch to ${fn("youthChair")} and it's gone, and typing an aid recipient's name shows "New payee".` },
+  { as: "bookkeeper", view: "card", arg: "PO-11039", t: "Send it back from any step", p: `PO-11039 is approved and waiting to be paid, but the deposit looks wrong. Under Something wrong?, ${fn("bookkeeper")} picks Chair approval, types what needs fixing and clicks Send back. ${fn("commDirector")}, who approved it, is emailed with the note, and ${fn("youthChair")} is told. Any step can send a request back, to the requester or to an earlier step.` },
   { as: "officeAdmin", view: "newPO", card: true, t: "Credit card receipts", p: `${fn("officeAdmin")} holds the office card. She picks the card and statement month and enters each charge with its own sub-account. One charge is marked to be repaid by the Youth Committee, one has no receipt. Submit it; it goes straight to finance.` },
   { as: "bookkeeper", view: "purchases", t: "Finance reviews card receipts", p: `${fn("bookkeeper")} sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives.` },
   { as: "maintStaff", view: "newPO", facilities: true, t: "A maintenance expense", p: `${fn("maintStaff")} on the maintenance staff bought replacement parts and asks to be reimbursed from Facility Maintenance. The sub-accounts offered are Facility Maintenance's only. One line still needs its receipt: click Upload receipt, then submit. It goes to ${fn("maintChair")}, the Facility Maintenance chair, by email and in the portal.` },
@@ -3992,7 +4069,8 @@ function doStep(i) {
     { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Program", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
     { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "Administration – Office supplies & postage", amount: 12.4, noReceipt: true },
   ] }; }
-  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Program", amount: 186.4, note: "Run capacitor", receipt: "capacitor-receipt.pdf" }, { acct: "Facility Maintenance – Program", amount: 64.2, note: "Air filters (6)", receipt: "" }] };
+  else if (s.view === "newPO" && s.labor) S.poDraft = { type: "vendor", committee: "Youth", payee: "Sample basketball coach", desc: "Basketball coaching, October", eventId: "", pay: "check", checkTo: "box", address: "12 Sample Rd, Raleigh, NC 27606", labor: false, w9Uploaded: "", lines: [{ acct: "Youth – Labor", amount: 200, note: "4 sessions at $50", receipt: "coach-invoice.pdf" }] };
+  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, checkTo: "office", desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Program", amount: 186.4, note: "Run capacitor", receipt: "capacitor-receipt.pdf" }, { acct: "Facility Maintenance – Program", amount: 64.2, note: "Air filters (6)", receipt: "" }] };
   else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "youthChair" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Program", amount: 96.4, note: "Costco snacks", receipt: "" }, { acct: "Youth – Admin", amount: 38.99, note: "Trivia prizes", receipt: "" }] }; }
   if (s.as === "renter") { S.rnDone = null; S.rnDraft = null; }
   if (window.innerWidth < 900) S.guide = false;
@@ -4028,7 +4106,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, vendors: vVendors, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
   const preview = mod && mod.preview ? `<div class="note info"><strong>Preview.</strong> ${esc(mod.name)} is planned for after launch. Have a look, but it isn't part of this beta.</div>` : "";
   document.getElementById("main").innerHTML = preview + (V[S.view] || vHome)();
   renderRail();
@@ -4109,6 +4187,8 @@ document.addEventListener("click", (e) => {
   if (ds.rnnew) { S.rnDone = null; S.rnDraft = null; return render(); }
   if (ds.addline) { readPO(); S.poDraft.lines.push(S.poDraft.type === "card" ? cardBlankLine() : { acct: acctsFor(S.poDraft.committee)[0], amount: "", note: "", receipt: "" }); return render(); }
   if (ds.rcpt) { readPO(); const i = Number(ds.rcpt); S.poDraft.lines[i].receipt = `receipt-line-${i + 1}.pdf`; document.getElementById("tip").hidden = true; toast("Demo only: no file was uploaded. In the portal, the receipt is saved to IAR's Shared Drive."); return render(); }
+  if (ds.w9up) { readPO(); S.poDraft.w9Uploaded = `W-9 — ${S.poDraft.payee.trim()}.pdf`; document.getElementById("tip").hidden = true; toast("Demo only: no file was uploaded. In the portal, the W-9 goes to the finance office's restricted W-9 drive."); return render(); }
+  if (ds.w9del) { readPO(); S.poDraft.w9Uploaded = ""; return render(); }
   if (ds.rcptdel) { readPO(); S.poDraft.lines[Number(ds.rcptdel)].receipt = ""; return render(); }
   if (ds.delline) { readPO(); S.poDraft.lines.splice(Number(ds.delline), 1); return render(); }
   if (ds.task) {
@@ -4162,10 +4242,24 @@ function eventAction(a) {
   evNotify(c, prevStatus);
   render();
 }
+/* Send back: the requester, or any earlier step the request actually passed. Same rule as returnTargets in portal/src/lib/purchases/workflow.ts. */
+const PO_BACK_LABEL = { returned: "The requester, to make changes", chair: "Chair approval", finance: "Finance review" };
+const chairApproval = (c) => [...c.log].reverse().find((l) => /^(Chair approved|Approved as director|Backup approver approved|Approved for )/.test(l.text));
+function poBackTargets(c) {
+  const t = ["returned"];
+  if (["to_pay", "books"].includes(c.status)) t.push("finance");
+  if (["finance", "to_pay"].includes(c.status) && c.type !== "card" && chairApproval(c)) t.push("chair");
+  return t;
+}
 function poAction(a) {
   const c = getCard(S.arg);
   if (!canActPO(c) && !a.startsWith("resolve")) return toast("This step is waiting on someone else.");
   const prevStatus = c.status, how = chairStepAs(c);
+  if (a.startsWith("approve")) c.backNote = "";
+  if (a === "approveFin" && c.labor && !c.w9) {
+    if (!c.w9Uploaded) return toast("A W-9 is needed for this labor payment. Ask the requester to upload it.");
+    c.w9 = true; const v = vendorRecord(c); v.w9 = TODAY; log(c, "Checked the W-9 in the restricted W-9 drive: on file");
+  }
   if (a === "approveChair") { log(c, how?.as === "director" ? "Approved as director" : how?.as === "cover" ? `Approved for ${nameOf(how.for)}, who is away` : c.approver ? "Backup approver approved" : "Chair approved"); c.status = "finance"; c.approver = null; toast("Approved. Sent to finance."); }
   if (a === "approveFin") { c.status = c.type === "card" ? "books" : "to_pay"; log(c, c.type === "card" ? "Finance reviewed the charges" : "Finance approved for payment"); toast(c.type === "card" ? "Approved. Next: QuickBooks." : "Approved for payment"); }
   if (a === "books") { c.status = "done"; log(c, "Entered in QuickBooks"); const n = owedLines(c).length; toast(n ? `Complete. ${n} refund/repayment still tracked.` : "Complete"); }
@@ -4174,8 +4268,22 @@ function poAction(a) {
     if (!has("finance") || c.owner === S.me || !l || l.resolved) return;
     l.resolved = true; log(c, l.flag === "refund" ? `Refund received: ${l.merchant} ${money(l.amount)}` : `Repayment received from ${l.repayBy}: ${money(l.amount)}`); toast("Recorded");
   }
+  if (a === "paid" && c.type === "vendor") { const v = vendorRecord(c); if (!v.funds.includes(c.committee)) v.funds.push(c.committee); v.timesPaid++; v.lastPaid = TODAY; if (c.pay === "check" && c.address) v.address = c.address; if (c.w9 && !v.w9) v.w9 = TODAY; }
   if (a === "paid") { c.status = "paid"; log(c, "Paid by check #20431. Entered in QuickBooks"); toast("Payment recorded"); }
-  if (a === "return") { c.status = "returned"; log(c, `Returned to requester${chairStepNote(how)}: please attach the itemized receipt`); toast("Returned to " + nameOf(c.owner)); }
+  if (a === "back") {
+    const to = document.getElementById("poBackTo")?.value || "returned", note = (document.getElementById("poBackNote")?.value || "").trim();
+    if (!note) return toast("Say what needs fixing.");
+    if (!poBackTargets(c).includes(to)) return toast("This request hasn't been through that step.");
+    const from = PO_STATUS[c.status][0];
+    c.backNote = note;
+    if (to === "returned") { c.status = "returned"; log(c, `Returned to requester${chairStepNote(how)}: ${note}`); toast("Sent back to " + nameOf(c.owner)); }
+    else {
+      if (to === "chair") c.approver = chairApproval(c).who; // back to whoever took the chair step
+      c.status = to; c.sentBack = true;
+      log(c, `Sent back to ${PO_BACK_LABEL[to]} (from ${from})${chairStepNote(how)}: ${note}`);
+      toast(`Sent back to ${PO_BACK_LABEL[to].toLowerCase()}`);
+    }
+  }
   poNotify(c, prevStatus);
   render();
 }
@@ -4186,6 +4294,11 @@ function readPO() {
   const el = f.elements;
   if (el.committee) d.committee = el.committee.value;
   if (el.payee) d.payee = el.payee.value;
+  const pay = f.querySelector("input[name=pay]:checked");
+  if (pay) d.pay = pay.value;
+  if (el.checkTo) d.checkTo = el.checkTo.value;
+  if (el.address) d.address = el.address.value;
+  if (el.labor && !el.labor.disabled) d.labor = el.labor.checked;
   if (el.eventId) d.eventId = el.eventId.value;
   if (el.card) d.card = el.card.value;
   if (el.month) d.month = el.month.value;
@@ -4194,6 +4307,7 @@ function readPO() {
 }
 document.addEventListener("input", (e) => {
   if (e.target.closest("#evForm")) { readDraft(); paintChecks(); }
+  if (e.target.id === "p_payee" && S.poDraft) { readPO(); const st = document.getElementById("payeeStatus"); if (st) st.innerHTML = payeeStatus(S.poDraft); }
   if (e.target.closest("#poForm")) { readPO(); const s = document.getElementById("poSum"); if (s) s.textContent = money(S.poDraft.lines.reduce((a, l) => a + Number(l.amount || 0), 0)); }
 });
 document.addEventListener("change", (e) => {
@@ -4204,8 +4318,16 @@ document.addEventListener("change", (e) => {
   if (e.target.name === "type" && e.target.closest("#poForm")) {
     readPO(); const d = S.poDraft;
     if (d.type === "card") { const k = myCards()[0]; d.card = d.card || k.last4; d.month = d.month || lastMonthYm(); d.desc = d.desc || `Card receipts — ${fmtYm(d.month)}`; d.lines = d.lines.map((l) => ({ ...cardBlankLine(), ...l })); d.eventId = ""; }
-    else if (d.type === "reimburse") d.payee = me().name;
+    else if (d.type === "reimburse") { d.payee = me().name; d.pay = d.pay || "check"; d.address = d.address || lastAddress(); }
+    else if (d.payee === me().name) { d.payee = ""; if (d.address === lastAddress()) d.address = ""; } // the requester's own address isn't the vendor's
     render();
+  }
+  if (e.target.closest("#poForm") && (["pay", "labor"].includes(e.target.name) || e.target.dataset.k === "acct")) { readPO(); return render(); }
+  if (e.target.id === "p_payee" && S.poDraft) {
+    readPO(); const d = S.poDraft, v = findVendor(d.committee, d.payee);
+    if (v && v.address && !String(d.address || "").trim()) d.address = v.address;
+    if (v && !d.pay) d.pay = "check";
+    return render();
   }
   if (e.target.dataset && ["flag", "noReceipt"].includes(e.target.dataset.k) && e.target.closest("#poForm")) { readPO(); render(); }
   if (e.target.name === "committee" && e.target.closest("#poForm")) { readPO(); render(); }
@@ -4261,13 +4383,21 @@ document.addEventListener("submit", (e) => {
         lines: lines.map((l) => ({ date: l.date, merchant: l.merchant.trim(), acct: l.acct, amount: Number(l.amount), flag: l.flag || "", repayBy: l.flag === "repay" ? l.repayBy.trim() : "", noReceipt: Boolean(l.noReceipt), receipt: l.noReceipt ? "" : l.receipt || "" })), status: "finance", created: TODAY });
       c.log.push({ t: TODAY, who: "system", text: "Card receipts go straight to finance review" + (dup ? ` (${dup.id} already covers this card and month)` : "") });
     } else {
+      if (!String(d.payee || "").trim()) return toast("Who should be paid?");
+      if (!d.pay) return toast("Choose check or ACH.");
+      if (d.pay === "check" && !d.checkTo) return toast("Choose where the check should go.");
+      if (d.pay === "check" && String(d.address || "").trim().length < 8) return toast(`Enter ${d.type === "reimburse" ? "your" : "the payee's"} mailing address. IAR records it for every check.`);
+      if (w9NeededFor({ ...d, lines }) && !d.w9Uploaded) return toast("Upload the payee's W-9. IAR needs one on file before paying for labor.");
       const isChair = teamRole(S.me, d.committee) === "chair";
       const otherChair = peopleIn(d.committee, "chair").find((p) => p !== S.me);
       const vice = peopleIn(d.committee, "vice").find((p) => p !== S.me);
       const director = d.committee === "Social & Welfare" ? null : directorsOf(d.committee).find((p) => p !== S.me);
       // Any chair of the committee can approve, so name one only when the requester is a chair themselves.
       const approver = otherChair ? (isChair ? otherChair : null) : vice || director || null;
-      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note, "", l.receipt || ""]), eventId: d.eventId || null, status: otherChair || approver ? "chair" : "finance", approver, created: TODAY });
+      const vendor = findVendor(d.committee, d.payee), labor = poLabor({ ...d, lines });
+      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee.trim(), desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note, "", l.receipt || ""]), eventId: d.eventId || null, status: otherChair || approver ? "chair" : "finance", approver, created: TODAY,
+        pay: d.pay, checkTo: d.pay === "check" ? d.checkTo : "", address: d.pay === "check" ? d.address.trim() : "", labor, w9: Boolean(vendor?.w9), w9Uploaded: labor && !vendor?.w9 ? d.w9Uploaded : "" });
+      if (c.w9Uploaded) c.log.push({ t: TODAY, who: S.me, text: "Uploaded the payee's W-9 to the restricted W-9 drive" });
       const why = isChair ? `Requester is the ${d.committee} chair, so it goes to` : `${d.committee} has no chair, so it goes to`;
       if (isChair && otherChair) c.log.push({ t: TODAY, who: "system", text: `Requester is one of the ${d.committee} chairs, so it goes to another chair, ${nameOf(otherChair)}` });
       else if (approver && approver === vice) c.log.push({ t: TODAY, who: "system", text: `${why} the vice chair, ${nameOf(vice)}` });

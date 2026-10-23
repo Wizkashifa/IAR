@@ -55,9 +55,14 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           <h1>Purchase Requests</h1>
           <p className="lead">Pay a vendor, get reimbursed, or submit IAR credit card receipts.</p>
         </div>
-        <Link href="/purchases/new" className="button">
-          New request
-        </Link>
+        <div className="row">
+          <Link href="/purchases/vendors" className="button secondary">
+            Saved vendors
+          </Link>
+          <Link href="/purchases/new" className="button">
+            New request
+          </Link>
+        </div>
       </div>
       <Flash ok={ok} error={error} />
 
