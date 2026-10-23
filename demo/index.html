@@ -233,7 +233,7 @@ form.f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1
 .lines td { padding: 6px; }
 .lines input, .lines select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0; }
 .lines .amt { width: 110px; text-align: right; }
-.lines.card-lines { min-width: 760px; }
+.lines.card-lines { min-width: 900px; }
 .lines.card-lines input[type=date] { min-width: 140px; }
 .lines.card-lines [data-k=merchant] { min-width: 150px; }
 .lines.card-lines [data-k=acct] { min-width: 190px; }
@@ -413,6 +413,12 @@ body.modal-open { overflow: hidden; }
   form.f, .sect { grid-template-columns: minmax(0, 1fr); }
   .who select { max-width: 200px; }
 }
+@media print {
+  .top, .rail, .guide, .toast, .noprint, .note { display: none !important; }
+  .shell { display: block; margin: 0 !important; }
+  .main { padding: 0; }
+  body { background: #fff; }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -492,27 +498,27 @@ const fmtLong = (s) => { const d = parseD(s); return `${MON[d.getMonth()]} ${d.g
 /* swaps in real names from a file kept outside this public repo.     */
 /* ------------------------------------------------------------------ */
 const PEOPLE = {
-  bilal:  { name: "Youth Chair", title: "Youth Committee chair", roles: ["member", "cardholders"], teams: { Youth: "chair" } },
-  tara:   { name: "Programs Director", title: "Director: Youth, Women, Older Adults, Sports, Volunteer", roles: ["member"], teams: {} },
-  idris:  { name: "Maintenance Staff", title: "Facilities & maintenance staff", roles: ["member"], teams: { "Facility Maintenance": "member" } },
-  yusuf:  { name: "Maintenance Chair", title: "Facility Maintenance chair", roles: ["member"], teams: { "Facility Maintenance": "chair" } },
-  azeem:  { name: "Maintenance Vice Chair", title: "Facility Maintenance vice chair", roles: ["member"], teams: { "Facility Maintenance": "vice" } },
-  hana:   { name: "Office Admin", title: "IAR office admin", roles: ["member", "office", "cardholders"], teams: { Administration: "member" } },
-  omar:   { name: "Bookkeeper", title: "Bookkeeper, finance office", roles: ["member", "finance", "cardholders"], teams: { Administration: "member" } },
-  layla:  { name: "S&W Chair", title: "Social & Welfare chair", roles: ["member", "cardholders"], teams: { "Social & Welfare": "chair" } },
-  sara:   { name: "Marketing team", title: "Marketing team", roles: ["member"], teams: { Marketing: "member" } },
-  maryam: { name: "IT Chair", title: "IT Services chair", roles: ["member"], teams: { "IT Services": "chair" } },
-  zaid:   { name: "IT team", title: "IT Services team (includes A/V)", roles: ["member"], teams: { "IT Services": "member" } },
-  khalid: { name: "Shura Chair", title: "Shura / board chair · acting CEO · executive", roles: ["member", "executive"], teams: { Shura: "chair" } },
-  yasir:  { name: "Imam", title: "Head Imam · executive", roles: ["member", "executive"], teams: { "Imam Office": "chair" } },
-  safa:   { name: "Imam Office Admin", title: "Imam's Office admin", roles: ["member"], teams: { "Imam Office": "member" } },
-  admin:  { name: "Portal Admin", title: "Portal admin (sees everything)", roles: ["member", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "shura", "admins"], teams: { Youth: "member", "Social & Welfare": "member", Administration: "member" } },
-  renter: { name: "Outside renter", title: "Not signed in · public page", roles: [], teams: {} },
+  youthChair: { name: "Youth Chair", title: "Youth Chair", roles: ["member", "cardholders"], teams: { Youth: "chair" } },
+  commDirector: { name: "Community Director", title: "Community Director", roles: ["member"], teams: {} },
+  maintStaff: { name: "Maintenance Staff", title: "Maintenance Staff", roles: ["member"], teams: { "Facility Maintenance": "member" } },
+  maintChair: { name: "Facility Maintenance Chair", title: "Facility Maintenance Chair", roles: ["member"], teams: { "Facility Maintenance": "chair" } },
+  maintVice: { name: "Facility Maintenance Vice Chair", title: "Facility Maintenance Vice Chair", roles: ["member"], teams: { "Facility Maintenance": "vice" } },
+  officeAdmin: { name: "Office Admin", title: "Office Admin", roles: ["member", "office", "cardholders"], teams: { Administration: "member" } },
+  bookkeeper: { name: "Bookkeeper", title: "Bookkeeper", roles: ["member", "finance", "cardholders"], teams: { Administration: "member" } },
+  swChair: { name: "Social & Welfare Chair", title: "Social & Welfare Chair", roles: ["member", "cardholders"], teams: { "Social & Welfare": "chair" } },
+  mktTeam: { name: "Marketing team", title: "Marketing team", roles: ["member"], teams: { Marketing: "member" } },
+  itChair: { name: "IT Services Chair", title: "IT Services Chair", roles: ["member"], teams: { "IT Services": "chair" } },
+  itTeam: { name: "IT & A/V team", title: "IT & A/V team", roles: ["member"], teams: { "IT Services": "member" } },
+  shuraChair: { name: "Shura Chair & Acting CEO", title: "Shura Chair & Acting CEO", roles: ["member", "executive"], teams: { Shura: "chair" } },
+  headImam: { name: "Head Imam", title: "Head Imam", roles: ["member", "executive"], teams: { "Imam Office": "chair" } },
+  imamAdmin: { name: "Imam's Office Admin", title: "Imam's Office Admin", roles: ["member"], teams: { "Imam Office": "member" } },
+  admin: { name: "Portal Admin", title: "Portal Admin", roles: ["member", "office", "finance", "cardholders", "marketing", "av", "facilities", "security", "sw", "executive", "it", "shura", "admins"], teams: { Youth: "member", "Social & Welfare": "member", Administration: "member" } },
+  renter: { name: "Outside group (public page)", title: "Outside group (public page)", roles: [], teams: {} },
 };
 /* Committees and teams come from Google Groups (portal-team-*): Owner = chair, Manager = vice chair, Member = member.
    A role is per team, so chairing one never carries over to another. Directors own a pillar group (portal-pillar-*)
    whose members are team groups. These are sample people standing in for what Google returns. */
-const PILLARS = [{ name: "Programs", owner: "tara", teams: ["Youth", "Women's Committee", "Older Adult Community", "Sports & Recreation", "Volunteer"] }];
+const PILLARS = [{ name: "Community", owner: "commDirector", teams: ["Youth", "Women's Committee", "Older Adult Community", "Sports & Recreation", "Volunteer"] }];
 /* The teams that also switch on a queue or module. */
 const QUEUE_ROLES = { Marketing: ["marketing"], "IT Services": ["it", "av"], "Facility Maintenance": ["facilities"], "Safety & Security": ["security"], "Social & Welfare": ["sw"], Shura: ["shura"] };
 for (const [k, p] of Object.entries(PEOPLE)) {
@@ -526,6 +532,8 @@ const teamRole = (pid, team) => PEOPLE[pid]?.teams?.[team];
 const peopleIn = (team, role) => Object.keys(PEOPLE).filter((p) => p !== "admin" && teamRole(p, team) === role);
 /* First name for guide text and greetings ("first" is set when names are real). */
 const fn = (id) => PEOPLE[id].first || PEOPLE[id].name;
+/* A person for menus and labels: "Name (Title)" when they have a real name, otherwise just their role. */
+const who = (id) => (PEOPLE[id].name === PEOPLE[id].title ? PEOPLE[id].title : `${PEOPLE[id].name} (${PEOPLE[id].title})`);
 /* Committees and teams work the same way: each is a Google Group. The last entry is for outside groups' private events. */
 const COMMITTEES = ["Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education", "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing", "Older Adult Community", "Outreach", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer", "Women's Committee", "Youth", "Community member (private event)"];
 
@@ -599,7 +607,7 @@ function seed() {
   const serA = nextDow(addDays(TODAY, -78), 2, 0); // a 3-month Tuesday series that is close to its end
   const serB = nextDow(addDays(TODAY, -33), 3, 0); // a 3-month Wednesday series that just started
   S = {
-    me: "bilal",
+    me: "youthChair",
     view: "home",
     arg: null,
     guide: false,
@@ -610,52 +618,52 @@ function seed() {
       { room: "f3arabic", date: tueLater, s: toMin("18:30"), e: toMin("20:00"), label: "Adult Arabic class" },
       { room: "r280", date: thuSoon, s: toMin("19:00"), e: toMin("21:00"), label: "Shura meeting" },
       { room: "mphB", date: sunLater, s: toMin("16:00"), e: toMin("18:00"), label: "Sisters' fitness" },
+      // Today, so everyone's "Today at IAR" panel has something on it.
+      { room: "mphAB", date: TODAY, s: toMin("17:00"), e: toMin("18:30"), label: "Youth open gym" },
+      { room: "r230a", date: TODAY, s: toMin("19:30"), e: toMin("21:00"), label: "Adult Quran class" },
     ],
     cards: [
-      ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "bilal", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", serA, recurEnd(serA, 3)), created: now(78),
-        tasks: { security: "todo" }, log: [[now(78), "bilal", "Submitted as a weekly series, 3 months"], [now(77), "tara", "Mission review as director: approved. Sent to the executive"], [now(76), "yasir", "Mission review: approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
-      ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "layla", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", serB, recurEnd(serB, 3)), created: now(33),
-        tasks: { security: "todo" }, log: [[now(33), "layla", "Submitted as a weekly series, 3 months"], [now(31), "khalid", "Mission review: approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
-      ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "bilal", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
+      ev({ id: "EV-1022", title: "Youth Weekly Halaqa", owner: "youthChair", committee: "Youth", status: "approved", date: serA, start: "19:00", end: "20:30", room: "r250", attendance: 18, isPublic: false, recur: mkRecur("weekly", serA, recurEnd(serA, 3)), created: now(78),
+        tasks: { security: "todo" }, log: [[now(78), "youthChair", "Submitted as a weekly series, 3 months"], [now(77), "commDirector", "Mission review as director: approved. Sent to the executive"], [now(76), "headImam", "Mission review: approved. Every Tuesday through " + fmtLong(recurEnd(serA, 3)) + " is held on the IAR calendar"]] }),
+      ev({ id: "EV-1028", title: "S&W Weekly Intake Hours", owner: "swChair", committee: "Social & Welfare", status: "approved", date: serB, start: "10:00", end: "12:00", room: "r250", attendance: 6, isPublic: false, recur: mkRecur("weekly", serB, recurEnd(serB, 3)), created: now(33),
+        tasks: { security: "todo" }, log: [[now(33), "swChair", "Submitted as a weekly series, 3 months"], [now(31), "shuraChair", "Mission review: approved. Every Wednesday through " + fmtLong(recurEnd(serB, 3)) + " is held on the IAR calendar"]] }),
+      ev({ id: "EV-1042", title: "Youth Halaqa — winter series", owner: "youthChair", committee: "Youth", status: "changes", date: tueLater, start: "14:00", end: "16:00", room: "mphB", attendance: 35, food: true, isPublic: true, created: now(5),
         brief: { subtitle: "A Weekly Halaqa for Teens", text: "Teens ages 13-18 are invited to the Youth Winter Halaqa: a weekly circle on the Seerah, with snacks and games after. Tuesdays this winter at IAR.", flyer: "Title, Tuesdays, ages 13-18, snacks provided", startOn: addDays(tueLater, -21) },
-        log: [[now(5), "bilal", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "tara", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
-      ev({ id: "EV-1031", title: "Youth Family Night", owner: "bilal", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables, stage riser, projector", budget: 900, created: now(16),
+        log: [[now(5), "youthChair", "Submitted"], [now(5), "system", "Auto checks: overlaps Al-Iman school hours in MPH B"], [now(1), "commDirector", "Requested changes: MPH B is the school's until 3:30 on weekdays. Move to 4:00 PM or pick Room 250."]] }),
+      ev({ id: "EV-1031", title: "Youth Family Night", owner: "youthChair", committee: "Youth", status: "approved", date: satSoon, start: "18:00", end: "21:00", setup: 60, teardown: 45, room: "mphAB", attendance: 120, food: true, isPublic: true, av: true, setupNotes: "12 round tables and a stage riser; Youth volunteers set up", budget: 900, created: now(16),
         brief: { subtitle: "An Evening for the Whole Family", text: "Join the Youth Committee for Family Night: dinner, a youth-led nasheed set, games for kids and a short reminder. Saturday 6:00 - 9:00 PM in the MPH. Free, but please register so we have enough food.", flyer: "Title, date, 6-9 PM, MPH, dinner included, register by Thursday", regLink: "", payment: "", startOn: addDays(satSoon, -14), files: "https://drive.google.com/drive/folders/family-night-photos" },
         avNeeds: { kinds: ["projector", "sound"], includes: ["quran", "laptop", "video"], ack: true, notes: "Slideshow of last year's photos with music at 8 PM." },
-        tasks: { marketing: "doing", av: "todo", facilities: "todo", security: "todo" }, linkedPOs: ["PO-11046"],
-        log: [[now(16), "bilal", "Submitted"], [now(16), "tara", "Mission review as director: approved. Sent to the executive"], [now(15), "yasir", "Mission review: approved. Room hold confirmed on the IAR calendar"], [now(12), "sara", "Started the flyer"]] }),
-      ev({ id: "EV-0998", title: "Food drive volunteer briefing", owner: "bilal", committee: "Youth", status: "closeout", date: pastDay, start: "19:00", end: "20:30", room: "r250", attendance: 18, food: true, budget: 250, created: now(24),
+        tasks: { marketing: "doing", av: "todo", security: "todo" }, linkedPOs: ["PO-11046"],
+        log: [[now(16), "youthChair", "Submitted"], [now(16), "commDirector", "Mission review as director: approved. Sent to the executive"], [now(15), "headImam", "Mission review: approved. Room hold confirmed on the IAR calendar"], [now(12), "mktTeam", "Started the flyer"]] }),
+      ev({ id: "EV-0998", title: "Food drive volunteer briefing", owner: "youthChair", committee: "Youth", status: "closeout", date: pastDay, start: "19:00", end: "20:30", room: "r250", attendance: 18, food: true, budget: 250, created: now(24),
         tasks: { security: "done" }, securityResult: "Room left clean, chairs returned", linkedPOs: ["PO-10977"],
-        log: [[now(24), "bilal", "Submitted"], [now(23), "tara", "Mission review as director: approved. Sent to the executive"], [now(22), "khalid", "Mission review: approved"], [pastDay, "idris", "Room check after event: clean, chairs returned"]] }),
-      ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "tara", committee: "Women's Committee", status: "mission", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
-        log: [[now(2), "tara", "Submitted"], [now(2), "system", "Auto checks passed"], [now(2), "system", "Requester directs this committee's pillar, so it goes straight to the executive"]] }),
-      ev({ id: "EV-1053", title: "Interfaith Open House", owner: "bilal", committee: "Outreach", status: "mission", date: satLater, start: "14:00", end: "17:00", setup: 60, teardown: 60, room: "main", attendance: 200, food: false, isPublic: true, triggers: { outsideSpeaker: true, newProgram: true }, budget: 1800, created: now(3),
-        brief: { subtitle: "Meet Your Muslim Neighbors", text: "IAR opens its doors to neighbors of every faith: a tour of the masjid, a panel of local faith leaders, and light refreshments. Saturday 2:00 - 5:00 PM at the Main Prayer Hall. All are welcome.", flyer: "Title, date and time, all faiths welcome, panel speakers' names", other: "Panel: local faith leaders on caring for our neighbors", startOn: addDays(satLater, -21) },
-        log: [[now(3), "bilal", "Submitted"], [now(3), "system", "Outreach has no pillar director, so it goes straight to the executive"], [now(3), "system", "For the reviewers: new program, outside speaker or group, 200 expected"]] }),
+        log: [[now(24), "youthChair", "Submitted"], [now(23), "commDirector", "Mission review as director: approved. Sent to the executive"], [now(22), "shuraChair", "Mission review: approved"], [pastDay, "maintStaff", "Room check after event: clean, chairs returned"]] }),
+      ev({ id: "EV-1050", title: "Sisters' Tafsir Circle", owner: "commDirector", committee: "Women's Committee", status: "mission", date: thuSoon, start: "10:30", end: "12:00", room: "r250", attendance: 15, created: now(2),
+        log: [[now(2), "commDirector", "Submitted"], [now(2), "system", "Auto checks passed"], [now(2), "system", "Requester directs this committee's pillar, so it goes straight to the executive"]] }),
     ],
     pos: [
-      po({ id: "PO-11045", owner: "bilal", type: "reimburse", committee: "Youth", payee: PEOPLE.bilal.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Food & Hospitality", 142.5], ["Youth – Supplies", 42]], eventId: "EV-1042", status: "chair", approver: "tara", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
-      po({ id: "PO-11046", owner: "bilal", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Programs & Events", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "tara", created: now(6) }),
-      po({ id: "PO-10977", owner: "bilal", type: "reimburse", committee: "Youth", payee: PEOPLE.bilal.name, desc: "Pizza and water — food drive briefing", lines: [["Youth – Food & Hospitality", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
-      po({ id: "PO-11039", owner: "bilal", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Programs & Events", 1200]], status: "to_pay", w9: true, created: now(4) }),
-      po({ id: "PO-11053", owner: "idris", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.idris.name, desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Repairs", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
-      cardPO({ id: "PO-11051", owner: "layla", last4: "3051", status: "finance", created: now(2), lines: [
-        { day: 3, merchant: "Food Lion — pantry restock", acct: "S&W – Food Pantry", amount: 286.4 },
-        { day: 9, merchant: "Costco — pantry staples", acct: "S&W – Food Pantry", amount: 214.18 },
-        { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Printing & Design", amount: 129, flag: "refund" },
-        { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Programs & Events", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
-        { day: 24, merchant: "Staples", acct: "S&W – Community Aid", amount: 23.5, noReceipt: true },
+      po({ id: "PO-11045", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Program", 142.5, "Snacks for the halaqa"], ["Youth – Admin", 42, "Printing and name tags"]], eventId: "EV-1042", status: "chair", approver: "commDirector", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
+      po({ id: "PO-11046", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Program", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "commDirector", created: now(6) }),
+      po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Pizza and water — food drive briefing", lines: [["Youth – Program", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
+      po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Program", 1200]], status: "to_pay", w9: true, created: now(4) }),
+      po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Program", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
+      cardPO({ id: "PO-11051", owner: "swChair", last4: "3051", status: "finance", created: now(2), lines: [
+        { day: 3, merchant: "Food Lion — pantry restock", acct: "Social & Welfare – Program", amount: 286.4 },
+        { day: 9, merchant: "Costco — pantry staples", acct: "Social & Welfare – Program", amount: 214.18 },
+        { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Program", amount: 129, flag: "refund" },
+        { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Program", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
+        { day: 24, merchant: "Staples", acct: "Social & Welfare – Program", amount: 23.5, noReceipt: true },
       ] }),
-      cardPO({ id: "PO-11037", owner: "bilal", last4: "7720", status: "done", created: now(9), lines: [
-        { day: 6, merchant: "Costco", acct: "Youth – Food & Hospitality", amount: 188.42 },
-        { day: 20, merchant: "Target (returned items)", acct: "Youth – Supplies", amount: 41.17, flag: "refund" },
+      cardPO({ id: "PO-11037", owner: "youthChair", last4: "7720", status: "done", created: now(9), lines: [
+        { day: 6, merchant: "Costco", acct: "Youth – Program", amount: 188.42 },
+        { day: 20, merchant: "Target (returned items)", acct: "Youth – Program", amount: 41.17, flag: "refund" },
       ] }),
     ],
     mreqs: [
-      mkReq({ id: "MK-324", type: "badge", owner: "idris", committee: "Facility Maintenance", status: "submitted", created: now(1), answers: { first: PEOPLE.idris.name.split(" ")[0], last: PEOPLE.idris.name.split(" ").slice(1).join(" "), title: "Facilities Technician", photo: "onsite" }, notes: "Old badge was lost.", log: [[now(1), "idris", "Submitted"]] }),
-      mkReq({ id: "MK-322", type: "announce", owner: "layla", committee: "Social & Welfare", status: "scheduled", doneBy: addDays(TODAY, 4), created: now(6), answers: { text: "The IAR Food Pantry is now open Wednesdays 10 AM - 12 PM as well as Saturdays. Families in need can visit or call the office. Volunteers are welcome too!", due: addDays(TODAY, 5) }, log: [[now(6), "layla", "Submitted"], [now(3), "sara", "Scheduled at the weekly review, to finish by " + fmtLong(addDays(TODAY, 4))]] }),
-      mkReq({ id: "MK-323", type: "highlight", owner: "bilal", committee: "Youth", status: "doing", doneBy: addDays(TODAY, 2), created: now(8), answers: { desc: "Our youth basketball team won the regional Muslim youth tournament. Shout-out to the players and their coaches.", media: "https://drive.google.com/drive/folders/youth-basketball-final", due: addDays(TODAY, 3) }, log: [[now(8), "bilal", "Submitted"], [now(3), "sara", "Scheduled at the weekly review"], [now(1), "sara", "Started"]] }),
-      mkReq({ id: "MK-319", type: "redirect", owner: "hana", committee: "Administration", status: "done", doneBy: now(10), created: now(20), answers: { from: "raleighmasjid.org/rooms", to: "https://forms.gle/room-request-example" }, log: [[now(20), "hana", "Submitted"], [now(14), "sara", "Scheduled at the weekly review"], [now(10), "sara", "Done"]] }),
+      mkReq({ id: "MK-324", type: "badge", owner: "maintStaff", committee: "Facility Maintenance", status: "submitted", created: now(1), answers: { first: "New", last: "Hire", title: "Facilities Technician", photo: "onsite" }, notes: "For the facilities technician starting next week. Name to follow once HR confirms.", log: [[now(1), "maintStaff", "Submitted"]] }),
+      mkReq({ id: "MK-322", type: "announce", owner: "swChair", committee: "Social & Welfare", status: "scheduled", doneBy: addDays(TODAY, 4), created: now(6), answers: { text: "The IAR Food Pantry is now open Wednesdays 10 AM - 12 PM as well as Saturdays. Families in need can visit or call the office. Volunteers are welcome too!", due: addDays(TODAY, 5) }, log: [[now(6), "swChair", "Submitted"], [now(3), "mktTeam", "Scheduled at the weekly review, to finish by " + fmtLong(addDays(TODAY, 4))]] }),
+      mkReq({ id: "MK-323", type: "highlight", owner: "youthChair", committee: "Youth", status: "doing", doneBy: addDays(TODAY, 2), created: now(8), answers: { desc: "Our youth basketball team won the regional Muslim youth tournament. Shout-out to the players and their coaches.", media: "https://drive.google.com/drive/folders/youth-basketball-final", due: addDays(TODAY, 3) }, log: [[now(8), "youthChair", "Submitted"], [now(3), "mktTeam", "Scheduled at the weekly review"], [now(1), "mktTeam", "Started"]] }),
+      mkReq({ id: "MK-319", type: "redirect", owner: "officeAdmin", committee: "Administration", status: "done", doneBy: now(10), created: now(20), answers: { from: "raleighmasjid.org/rooms", to: "https://forms.gle/room-request-example" }, log: [[now(20), "officeAdmin", "Submitted"], [now(14), "mktTeam", "Scheduled at the weekly review"], [now(10), "mktTeam", "Done"]] }),
     ],
     rentals: [
       { kind: "rental", id: "RN-201", org: "Triangle Youth Futsal", contact: "League coach", email: "coach@example.org", date: nextDow(TODAY, 0, 15), start: "15:00", end: "18:00", room: "mphAB", attendance: 40, purpose: "Weekly futsal practice for ages 10–14", status: "submitted", insurance: "certificate-of-insurance.pdf", created: now(1) },
@@ -704,14 +712,16 @@ function ev(o) {
 }
 function po(o) {
   const c = Object.assign({ kind: "po", w9: false, log: [], comments: [] }, o);
-  // Lines are [account, amount, note, flag] or, for card charges, objects with date and merchant.
-  c.lines = o.lines.map((l) => (Array.isArray(l) ? { acct: l[0], amount: l[1], note: l[2] || "", flag: l[3] || "" } : { note: "", flag: "", repayBy: "", noReceipt: false, resolved: false, ...l }));
+  // Lines are [account, amount, note, flag, receipt] or, for card charges, objects with date and merchant.
+  // Sample requests get a receipt file per line unless one is passed (an empty string means none was attached).
+  const sample = (i) => `${String(o.id).toLowerCase()}-receipt-${i + 1}.pdf`;
+  c.lines = o.lines.map((l, i) => (Array.isArray(l) ? { acct: l[0], amount: l[1], note: l[2] || "", flag: l[3] || "", receipt: l[4] ?? sample(i) } : { note: "", flag: "", repayBy: "", noReceipt: false, resolved: false, ...l, receipt: l.receipt ?? (l.noReceipt ? "" : sample(i)) }));
   c.log = [{ t: o.created, who: o.owner, text: "Submitted" }];
-  if (o.status === "finance" && o.type !== "card") c.log.push({ t: o.created, who: o.chairBy || "bilal", text: o.chairBy === "tara" ? "Approved as director" : "Chair approved" });
+  if (o.status === "finance" && o.type !== "card") c.log.push({ t: o.created, who: o.chairBy || "youthChair", text: o.chairBy === "commDirector" ? "Approved as director" : "Chair approved" });
   if (o.note) c.log.push({ t: o.created, who: "system", text: o.note });
-  if (o.status === "paid") c.log.push({ t: o.created, who: "omar", text: "Paid by check #20418" });
-  if (o.type === "card" && ["books", "done"].includes(o.status)) c.log.push({ t: o.created, who: "omar", text: "Finance reviewed the charges" });
-  if (o.status === "done") c.log.push({ t: o.created, who: "omar", text: "Entered in QuickBooks" });
+  if (o.status === "paid") c.log.push({ t: o.created, who: "bookkeeper", text: "Paid by check #20418" });
+  if (o.type === "card" && ["books", "done"].includes(o.status)) c.log.push({ t: o.created, who: "bookkeeper", text: "Finance reviewed the charges" });
+  if (o.status === "done") c.log.push({ t: o.created, who: "bookkeeper", text: "Entered in QuickBooks" });
   return c;
 }
 /* A card-receipts request for last month's statement on one IAR card. */
@@ -726,7 +736,7 @@ function buildTasks(c, states) {
   const st = (k) => states[k] || (["approved", "closeout", "closed"].includes(c.status) ? "todo" : "locked");
   if (c.isPublic) t.push({ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing" + (c.brief && c.brief.subtitle ? `: “${c.brief.subtitle}”` : ""), status: st("marketing") });
   if (c.av) { const k = (c.avNeeds?.kinds || []).map((x) => AV_KINDS[x].toLowerCase()); t.push({ id: "av", team: "av", title: "A/V: " + (k.length ? k.join(", ") : "support requested"), status: st("av") }); }
-  if (c.setupNotes) t.push({ id: "facilities", team: "facilities", title: "Room setup: " + c.setupNotes, status: st("facilities") });
+  // No setup task: the requester and their committee set up and clean up. Only A/V and marketing are services.
   if (c.room !== "offsite") t.push({ id: "security", team: "security", title: "Room check before and after" + (afterHours(c) ? " + after-hours coverage" : ""), status: st("security") });
   if (c.committee.startsWith("Community") && room(c.room).mph) t.push({ id: "payment", team: "finance", title: "Collect $200 fee and $100 deposit", status: st("payment") });
   return t;
@@ -865,8 +875,8 @@ const has = (r) => me().roles.includes(r) || (S.extra[S.me] || []).includes(r);
 const nameOf = (id) => (id === "system" ? "Portal" : id.startsWith("ext:") ? id.slice(4) : PEOPLE[id]?.name || id);
 const isMine = (c) => c.owner === S.me || (S.me === "admin" && false);
 const getCard = (id) => S.cards.find((c) => c.id === id) || S.pos.find((c) => c.id === id) || S.mreqs.find((c) => c.id === id) || S.rentals.find((c) => c.id === id) || S.tickets.find((c) => c.id === id);
-const TEAM_ROLE = { marketing: "marketing", av: "av", facilities: "facilities", security: "security", finance: "finance" };
-const TEAM_NAME = { marketing: "Marketing", av: "AV", facilities: "Facilities", security: "Security", finance: "Finance" };
+const TEAM_ROLE = { marketing: "marketing", av: "av", security: "security", finance: "finance" };
+const TEAM_NAME = { marketing: "Marketing", av: "AV", security: "Security", finance: "Finance" };
 
 const EV_STATUS = {
   submitted: ["Submitted", "info"], director: ["Director review", "info"], mission: ["Executive review", "info"], changes: ["Changes requested", "warn"],
@@ -945,7 +955,7 @@ const evergreen = (...n) => n.map((x) => ({ n: x, fy: false }));
 const fyOf = (d) => { const x = parseD(d), y = x.getMonth() >= 6 ? x.getFullYear() : x.getFullYear() - 1; return `FY${String(y).slice(2)}-${String(y + 1).slice(2)}`; };
 const LIB_DRIVES = [
   { id: "policies", name: "Policies", tokens: ["member"], role: "Viewer", blurb: "Approved IAR policies. Everyone can read them; the Shura and executive edit.", folders: evergreen("Rooms and rentals", "Purchasing", "People", "Drafts", "Archive") },
-  { id: "ops", name: "Operations", tokens: ["office", "facilities", "security", "av", "it"], role: "Contributor", blurb: "Run sheets, contracts and setup diagrams for the teams that run the buildings.", folders: [...byYear("Contracts"), ...evergreen("Run sheets")] },
+  { id: "ops", name: "Operations", tokens: ["office", "facilities", "security", "av", "it"], role: "Contributor", blurb: "Printed daily schedules, contracts and room setup diagrams for the teams that run the buildings.", folders: [...byYear("Contracts"), ...evergreen("Daily schedules")] },
   ...COMMITTEE_DRIVES.map((c) => ({ id: "c-" + slug(c), name: c === "Women's Committee" || c === "Administration" ? c : c + " Committee", tokens: ["c:" + c], role: "Contributor", blurb: `${c === "Administration" ? "Office" : c} files, plans and event material.`, folders: [...evergreen("Planning"), ...byYear("Events")] })),
   { id: "shura", name: "IAR Shura", tokens: ["shura"], role: "Content manager", blurb: "Minutes, resolutions, board packets and approved budgets.", folders: byYear("Minutes", "Resolutions", "Board packets", "Budget") },
   { id: "sw", name: "Social & Welfare", tokens: ["sw"], role: "Contributor", blurb: "Case files and aid records. No sharing outside the group; download is off for viewers.", folders: [...byYear("Case files"), ...evergreen("Guidelines")] },
@@ -968,49 +978,48 @@ function libSeed() {
   let q = 0;
   const f = (drive, folder, name, owner, age, o = {}) => ({ id: "F-" + ++q, drive, folder, name, owner, updated: n(-age), review: o.review || "", link: o.link || [] });
   S.lib = { drive: null, folder: null, sel: null, q: "", tab: "files", year: "cur", seq: q, files: [
-    f("policies", "Rooms and rentals", "Room use policy.docx", "hana", 210, { review: n(-20), link: ["EV-1031"] }),
-    f("policies", "Rooms and rentals", "Food and catering rules.pdf", "hana", 140, { review: n(10) }),
-    f("policies", "Drafts", "Facility rental terms (draft for Shura).docx", "hana", 6, { review: n(30) }),
-    f("policies", "Purchasing", "Purchasing and reimbursement policy.pdf", "omar", 95, { review: n(90), link: ["PO-11045", "PO-11046"] }),
-    f("policies", "People", "Volunteer code of conduct.pdf", "hana", 300, { review: n(200) }),
-    f("policies", "Archive", "Room use policy (2023 version).docx", "hana", 900),
-    f("ops", "Run sheets", "Daily run sheet template.xlsx", "hana", 40),
-    f("ops", "Run sheets", "Setup diagrams — Multipurpose Hall.pdf", "yusuf", 33),
-    f("ops", "Contracts", "Security patrol contract.pdf", "idris", 120),
-    f("ops", "Contracts", "HVAC maintenance contract.pdf", "idris", 75),
-    f("ops", "Contracts", "Security patrol contract (prior term).pdf", "idris", 380),
-    f("c-youth", "Events", "Youth Family Night — flyer.png", "bilal", 9, { link: ["EV-1031"] }),
-    f("c-youth", "Planning", "Halaqa winter series outline.docx", "bilal", 4, { link: ["EV-1042"] }),
-    f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "bilal", 18, { link: ["PO-11039"] }),
-    f("c-youth", "Events", "Summer camp schedule.pdf", "bilal", 190),
-    f("c-outreach", "Events", "Interfaith Open House — speaker list.docx", "bilal", 7, { link: ["EV-1053"] }),
-    f("c-outreach", "Planning", "Invitation list.xlsx", "bilal", 12),
-    f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "hana", 50),
-    f("c-education", "Planning", "Teacher roster.xlsx", "hana", 22),
-    f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "hana", 8, { link: ["EV-1050"] }),
-    f("c-dawah", "Planning", "New Muslim guide.pdf", "hana", 70),
-    f("c-dawah", "Events", "Booklet print order.pdf", "hana", 35),
-    f("c-administration", "Planning", "Office procedures manual.docx", "hana", 160, { review: n(45) }),
-    f("c-administration", "Planning", "Key and lock log.xlsx", "hana", 3),
-    f("shura", "Minutes", "Shura minutes — September meeting.docx", "khalid", 25),
-    f("shura", "Minutes", "Shura minutes — August meeting.docx", "khalid", 56),
-    f("shura", "Minutes", "Shura minutes — June meeting.docx", "khalid", 125),
-    f("shura", "Minutes", "Shura minutes — May meeting.docx", "khalid", 160),
-    f("shura", "Resolutions", "Resolution 2026-04: gym rental terms.pdf", "khalid", 40),
-    f("shura", "Board packets", "Board packet — October.pdf", "khalid", 5),
-    f("shura", "Budget", "FY26-27 approved budget.xlsx", "omar", 110),
-    f("shura", "Budget", "Budget amendment request — Youth.pdf", "bilal", 14),
-    f("shura", "Budget", "FY25-26 approved budget.xlsx", "omar", 420),
-    f("sw", "Case files", "Case 311 — intake and approval.pdf", "layla", 30),
-    f("sw", "Case files", "Case 318 — documents.pdf", "layla", 9),
-    f("sw", "Case files", "Case 287 — closed.pdf", "layla", 250),
-    f("sw", "Guidelines", "Zakat distribution guidelines.pdf", "layla", 180, { review: n(-5) }),
-    f("finance", "W-9s", "W-9 — Triangle Sound & Stage.pdf", "omar", 20, { link: ["PO-11046"] }),
-    f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "omar", 60, { link: ["PO-11039"] }),
-    f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "bilal", 3, { link: ["PO-11045"] }),
-    f("finance", "Receipts", "Carolina Air Systems — deposit receipt.pdf", "omar", 300),
-    f("finance", "Card statements", "Card 3051 — September statement.pdf", "omar", 12, { link: ["PO-11051"] }),
-    f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "omar", 15),
+    f("policies", "Rooms and rentals", "Room use policy.docx", "officeAdmin", 210, { review: n(-20), link: ["EV-1031"] }),
+    f("policies", "Rooms and rentals", "Food and catering rules.pdf", "officeAdmin", 140, { review: n(10) }),
+    f("policies", "Drafts", "Facility rental terms (draft for Shura).docx", "officeAdmin", 6, { review: n(30) }),
+    f("policies", "Purchasing", "Purchasing and reimbursement policy.pdf", "bookkeeper", 95, { review: n(90), link: ["PO-11045", "PO-11046"] }),
+    f("policies", "People", "Volunteer code of conduct.pdf", "officeAdmin", 300, { review: n(200) }),
+    f("policies", "Archive", "Room use policy (2023 version).docx", "officeAdmin", 900),
+    f("ops", "Daily schedules", "Today at IAR — print template.xlsx", "officeAdmin", 40),
+    f("ops", "Daily schedules", "Setup diagrams — Multipurpose Hall.pdf", "maintChair", 33),
+    f("ops", "Contracts", "Security patrol contract.pdf", "maintStaff", 120),
+    f("ops", "Contracts", "HVAC maintenance contract.pdf", "maintStaff", 75),
+    f("ops", "Contracts", "Security patrol contract (prior term).pdf", "maintStaff", 380),
+    f("c-youth", "Events", "Youth Family Night — flyer.png", "youthChair", 9, { link: ["EV-1031"] }),
+    f("c-youth", "Planning", "Halaqa winter series outline.docx", "youthChair", 4, { link: ["EV-1042"] }),
+    f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "youthChair", 18, { link: ["PO-11039"] }),
+    f("c-youth", "Events", "Summer camp schedule.pdf", "youthChair", 190),
+    f("c-outreach", "Planning", "Invitation list.xlsx", "officeAdmin", 12),
+    f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "officeAdmin", 50),
+    f("c-education", "Planning", "Teacher roster.xlsx", "officeAdmin", 22),
+    f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "officeAdmin", 8, { link: ["EV-1050"] }),
+    f("c-dawah", "Planning", "New Muslim guide.pdf", "officeAdmin", 70),
+    f("c-dawah", "Events", "Booklet print order.pdf", "officeAdmin", 35),
+    f("c-administration", "Planning", "Office procedures manual.docx", "officeAdmin", 160, { review: n(45) }),
+    f("c-administration", "Planning", "Key and lock log.xlsx", "officeAdmin", 3),
+    f("shura", "Minutes", "Shura minutes — September meeting.docx", "shuraChair", 25),
+    f("shura", "Minutes", "Shura minutes — August meeting.docx", "shuraChair", 56),
+    f("shura", "Minutes", "Shura minutes — June meeting.docx", "shuraChair", 125),
+    f("shura", "Minutes", "Shura minutes — May meeting.docx", "shuraChair", 160),
+    f("shura", "Resolutions", "Resolution 2026-04: gym rental terms.pdf", "shuraChair", 40),
+    f("shura", "Board packets", "Board packet — October.pdf", "shuraChair", 5),
+    f("shura", "Budget", "FY26-27 approved budget.xlsx", "bookkeeper", 110),
+    f("shura", "Budget", "Budget amendment request — Youth.pdf", "bookkeeper", 14),
+    f("shura", "Budget", "FY25-26 approved budget.xlsx", "bookkeeper", 420),
+    f("sw", "Case files", "Case 311 — intake and approval.pdf", "swChair", 30),
+    f("sw", "Case files", "Case 318 — documents.pdf", "swChair", 9),
+    f("sw", "Case files", "Case 287 — closed.pdf", "swChair", 250),
+    f("sw", "Guidelines", "Zakat distribution guidelines.pdf", "swChair", 180, { review: n(-5) }),
+    f("finance", "W-9s", "W-9 — Triangle Sound & Stage.pdf", "bookkeeper", 20, { link: ["PO-11046"] }),
+    f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "bookkeeper", 60, { link: ["PO-11039"] }),
+    f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "youthChair", 3, { link: ["PO-11045"] }),
+    f("finance", "Receipts", "Carolina Air Systems — deposit receipt.pdf", "bookkeeper", 300),
+    f("finance", "Card statements", "Card 3051 — September statement.pdf", "bookkeeper", 12, { link: ["PO-11051"] }),
+    f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "bookkeeper", 15),
   ] };
   S.lib.seq = q;
 }
@@ -1075,7 +1084,7 @@ function libAccess() {
   }).join("");
   return `<div class="note info">Groups add up. Someone can belong to any number of them: a Shura member who is also on Social & Welfare is in both <span class="mono">portal-team-shura@</span> and <span class="mono">portal-team-social-welfare@</span>, and sees both drives and both portal modules. People with × were added by hand; the rest come from their role or committee.</div>
   <div class="panel"><div class="panel-h"><h2>Add someone to a group</h2></div><div class="panel-b"><div class="row">
-    <select id="libPerson" aria-label="Person">${people.map((k) => `<option value="${k}">${esc(PEOPLE[k].name)} — ${esc(PEOPLE[k].title)}</option>`).join("")}</select>
+    <select id="libPerson" aria-label="Person">${people.map((k) => `<option value="${k}">${esc(who(k))}</option>`).join("")}</select>
     <select id="libGroup" aria-label="Group">${GROUP_TOKENS.map((t) => `<option value="${esc(t)}">${groupOf(t)}</option>`).join("")}</select>
     <button class="btn primary" type="button" data-libadd="1">Add to group</button></div></div></div>
   <div class="panel"><div class="panel-h"><h2>Groups</h2><span class="small muted">Each group is a member of its shared drive(s) in Google</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Opens</th><th>Members</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
@@ -1118,13 +1127,12 @@ const MODULES = [
   { id: "purchases", name: "Purchase Requests", vis: ["member"], group: "Request" },
   { id: "marketing", name: "Marketing Requests", vis: ["member"], group: "Request" },
   { id: "tickets", name: "IT & Maintenance", vis: ["member"], group: "Request" },
-  { id: "queues", name: "Team Queue", vis: ["marketing", "av", "facilities", "security", "finance", "office"], group: "Work" },
-  { id: "runsheet", name: "Daily Run Sheet", vis: ["office", "facilities", "security"], group: "Work" },
+  { id: "queues", name: "Team Queue", vis: ["marketing", "av", "security", "finance", "office"], group: "Work" },
   { id: "rentals", name: "Facility Rentals", vis: ["office"], group: "Work" },
-  { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work" },
-  { id: "library", name: "Library", vis: ["member"], group: "Files" },
-  { id: "shura", name: "Shura / Board", vis: ["shura"], group: "Finance" },
-  { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance" },
+  { id: "assets", name: "Asset Tracker", vis: ["facilities", "it", "office"], group: "Work", preview: true },
+  { id: "library", name: "Library", vis: ["member"], group: "Files", preview: true },
+  { id: "shura", name: "Shura / Board", vis: ["shura"], group: "Finance", preview: true },
+  { id: "budget", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance", preview: true },
   { id: "aid", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
   { id: "settings", name: "Portal Settings", vis: ["admins"], group: "Admin" },
   { id: "away", name: "Out of office", vis: ["member"], group: "You" },
@@ -1136,7 +1144,6 @@ const BLURB = {
   purchases: "Pay a vendor, get reimbursed, or submit card receipts, split across sub-accounts.",
   marketing: "Graphics, signs, announcements, highlights, webpages, short links and staff badges. Event marketing is part of the event request.",
   queues: "Your team's tasks across every event, unlocked when an event is approved.",
-  runsheet: "One printable page of what's happening where today.",
   rentals: "Outside groups' requests for the gym and halls.",
   aid: "Private aid cases, visible only to S&W and finance.",
   tickets: "Report a building or tech problem, or run the team's board, backlog, sprints and reports.",
@@ -1224,15 +1231,14 @@ function seedPortalExtras() {
   S.notifs = []; S.nseq = 0; S.away = {}; S.awayPick = null; S.fbseq = 1; S.fbSent = false;
   const at = (h) => hoursAgo(h);
   const po11053 = getCard("PO-11053"), po11045 = getCard("PO-11045"), po11046 = getCard("PO-11046"), po11051 = getCard("PO-11051");
-  notify("yusuf", `${poLabel(po11053)} needs your chair approval`, { card: po11053.id, email: true, delegable: true, by: "idris", t: at(40) });
-  notify("tara", `${poLabel(po11045)} needs your chair approval`, { card: po11045.id, email: true, by: "bilal", t: at(20) });
-  notify("role:finance", `${poLabel(po11046)} needs finance review`, { card: po11046.id, email: true, by: "tara", t: at(140) });
-  notify("role:finance", `${poLabel(po11051)} needs a review of its charges`, { card: po11051.id, email: true, by: "layla", t: at(44) });
-  notify("bilal", `EV-1042 “Youth Halaqa — winter series”: changes requested`, { card: "EV-1042", email: true, by: "tara", t: at(22) });
-  notify("role:executive", `EV-1050 “Sisters' Tafsir Circle” needs mission review`, { card: "EV-1050", email: true, by: "tara", t: at(46) });
-  notify("role:executive", `EV-1053 “Interfaith Open House” needs mission review`, { card: "EV-1053", email: true, by: "bilal", t: at(70) });
-  notify("role:marketing", `MK-324 “${getCard("MK-324").title}” is new for the weekly review`, { card: "MK-324", email: true, by: "idris", t: at(20) });
-  S.feedback = [{ id: "FB-1", by: "layla", kind: "idea", text: "Could the card receipts form remember the merchants I use every month?", page: "Purchase Requests", t: at(30), done: false }];
+  notify("maintChair", `${poLabel(po11053)} needs your chair approval`, { card: po11053.id, email: true, delegable: true, by: "maintStaff", t: at(40) });
+  notify("commDirector", `${poLabel(po11045)} needs your chair approval`, { card: po11045.id, email: true, by: "youthChair", t: at(20) });
+  notify("role:finance", `${poLabel(po11046)} needs finance review`, { card: po11046.id, email: true, by: "commDirector", t: at(140) });
+  notify("role:finance", `${poLabel(po11051)} needs a review of its charges`, { card: po11051.id, email: true, by: "swChair", t: at(44) });
+  notify("youthChair", `EV-1042 “Youth Halaqa — winter series”: changes requested`, { card: "EV-1042", email: true, by: "commDirector", t: at(22) });
+  notify("role:executive", `EV-1050 “Sisters' Tafsir Circle” needs mission review`, { card: "EV-1050", email: true, by: "commDirector", t: at(46) });
+  notify("role:marketing", `MK-324 “${getCard("MK-324").title}” is new for the weekly review`, { card: "MK-324", email: true, by: "maintStaff", t: at(20) });
+  S.feedback = [{ id: "FB-1", by: "swChair", kind: "idea", text: "Could the card receipts form remember the merchants I use every month?", page: "Purchase Requests", t: at(30), done: false }];
 }
 
 /* Search: request numbers or words, limited to what the person could open anyway. */
@@ -1298,7 +1304,7 @@ function vAway() {
   <div class="panel panel-b"><form id="awayForm" class="f">
     <div class="fld"><label for="aw_from">First day away</label><input type="date" id="aw_from" name="from" value="${esc(mine ? mine.from : TODAY)}"></div>
     <div class="fld"><label for="aw_until">Last day away</label><input type="date" id="aw_until" name="until" min="${TODAY}" value="${esc(mine ? mine.until : addDays(TODAY, 10))}"></div>
-    <div class="fld wide"><label for="aw_to">Who covers your approvals</label><select id="aw_to" name="delegate"><option value="">Choose someone</option>${people.map((p) => `<option value="${p}" ${p === pick ? "selected" : ""}>${esc(nameOf(p))} — ${esc(PEOPLE[p].title)}</option>`).join("")}</select><span class="hint">Usually your vice chair or backup approver. They're emailed, and can approve, return or reject requests waiting on you. Each one is recorded as on your behalf.</span></div>
+    <div class="fld wide"><label for="aw_to">Who covers your approvals</label><select id="aw_to" name="delegate"><option value="">Choose someone</option>${people.map((p) => `<option value="${p}" ${p === pick ? "selected" : ""}>${esc(who(p))}</option>`).join("")}</select><span class="hint">Usually your vice chair or backup approver. They're emailed, and can approve, return or reject requests waiting on you. Each one is recorded as on your behalf.</span></div>
     <div class="fld wide"><label for="aw_note">Note for them (optional)</label><input type="text" id="aw_note" name="note" value="${esc(mine?.note || "")}" placeholder="Travelling for Umrah; reachable by text for anything urgent"></div>
     <div class="actions"><button class="btn primary" type="submit">${mine ? "Update" : "Turn on"}</button></div>
   </form></div>
@@ -1330,7 +1336,7 @@ function renderRail() {
   for (const m of MODULES.filter(visible)) {
     if (m.group !== lastGroup) { if (m.group) html += `<div class="group">${esc(m.group)}</div>`; lastGroup = m.group; }
     const on = S.view === m.id || (S.view === "card" && m.id === "requests" && !/^(TK|MK)-/.test(String(S.arg))) || (S.view === "newMarketing" && m.id === "marketing") || (S.view === "card" && String(S.arg).startsWith("MK-") && m.id === "marketing") || (S.view === "newEvent" && m.id === "events") || (S.view === "newPO" && m.id === "purchases") || (S.view === "card" && String(S.arg).startsWith("TK-") && m.id === "tickets");
-    html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
+    html += `<button type="button" data-go="${m.id}" class="${on ? "on" : ""}">${m.preview ? `<span>${esc(m.name)}<span class="soon" style="display:block">Coming after launch</span></span>` : esc(m.name)}${counts[m.id] ? `<span class="count">${counts[m.id]}</span>` : ""}</button>`;
   }
   const hidden = MODULES.filter((m) => !visible(m)).length;
   if (hidden) html += `<div class="group">Not in your groups</div><button type="button" disabled style="cursor:default"><span class="soon">${hidden} module${hidden > 1 ? "s" : ""} hidden</span></button>`;
@@ -1355,8 +1361,9 @@ function vHome() {
   </div>
   ${tasks.length ? `<div class="panel"><div class="panel-h"><h2>Your team's open tasks</h2><button class="btn small" data-go="queues" type="button">Open queue</button></div>
     <div class="list">${tasks.slice(0, 4).map(({ c, t }) => `<button class="item" type="button" data-card="${c.id}"><div><div class="t">${esc(t.title)}</div><div class="s">${esc(c.title)} · ${fmtDate(c.date)}</div></div><div class="r">${taskPill(t)}</div></button>`).join("")}</div></div>` : ""}
+  ${todayPanel()}
   <div><h2 style="margin-bottom:10px">Your tools</h2><div class="tiles">
-    ${tiles.map((m) => `<button class="tile" type="button" data-go="${m.id}"><h3>${esc(m.name)}</h3><p>${esc(BLURB[m.id])}</p></button>`).join("")}
+    ${tiles.map((m) => `<button class="tile" type="button" data-go="${m.id}"><h3>${esc(m.name)}</h3><p>${esc(BLURB[m.id])}</p>${m.preview ? '<div class="foot"><span class="pill">Coming after launch</span></div>' : ""}</button>`).join("")}
   </div></div>`;
 }
 function itemRow(c, why) {
@@ -1394,7 +1401,7 @@ function taskPill(t) {
 function vRequests() {
   const mine = [...S.cards, ...S.pos, ...S.mreqs, ...S.tickets].filter((c) => c.owner === S.me);
   return `${modHead("My Requests", "Events, purchases, marketing and IT & maintenance requests you own. Each one shows who it's waiting on.", `<button class="btn" data-go="newEvent" type="button">New event request</button><button class="btn" data-go="newPO" type="button">New purchase request</button><button class="btn" data-go="newMarketing" type="button">New marketing request</button><button class="btn" data-tk2="create" type="button">Report a problem</button>`)}
-  ${yourRequests(mine, { empty: `You haven't submitted anything yet. Switch to ${esc(PEOPLE.bilal.name)} to see a full list.` })}`;
+  ${yourRequests(mine, { empty: `You haven't submitted anything yet. Switch to ${esc(PEOPLE.youthChair.name)} to see a full list.` })}`;
 }
 
 function vEvents() {
@@ -1424,8 +1431,10 @@ function timeline(date, roomId, req) {
 }
 
 function defaultDraft() {
+  // The Youth example fills the form only for people on Youth (and the admin). Everyone else starts from a blank request for their own committee.
+  if (!myCommittees().includes("Youth")) { const date = nextDow(TODAY, 4, 25); return { id: null, title: "", committee: myCommittees()[0] || "", date, start: "18:30", end: "20:00", setup: 30, teardown: 30, room: "r250", attendance: 20, food: false, isPublic: false, registration: false, av: false, setupNotes: "", budget: 0, triggers: {}, recurFreq: "none", recurEnd: "", description: "", brief: briefBlank(), avNeeds: avBlank(), final: false }; }
   const date = nextDow(TODAY, 0, 22);
-  return { id: null, title: "Youth Game Night", committee: "Youth", date, start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables and a projector", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents.",
+  return { id: null, title: "Youth Game Night", committee: "Youth", date, start: "11:00", end: "13:00", setup: 30, teardown: 30, room: "mphAB", attendance: 60, food: true, isPublic: true, registration: false, av: true, setupNotes: "Game tables; Youth volunteers set up and clean up", budget: 400, triggers: {}, recurFreq: "none", recurEnd: "", description: "Board games, a trivia round and dinner for youth and parents.",
     brief: { ...briefBlank(), subtitle: "Games and Dinner for Families", text: "Youth and parents are invited to Youth Game Night: board games, a trivia round with prizes, and dinner together. Free and open to all families.", flyer: "Title, date and time, full gym (MPH), dinner included, free for families", startOn: defaultStartOn(date) },
     avNeeds: { ...avBlank(), kinds: ["projector", "sound"], includes: ["laptop"], ack: true }, final: true };
 }
@@ -1467,18 +1476,19 @@ function vNewEvent() {
   const editing = d.id ? getCard(d.id) : null;
   const prior = d.renews && getCard(d.renews);
   return `<div class="crumb"><button type="button" data-go="events">Events & Rooms</button> / ${editing ? "Edit " + esc(d.id) : "New request"}</div>
-  <div><h1>${editing ? "Update and resubmit" : prior ? "Renew a recurring series" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing, AV and setup. The checks on the right update as you type.</p></div>
+  <div><h1>${editing ? "Update and resubmit" : prior ? "Renew a recurring series" : "New event request"}</h1><p class="lead">One form for the room, approval, marketing and A/V. The checks on the right update as you type.</p></div>
   ${prior ? `<div class="note info">Next period for <span class="mono">${prior.id}</span>, which ends ${fmtLong(prior.recur.end)}. It goes through the same checks and approval as any new request.</div>` : ""}
   <div class="grid2">
     <div class="panel"><div class="panel-b"><form class="f" id="evForm" autocomplete="off">
       <div class="fld wide"><label for="f_title">Program title</label><input type="text" id="f_title" name="title" value="${esc(d.title)}" required></div>
-      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from marketing, AV or facilities.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
+      <div class="fld wide"><label for="f_description">Tell us about the event</label><textarea id="f_description" name="description" rows="6" placeholder="What will happen, who it's for, and why it matters. Include the schedule, any speakers or guests, who is invited, and what help you need from marketing or A/V.">${esc(d.description || "")}</textarea><span class="hint" id="descHint"></span></div>
       <div class="fld"><label for="f_committee">Sponsoring committee</label><select id="f_committee" name="committee">${committees.map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">From your Google Groups</span></div>
       <div class="fld"><label for="f_date">${d.recurFreq !== "none" ? "First date" : "Date"}</label><input type="date" id="f_date" name="date" value="${d.date}"></div>
       <div class="fld"><label for="f_start">Event starts</label><input type="time" id="f_start" name="start" value="${d.start}" step="900"></div>
       <div class="fld"><label for="f_end">Event ends</label><input type="time" id="f_end" name="end" value="${d.end}" step="900"></div>
       <div class="fld"><label for="f_setup">Setup before (minutes)</label><input type="number" id="f_setup" name="setup" value="${d.setup}" min="0" step="15"></div>
       <div class="fld"><label for="f_teardown">Cleanup after (minutes)</label><input type="number" id="f_teardown" name="teardown" value="${d.teardown}" min="0" step="15"></div>
+      <div class="fld wide"><span class="hint">You and your committee set up and clean up. This time is held on the calendar for you.</span></div>
       <div class="fld"><label for="f_recurFreq">Repeats</label><select id="f_recurFreq" name="recurFreq"><option value="none" ${d.recurFreq === "none" ? "selected" : ""}>Does not repeat</option>${Object.entries(RECUR_FREQ).map(([k, l]) => `<option value="${k}" ${d.recurFreq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
       <div class="fld"><label for="f_recurEnd">Repeats until</label><input type="date" id="f_recurEnd" name="recurEnd" value="${d.recurEnd || ""}"><span class="hint" id="recurHint"></span></div>
       <div class="fld wide"><label for="f_room">Room</label><select id="f_room" name="room">${ROOMS.map((r) => `<option value="${r.id}" ${r.id === d.room ? "selected" : ""}>${esc(r.name)}${r.cap ? ` (${r.cap})` : ""}</option>`).join("")}</select></div>
@@ -1492,7 +1502,7 @@ function vNewEvent() {
       </div></div>
       ${d.isPublic ? briefSection(d) : ""}
       ${d.av ? avSection(d) : ""}
-      <div class="fld wide"><label for="f_setupNotes">Setup needed</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage, projector"></div>
+      <div class="fld wide"><label for="f_setupNotes">Your setup plan (optional)</label><input type="text" id="f_setupNotes" name="setupNotes" value="${esc(d.setupNotes)}" placeholder="Tables, chairs, stage"><span class="hint">For the room check and Today at IAR. IAR staff don't set up rooms; only A/V and marketing are offered as services.</span></div>
       <div class="fld wide"><span class="lbl">Does any of this apply?</span><div class="checks-inline">
         <label><input type="checkbox" id="f_newProgram" name="newProgram" ${d.triggers.newProgram ? "checked" : ""}> New program</label>
         <label><input type="checkbox" id="f_outsideSpeaker" name="outsideSpeaker" ${d.triggers.outsideSpeaker ? "checked" : ""}> Outside speaker or group</label>
@@ -1680,7 +1690,7 @@ function vCard() {
     side: `${detailsPanel(`<dt>Requested by</dt><dd>${esc(nameOf(c.owner))}</dd><dt>Committee</dt><dd>${esc(c.committee)}</dd><dt>Waiting on</dt><dd>${esc(waitingOn(c)) || "Nothing"}</dd>
         <dt>Room hold</dt><dd>${fmtRange(toMin(c.start) - c.setup, toMin(c.end) + c.teardown)} (setup ${c.setup} min, cleanup ${c.teardown} min)</dd>
         <dt>Expected</dt><dd>${c.attendance} people</dd><dt>Food</dt><dd>${c.food ? "Yes" : "No"}</dd><dt>Public</dt><dd>${c.isPublic ? "Yes" : "Internal"}</dd>
-        <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup</dt><dd>${esc(c.setupNotes)}</dd>` : ""}`)}
+        <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup plan (by requester)</dt><dd>${esc(c.setupNotes)}</dd>` : ""}`)}
       <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch)}</div></div></div>
       <div class="panel"><div class="panel-h"><h2>Calendar</h2></div><div class="panel-b">${c.room === "offsite" ? '<span class="muted">Off-site</span>' : timeline(c.date, c.room, c)}</div></div>`,
   });
@@ -1719,14 +1729,26 @@ function closeoutForm(c, linked, spent) {
 }
 
 /* ---- Purchases ---------------------------------------------------- */
-const ACCOUNTS = ["Facility Maintenance – Repairs", "Facility Maintenance – Supplies", "Youth – Programs & Events", "Youth – Food & Hospitality", "Youth – Supplies", "S&W – Food Pantry", "S&W – Community Aid", "Outreach – Events", "Marketing – Printing & Design", "01-5003 General Fund – Administrative", "01-5009 General Fund – Cleaning Supplies"];
+/* Sample sub-accounts until IAR has a chart of accounts: Admin, Program and Labor for every committee and team,
+   plus Page Road's building costs and Administration's IAR-wide overhead (Administration is the General Fund).
+   Cleaning, security, IT hardware and building repairs stay with their own cost centers in the budget. */
+const EXTRA_ACCOUNTS = {
+  "Page Road": ["Utilities", "Construction", "Lease"],
+  Administration: ["Utilities", "Insurance", "Bank & card fees", "Professional services", "Software & subscriptions", "Office supplies & postage", "Equipment leases", "Trash & recycling", "Licenses, permits & filings", "Dues & memberships", "Staff benefits & payroll taxes"],
+};
+const ACCOUNTS = COMMITTEES.filter((c) => !c.startsWith("Community"))
+  .flatMap((committee) => ["Admin", "Program", "Labor", ...(EXTRA_ACCOUNTS[committee] || [])].map((k) => ({ name: `${committee} – ${k}`, committee })));
+const ACCT_NAMES = ACCOUNTS.map((a) => a.name);
+const DEMO_UPLOAD_TIP = "Demo only: no file is uploaded. In the portal, the receipt is saved to IAR's Shared Drive with this request.";
+/* A purchase charges only its committee's sub-accounts. Card charges can be for any committee. */
+const acctsFor = (committee) => ACCOUNTS.filter((x) => x.committee === committee).map((x) => x.name);
 const PO_TYPE = { vendor: "Pay a vendor or person", reimburse: "Reimburse me", card: "IAR credit card receipts" };
 /* IAR credit cards: each one is assigned to one person. Only the last four digits are ever stored. */
 const IAR_CARDS = [
-  { last4: "4417", holder: "hana", committee: "Administration", label: "Office card" },
-  { last4: "7720", holder: "bilal", committee: "Youth", label: "Youth card" },
-  { last4: "8890", holder: "omar", committee: "Administration", label: "Finance card" },
-  { last4: "3051", holder: "layla", committee: "Social & Welfare", label: "S&W card" },
+  { last4: "4417", holder: "officeAdmin", committee: "Administration", label: "Office card" },
+  { last4: "7720", holder: "youthChair", committee: "Youth", label: "Youth card" },
+  { last4: "8890", holder: "bookkeeper", committee: "Administration", label: "Finance card" },
+  { last4: "3051", holder: "swChair", committee: "Social & Welfare", label: "S&W card" },
 ];
 /* A chair's own request goes to another chair, then the vice chair (a Manager of the team's group), then the director. */
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1734,7 +1756,7 @@ const myCards = () => IAR_CARDS.filter((k) => k.holder === S.me);
 const lastMonthYm = () => { const d = parseD(TODAY); d.setDate(1); d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; };
 const fmtYm = (ym) => { const [y, m] = ym.split("-").map(Number); return `${MONTHS[m - 1]} ${y}`; };
 const owedLines = (c) => c.lines.filter((l) => l.flag && !l.resolved);
-const cardBlankLine = () => ({ date: "", merchant: "", acct: ACCOUNTS[0], amount: "", note: "", flag: "", repayBy: "", noReceipt: false });
+const cardBlankLine = () => ({ date: "", merchant: "", acct: ACCT_NAMES[0], amount: "", note: "", flag: "", repayBy: "", noReceipt: false, receipt: "" });
 function canActPO(c) {
   if (c.owner === S.me) return false; // nobody approves, pays or books their own request
   if (c.status === "chair") return Boolean(chairStepAs(c));
@@ -1768,22 +1790,30 @@ function owedPanel() {
   </div></div>`;
 }
 function vNewPO() {
-  const d = S.poDraft || (S.poDraft = { type: "reimburse", committee: poCommittees()[0] || "", payee: me().name, desc: "", eventId: S.arg || "", lines: [{ acct: poCommittees()[0] === "Facility Maintenance" ? ACCOUNTS[0] : ACCOUNTS[3], amount: "", note: "" }] });
+  const d = S.poDraft || (S.poDraft = { type: "reimburse", committee: poCommittees()[0] || "", payee: me().name, desc: "", eventId: S.arg || "", lines: [{ acct: acctsFor(poCommittees()[0])[0], amount: "", note: "", receipt: "" }] });
   if (d.type !== "card" && !poCommittees().includes(d.committee)) d.committee = poCommittees()[0] || "";
   if (d.type === "card" && !myCards().length) d.type = "reimburse";
   const card = d.type === "card";
+  // A purchase only charges its own committee's sub-accounts, so switching committee resets lines from another one.
+  const accts = card ? ACCT_NAMES : acctsFor(d.committee);
+  if (!card) d.lines.forEach((l) => { if (!accts.includes(l.acct)) l.acct = accts[0]; });
   const myEvents = S.cards.filter((c) => c.owner === S.me && !["denied", "cancelled", "closed"].includes(c.status));
   const sum = d.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
-  const acctSel = (l, i) => `<select id="l_acct_${i}" data-line="${i}" data-k="acct" aria-label="Sub-account, line ${i + 1}">${ACCOUNTS.map((a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>`;
+  const acctOpt = (l) => (a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`;
+  // Card charges can be for any committee, so their menu is grouped by committee.
+  const acctSel = (l, i) => `<select id="l_acct_${i}" data-line="${i}" data-k="acct" aria-label="Sub-account, line ${i + 1}">${card ? [...new Set(ACCOUNTS.map((a) => a.committee))].map((c) => `<optgroup label="${esc(c)}">${acctsFor(c).map(acctOpt(l)).join("")}</optgroup>`).join("") : accts.map(acctOpt(l)).join("")}</select>`;
   const amt = (l, i) => `<input class="amt" type="number" id="l_amt_${i}" data-line="${i}" data-k="amount" value="${l.amount}" step="0.01" min="0" placeholder="0.00" aria-label="Amount, line ${i + 1}">`;
+  const rcpt = (l, i) => (card && l.noReceipt ? '<span class="small muted">No receipt</span>'
+    : l.receipt ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><span class="pill ok">${esc(l.receipt)}</span><button class="x" type="button" data-rcptdel="${i}" aria-label="Remove receipt, line ${i + 1}">×</button></span>`
+    : `<button class="btn small" type="button" data-rcpt="${i}" data-tip="${esc(DEMO_UPLOAD_TIP)}" aria-label="Upload receipt for line ${i + 1} (demo only, nothing is uploaded)">Upload receipt</button>`);
   const del = (i) => (d.lines.length > 1 ? `<button class="btn small" type="button" data-delline="${i}" aria-label="Remove line ${i + 1}">×</button>` : "");
   const lineRows = card
     ? d.lines.map((l, i) => `<tr><td><input type="date" id="l_date_${i}" data-line="${i}" data-k="date" value="${esc(l.date)}" aria-label="Charge date, line ${i + 1}"></td><td><input type="text" id="l_merch_${i}" data-line="${i}" data-k="merchant" value="${esc(l.merchant)}" placeholder="Merchant" aria-label="Merchant, line ${i + 1}"></td><td>${acctSel(l, i)}</td><td>${amt(l, i)}</td>
         <td><select id="l_flag_${i}" data-line="${i}" data-k="flag" aria-label="Expected back, line ${i + 1}"><option value="" ${!l.flag ? "selected" : ""}>No</option><option value="refund" ${l.flag === "refund" ? "selected" : ""}>Refund pending</option><option value="repay" ${l.flag === "repay" ? "selected" : ""}>To be repaid by…</option></select>${l.flag === "repay" ? `<input type="text" id="l_repay_${i}" data-line="${i}" data-k="repayBy" value="${esc(l.repayBy)}" placeholder="Who repays IAR" style="margin-top:4px" aria-label="Repaid by, line ${i + 1}">` : ""}</td>
-        <td style="text-align:center"><input type="checkbox" data-line="${i}" data-k="noReceipt" ${l.noReceipt ? "checked" : ""} aria-label="No receipt for line ${i + 1}" style="width:auto"></td><td>${del(i)}</td></tr>`).join("")
-    : d.lines.map((l, i) => `<tr><td>${acctSel(l, i)}</td><td><input type="text" id="l_note_${i}" data-line="${i}" data-k="note" value="${esc(l.note)}" placeholder="Receipt detail" aria-label="Note, line ${i + 1}"></td><td>${amt(l, i)}</td><td>${del(i)}</td></tr>`).join("");
-  const head = card ? "<th>Date</th><th>Merchant</th><th>Sub-account</th><th class=\"num\">Amount</th><th>Expected back</th><th>No receipt</th><th></th>" : "<th>Sub-account</th><th>Note</th><th class=\"num\">Amount</th><th></th>";
-  const cols = card ? 7 : 4;
+        <td style="text-align:center"><input type="checkbox" data-line="${i}" data-k="noReceipt" ${l.noReceipt ? "checked" : ""} aria-label="No receipt for line ${i + 1}" style="width:auto"></td><td>${rcpt(l, i)}</td><td>${del(i)}</td></tr>`).join("")
+    : d.lines.map((l, i) => `<tr><td>${acctSel(l, i)}</td><td><input type="text" id="l_note_${i}" data-line="${i}" data-k="note" value="${esc(l.note)}" placeholder="Receipt detail" aria-label="Note, line ${i + 1}"></td><td>${amt(l, i)}</td><td>${rcpt(l, i)}</td><td>${del(i)}</td></tr>`).join("");
+  const head = card ? "<th>Date</th><th>Merchant</th><th>Sub-account</th><th class=\"num\">Amount</th><th>Expected back</th><th>No receipt</th><th>Receipt</th><th></th>" : "<th>Sub-account</th><th>Note</th><th class=\"num\">Amount</th><th>Receipt</th><th></th>";
+  const cols = card ? 8 : 5;
   return `<div class="crumb"><button type="button" data-go="purchases">Purchase Requests</button> / New</div>
   <div><h1>New purchase request</h1><p class="lead">${card ? "Enter each charge on your card statement with its own sub-account. Mark anything that will be refunded or repaid; finance tracks it until the money comes back." : "Split one request across as many sub-accounts as you need. Link it to an event so its cost shows up on the event card."}</p></div>
   <div class="panel"><div class="panel-b"><form class="f" id="poForm" autocomplete="off">
@@ -1798,8 +1828,7 @@ function vNewPO() {
     <div class="fld wide"><span class="lbl">${card ? "Charges" : "Line items"}</span><div class="tablewrap"><table class="lines${card ? " card-lines" : ""}"><thead><tr>${head}</tr></thead><tbody>
       ${lineRows}
       <tr><td colspan="${card ? 3 : 2}"><button class="btn small" type="button" data-addline="1">${card ? "Add a charge" : "Add a line"}</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td colspan="${cols - (card ? 4 : 3)}"></td></tr>
-    </tbody></table></div><span class="hint">Sample accounts. The real list comes from the chart of accounts.</span></div>
-    <div class="fld wide"><span class="lbl">Receipts</span><div class="row"><span class="pill">receipt-${S.seq.PO + 1}.pdf</span><span class="hint">Uploads go to IAR's Shared Drive, filed by fiscal year</span></div></div>
+    </tbody></table></div><span class="hint">Sample sub-accounts (Admin, Program, Labor) until IAR has a chart of accounts.${!card && d.committee === "Administration" ? " Administration is the General Fund, so IAR-wide costs like utilities and insurance go here." : ""} Attach a receipt to each line; receipts are saved to IAR's Shared Drive, filed by fiscal year. <strong>Demo: uploads don't save a file.</strong></span></div>
     <div class="actions"><button class="btn" type="button" data-go="purchases">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
   </form></div></div>`;
 }
@@ -1822,7 +1851,7 @@ function vPOCard(c) {
   const why = !act && c.owner === S.me && ["chair", "finance", "to_pay", "books"].includes(c.status) && (has("finance") || has("chairs")) ? `<div class="note info">You can't approve or book your own request. It's waiting on ${esc(waitingOn(c))}.</div>` : "";
   const owed = owedLines(c);
   const tag = (l, i) => [
-    l.noReceipt ? '<span class="pill warn">No receipt</span>' : "",
+    l.noReceipt || !l.receipt ? '<span class="pill warn">No receipt</span>' : `<span class="pill">${esc(l.receipt)}</span>`,
     l.flag === "refund" ? `<span class="pill ${l.resolved ? "ok" : "info"}">${l.resolved ? "Refund received" : "Refund pending"}</span>` : "",
     l.flag === "repay" ? `<span class="pill ${l.resolved ? "ok" : "info"}">${l.resolved ? "Repaid by " + esc(l.repayBy) : "To be repaid by " + esc(l.repayBy)}</span>` : "",
     l.flag && !l.resolved && has("finance") && c.owner !== S.me ? `<button class="btn small" type="button" data-po="resolve:${i}">Mark received</button>` : "",
@@ -1831,8 +1860,8 @@ function vPOCard(c) {
     ? `<thead><tr><th>Date</th><th>Merchant / sub-account</th><th class="num">Amount</th></tr></thead><tbody>
       ${c.lines.map((l, i) => `<tr><td class="small" style="white-space:nowrap">${l.date ? fmtDate(l.date) : ""}</td><td><strong>${esc(l.merchant)}</strong><div class="small muted">${esc(l.acct)}</div>${tag(l, i).trim() ? `<div class="row" style="margin-top:4px">${tag(l, i)}</div>` : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}
       ${owed.length ? `<tr><td></td><td class="small muted">Expected back</td><td class="num small">${money(owed.reduce((a, l) => a + Number(l.amount), 0))}</td></tr>` : ""}</tbody>`
-    : `<thead><tr><th>Sub-account</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
-      ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}</tbody>`;
+    : `<thead><tr><th>Sub-account</th><th>Note</th><th>Receipt</th><th class="num">Amount</th></tr></thead><tbody>
+      ${c.lines.map((l) => `<tr><td>${esc(l.acct)}</td><td>${esc(l.note)}${l.flag === "refund" ? ' <span class="pill warn">Refund pending</span>' : ""}</td><td>${l.receipt ? `<span class="pill">${esc(l.receipt)}</span>` : '<span class="pill warn">No receipt</span>'}</td><td class="num">${money(l.amount)}</td></tr>`).join("")}</tbody>`;
   const cardInfo = isCard && c.card ? IAR_CARDS.find((k) => k.last4 === c.card.last4) : null;
   return reqPage({
     back: ["purchases", "Purchase Requests"], id: c.id, title: esc(c.desc),
@@ -1848,7 +1877,7 @@ function vPOCard(c) {
       ${cardInfo ? `<dt>Card</dt><dd>···${cardInfo.last4} · ${esc(cardInfo.label)} · ${esc(nameOf(cardInfo.holder))}</dd><dt>Statement</dt><dd>${fmtYm(c.card.month)}</dd>` : `<dt>Pay to</dt><dd>${esc(c.payee)}</dd>`}
       ${c.type === "vendor" ? `<dt>W-9</dt><dd>${c.w9 ? '<span class="pill ok">On file</span>' : '<span class="pill warn">Needed</span>'}</dd>` : ""}
       ${isCard ? "" : `<dt>Event</dt><dd>${evc ? `<button class="crumb" type="button" style="border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text)" data-card="${evc.id}">${evc.id} · ${esc(evc.title)}</button>` : "None"}</dd>`}
-      <dt>Receipts</dt><dd><span class="pill">${c.id.toLowerCase()}-receipts.pdf</span></dd>`),
+      <dt>Receipts</dt><dd>${(() => { const n = c.lines.filter((l) => l.receipt).length; return `<span class="pill ${n === c.lines.length ? "ok" : "warn"}">${n} of ${c.lines.length} attached</span>`; })()}</dd>`),
   });
 }
 
@@ -2050,22 +2079,38 @@ function mkAction(a) {
   render();
 }
 
-/* ---- Run sheet ---------------------------------------------------- */
-function vRunSheet() {
-  const upcoming = Array.from({ length: 60 }, (_, i) => addDays(TODAY, i));
-  const live = (c) => ["approved", "closeout"].includes(c.status);
-  const dates = upcoming.filter((d) => S.cards.some((c) => live(c) && occursOn(c, d)) || S.bookings.some((b) => !b.recur && b.date === d) || S.rentals.some((r) => r.status === "approved" && r.date === d));
-  const date = S.arg || dates[0] || TODAY;
-  const rows = [
-    ...S.cards.filter((c) => occursOn(c, date) && ["approved", "closeout", "closed"].includes(c.status)).map((c) => ({ s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, ev: `${fmtRange(toMin(c.start), toMin(c.end))}`, room: room(c.room).name, title: c.title + (c.recur ? " (series)" : ""), who: `${nameOf(c.owner)} · ${c.committee}`, setup: c.setupNotes || "Standard", sec: (c.food ? "Food served. " : "") + (c.attendance >= 100 ? "Large crowd; parking help. " : "") + "Check room before and after.", after: afterHours(c), n: c.attendance })),
-    ...S.bookings.filter((b) => !b.recur && b.date === date).map((b) => ({ s: b.s, e: b.e, ev: fmtRange(b.s, b.e), room: room(b.room).name, title: b.label, who: "Recurring booking", setup: "Standard", sec: "Check room after.", after: b.e > 22 * 60, n: "" })),
-    ...S.rentals.filter((r) => r.date === date && r.status === "approved").map((r) => ({ s: toMin(r.start), e: toMin(r.end), ev: fmtRange(toMin(r.start), toMin(r.end)), room: room(r.room).name, title: "Rental: " + r.org, who: r.contact, setup: "Standard", sec: "Outside group: check in at the security desk.", after: false, n: r.attendance })),
+/* ---- Today at IAR -------------------------------------------------- */
+/* What's happening where on a day, from approved event cards, calendar bookings and approved rentals.
+   Requesters set up and clean up their own events, so "setup" is their plan, not a staff task. */
+const dayLive = (c) => ["approved", "closeout", "closed"].includes(c.status);
+function dayRows(date) {
+  return [
+    ...S.cards.filter((c) => occursOn(c, date) && dayLive(c)).map((c) => ({ s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, ev: `${fmtRange(toMin(c.start), toMin(c.end))}`, room: room(c.room).name, title: c.title + (c.recur ? " (series)" : ""), who: `${nameOf(c.owner)} · ${c.committee}`, setup: c.setupNotes || "No special setup", sec: (c.food ? "Food served. " : "") + (c.attendance >= 100 ? "Large crowd; parking help. " : "") + "Check room before and after.", after: afterHours(c), n: c.attendance, card: c.id })),
+    ...S.bookings.filter((b) => !b.recur && b.date === date).map((b) => ({ s: b.s, e: b.e, ev: fmtRange(b.s, b.e), room: room(b.room).name, title: b.label, who: "IAR calendar", setup: "No special setup", sec: "Check room after.", after: b.e > 22 * 60, n: "" })),
+    ...S.rentals.filter((r) => r.date === date && r.status === "approved").map((r) => ({ s: toMin(r.start), e: toMin(r.end), ev: fmtRange(toMin(r.start), toMin(r.end)), room: room(r.room).name, title: "Rental: " + r.org, who: r.contact, setup: "No special setup", sec: "Outside group: check in at the security desk.", after: false, n: r.attendance })),
   ].sort((a, b) => a.s - b.s);
-  return `<div class="head"><div><h1>Daily Run Sheet</h1><p class="lead">Built from approved event cards and the IAR calendar. In the portal this prints on one page.</p></div>
-    <div class="row"><input type="date" id="rsDate" class="btn small" value="${date}"></div></div>
-  ${dates.length ? `<div class="row small"><span class="muted">Days with bookings:</span>${dates.slice(0, 6).map((d) => `<button class="btn small ${d === date ? "primary" : ""}" type="button" data-go="runsheet" data-arg="${d}">${fmtDate(d)}</button>`).join("")}</div>` : ""}
+}
+/* The next days (from today) that have anything on them. */
+const busyDays = (n = 60) => Array.from({ length: n }, (_, i) => addDays(TODAY, i)).filter((d) => dayRows(d).length);
+/* The home page panel: everyone sees today, with the printable page one click away. */
+function todayPanel() {
+  const rows = dayRows(TODAY), next = rows.length ? null : busyDays().find((d) => d > TODAY);
+  const show = rows.length ? rows : next ? dayRows(next) : [];
+  return `<div class="panel"><div class="panel-h"><h2>Today at IAR <span class="small muted" style="font-weight:400">· ${fmtDate(TODAY)}</span></h2><button class="btn small" type="button" data-go="runsheet" data-arg="${rows.length ? TODAY : next || TODAY}">Printable version</button></div>
+    ${!rows.length ? `<div class="empty" style="padding:14px 16px">Nothing booked today.${next ? ` Next up: <strong>${fmtDate(next)}</strong>.` : ""}</div>` : ""}
+    ${show.length ? `<div class="list">${show.map((r) => `<${r.card ? `button class="item" type="button" data-card="${r.card}"` : 'div class="item" style="cursor:default"'}><div><div class="t">${esc(r.title)}</div><div class="s">${r.ev} · ${esc(r.room)} · ${esc(r.who)}</div></div><div class="r">${r.n ? `<span class="small muted">${r.n} people</span>` : ""}${r.after ? '<span class="pill warn">After hours</span>' : ""}</div></${r.card ? "button" : "div"}>`).join("")}</div>` : ""}
+  </div>`;
+}
+function vRunSheet() {
+  const dates = busyDays();
+  const date = S.arg || TODAY;
+  const rows = dayRows(date);
+  return `<div class="crumb noprint"><button type="button" data-go="home">Home</button> / Today at IAR</div>
+  <div class="head"><div><h1>Today at IAR</h1><p class="lead">What's happening where, built from approved requests and the IAR calendar. Each requester sets up and cleans up their own event.</p></div>
+    <div class="row noprint"><input type="date" id="rsDate" class="btn small" value="${date}" aria-label="Day"><button class="btn small primary" type="button" data-print="1">Print</button></div></div>
+  ${dates.length ? `<div class="row small noprint"><span class="muted">Days with bookings:</span>${dates.slice(0, 6).map((d) => `<button class="btn small ${d === date ? "primary" : ""}" type="button" data-go="runsheet" data-arg="${d}">${fmtDate(d)}</button>`).join("")}</div>` : ""}
   <div class="sheet"><div class="sheet-h"><h2>Main campus · ${fmtDate(date)}</h2><span class="small muted">Prayer times and school hours are standing holds and not listed</span></div>
-  ${rows.length ? `<div class="tablewrap"><table><thead><tr><th>Room hold</th><th>Event time</th><th>Room</th><th>Event</th><th>Contact</th><th class="num">People</th><th>Setup</th><th>Security notes</th></tr></thead><tbody>
+  ${rows.length ? `<div class="tablewrap"><table><thead><tr><th>Room hold</th><th>Event time</th><th>Room</th><th>Event</th><th>Contact</th><th class="num">People</th><th>Setup (by requester)</th><th>Security notes</th></tr></thead><tbody>
     ${rows.map((r) => `<tr><td class="mono">${fmtRange(r.s, r.e)}</td><td class="mono">${r.ev}</td><td>${esc(r.room)}</td><td><strong>${esc(r.title)}</strong></td><td>${esc(r.who)}</td><td class="num">${r.n}</td><td>${esc(r.setup)}</td><td>${esc(r.sec)}${r.after ? ' <span class="flag">After hours</span>' : ""}</td></tr>`).join("")}
   </tbody></table></div>` : `<div class="empty">Nothing booked this day.</div>`}</div>`;
 }
@@ -2091,7 +2136,7 @@ function vRentalCard(r) {
 function vPublicRental() {
   const d = S.rnDraft || (S.rnDraft = { org: "Raleigh Sisters Volleyball", contact: "Group organizer", email: "nadia@example.org", date: nextDow(TODAY, 6, 12), start: "14:00", end: "16:00", room: "mphAB", attendance: 24, purpose: "Recreational volleyball, women only" });
   if (S.rnDone) return `<div class="public-wrap"><div class="panel panel-b stack"><h1>Request received</h1><p class="lead">Thank you. We sent a confirmation link to ${esc(S.rnDone.email)}. The IAR office will reply within a week. Your request number is <span class="mono">${S.rnDone.id}</span>.</p>
-    <div class="note info">Demo: switch to ${esc(PEOPLE.hana.name)} (IAR office) to review it.</div><div><button class="btn" type="button" data-rnnew="1">Submit another</button></div></div></div>`;
+    <div class="note info">Demo: switch to ${esc(PEOPLE.officeAdmin.name)} (IAR office) to review it.</div><div><button class="btn" type="button" data-rnnew="1">Submit another</button></div></div></div>`;
   return `<div class="public-wrap"><div><h1>Request the gym or a hall</h1><p class="lead">For groups outside IAR. No account needed: we'll confirm your email, then the IAR office reviews your request against the calendar and room policy.</p></div>
   <div class="panel"><div class="panel-b"><form class="f" id="rnForm" autocomplete="off">
     <div class="fld wide"><label for="r_org">Organization or group</label><input type="text" id="r_org" name="org" value="${esc(d.org)}"></div>
@@ -2136,7 +2181,7 @@ function vSettings() {
       ${PILLARS.map((x) => `<tr><td><strong>${esc(x.name)}</strong><div class="small muted mono">portal-pillar-${groupSlug(x.name)}@</div></td><td>${esc(nameOf(x.owner))}</td><td>${x.teams.map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div>
       <div class="panel-b small muted">A director sees those committees' requests and can approve at the chair step alongside the chair, but never Social &amp; Welfare's, their own, or finance and executive steps.</div></div>
     <div class="panel"><div class="panel-h"><h2>Role groups</h2><span class="small muted">portal-role-…@ groups</span></div><div class="tablewrap"><table><thead><tr><th>Group</th><th>Unlocks</th><th>Members</th></tr></thead><tbody>
-      ${[["office", "Rentals, run sheet; submits for any committee"], ["finance", "Finance review, payment, QuickBooks, S&W aid; submits for any committee"], ["executive", "Executive offices (Head Imam, Shura chair, CEO): mission review, executive approvals. One person can hold several"], ["admins", "Sees everything and this page; never approves or pays"]].map(([r, u]) => `<tr><td class="mono">${ROLE_GROUP[r]}</td><td>${esc(u)}</td><td>${Object.keys(PEOPLE).filter((k) => k !== "admin" && PEOPLE[k].roles.includes(r)).map((k) => esc(nameOf(k))).join(", ") || '<span class="muted">Admins</span>'}</td></tr>`).join("")}
+      ${[["office", "Rentals; submits for any committee"], ["finance", "Finance review, payment, QuickBooks, S&W aid; submits for any committee"], ["executive", "Executive offices (Head Imam, Shura chair, CEO): mission review, executive approvals. One person can hold several"], ["admins", "Sees everything and this page; never approves or pays"]].map(([r, u]) => `<tr><td class="mono">${ROLE_GROUP[r]}</td><td>${esc(u)}</td><td>${Object.keys(PEOPLE).filter((k) => k !== "admin" && PEOPLE[k].roles.includes(r)).map((k) => esc(nameOf(k))).join(", ") || '<span class="muted">Admins</span>'}</td></tr>`).join("")}
       <tr><td class="mono">portal-role-beta@</td><td>During the beta, the only people (with admins) who can sign in</td><td class="muted">Testers</td></tr></tbody></table></div></div>
   <div class="panel"><div class="panel-h"><h2>Committees and teams</h2><span class="small muted">From Google Groups. People are changed in Google Admin, not here</span></div>
     <div class="panel-b small muted">Each is a group named portal-team-…@islam1.org. In the group, the Owner is the chair, a Manager is the vice chair (the backup approver), and Members are members. A role is per team: chairing one never carries over to another. The portal picks up changes within 15 minutes.</div>
@@ -2272,13 +2317,13 @@ function seedMoney() {
   }).filter((c) => c.lines.length);
   S.spendM = spread(S.budget.flatMap((c) => c.lines).reduce((a, l) => a + l.spent, 0), W.spend);
   S.imports = [
-    { id: "IMP-4", date: addDays(TODAY, -4), by: "omar", file: "qb-transactions-oct-1-to-15.csv", rows: 212, review: 3, revenue: 48210 },
-    { id: "IMP-3", date: addDays(TODAY, -22), by: "omar", file: "qb-transactions-sep.csv", rows: 388, review: 5, revenue: 171640 },
-    { id: "IMP-2", date: addDays(TODAY, -52), by: "omar", file: "qb-transactions-aug.csv", rows: 301, review: 2, revenue: 92350 },
+    { id: "IMP-4", date: addDays(TODAY, -4), by: "bookkeeper", file: "qb-transactions-oct-1-to-15.csv", rows: 212, review: 3, revenue: 48210 },
+    { id: "IMP-3", date: addDays(TODAY, -22), by: "bookkeeper", file: "qb-transactions-sep.csv", rows: 388, review: 5, revenue: 171640 },
+    { id: "IMP-2", date: addDays(TODAY, -52), by: "bookkeeper", file: "qb-transactions-aug.csv", rows: 301, review: 2, revenue: 92350 },
   ];
   S.qb = null; S.budTab = "flow"; S.shForm = false;
   S.shReq = [
-    { id: "SR-12", owner: "khalid", type: "report", committee: "Facility Maintenance", text: "Facility Maintenance ran 125% of budget last year. What drove it, and is the $200K for this year realistic?", status: "answered", resp: { by: "omar", t: addDays(TODAY, -6), text: "Mostly HVAC and roof repairs ($56.9K over). The FY26-27 budget is $25K lower than last year's, so I'd expect pressure again. Detail by vendor emailed to the Shura." }, created: addDays(TODAY, -9) },
+    { id: "SR-12", owner: "shuraChair", type: "report", committee: "Facility Maintenance", text: "Facility Maintenance ran 125% of budget last year. What drove it, and is the $200K for this year realistic?", status: "answered", resp: { by: "bookkeeper", t: addDays(TODAY, -6), text: "Mostly HVAC and roof repairs ($56.9K over). The FY26-27 budget is $25K lower than last year's, so I'd expect pressure again. Detail by vendor emailed to the Shura." }, created: addDays(TODAY, -9) },
     { id: "SR-14", owner: "ext:Another Shura member", type: "amendment", committee: "Facility Maintenance", from: "Special Projects (Shura)", amount: 2500, text: "Move $2,500 from Special Projects (Shura) to Facility Maintenance for the MPH cooling repair.", status: "open", created: addDays(TODAY, -2) },
   ];
   S.seq.SR = 14;
@@ -2750,8 +2795,8 @@ function tkComment(t, text, internal) {
   mentioned.filter((u) => u !== S.me).forEach((u) => S.tkx.notifs.unshift({ id: ++S.tkx.seq.N, to: u, t: tsNow(), ticket: t.id, text: `${nameOf(S.me)} mentioned you on ${t.id}`, read: false, by: S.me }));
   return true;
 }
-function tkResolveMention(w) { w = w.toLowerCase(); return Object.keys(PEOPLE).find((k) => k === w || PEOPLE[k].name.toLowerCase().split(" ")[0].replace(/^dr\.?/, "") === w || (k !== "admin" && k !== "renter" && PEOPLE[k].name.toLowerCase().replace(/^dr\. /, "").split(" ")[0] === w)); }
-const tkMentionHtml = (s) => esc(s).replace(/@([a-z][a-z.]*)/gi, (m, w) => (tkResolveMention(w) ? `<span class="mention">@${nameOf(tkResolveMention(w)).replace(/^Dr\. /, "").split(" ")[0]}</span>` : m)).replace(/\b(TK-\d+)\b/g, '<button type="button" class="lnk" data-tk2="open|$1">$1</button>').replace(/\n/g, "<br>");
+function tkResolveMention(w) { w = w.toLowerCase(); return Object.keys(PEOPLE).find((k) => k.toLowerCase() === w || PEOPLE[k].name.toLowerCase().split(" ")[0].replace(/^dr\.?/, "") === w || (k !== "admin" && k !== "renter" && PEOPLE[k].name.toLowerCase().replace(/^dr\. /, "").split(" ")[0] === w)); }
+const tkMentionHtml = (s) => esc(s).replace(/@([a-z][a-z.]*)/gi, (m, w) => (tkResolveMention(w) ? `<span class="mention">@${esc(fn(tkResolveMention(w)))}</span>` : m)).replace(/\b(TK-\d+)\b/g, '<button type="button" class="lnk" data-tk2="open|$1">$1</button>').replace(/\n/g, "<br>");
 
 /* ---- workflow engine ---- */
 function tkCan(t, to) {
@@ -2819,8 +2864,8 @@ function tkSeed() {
   S.tk = { tab: "board", team: "all", qf: {}, bq: "", scope: "sprint", swim: "none", epicF: "", q: "", sort: { f: "updated", dir: -1 }, sel: [], cal: TODAY.slice(0, 7), modal: null, act: "all", cdraft: {}, editing: null };
   S.tkx = {
     seq: { N: 0, C: 0, SP: 3, SCH: 5, F: 6 },
-    comps: [P(0, "it", "Wi-Fi & network", "zaid"), P(0, "it", "AV equipment", "zaid"), P(0, "it", "Printers", "maryam"), P(0, "it", "Accounts & email", "maryam"), P(0, "it", "Website & software", "zaid"), P(0, "it", "Computers", "maryam"),
-      P(0, "facilities", "HVAC", "idris"), P(0, "facilities", "Plumbing", "yusuf"), P(0, "facilities", "Electrical & lighting", "yusuf"), P(0, "facilities", "Doors, locks & keys", "idris"), P(0, "facilities", "Cleaning", "yusuf"), P(0, "facilities", "Grounds & parking", "yusuf"), P(0, "facilities", "Structure & roof", "idris")],
+    comps: [P(0, "it", "Wi-Fi & network", "itTeam"), P(0, "it", "AV equipment", "itTeam"), P(0, "it", "Printers", "itChair"), P(0, "it", "Accounts & email", "itChair"), P(0, "it", "Website & software", "itTeam"), P(0, "it", "Computers", "itChair"),
+      P(0, "facilities", "HVAC", "maintStaff"), P(0, "facilities", "Plumbing", "maintChair"), P(0, "facilities", "Electrical & lighting", "maintChair"), P(0, "facilities", "Doors, locks & keys", "maintStaff"), P(0, "facilities", "Cleaning", "maintChair"), P(0, "facilities", "Grounds & parking", "maintChair"), P(0, "facilities", "Structure & roof", "maintStaff")],
     sprints: [
       { id: "SP-0", name: "Sprint 0 · Summer fixes", goal: "Clear the summer backlog.", start: addDays(TODAY, -28), end: addDays(TODAY, -15), state: "done" },
       { id: "SP-1", name: "Sprint 1 · Pre-Family Night", goal: "Cooling and AV working before Family Night.", start: addDays(TODAY, -5), end: addDays(TODAY, 9), state: "active" },
@@ -2843,11 +2888,11 @@ function tkSeed() {
       { id: "remind", name: "Remind assignees the day before a due date", desc: "One notification per ticket.", on: true },
     ],
     schedules: [
-      { id: "PM-1", name: "HVAC filter check", team: "facilities", freq: "monthly", next: addDays(TODAY, 4), last: addDays(TODAY, -26), asset: "AS-015", room: "main", assignee: "yusuf", comp: "HVAC", priority: "Medium", est: 2, on: true, desc: "Monthly filter inspection for the rooftop units.", checklist: ["Inspect and replace filters, unit 1", "Inspect and replace filters, unit 2", "Log temperatures in the Main Prayer Hall"] },
-      { id: "PM-2", name: "Fire extinguisher and alarm inspection", team: "facilities", freq: "every 6 months", next: addDays(TODAY, 21), last: addDays(TODAY, -161), asset: "", room: "office", assignee: "idris", comp: "Structure & roof", priority: "High", est: 4, on: true, desc: "Check every extinguisher tag and test pull stations.", checklist: ["Check extinguisher tags, all floors", "Test alarm pull stations"] },
-      { id: "PM-3", name: "Printer toner and paper check", team: "it", freq: "weekly", next: addDays(TODAY, 2), last: addDays(TODAY, -5), asset: "AS-051", room: "office", assignee: "maryam", comp: "Printers", priority: "Low", est: 0.5, on: true, desc: "", checklist: [] },
-      { id: "PM-4", name: "Wi-Fi access point firmware update", team: "it", freq: "quarterly", next: addDays(TODAY, 33), last: addDays(TODAY, -58), asset: "AS-052", room: "r240", assignee: "zaid", comp: "Wi-Fi & network", priority: "Medium", est: 2, on: true, desc: "", checklist: ["Back up controller settings", "Update access points one floor at a time"] },
-      { id: "PM-5", name: "Security camera recorder health check", team: "it", freq: "monthly", next: addDays(TODAY, -2), last: addDays(TODAY, -32), asset: "AS-070", room: "office", assignee: "zaid", comp: "Computers", priority: "Medium", est: 1, on: true, desc: "Confirm every camera is recording and the disk has space.", checklist: [] },
+      { id: "PM-1", name: "HVAC filter check", team: "facilities", freq: "monthly", next: addDays(TODAY, 4), last: addDays(TODAY, -26), asset: "AS-015", room: "main", assignee: "maintChair", comp: "HVAC", priority: "Medium", est: 2, on: true, desc: "Monthly filter inspection for the rooftop units.", checklist: ["Inspect and replace filters, unit 1", "Inspect and replace filters, unit 2", "Log temperatures in the Main Prayer Hall"] },
+      { id: "PM-2", name: "Fire extinguisher and alarm inspection", team: "facilities", freq: "every 6 months", next: addDays(TODAY, 21), last: addDays(TODAY, -161), asset: "", room: "office", assignee: "maintStaff", comp: "Structure & roof", priority: "High", est: 4, on: true, desc: "Check every extinguisher tag and test pull stations.", checklist: ["Check extinguisher tags, all floors", "Test alarm pull stations"] },
+      { id: "PM-3", name: "Printer toner and paper check", team: "it", freq: "weekly", next: addDays(TODAY, 2), last: addDays(TODAY, -5), asset: "AS-051", room: "office", assignee: "itChair", comp: "Printers", priority: "Low", est: 0.5, on: true, desc: "", checklist: [] },
+      { id: "PM-4", name: "Wi-Fi access point firmware update", team: "it", freq: "quarterly", next: addDays(TODAY, 33), last: addDays(TODAY, -58), asset: "AS-052", room: "r240", assignee: "itTeam", comp: "Wi-Fi & network", priority: "Medium", est: 2, on: true, desc: "", checklist: ["Back up controller settings", "Update access points one floor at a time"] },
+      { id: "PM-5", name: "Security camera recorder health check", team: "it", freq: "monthly", next: addDays(TODAY, -2), last: addDays(TODAY, -32), asset: "AS-070", room: "office", assignee: "itTeam", comp: "Computers", priority: "Medium", est: 1, on: true, desc: "Confirm every camera is recording and the disk has space.", checklist: [] },
     ],
   };
   const mk = (o, entries = []) => {
@@ -2859,29 +2904,29 @@ function tkSeed() {
   const c = (h, who, text, internal) => ({ h, who, k: "comment", id: ++S.tkx.seq.C, text, internal: !!internal });
   const ch = (h, who, f, from, to) => ({ h, who, k: "change", f, from, to });
   S.tickets = [
-    mk({ id: "TK-480", type: "facilities", itype: "Epic", title: "Replace MPH rooftop HVAC unit 2", desc: "Unit 2 is past its warranty and failing every summer. Get quotes, get Shura approval, schedule the install outside Ramadan.", priority: "High", owner: "idris", assignee: "idris", status: "inprogress", comps: ["HVAC"], labels: ["capex"], start: addDays(TODAY, -10), due: addDays(TODAY, 60), room: "mphAB", asset: "AS-014", created: hoursAgo(240), watchers: ["omar", "khalid"] }),
-    mk({ id: "TK-481", type: "it", itype: "Epic", title: "Ramadan AV & Wi-Fi readiness", desc: "Everything IT needs done before taraweeh crowds arrive.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "inprogress", comps: ["AV equipment", "Wi-Fi & network"], start: addDays(TODAY, -3), due: addDays(TODAY, 45), created: hoursAgo(100) }),
-    mk({ id: "TK-501", type: "facilities", itype: "Problem", title: "MPH is not cooling before Family Night", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.\nUnit 2 compressor sounds like it is struggling.", priority: "Highest", owner: "hana", assignee: "idris", status: "inprogress", comps: ["HVAC"], labels: ["hvac", "family-night"], room: "mphAB", asset: "AS-014", epic: "TK-480", sprint: "SP-1", due: addDays(TODAY, 2), est: 6, spent: 2.5, vendor: "Carolina Air Systems", watchers: ["hana", "bilal"], attach: ["thermostat-84F.jpg"], firstResponse: hoursAgo(51), created: hoursAgo(52) },
-      [ch(50, "idris", "Assignee", "None", PEOPLE.idris.name), c(49, "idris", "Called the HVAC contractor; technician coming tomorrow morning."), c(40, "idris", "Contractor quote for a compressor swap is $1,850. Shura approval needed above $1,500.", true), ch(30, "idris", "Status", "Open", "In Progress"), c(28, "hana", "@idris thanks! Family Night is Saturday at 6, can you confirm cooling by Friday?"), { h: 26, who: "idris", k: "work", hours: 2.5, text: "Diagnosed on site with the technician" }]),
-    mk({ id: "TK-503", type: "facilities", itype: "Problem", title: "Wudu area faucet on the left keeps dripping", desc: "The left faucet drips constantly, even when fully closed.", priority: "Medium", owner: "layla", assignee: "yusuf", status: "open", comps: ["Plumbing"], labels: ["wudu"], room: "women", sprint: "SP-1", due: addDays(TODAY, 3), est: 1, firstResponse: hoursAgo(60), created: hoursAgo(70) }, [ch(60, "yusuf", "Assignee", "None", `${PEOPLE.yusuf.name} (component Plumbing)`)]),
-    mk({ id: "TK-504", type: "facilities", itype: "Request", title: "Replace burnt-out lights in the parking lot", desc: "Two poles by the east entrance are dark after Isha.", priority: "Low", owner: "bilal", status: "open", comps: ["Electrical & lighting"], labels: ["safety"], room: "parking", created: hoursAgo(20) }),
-    mk({ id: "TK-505", type: "facilities", itype: "Problem", title: "Main hall side door does not latch", desc: "Needs a new strike plate; door swings open in wind.", priority: "High", owner: "bilal", assignee: "idris", status: "waiting", comps: ["Doors, locks & keys"], labels: ["security"], room: "main", sprint: "SP-1", vendor: "Triangle Locksmith", spent: 1, est: 2, flagged: true, firstResponse: hoursAgo(118), pausedAt: hoursAgo(90), created: hoursAgo(120), links: [{ rel: "relates to", id: "TK-503" }] },
-      [ch(118, "idris", "Assignee", "None", PEOPLE.idris.name), ch(95, "idris", "Status", "Open", "In Progress"), ch(90, "idris", "Status", "In Progress", "Waiting"), c(90, "idris", "Strike plate is on order from the locksmith, ETA Thursday. Door is chained shut meanwhile.")]),
-    mk({ id: "TK-506", type: "facilities", itype: "Task", title: "Get three quotes for HVAC unit replacement", desc: "Same capacity (15 ton). Ask for installation dates outside Ramadan.", priority: "High", owner: "idris", assignee: "idris", status: "inprogress", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 7), est: 5, spent: 1.5, vendor: "", labels: ["capex"], created: hoursAgo(200), firstResponse: hoursAgo(199) }),
-    mk({ id: "TK-507", type: "facilities", itype: "Task", title: "Shura approval for HVAC purchase", desc: "Submit a purchase request once quotes are in.", priority: "Medium", owner: "idris", assignee: "idris", status: "open", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 20), created: hoursAgo(190), links: [{ rel: "is blocked by", id: "TK-506" }] }),
-    mk({ id: "TK-508", type: "facilities", itype: "Preventive", title: "HVAC filter check – last month", desc: "Monthly filter inspection for the rooftop units.", priority: "Medium", owner: "system", assignee: "yusuf", status: "review", comps: ["HVAC"], labels: ["preventive"], room: "main", asset: "AS-015", sched: "PM-1", sprint: "SP-1", due: addDays(TODAY, -1), est: 2, spent: 2, created: hoursAgo(200), firstResponse: hoursAgo(190) }),
-    mk({ id: "TK-509", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 1", parent: "TK-508", priority: "Medium", owner: "system", assignee: "yusuf", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(30), room: "main", asset: "AS-015", created: hoursAgo(200) }),
-    mk({ id: "TK-510", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 2", parent: "TK-508", priority: "Medium", owner: "system", assignee: "yusuf", status: "inprogress", room: "main", asset: "AS-015", created: hoursAgo(200) }),
-    mk({ id: "TK-502", type: "it", itype: "Problem", title: "Wi-Fi drops every few minutes in the conference room", desc: "Wi-Fi drops every few minutes in the conference room, mostly during video calls.", priority: "Medium", owner: "bilal", status: "open", comps: ["Wi-Fi & network"], labels: ["wifi"], room: "r240", asset: "AS-052", created: hoursAgo(26), links: [{ rel: "relates to", id: "TK-521" }] }),
-    mk({ id: "TK-515", type: "it", itype: "Request", title: "New laptop for the Youth coordinator", desc: "Current laptop is 7 years old and cannot run the registration software.", priority: "Low", owner: "bilal", assignee: "maryam", status: "open", comps: ["Computers"], labels: ["hardware", "procurement"], sprint: "SP-2", due: addDays(TODAY, 14), est: 3, cost: 900, firstResponse: hoursAgo(60), created: hoursAgo(80) }),
-    mk({ id: "TK-516", type: "it", itype: "Problem", title: "Office printer jams on tray 2", desc: "Paper jams roughly every 20 pages when using tray 2.", priority: "Medium", owner: "hana", assignee: "maryam", status: "inprogress", comps: ["Printers"], room: "office", asset: "AS-051", sprint: "SP-1", est: 2, created: hoursAgo(30), firstResponse: hoursAgo(28) }, [ch(28, "maryam", "Assignee", "None", `${PEOPLE.maryam.name} (component Printers)`), ch(24, "maryam", "Status", "Open", "In Progress")]),
-    mk({ id: "TK-517", type: "it", itype: "Request", title: "Create an email account for the new Imam office assistant", desc: "For the new assistant starting Monday. Needs the imam@ shared inbox.", priority: "Medium", owner: "hana", assignee: "maryam", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(5), comps: ["Accounts & email"], spent: 0.5, created: hoursAgo(20), firstResponse: hoursAgo(19), sprint: "SP-1" }, [c(6, "maryam", "Account created and added to the imam@ group. Temporary password sent to the office by phone.", true), c(5, "maryam", "All set. Sumayya can sign in now.")]),
-    mk({ id: "TK-518", type: "it", itype: "Problem", title: "Projector in Room 240 flickers", desc: "Image flickers every few seconds on HDMI and VGA.", priority: "High", owner: "layla", status: "open", comps: ["AV equipment"], room: "r240", asset: "AS-031", created: hoursAgo(3), labels: ["av"] }),
-    mk({ id: "TK-519", type: "it", itype: "Problem", title: "Website prayer-times widget shows the wrong Isha time", desc: "Shows 8:15 PM; the masjid calendar says 8:45 PM.", priority: "High", owner: "khalid", assignee: "zaid", status: "inprogress", comps: ["Website & software"], labels: ["website"], sprint: "SP-1", due: addDays(TODAY, 1), est: 3, spent: 1, created: hoursAgo(40), firstResponse: hoursAgo(38) }),
-    mk({ id: "TK-520", type: "it", itype: "Task", title: "Test the PA system and mics before Ramadan", desc: "Run a full sound check in the main hall and MPH.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "open", comps: ["AV equipment"], epic: "TK-481", sprint: "SP-1", due: addDays(TODAY, 6), est: 2, created: hoursAgo(90), asset: "AS-032" }),
-    mk({ id: "TK-521", type: "it", itype: "Task", title: "Add two Wi-Fi access points to the gym", desc: "Coverage in the MPH is weak during large events.", priority: "Medium", owner: "zaid", assignee: "zaid", status: "open", comps: ["Wi-Fi & network"], epic: "TK-481", sprint: "SP-2", est: 8, cost: 760, labels: ["wifi", "procurement"], created: hoursAgo(88), links: [{ rel: "relates to", id: "TK-502" }] }),
-    mk({ id: "TK-523", type: "it", itype: "Problem", title: "Cannot sign in to the IAR Google account", desc: "Locked out after changing the password on my phone.", priority: "Highest", owner: "sara", assignee: "maryam", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(59), comps: ["Accounts & email"], spent: 0.25, created: hoursAgo(60), firstResponse: hoursAgo(59.5) }),
-    mk({ id: "TK-488", type: "it", itype: "Problem", title: "Projector shows no picture from HDMI", desc: "Projector shows no picture from HDMI.", priority: "Medium", owner: "hana", assignee: "zaid", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(29 * 24), comps: ["AV equipment"], room: "r240", asset: "AS-031", sprint: "SP-0", spent: 1, created: hoursAgo(30 * 24), firstResponse: hoursAgo(30 * 24 - 2) }, [c(29 * 24, "zaid", "Replaced the HDMI switch.")]),
+    mk({ id: "TK-480", type: "facilities", itype: "Epic", title: "Replace MPH rooftop HVAC unit 2", desc: "Unit 2 is past its warranty and failing every summer. Get quotes, get Shura approval, schedule the install outside Ramadan.", priority: "High", owner: "maintStaff", assignee: "maintStaff", status: "inprogress", comps: ["HVAC"], labels: ["capex"], start: addDays(TODAY, -10), due: addDays(TODAY, 60), room: "mphAB", asset: "AS-014", created: hoursAgo(240), watchers: ["bookkeeper", "shuraChair"] }),
+    mk({ id: "TK-481", type: "it", itype: "Epic", title: "Ramadan AV & Wi-Fi readiness", desc: "Everything IT needs done before taraweeh crowds arrive.", priority: "Medium", owner: "itTeam", assignee: "itTeam", status: "inprogress", comps: ["AV equipment", "Wi-Fi & network"], start: addDays(TODAY, -3), due: addDays(TODAY, 45), created: hoursAgo(100) }),
+    mk({ id: "TK-501", type: "facilities", itype: "Problem", title: "MPH is not cooling before Family Night", desc: "MPH is not cooling; it's 84°F inside before Family Night setup.\nUnit 2 compressor sounds like it is struggling.", priority: "Highest", owner: "officeAdmin", assignee: "maintStaff", status: "inprogress", comps: ["HVAC"], labels: ["hvac", "family-night"], room: "mphAB", asset: "AS-014", epic: "TK-480", sprint: "SP-1", due: addDays(TODAY, 2), est: 6, spent: 2.5, vendor: "Carolina Air Systems", watchers: ["officeAdmin", "youthChair"], attach: ["thermostat-84F.jpg"], firstResponse: hoursAgo(51), created: hoursAgo(52) },
+      [ch(50, "maintStaff", "Assignee", "None", PEOPLE.maintStaff.name), c(49, "maintStaff", "Called the HVAC contractor; technician coming tomorrow morning."), c(40, "maintStaff", "Contractor quote for a compressor swap is $1,850. Shura approval needed above $1,500.", true), ch(30, "maintStaff", "Status", "Open", "In Progress"), c(28, "officeAdmin", "@maintStaff thanks! Family Night is Saturday at 6, can you confirm cooling by Friday?"), { h: 26, who: "maintStaff", k: "work", hours: 2.5, text: "Diagnosed on site with the technician" }]),
+    mk({ id: "TK-503", type: "facilities", itype: "Problem", title: "Wudu area faucet on the left keeps dripping", desc: "The left faucet drips constantly, even when fully closed.", priority: "Medium", owner: "swChair", assignee: "maintChair", status: "open", comps: ["Plumbing"], labels: ["wudu"], room: "women", sprint: "SP-1", due: addDays(TODAY, 3), est: 1, firstResponse: hoursAgo(60), created: hoursAgo(70) }, [ch(60, "maintChair", "Assignee", "None", `${PEOPLE.maintChair.name} (component Plumbing)`)]),
+    mk({ id: "TK-504", type: "facilities", itype: "Request", title: "Replace burnt-out lights in the parking lot", desc: "Two poles by the east entrance are dark after Isha.", priority: "Low", owner: "youthChair", status: "open", comps: ["Electrical & lighting"], labels: ["safety"], room: "parking", created: hoursAgo(20) }),
+    mk({ id: "TK-505", type: "facilities", itype: "Problem", title: "Main hall side door does not latch", desc: "Needs a new strike plate; door swings open in wind.", priority: "High", owner: "youthChair", assignee: "maintStaff", status: "waiting", comps: ["Doors, locks & keys"], labels: ["security"], room: "main", sprint: "SP-1", vendor: "Triangle Locksmith", spent: 1, est: 2, flagged: true, firstResponse: hoursAgo(118), pausedAt: hoursAgo(90), created: hoursAgo(120), links: [{ rel: "relates to", id: "TK-503" }] },
+      [ch(118, "maintStaff", "Assignee", "None", PEOPLE.maintStaff.name), ch(95, "maintStaff", "Status", "Open", "In Progress"), ch(90, "maintStaff", "Status", "In Progress", "Waiting"), c(90, "maintStaff", "Strike plate is on order from the locksmith, ETA Thursday. Door is chained shut meanwhile.")]),
+    mk({ id: "TK-506", type: "facilities", itype: "Task", title: "Get three quotes for HVAC unit replacement", desc: "Same capacity (15 ton). Ask for installation dates outside Ramadan.", priority: "High", owner: "maintStaff", assignee: "maintStaff", status: "inprogress", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 7), est: 5, spent: 1.5, vendor: "", labels: ["capex"], created: hoursAgo(200), firstResponse: hoursAgo(199) }),
+    mk({ id: "TK-507", type: "facilities", itype: "Task", title: "Shura approval for HVAC purchase", desc: "Submit a purchase request once quotes are in.", priority: "Medium", owner: "maintStaff", assignee: "maintStaff", status: "open", comps: ["HVAC"], epic: "TK-480", due: addDays(TODAY, 20), created: hoursAgo(190), links: [{ rel: "is blocked by", id: "TK-506" }] }),
+    mk({ id: "TK-508", type: "facilities", itype: "Preventive", title: "HVAC filter check – last month", desc: "Monthly filter inspection for the rooftop units.", priority: "Medium", owner: "system", assignee: "maintChair", status: "review", comps: ["HVAC"], labels: ["preventive"], room: "main", asset: "AS-015", sched: "PM-1", sprint: "SP-1", due: addDays(TODAY, -1), est: 2, spent: 2, created: hoursAgo(200), firstResponse: hoursAgo(190) }),
+    mk({ id: "TK-509", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 1", parent: "TK-508", priority: "Medium", owner: "system", assignee: "maintChair", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(30), room: "main", asset: "AS-015", created: hoursAgo(200) }),
+    mk({ id: "TK-510", type: "facilities", itype: "Sub-task", title: "Inspect and replace filters, unit 2", parent: "TK-508", priority: "Medium", owner: "system", assignee: "maintChair", status: "inprogress", room: "main", asset: "AS-015", created: hoursAgo(200) }),
+    mk({ id: "TK-502", type: "it", itype: "Problem", title: "Wi-Fi drops every few minutes in the conference room", desc: "Wi-Fi drops every few minutes in the conference room, mostly during video calls.", priority: "Medium", owner: "youthChair", status: "open", comps: ["Wi-Fi & network"], labels: ["wifi"], room: "r240", asset: "AS-052", created: hoursAgo(26), links: [{ rel: "relates to", id: "TK-521" }] }),
+    mk({ id: "TK-515", type: "it", itype: "Request", title: "New laptop for the Youth coordinator", desc: "Current laptop is 7 years old and cannot run the registration software.", priority: "Low", owner: "youthChair", assignee: "itChair", status: "open", comps: ["Computers"], labels: ["hardware", "procurement"], sprint: "SP-2", due: addDays(TODAY, 14), est: 3, cost: 900, firstResponse: hoursAgo(60), created: hoursAgo(80) }),
+    mk({ id: "TK-516", type: "it", itype: "Problem", title: "Office printer jams on tray 2", desc: "Paper jams roughly every 20 pages when using tray 2.", priority: "Medium", owner: "officeAdmin", assignee: "itChair", status: "inprogress", comps: ["Printers"], room: "office", asset: "AS-051", sprint: "SP-1", est: 2, created: hoursAgo(30), firstResponse: hoursAgo(28) }, [ch(28, "itChair", "Assignee", "None", `${PEOPLE.itChair.name} (component Printers)`), ch(24, "itChair", "Status", "Open", "In Progress")]),
+    mk({ id: "TK-517", type: "it", itype: "Request", title: "Create an email account for the new Imam office assistant", desc: "For the new assistant starting Monday. Needs the imam@ shared inbox.", priority: "Medium", owner: "imamAdmin", assignee: "itChair", status: "resolved", resolution: "Done", resolvedAt: hoursAgo(5), comps: ["Accounts & email"], spent: 0.5, created: hoursAgo(20), firstResponse: hoursAgo(19), sprint: "SP-1" }, [c(6, "itChair", "Account created and added to the imam@ group. Temporary password sent to the office by phone.", true), c(5, "itChair", "All set. The new assistant can sign in now.")]),
+    mk({ id: "TK-518", type: "it", itype: "Problem", title: "Projector in Room 240 flickers", desc: "Image flickers every few seconds on HDMI and VGA.", priority: "High", owner: "swChair", status: "open", comps: ["AV equipment"], room: "r240", asset: "AS-031", created: hoursAgo(3), labels: ["av"] }),
+    mk({ id: "TK-519", type: "it", itype: "Problem", title: "Website prayer-times widget shows the wrong Isha time", desc: "Shows 8:15 PM; the masjid calendar says 8:45 PM.", priority: "High", owner: "shuraChair", assignee: "itTeam", status: "inprogress", comps: ["Website & software"], labels: ["website"], sprint: "SP-1", due: addDays(TODAY, 1), est: 3, spent: 1, created: hoursAgo(40), firstResponse: hoursAgo(38) }),
+    mk({ id: "TK-520", type: "it", itype: "Task", title: "Test the PA system and mics before Ramadan", desc: "Run a full sound check in the main hall and MPH.", priority: "Medium", owner: "itTeam", assignee: "itTeam", status: "open", comps: ["AV equipment"], epic: "TK-481", sprint: "SP-1", due: addDays(TODAY, 6), est: 2, created: hoursAgo(90), asset: "AS-032" }),
+    mk({ id: "TK-521", type: "it", itype: "Task", title: "Add two Wi-Fi access points to the gym", desc: "Coverage in the MPH is weak during large events.", priority: "Medium", owner: "itTeam", assignee: "itTeam", status: "open", comps: ["Wi-Fi & network"], epic: "TK-481", sprint: "SP-2", est: 8, cost: 760, labels: ["wifi", "procurement"], created: hoursAgo(88), links: [{ rel: "relates to", id: "TK-502" }] }),
+    mk({ id: "TK-523", type: "it", itype: "Problem", title: "Cannot sign in to the IAR Google account", desc: "Locked out after changing the password on my phone.", priority: "Highest", owner: "mktTeam", assignee: "itChair", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(59), comps: ["Accounts & email"], spent: 0.25, created: hoursAgo(60), firstResponse: hoursAgo(59.5) }),
+    mk({ id: "TK-488", type: "it", itype: "Problem", title: "Projector shows no picture from HDMI", desc: "Projector shows no picture from HDMI.", priority: "Medium", owner: "officeAdmin", assignee: "itTeam", status: "resolved", resolution: "Fixed", resolvedAt: hoursAgo(29 * 24), comps: ["AV equipment"], room: "r240", asset: "AS-031", sprint: "SP-0", spent: 1, created: hoursAgo(30 * 24), firstResponse: hoursAgo(30 * 24 - 2) }, [c(29 * 24, "itTeam", "Replaced the HDMI switch.")]),
   ];
   S.tickets.forEach((t) => { if (!t.log.length) t.log = [{ t: t.created, who: t.owner, k: "created" }]; });
   S.tickets.find((t) => t.id === "TK-505").links.push({ rel: "is blocked by", id: "TK-507" });
@@ -2892,8 +2937,8 @@ function tkSeed() {
   S.tickets.find((t) => t.id === "TK-521").links = [{ rel: "relates to", id: "TK-502" }];
   S.tickets.find((t) => t.id === "TK-502").links = [{ rel: "relates to", id: "TK-521" }];
   const n = (to, ticket, text, h) => S.tkx.notifs.push({ id: ++S.tkx.seq.N, to, t: hoursAgo(h), ticket, text, read: false, by: "system" });
-  n("idris", "TK-501", `${PEOPLE.hana.name} commented on TK-501`, 28); n("zaid", "TK-518", "Highest/High-priority TK-518: Projector in Room 240 flickers", 3); n("zaid", "TK-519", "TK-519 is due tomorrow", 2);
-  n("hana", "TK-517", "TK-517 moved to Resolved · Done", 5); n("maryam", "TK-518", "TK-518 needs a first response", 2);
+  n("maintStaff", "TK-501", `${PEOPLE.officeAdmin.name} commented on TK-501`, 28); n("itTeam", "TK-518", "Highest/High-priority TK-518: Projector in Room 240 flickers", 3); n("itTeam", "TK-519", "TK-519 is due tomorrow", 2);
+  n("imamAdmin", "TK-517", "TK-517 moved to Resolved · Done", 5); n("itChair", "TK-518", "TK-518 needs a first response", 2);
   tkRunAutomation();
 }
 
@@ -3612,51 +3657,50 @@ function assetDetail(a) {
 /* Demo guide                                                          */
 /* ------------------------------------------------------------------ */
 const STEPS = [
-  { as: "bilal", view: "newEvent", t: "Request an event", p: `${fn("bilal")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; every event gets mission review, so ${fn("tara")}, the director over Youth, is notified.`, reset: () => (S.draft = null) },
-  { as: "tara", view: "events", arg: "review", t: "The director reviews it", p: `${fn("tara")} sees it under Needs review, with the checks already run. Open Youth Game Night and approve it as aligned with the mission. It goes on to the executive, who are notified.` },
-  { as: "yasir", view: "events", arg: "review", t: "The executive approves", p: `${fn("yasir")} is in the executive group, and any executive can give the final approval. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("bilal")} is notified.` },
-  { as: "sara", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
-  { as: "bilal", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("bilal")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
-  { as: "sara", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
-  { as: "bilal", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("bilal")}: add a purchase request linked to Game Night, split across two sub-accounts, and submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("tara")}, the director over Youth.` },
-  { as: "tara", view: "home", t: "A director approves", p: `${fn("tara")} directs Youth, Women, Older Adults, Sports and Volunteer. The request is waiting on her home page and in her notifications. Open it and approve; the history says "as director". She can also approve any of her committees' requests alongside their chairs.` },
-  { as: "omar", view: "purchases", t: "Finance pays", p: `${fn("omar")} approves it for payment and records the check. ${fn("bilal")} is notified, and the event card now shows what's been spent against its budget.` },
-  { as: "hana", view: "newPO", card: true, t: "Credit card receipts", p: `${fn("hana")} holds the office card. She picks the card and statement month and enters each charge with its own sub-account. One charge is marked to be repaid by the Youth Committee, one has no receipt. Submit it; it goes straight to finance.` },
-  { as: "omar", view: "purchases", t: "Finance reviews card receipts", p: `${fn("omar")} sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives.` },
-  { as: "idris", view: "newPO", facilities: true, t: "A maintenance expense", p: `${fn("idris")} on the maintenance staff bought replacement parts and asks to be reimbursed from Facility Maintenance. Submit it: it goes to ${fn("yusuf")}, the Facility Maintenance chair, by email and in the portal.` },
-  { as: "yusuf", view: "notifs", t: "Notifications", p: `${fn("yusuf")}'s bell shows what reached him, including ${fn("idris")}'s requests. Anything waiting on him was also emailed; updates that need nothing from him stay in the portal. Open one to jump to the request.` },
-  { as: "yusuf", view: "away", t: "Out of office", reset: () => { delete S.away.yusuf; S.awayPick = "azeem"; }, p: `${fn("yusuf")} is travelling. Out of office is filled in with ${fn("azeem")}, his vice chair, as cover. Turn it on: ${fn("azeem")} is emailed, and the approvals waiting on ${fn("yusuf")} go to him until the last day.` },
-  { as: "azeem", view: "home", t: "Covering approvals", reset: () => { S.away.yusuf = S.away.yusuf || { from: TODAY, until: addDays(TODAY, 10), delegate: "azeem", note: "Travelling for Umrah" }; }, p: `${fn("azeem")} sees a banner, and ${fn("yusuf")}'s waiting approvals are marked "covering for". Open one and approve it; the history says it was for ${fn("yusuf")}. Back as ${fn("yusuf")}, Out of office has an "I'm back" button.` },
-  { as: "omar", view: "search", arg: "11046", t: "Search by number or words", p: `The search box at the top finds a request by its number (11046 or PO-11046) or by words in it. It only shows requests the person could open anyway: switch to ${fn("bilal")} and search "pantry", and the S&W card receipts stay hidden.` },
-  { as: "idris", view: "runsheet", t: "The daily run sheet", p: `${fn("idris")} is on Facility Maintenance, so he sees one page of what's happening where for each day, built from approved events, with the setup each one needs. The Safety & Security team logs its room checks back to each event card.` },
-  { as: "bilal", view: "card", arg: "EV-0998", t: "Close out an event", p: `After the food drive briefing, ${fn("bilal")} adds attendance. Actual spend comes from the linked purchase, and room condition comes from security.` },
-  { as: "bilal", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurEnd: recurMax(nextDow(TODAY, 2, 10)), description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week and Repeats until is filled with the latest allowed date, 3 months out. Try a later date: it is rejected, since a series can't pass 3 months. Every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
-  { as: "bilal", view: "card", arg: "EV-1022", t: "Renew a series", p: `The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. The renewal goes through mission review like any request.` },
-  { as: "yasir", view: "card", arg: "EV-1053", t: "No director? Straight to the executive", p: `Outreach isn't in a pillar, so the Interfaith Open House skips the director step and ${fn("yasir")} is notified directly. The checks point out what to look at closely: outside speakers, a new program and 200 guests.` },
-  { as: "renter", view: "public", t: "An outside group requests the gym", p: `No IAR account needed. Send the request, then switch to ${fn("hana")} and open Facility Rentals to review it against the same calendar.` },
-  { as: "yasir", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
-  { as: "bilal", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: `${fn("bilal")} chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself.` },
-  { as: "omar", view: "budget", t: "Revenue by type", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = null; }, p: "Finance sees every dollar received, sorted three ways: unrestricted gifts to IAR, donations designated to a committee (Da'wah, say) and program revenue earned by a committee (Youth, say). Page Road has its own plan: tuition, endowment and donations." },
-  { as: "omar", view: "budget", t: "Import from QuickBooks", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = qbSample(); }, p: `${fn("omar")} imports an export. Each row is sorted by its QuickBooks account and class. Two gifts have no committee, so choose where they go (the roof check is Facility Maintenance, the dinner is Marketing & Fundraising), then import and watch the totals change.` },
-  { as: "khalid", view: "shura", t: "The Shura / board dashboard", reset: () => { S.shForm = false; }, p: `${fn("khalid")} is on the Shura, so he gets the Shura / Board role. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment.` },
-  { as: "yasir", view: "budget", t: "Executive answers the Shura", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; }, p: "Requests land with the right office: reports go to finance, amendments and spending reviews to the executive. Approve or decline at the bottom of the Budget page. The Shura member is notified." },
-  { as: "bilal", view: "tickets", t: "Report a problem", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Anyone can report an IT or maintenance problem. Click Report a problem, pick the room and, if you know it, the equipment. Typing a summary checks for tickets already filed. Submit it: it is assigned to the component lead automatically." },
-  { as: "zaid", view: "tickets", t: "IT works the board", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "The IT team sees IT only. The board shows the active sprint in columns. Drag the Wi-Fi ticket to In Progress (it's assigned automatically), then drag it to Done and pick a resolution. Try Group by Assignee and the quick filters." },
-  { as: "zaid", view: "card", arg: "TK-518", t: "Triage an issue", p: "A High-priority projector problem is waiting on a first response. The SLA panel shows the clock. Assign it, set the priority, add a component and a label, link it to another issue, add a sub-task, log time, and leave an internal note the reporter cannot see." },
-  { as: "idris", view: "tickets", t: "Search with JQL", reset: () => { S.tk.tab = "list"; S.tk.modal = null; }, p: "Switch to List. Try: priority >= High AND statusCategory != Done ORDER BY due ASC. Save it as a filter, or select several rows to bulk-assign or move them." },
-  { as: "idris", view: "tickets", t: "Plan a sprint", reset: () => { S.tk.tab = "backlog"; S.tk.modal = null; }, p: "Backlog shows the active sprint, the next one and everything unscheduled. Drag issues between them, reorder with the arrows, start or complete a sprint, and see unfinished work roll over." },
-  { as: "idris", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
+  { as: "youthChair", view: "newEvent", t: "Request an event", p: `${fn("youthChair")} chairs the Youth Committee. The form opens with a Sunday 11 AM request for the full gym, and the checks flag the overlap with Al-Furqan weekend school. Change the start to 3:00 PM and the end to 5:00 PM. It's open to the public and needs A/V, so the form also asks marketing's and A/V's questions: the announcement, the flyer, when to start marketing, and the A/V support needed. No separate marketing form. Submit; every event gets mission review, so ${fn("commDirector")}, the director over Youth, is notified.`, reset: () => (S.draft = null) },
+  { as: "commDirector", view: "events", arg: "review", t: "The director reviews it", p: `${fn("commDirector")} sees it under Needs review, with the checks already run. Open Youth Game Night and approve it as aligned with the mission. It goes on to the executive, who are notified.` },
+  { as: "headImam", view: "events", arg: "review", t: "The executive approves", p: `${fn("headImam")} is in the executive group, and any executive can give the final approval. Open Youth Game Night and approve it. The room hold is confirmed on the IAR calendar, and ${fn("youthChair")} is notified.` },
+  { as: "mktTeam", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
+  { as: "youthChair", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("youthChair")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
+  { as: "mktTeam", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
+  { as: "youthChair", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("youthChair")}: add a purchase request linked to Game Night, split across two sub-accounts (Program and Admin). Click Upload receipt on each line (in the demo nothing is uploaded), then submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("commDirector")}, the director over Youth.` },
+  { as: "commDirector", view: "home", t: "A director approves", p: `${fn("commDirector")} is the Community Director, over Youth, Women, Older Adults, Sports and Volunteer. The request is waiting on their home page and in their notifications. Open it and approve; the history says "as director". She can also approve any of her committees' requests alongside their chairs.` },
+  { as: "bookkeeper", view: "purchases", t: "Finance pays", p: `${fn("bookkeeper")} approves it for payment and records the check. ${fn("youthChair")} is notified, and the event card now shows what's been spent against its budget.` },
+  { as: "officeAdmin", view: "newPO", card: true, t: "Credit card receipts", p: `${fn("officeAdmin")} holds the office card. She picks the card and statement month and enters each charge with its own sub-account. One charge is marked to be repaid by the Youth Committee, one has no receipt. Submit it; it goes straight to finance.` },
+  { as: "bookkeeper", view: "purchases", t: "Finance reviews card receipts", p: `${fn("bookkeeper")} sees which cards haven't sent last month's receipts and what's still owed back to IAR. Open a card request, approve the charges, mark it entered in QuickBooks, then mark the repayment received when it arrives.` },
+  { as: "maintStaff", view: "newPO", facilities: true, t: "A maintenance expense", p: `${fn("maintStaff")} on the maintenance staff bought replacement parts and asks to be reimbursed from Facility Maintenance. The sub-accounts offered are Facility Maintenance's only. One line still needs its receipt: click Upload receipt, then submit. It goes to ${fn("maintChair")}, the Facility Maintenance chair, by email and in the portal.` },
+  { as: "maintChair", view: "notifs", t: "Notifications", p: `${fn("maintChair")}'s bell shows what reached him, including ${fn("maintStaff")}'s requests. Anything waiting on him was also emailed; updates that need nothing from him stay in the portal. Open one to jump to the request.` },
+  { as: "maintChair", view: "away", t: "Out of office", reset: () => { delete S.away.maintChair; S.awayPick = "maintVice"; }, p: `${fn("maintChair")} is travelling. Out of office is filled in with ${fn("maintVice")}, his vice chair, as cover. Turn it on: ${fn("maintVice")} is emailed, and the approvals waiting on ${fn("maintChair")} go to him until the last day.` },
+  { as: "maintVice", view: "home", t: "Covering approvals", reset: () => { S.away.maintChair = S.away.maintChair || { from: TODAY, until: addDays(TODAY, 10), delegate: "maintVice", note: "Travelling for Umrah" }; }, p: `${fn("maintVice")} sees a banner, and ${fn("maintChair")}'s waiting approvals are marked "covering for". Open one and approve it; the history says it was for ${fn("maintChair")}. Back as ${fn("maintChair")}, Out of office has an "I'm back" button.` },
+  { as: "bookkeeper", view: "search", arg: "11046", t: "Search by number or words", p: `The search box at the top finds a request by its number (11046 or PO-11046) or by words in it. It only shows requests the person could open anyway: switch to ${fn("youthChair")} and search "pantry", and the S&W card receipts stay hidden.` },
+  { as: "maintStaff", view: "home", t: "Today at IAR", p: `Everyone's home page shows Today at IAR: what's happening in each room today, built from approved requests and the IAR calendar. Click Printable version for a one-page sheet with security notes and each requester's setup plan. Requesters set up and clean up their own events; IAR offers only A/V and marketing as services.` },
+  { as: "youthChair", view: "card", arg: "EV-0998", t: "Close out an event", p: `After the food drive briefing, ${fn("youthChair")} adds attendance. Actual spend comes from the linked purchase, and room condition comes from security.` },
+  { as: "youthChair", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurEnd: recurMax(nextDow(TODAY, 2, 10)), description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week and Repeats until is filled with the latest allowed date, 3 months out. Try a later date: it is rejected, since a series can't pass 3 months. Every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
+  { as: "youthChair", view: "card", arg: "EV-1022", t: "Renew a series", p: `The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. The renewal goes through mission review like any request.` },
+  { as: "renter", view: "public", t: "An outside group requests the gym", p: `No IAR account needed. Send the request, then switch to ${fn("officeAdmin")} and open Facility Rentals to review it against the same calendar.` },
+  { as: "headImam", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
+  { as: "youthChair", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: `${fn("youthChair")} chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself.` },
+  { as: "bookkeeper", view: "budget", t: "Revenue by type", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = null; }, p: "Finance sees every dollar received, sorted three ways: unrestricted gifts to IAR, donations designated to a committee (Da'wah, say) and program revenue earned by a committee (Youth, say). Page Road has its own plan: tuition, endowment and donations." },
+  { as: "bookkeeper", view: "budget", t: "Import from QuickBooks", reset: () => { S.budTab = "rev"; S.budScope = "IAR"; S.qb = qbSample(); }, p: `${fn("bookkeeper")} imports an export. Each row is sorted by its QuickBooks account and class. Two gifts have no committee, so choose where they go (the roof check is Facility Maintenance, the dinner is Marketing & Fundraising), then import and watch the totals change.` },
+  { as: "shuraChair", view: "shura", t: "The Shura / board dashboard", reset: () => { S.shForm = false; }, p: `${fn("shuraChair")} is on the Shura, so he gets the Shura / Board role. His home is a dashboard: received vs. spent, committees against the calendar, restricted money held, and how last year closed. Send a request from the bottom, such as a report or a budget amendment.` },
+  { as: "headImam", view: "budget", t: "Executive answers the Shura", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; }, p: "Requests land with the right office: reports go to finance, amendments and spending reviews to the executive. Approve or decline at the bottom of the Budget page. The Shura member is notified." },
+  { as: "youthChair", view: "tickets", t: "Report a problem", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "Anyone can report an IT or maintenance problem. Click Report a problem, pick the room and, if you know it, the equipment. Typing a summary checks for tickets already filed. Submit it: it is assigned to the component lead automatically." },
+  { as: "itTeam", view: "tickets", t: "IT works the board", reset: () => { S.tk.tab = "board"; S.tk.modal = null; }, p: "The IT team sees IT only. The board shows the active sprint in columns. Drag the Wi-Fi ticket to In Progress (it's assigned automatically), then drag it to Done and pick a resolution. Try Group by Assignee and the quick filters." },
+  { as: "itTeam", view: "card", arg: "TK-518", t: "Triage an issue", p: "A High-priority projector problem is waiting on a first response. The SLA panel shows the clock. Assign it, set the priority, add a component and a label, link it to another issue, add a sub-task, log time, and leave an internal note the reporter cannot see." },
+  { as: "maintStaff", view: "tickets", t: "Search with JQL", reset: () => { S.tk.tab = "list"; S.tk.modal = null; }, p: "Switch to List. Try: priority >= High AND statusCategory != Done ORDER BY due ASC. Save it as a filter, or select several rows to bulk-assign or move them." },
+  { as: "maintStaff", view: "tickets", t: "Plan a sprint", reset: () => { S.tk.tab = "backlog"; S.tk.modal = null; }, p: "Backlog shows the active sprint, the next one and everything unscheduled. Drag issues between them, reorder with the arrows, start or complete a sprint, and see unfinished work roll over." },
+  { as: "maintStaff", view: "tickets", t: "Preventive maintenance", reset: () => { S.tk.tab = "schedules"; S.tk.modal = null; }, p: "Schedules create recurring Preventive tickets with a checklist as sub-tasks. Click Create tickets for due schedules, then open one from the board." },
   { as: "admin", view: "tickets", t: "Reports and calendar", reset: () => { S.tk.tab = "reports"; S.tk.modal = null; }, p: "Switch the team to see every issue. Reports show created vs. resolved, workload, SLA compliance and the equipment with the most tickets; Calendar shows due dates; Timeline shows epics and sprints." },
-  { as: "idris", view: "assets", t: "Track the equipment", p: `${fn("idris")} keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset.` },
-  { as: "khalid", view: "library", t: "Shura documents", reset: () => libReset("shura"), p: `${fn("khalid")} is on the Shura, so portal-team-shura@ opens the IAR Shura drive: minutes, resolutions, board packets and the approved budget. Open a file to see its details. Minutes are filed by fiscal year (FY26-27 first, earlier years behind a link). The portal keeps only the Drive ID and review date; Drive holds the file and checks access.` },
-  { as: "bilal", view: "library", t: "Restricted drives stay closed", reset: () => libReset(null, "budget"), p: `${fn("bilal")} sees Policies and the Youth drive, and the restricted drives show as locked. The search for 'budget' finds nothing, because the approved budget lives in the Shura drive and search only covers drives he can open. Clear the box and try 'policy'.` },
-  { as: "omar", view: "library", t: "Finance files link to requests", reset: () => libReset("finance"), p: `${fn("omar")}'s finance group opens the Finance drive. Open the W-9 for Triangle Sound & Stage: it is linked to the purchase request that needed it. Click the request to jump to the card.` },
-  { as: "hana", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Policies aren't split by year: a new version replaces the file, and retired ones go to Archive. Each has a review date; the room use policy is overdue and the catering rules are due soon. Try uploading a file to Minutes with a June date and watch the folder it lands in." },
-  { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: `The Access tab shows each group and who is in it. Add ${fn("khalid")} (Shura) to portal-team-social-welfare@, then switch to ${fn("khalid")}: he now has Social & Welfare as well as the Shura drive, and S&W Aid appears in his sidebar. Remove him with the × to undo.` },
-  { as: "admin", view: "settings", t: "Committees, chairs and directors", p: `Portal Settings shows each committee and team as it is in Google Groups: the group's Owner is the chair, a Manager is the vice chair, and everyone else is a member. Roles are per team, so ${fn("bilal")} chairs Youth and nothing else. ${fn("tara")} directs the Programs pillar. ${fn("yasir")} and ${fn("khalid")} are in the executive group; ${fn("khalid")} is Shura chair and acting CEO, and nothing about that is fixed in code. When someone else takes an office, they're added to the group and he's removed. Nobody edits code or files: people are changed in Google Admin.` },
-  { as: "idris", view: "feedback", arg: "purchases", t: "Send feedback (beta)", reset: () => { S.fbSent = false; }, p: `Every page has a Feedback button at the top that remembers which page you were on. ${fn("idris")} reports something confusing; it's emailed to the portal admins.` },
+  { as: "maintStaff", view: "assets", t: "Track the equipment", p: `${fn("maintStaff")} keeps the asset tracker. Open AS-014 to see its repair history, check out the wireless mics to an event, or report a problem straight from an asset.` },
+  { as: "shuraChair", view: "library", t: "Shura documents", reset: () => libReset("shura"), p: `${fn("shuraChair")} is on the Shura, so portal-team-shura@ opens the IAR Shura drive: minutes, resolutions, board packets and the approved budget. Open a file to see its details. Minutes are filed by fiscal year (FY26-27 first, earlier years behind a link). The portal keeps only the Drive ID and review date; Drive holds the file and checks access.` },
+  { as: "youthChair", view: "library", t: "Restricted drives stay closed", reset: () => libReset(null, "budget"), p: `${fn("youthChair")} sees Policies and the Youth drive, and the restricted drives show as locked. The search for 'budget' finds nothing, because the approved budget lives in the Shura drive and search only covers drives he can open. Clear the box and try 'policy'.` },
+  { as: "bookkeeper", view: "library", t: "Finance files link to requests", reset: () => libReset("finance"), p: `${fn("bookkeeper")}'s finance group opens the Finance drive. Open the W-9 for Triangle Sound & Stage: it is linked to the purchase request that needed it. Click the request to jump to the card.` },
+  { as: "officeAdmin", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Policies aren't split by year: a new version replaces the file, and retired ones go to Archive. Each has a review date; the room use policy is overdue and the catering rules are due soon. Try uploading a file to Minutes with a June date and watch the folder it lands in." },
+  { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: `The Access tab shows each group and who is in it. Add ${fn("shuraChair")} (Shura) to portal-team-social-welfare@, then switch to ${fn("shuraChair")}: he now has Social & Welfare as well as the Shura drive, and S&W Aid appears in his sidebar. Remove him with the × to undo.` },
+  { as: "admin", view: "settings", t: "Committees, chairs and directors", p: `Portal Settings shows each committee and team as it is in Google Groups: the group's Owner is the chair, a Manager is the vice chair, and everyone else is a member. Roles are per team, so ${fn("youthChair")} chairs Youth and nothing else. ${fn("commDirector")} is the Community Director: the Community pillar covers Youth, Women, Older Adults, Sports and Volunteer. ${fn("headImam")} and ${fn("shuraChair")} are in the executive group; ${fn("shuraChair")} is Shura chair and acting CEO, and nothing about that is fixed in code. When someone else takes an office, they're added to the group and he's removed. Nobody edits code or files: people are changed in Google Admin.` },
+  { as: "maintStaff", view: "feedback", arg: "purchases", t: "Send feedback (beta)", reset: () => { S.fbSent = false; }, p: `Every page has a Feedback button at the top that remembers which page you were on. ${fn("maintStaff")} reports something confusing; it's emailed to the portal admins.` },
   { as: "admin", view: "feedback", t: "Admins read feedback", reset: () => { S.fbSent = false; }, p: `${fn("admin")} reads everything sent, with the page it came from, and marks items done.` },
-  { as: "layla", view: "home", t: "Groups decide what people see", p: `${fn("layla")} chairs Social & Welfare, so she sees S&W Aid. ${fn("bilal")} never does. Try ${PEOPLE.admin.name} and Portal Settings: switch off a rule and watch the event checks change.` },
+  { as: "swChair", view: "home", t: "Groups decide what people see", p: `${fn("swChair")} chairs Social & Welfare, so she sees S&W Aid. ${fn("youthChair")} never does. Try ${PEOPLE.admin.name} and Portal Settings: switch off a rule and watch the event checks change.` },
 ];
 function renderGuide() {
   const g = document.getElementById("guide");
@@ -3664,19 +3708,19 @@ function renderGuide() {
   document.body.classList.toggle("guide-open", S.guide);
   if (!S.guide) return;
   g.innerHTML = `<div class="guide-h"><h2>Demo guide</h2><div class="row"><button class="btn small" type="button" data-reset="1">Reset demo</button><button class="btn small" type="button" data-closeguide="1" aria-label="Close guide">Close</button></div></div>
-  <div class="guide-b">${STEPS.map((s, i) => `<div class="step ${i === S.step ? "cur" : ""}"><span class="n">${i + 1}</span><div><strong>${esc(s.t)}</strong><div class="as">As ${esc(PEOPLE[s.as].name)} · ${esc(PEOPLE[s.as].title)}</div><p>${esc(s.p)}</p><button class="btn small ${i === S.step ? "primary" : ""}" type="button" data-step="${i}">Go to this step</button></div></div>`).join("")}</div>`;
+  <div class="guide-b">${STEPS.map((s, i) => `<div class="step ${i === S.step ? "cur" : ""}"><span class="n">${i + 1}</span><div><strong>${esc(s.t)}</strong><div class="as">As ${esc(who(s.as))}${PEOPLE[s.as].tester ? " ★" : ""}</div><p>${esc(s.p)}</p><button class="btn small ${i === S.step ? "primary" : ""}" type="button" data-step="${i}">Go to this step</button></div></div>`).join("")}</div>`;
 }
 function doStep(i) {
   const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
   S.me = s.as; S.poDraft = null;
   if (s.view === "newPO" && s.card) { const ym = lastMonthYm(); S.poDraft = { type: "card", card: "4417", month: ym, desc: `Card receipts — office card, ${fmtYm(ym)}`, lines: [
-    { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "01-5003 General Fund – Administrative", amount: 42.18 },
-    { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "01-5009 General Fund – Cleaning Supplies", amount: 156.3 },
-    { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Supplies", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
-    { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "01-5003 General Fund – Administrative", amount: 12.4, noReceipt: true },
+    { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "Administration – Office supplies & postage", amount: 42.18, receipt: "staples-receipt.pdf" },
+    { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "Administration – Admin", amount: 156.3, receipt: "costco-receipt.pdf" },
+    { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Program", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
+    { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "Administration – Office supplies & postage", amount: 12.4, noReceipt: true },
   ] }; }
-  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Repairs", amount: 186.4, note: "Run capacitor" }, { acct: "Facility Maintenance – Supplies", amount: 64.2, note: "Air filters (6)" }] };
-  else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "bilal" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: PEOPLE.bilal.name, desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Food & Hospitality", amount: 96.4, note: "Costco snacks" }, { acct: "Youth – Supplies", amount: 38.99, note: "Trivia prizes" }] }; }
+  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Program", amount: 186.4, note: "Run capacitor", receipt: "capacitor-receipt.pdf" }, { acct: "Facility Maintenance – Program", amount: 64.2, note: "Air filters (6)", receipt: "" }] };
+  else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "youthChair" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Program", amount: 96.4, note: "Costco snacks", receipt: "" }, { acct: "Youth – Admin", amount: 38.99, note: "Trivia prizes", receipt: "" }] }; }
   if (s.as === "renter") { S.rnDone = null; S.rnDraft = null; }
   if (window.innerWidth < 900) S.guide = false;
   go(s.view, s.arg);
@@ -3687,13 +3731,17 @@ function doStep(i) {
 /* ------------------------------------------------------------------ */
 function render() {
   const sel = document.getElementById("persona");
-  sel.innerHTML = Object.entries(PEOPLE).map(([k, p]) => `<option value="${k}" ${k === S.me ? "selected" : ""}>${esc(p.name)} — ${esc(p.title)}</option>`).join("");
+  // Alpha testers (marked in the published copy only) are starred and listed first, so each can find their own profile.
+  const opt = ([k, p]) => `<option value="${k}" ${k === S.me ? "selected" : ""}>${p.tester ? "★ " : ""}${esc(who(k))}</option>`;
+  const people = Object.entries(PEOPLE), testers = people.filter(([, p]) => p.tester);
+  sel.innerHTML = testers.length ? `<optgroup label="★ Alpha testers">${testers.map(opt).join("")}</optgroup><optgroup label="Other roles">${people.filter(([, p]) => !p.tester).map(opt).join("")}</optgroup>` : people.map(opt).join("");
   if (S.me === "renter" && S.view !== "public") S.view = "public";
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
   const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
-  document.getElementById("main").innerHTML = (V[S.view] || vHome)();
+  const preview = mod && mod.preview ? `<div class="note info"><strong>Preview.</strong> ${esc(mod.name)} is planned for after launch. Have a look, but it isn't part of this beta.</div>` : "";
+  document.getElementById("main").innerHTML = preview + (V[S.view] || vHome)();
   renderRail();
   renderGuide();
   document.getElementById("guideBtn").textContent = S.guide ? "Hide guide" : "Demo guide";
@@ -3738,10 +3786,13 @@ document.addEventListener("click", (e) => {
   }
   if (libClick(ds)) return;
   if (ds.step) return doStep(Number(ds.step));
+  if (ds.print) return window.print();
   if (ds.closeguide) { S.guide = false; return render(); }
   if (ds.reset) { const g = S.guide; seed(); S.guide = g; RULES.forEach((r) => (r.on = true)); Object.assign(POLICY, POLICY_DEFAULT); toast("Demo reset to its starting data"); return render(); }
   if (ds.rnnew) { S.rnDone = null; S.rnDraft = null; return render(); }
-  if (ds.addline) { readPO(); S.poDraft.lines.push(S.poDraft.type === "card" ? cardBlankLine() : { acct: ACCOUNTS[0], amount: "", note: "" }); return render(); }
+  if (ds.addline) { readPO(); S.poDraft.lines.push(S.poDraft.type === "card" ? cardBlankLine() : { acct: acctsFor(S.poDraft.committee)[0], amount: "", note: "", receipt: "" }); return render(); }
+  if (ds.rcpt) { readPO(); const i = Number(ds.rcpt); S.poDraft.lines[i].receipt = `receipt-line-${i + 1}.pdf`; document.getElementById("tip").hidden = true; toast("Demo only: no file was uploaded. In the portal, the receipt is saved to IAR's Shared Drive."); return render(); }
+  if (ds.rcptdel) { readPO(); S.poDraft.lines[Number(ds.rcptdel)].receipt = ""; return render(); }
   if (ds.delline) { readPO(); S.poDraft.lines.splice(Number(ds.delline), 1); return render(); }
   if (ds.task) {
     const [cid, tid, st] = ds.task.split("|"); const c = getCard(cid); const t = c.tasks.find((x) => x.id === tid);
@@ -3839,7 +3890,8 @@ document.addEventListener("change", (e) => {
     else if (d.type === "reimburse") d.payee = me().name;
     render();
   }
-  if (e.target.dataset && e.target.dataset.k === "flag" && e.target.closest("#poForm")) { readPO(); render(); }
+  if (e.target.dataset && ["flag", "noReceipt"].includes(e.target.dataset.k) && e.target.closest("#poForm")) { readPO(); render(); }
+  if (e.target.name === "committee" && e.target.closest("#poForm")) { readPO(); render(); }
   if (e.target.id === "calDate" || e.target.id === "calRoom") { S.calDate = document.getElementById("calDate").value; S.calRoom = document.getElementById("calRoom").value; document.getElementById("calOut").innerHTML = timeline(S.calDate, S.calRoom, null); }
   if (e.target.id === "rsDate") go("runsheet", e.target.value);
   if (e.target.id === "polTerms") { POLICY.maxMonths = Number(e.target.value); toast(`Longest series: ${POLICY.maxMonths} months`); }
@@ -3888,7 +3940,7 @@ document.addEventListener("submit", (e) => {
       if (bad >= 0) return toast(`Charge ${bad + 1}: add the date, the merchant${lines[bad].flag === "repay" ? " and who will repay it" : ""}.`);
       const dup = S.pos.find((p) => p.card && p.card.last4 === k.last4 && p.card.month === d.month && p.status !== "rejected");
       c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: "card", committee: k.committee, card: { last4: k.last4, month: d.month }, payee: `IAR card ···${k.last4} · ${fmtYm(d.month)}`, desc: d.desc,
-        lines: lines.map((l) => ({ date: l.date, merchant: l.merchant.trim(), acct: l.acct, amount: Number(l.amount), flag: l.flag || "", repayBy: l.flag === "repay" ? l.repayBy.trim() : "", noReceipt: Boolean(l.noReceipt) })), status: "finance", created: TODAY });
+        lines: lines.map((l) => ({ date: l.date, merchant: l.merchant.trim(), acct: l.acct, amount: Number(l.amount), flag: l.flag || "", repayBy: l.flag === "repay" ? l.repayBy.trim() : "", noReceipt: Boolean(l.noReceipt), receipt: l.noReceipt ? "" : l.receipt || "" })), status: "finance", created: TODAY });
       c.log.push({ t: TODAY, who: "system", text: "Card receipts go straight to finance review" + (dup ? ` (${dup.id} already covers this card and month)` : "") });
     } else {
       const isChair = teamRole(S.me, d.committee) === "chair";
@@ -3897,13 +3949,15 @@ document.addEventListener("submit", (e) => {
       const director = d.committee === "Social & Welfare" ? null : directorsOf(d.committee).find((p) => p !== S.me);
       // Any chair of the committee can approve, so name one only when the requester is a chair themselves.
       const approver = otherChair ? (isChair ? otherChair : null) : vice || director || null;
-      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note]), eventId: d.eventId || null, status: otherChair || approver ? "chair" : "finance", approver, created: TODAY });
+      c = po({ id: "PO-" + ++S.seq.PO, owner: S.me, type: d.type, committee: d.committee, payee: d.payee, desc: d.desc, lines: lines.map((l) => [l.acct, Number(l.amount), l.note, "", l.receipt || ""]), eventId: d.eventId || null, status: otherChair || approver ? "chair" : "finance", approver, created: TODAY });
       const why = isChair ? `Requester is the ${d.committee} chair, so it goes to` : `${d.committee} has no chair, so it goes to`;
       if (isChair && otherChair) c.log.push({ t: TODAY, who: "system", text: `Requester is one of the ${d.committee} chairs, so it goes to another chair, ${nameOf(otherChair)}` });
       else if (approver && approver === vice) c.log.push({ t: TODAY, who: "system", text: `${why} the vice chair, ${nameOf(vice)}` });
       else if (approver) c.log.push({ t: TODAY, who: "system", text: `${why} the committee's director, ${nameOf(approver)}` });
       else if (!otherChair) c.log.push({ t: TODAY, who: "system", text: isChair ? "Requester is the chair and there's no vice chair or director: finance reviews it" : `${d.committee} has no chair yet: finance reviews it` });
     }
+    const missing = c.lines.filter((l) => !l.receipt && !l.noReceipt).length;
+    if (missing) c.log.push({ t: TODAY, who: "system", text: `${missing} of ${c.lines.length} line${c.lines.length === 1 ? " has" : "s have"} no receipt attached yet` });
     S.pos.unshift(c);
     poNotify(c, null);
     if (d.eventId) { const evc = getCard(d.eventId); evc.linkedPOs.push(c.id); log(evc, `Purchase ${c.id} linked (${money(total(c))})`); }
