@@ -84,6 +84,18 @@ Every event gets mission review in two steps: the director of the committee's pi
 - Purchase requests: linked POs, coded to the event
 - Payments: fee and deposit for community MPH use, deposit refund after the room check
 
+**Asking for a booked time**
+
+When a request clashes with another booking, the requester can ask whoever holds it to give it up, instead of only changing their own time. Prayer times, school hours and other standing holds can't be asked for.
+
+- The ask goes to the booking's owner and their committee's chair and vice chair. For an entry made straight on the calendar, it goes to whoever made it, or to the office. The requester says why they need the time. Their request is submitted, but it doesn't hold the room or go to mission review until there's an answer
+- A recurring series is asked for date by date: only the clashing dates. The rest of the series stays
+- The holder can give it up and move their event, give it up and cancel those dates, or keep it. Giving it up takes those dates off the IAR calendar at once: a one-time event is removed, the last dates of a series end it early, and other dates are cancelled one occurrence at a time
+- A moved event needs only the pillar director's approval, with no executive step, and is approved straight away when there's no director. It can't be moved onto the time it gave up
+- If the holder keeps it, the request goes back to the requester to pick another time. The same dates can't be asked for again
+- No answer: a reminder after 3 days. After 6, the pillar director over the holder's committee decides for them, or the executive when there's no director. Nothing is ever given up automatically
+- The rules are in `portal/src/lib/events/slot-requests.ts`
+
 **Ownership and notifications**
 
 - The requester owns the card, the sponsoring committee co-owns it, and the chair can reassign it
@@ -165,7 +177,7 @@ Most of the [2021 Room Reservation Policy](https://raleighmasjid.org/wp-content/
 | Food pantry: red building first floor, 1st Saturday mornings and every Ramadan Saturday | Recurring hold | Block-out |
 | Priority tiers: school, youth, Shura/admin, S&W, then committees, then community. Funerals and Izzah outrank all; no Izzah on Friday evening | A higher-tier request against a lower-tier hold opens a conflict | Conflict |
 | Must be sponsored by an IAR committee | Required sponsor field, filled from the requester's groups | Required field |
-| Conflicts: the two chairs agree first, then the CEO's decision is binding | Conflict thread between the two owners, with an escalate-to-CEO button | Workflow |
+| Conflicts: the two chairs agree first, then the CEO's decision is binding | The requester asks the holder to give up the time (see "Asking for a booked time"). No answer in 6 days: the holder's pillar director decides, or the executive when there's no director | Workflow |
 | Conference room: leadership, imams, chairs only; requester must attend; IAR business only | Room shown only to those groups | Access |
 | MPH needs a 2-hour cleaning gap | Gap added to the hold automatically | Calculated |
 | Food only in the MPH, Room 240 and school rooms during school | Flag when food is selected for another room | Flag |
@@ -188,6 +200,7 @@ The 2021 policy needs a short refresh before its rules go into the software. Rul
 - [ ] **Gym and outside renters:** no rental rates, insurance requirement or agreement exists. Needed before the public front door
 - [ ] **Mission review:** written criteria, and how long the director and the executive each have
 - [ ] **Lead times:** the policy has none. Marketing asks for 3 weeks. Set a minimum per event type
+- [ ] **Room conflicts:** the policy makes the CEO's decision binding. The portal sends an unanswered ask to the holder's pillar director first, and to the executive only when there's no director. Confirm this, and whether a holder who answers "keep it" can be overruled
 - [ ] **New spaces:** the Community Flex Room, Red Brick rooms and the Women's Prayer Hall appear on the form but not in the policy
 
 ## Architecture

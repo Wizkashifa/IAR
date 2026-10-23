@@ -870,6 +870,7 @@ function seed() {
   S.vendors = seedVendors();
   libSeed();
   seedPortalExtras();
+  seedSlots();
 }
 /* Marketing brief and A/V needs: the event questions from the Marketing/Multimedia/AV Request Form, asked once on the event card. */
 const briefBlank = () => ({ subtitle: "", text: "", flyer: "", other: "", regLink: "", payment: "", startOn: "", files: "", notes: "" });
@@ -939,10 +940,11 @@ function holdsOn(date, excludeId) {
     }
     if (r.pantry && firstSat(date) && ruleOn("pantry")) out.push({ room: r.id, s: 480, e: 720, label: "Food pantry", kind: "standing", rule: "pantry" });
   }
-  for (const b of S.bookings) if (occursOn(b, date)) out.push({ ...b, kind: "booking" });
+  for (const b of S.bookings) if (occursOn(b, date) && !(b.released || []).includes(date)) out.push({ ...b, kind: "booking" });
   for (const c of S.cards) {
-    if (c.id === excludeId || !occursOn(c, date) || c.room === "offsite") continue;
-    if (["denied", "cancelled", "changes"].includes(c.status)) continue;
+    if (c.id === excludeId || !occursOn(c, date) || c.room === "offsite" || (c.released || []).includes(date)) continue;
+    // A card moved to give up its slot keeps its other dates while the owner picks a new time. A card waiting on a slot answer holds nothing yet.
+    if (["denied", "cancelled", "slot"].includes(c.status) || (c.status === "changes" && !c.releasedFor)) continue;
     out.push({ room: c.room, s: toMin(c.start) - c.setup, e: toMin(c.end) + c.teardown, label: c.title, kind: c.status === "approved" || c.status === "closeout" || c.status === "closed" ? "booking" : "tentative", cardId: c.id });
   }
   for (const r of S.rentals) {
@@ -995,7 +997,12 @@ function runChecks(e, ownerId) {
       if (!found.get(k).on.includes(dt)) found.get(k).on.push(dt);
     }
     if (found.size) {
-      for (const { h, on } of found.values()) add("bad", `Overlaps ${h.label}, ${fmtRange(h.s, h.e)}${rec ? `, on ${on.length} of ${dates.length} dates (first: ${fmtDate(on[0])})` : ""}.`, h.rule ? RULE_LABEL[h.rule] : h.kind === "tentative" ? "Pending request on the calendar" : "Booked on the IAR calendar");
+      const gaveTo = slotGivenTo(e);
+      for (const { h, on } of found.values()) {
+        const key = h.kind === "standing" ? "" : h.cardId || h.id || "";
+        if (gaveTo && key === gaveTo) { out.push({ sev: "bad", block: true, text: `This still overlaps ${h.label}, which you gave this time to. Pick another time or room.`, rule: "Room ask" }); continue; }
+        out.push({ sev: "bad", text: `Overlaps ${h.label}, ${fmtRange(h.s, h.e)}${rec ? `, on ${on.length} of ${dates.length} dates (first: ${fmtDate(on[0])})` : ""}.`, rule: h.rule ? RULE_LABEL[h.rule] : h.kind === "tentative" ? "Pending request on the calendar" : "Booked on the IAR calendar", ask: /^(EV|CAL)-/.test(key) ? { key, dates: on } : null });
+      }
     } else add("ok", `${rm.name} is free on the IAR calendar, ${fmtRange(ws, we)} including setup and cleanup${rec ? `, on all ${dates.length} dates` : ""}.`, "IAR Google Calendar");
     if (rm.mph && ruleOn("gap")) {
       const near = holdsOn(e.date, e.id).filter((h) => room(h.room).mph && roomsOverlap(h.room, e.room) && h.kind !== "standing" && ((h.e <= ws && ws - h.e < 120) || (h.s >= we && h.s - we < 120)));
@@ -1057,7 +1064,7 @@ const TEAM_ROLE = { marketing: "marketing", av: "av", security: "security", fina
 const TEAM_NAME = { marketing: "Marketing", av: "AV", security: "Security", finance: "Finance" };
 
 const EV_STATUS = {
-  submitted: ["Submitted", "info"], director: ["Director review", "info"], mission: ["Executive review", "info"], changes: ["Changes requested", "warn"],
+  submitted: ["Submitted", "info"], slot: ["Waiting on a room answer", "info"], director: ["Director review", "info"], mission: ["Executive review", "info"], changes: ["Changes requested", "warn"],
   approved: ["Approved", "ok"], denied: ["Denied", "bad"], cancelled: ["Cancelled", "bad"], closeout: ["Close-out", "warn"], closed: ["Closed", "accent"],
 };
 const PO_STATUS = { chair: ["Chair approval", "info"], finance: ["Finance review", "info"], to_pay: ["Approved, to pay", "ok"], paid: ["Paid", "accent"], books: ["Enter in QuickBooks", "info"], done: ["Complete", "accent"], returned: ["Returned to you", "warn"], rejected: ["Rejected", "bad"] };
@@ -1079,7 +1086,8 @@ function statusPill(c) {
 }
 function waitingOn(c) {
   if (c.kind === "event") {
-    if (c.status === "director") return `${evDirectors(c).map(nameOf).join(", ")} (director): mission review`;
+    if (c.status === "slot") { const s = S.slots.find((x) => x.from === c.id && slotOpen(x)); return s ? `${slotDeciders(s).map(nameOf).join(", ")}: answer the room ask` : ""; }
+    if (c.status === "director") return `${evDirectors(c).map(nameOf).join(", ")} (director): ${c.releasedFor ? "approve the moved time" : "mission review"}`;
     if (c.status === "mission") return "Executive: mission review";
     if (c.status === "changes") return `${nameOf(c.owner)}: make changes`;
     if (c.status === "closeout") return `${nameOf(c.owner)}: close-out`;
@@ -1108,8 +1116,9 @@ function myActionItems() {
   const p = me();
   for (const c of S.cards) {
     if (c.owner === S.me && ["changes", "closeout"].includes(c.status)) items.push({ c, why: c.status === "changes" ? "Make the requested changes and resubmit" : "Add attendance and close it out" });
-    if (canReviewEv(c)) items.push({ c, why: c.status === "director" ? "Mission review as director" : "Mission review" });
+    if (canReviewEv(c)) items.push({ c, why: c.status === "director" ? (c.releasedFor ? "Approve the moved time as director" : "Mission review as director") : "Mission review" });
   }
+  for (const s of S.slots) if (slotCanDecide(s)) items.push({ c: getCard(s.key) || getCard(s.from), why: `${nameOf(s.by)} asks for ${slotDatesText(s.dates)}${s.status === "escalated" ? " (no answer, so it's yours to decide)" : ""}` });
   for (const c of S.pos) {
     if (c.owner === S.me && c.status === "returned") items.push({ c, why: "Fix and resubmit" });
     if (canActPO(c)) items.push({ c, why: { chair: chairStepAs(c)?.as === "director" ? "Approve as director" : chairStepAs(c)?.as === "cover" ? `Covering for ${nameOf(chairStepAs(c).for)}` : c.approver ? "Approve as backup approver" : "Chair approval", finance: c.type === "card" ? "Review card charges" : "Finance review", to_pay: "Record payment", books: "Enter in QuickBooks" }[c.status] });
@@ -1790,7 +1799,7 @@ function paintChecks() {
   if (d.date) { endEl.min = d.date; endEl.max = recurMax(d.date); }
   document.getElementById("recurHint").textContent = d.recurFreq === "none" ? "Only for repeating events" : d.date ? `Required. No later than ${fmtLong(recurMax(d.date))} (${POLICY.maxMonths} months from the first date).` : "";
   document.getElementById("descHint").textContent = descHint(d.description);
-  document.getElementById("checks").innerHTML = checksHtml(ch);
+  document.getElementById("checks").innerHTML = checksHtml(ch, "draft");
   const w = worst(ch);
   document.getElementById("checkSum").innerHTML = `<span class="pill dot ${w}">${w === "ok" ? "All clear" : w === "warn" ? "Flags to review" : "Conflict"}</span>`;
   const bad = ch.filter((x) => x.sev === "bad").length;
@@ -1800,9 +1809,11 @@ function paintChecks() {
 }
 const DESC_GOOD = 200;
 const descHint = (t) => { const n = String(t || "").trim().length; return n >= DESC_GOOD ? `${n} characters. That gives reviewers and the teams what they need.` : `${n} characters. A few sentences, ${DESC_GOOD}+ characters, helps the reviewers approve faster: what happens, who it's for, the schedule and any speakers.`; };
-const checksHtml = (ch) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${icon({ ok: "check", warn: "alert", bad: "x", info: "info" }[c.sev])}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}</div></div>`).join("");
+/* askFrom: where an "Ask to use this time" button may appear: "draft" on the request form, or the card's ID on its page. */
+const checksHtml = (ch, askFrom) => ch.map((c) => `<div class="check ${c.sev}"><span class="ic">${icon({ ok: "check", warn: "alert", bad: "x", info: "info" }[c.sev])}</span><div>${esc(c.text)}${c.rule ? `<div class="rule">${esc(c.rule)}</div>` : ""}${askFrom !== undefined && c.ask && slotCanAsk(c.ask.key, c.ask.dates).ok ? `<button class="btn small" style="margin-top:6px" type="button" data-slotask="${esc(c.ask.key)}|${c.ask.dates.join(",")}|${esc(askFrom || "")}">Ask to use this time</button>` : ""}</div></div>`).join("");
 
-function submitEvent() {
+/* o.slot: submit while asking for a booked slot. The card waits for the answer before mission review. */
+function submitEvent(o = {}) {
   readDraft();
   const d = S.draft;
   const ch = runChecks(d, S.me);
@@ -1813,13 +1824,14 @@ function submitEvent() {
     c = getCard(d.id);
     prevStatus = c.status;
     Object.assign(c, JSON.parse(JSON.stringify(d)), { kind: "event" });
-    c.status = evFirstStage(c);
+    c.status = o.slot ? "slot" : slotResubmitStage(c);
     c.recur = recurOf(d);
-    c.tasks = buildTasks(c, {});
-    log(c, "Updated and resubmitted");
+    if (c.releasedFor) c.released = [];
+    if (c.status === "approved") { c.tasks = buildTasks(c, {}); log(c, "Moved to give up its time slot and resubmitted. No director over this committee, so it's approved without executive review. Room hold confirmed on the IAR calendar"); delete c.releasedFor; }
+    else { c.tasks = buildTasks(c, {}); log(c, c.releasedFor ? "Moved to give up its time slot and resubmitted. Only the director needs to approve it" : "Updated and resubmitted"); }
   } else {
     c = ev({ ...JSON.parse(JSON.stringify(d)), id: "EV-" + ++S.seq.EV, owner: S.me, created: TODAY });
-    c.status = evFirstStage(c);
+    c.status = o.slot ? "slot" : evFirstStage(c);
     c.recur = recurOf(d);
     log(c, c.recur ? `Submitted as a series: ${recurText(c.recur)}, ${fmtLong(c.recur.start)} to ${fmtLong(c.recur.end)}` : "Submitted");
     S.cards.unshift(c);
@@ -1829,8 +1841,9 @@ function submitEvent() {
   c.log.push({ t: TODAY, who: "system", text: flagged ? `Auto checks: ${flagged} flag${flagged > 1 ? "s" : ""} for the reviewers` : "Auto checks passed. Room held on the IAR calendar (tentative)" });
   if (missionReasons(c).length) c.log.push({ t: TODAY, who: "system", text: "For the reviewers: " + missionReasons(c).join(", ") });
   S.draft = null;
+  if (o.slot) return c;
   evNotify(c, prevStatus);
-  toast(`${c.id} submitted. ${c.status === "director" ? `Sent to ${evDirectors(c).map(nameOf).join(", ")} for mission review.` : "Sent to the executive for mission review."}`);
+  toast(`${c.id} submitted. ${c.status === "director" ? `Sent to ${evDirectors(c).map(nameOf).join(", ")} for mission review${c.releasedFor ? " only" : ""}.` : c.status === "approved" ? "Approved: the room is held on the IAR calendar." : "Sent to the executive for mission review."}`);
   go("card", c.id);
 }
 
@@ -1851,6 +1864,172 @@ function seriesPanel(c) {
     <div class="small muted">Every series has an end date. A committee can ask for its next period no earlier than ${POLICY.renewDays} days before this one ends.</div></div></div>`;
 }
 
+/* ---- Asking for a booked time slot ----------------------------------
+   When a request clashes with another booking, the requester can ask whoever
+   holds it to give it up. Same rules as portal/src/lib/events/slot-requests.ts. */
+const SLOT_TIMING = { remindDays: 3, escalateDays: 6 };
+const slotOpen = (s) => s.status === "open" || s.status === "escalated";
+const holderOf = (key) => getCard(key) || S.bookings.find((b) => b.id === key);
+const holderLabel = (h) => h.title || h.label;
+const holderDates = (h) => (h.recur ? occurrences(h.recur) : [h.date]);
+const holderWindow = (h) => (h.title ? fmtRange(toMin(h.start) - h.setup, toMin(h.end) + h.teardown) : fmtRange(h.s, h.e));
+const slotDatesText = (dates) => (dates.length > 1 ? `${fmtDate(dates[0])} and ${dates.length - 1} more date${dates.length > 2 ? "s" : ""}` : fmtDate(dates[0]));
+const slotWhat = (s) => { const h = holderOf(s.key); return `${room(h.room).name}, ${slotDatesText(s.dates)}, ${holderWindow(h)}`; };
+/* The owner and their committee's chair and vice chair; the office for an entry made straight on the calendar. */
+function slotAskTo(h, by) {
+  if (!h.owner) return ["role:office"];
+  const to = [...new Set([h.owner, ...peopleIn(h.committee, "chair"), ...peopleIn(h.committee, "vice")])].filter((p) => p !== by);
+  return to.length ? to : ["role:office"];
+}
+/* No answer: the pillar director over the holder's committee, else the executive. */
+function slotEscalateTo(h, by) {
+  const d = h.committee ? directorsOf(h.committee).filter((p) => p !== h.owner && p !== by) : [];
+  return d.length ? d : ["role:executive"];
+}
+const slotAddressed = (list) => list.some((a) => (a.startsWith("role:") ? has(a.slice(5)) : a === S.me));
+const slotDeciders = (s) => (s.status === "escalated" ? [...s.askedOf, ...s.escalatedTo] : s.askedOf).map((a) => (a.startsWith("role:") ? `ext:The ${a.slice(5)}` : a));
+const slotCanDecide = (s) => slotOpen(s) && s.by !== S.me && (slotAddressed(s.askedOf) || (s.status === "escalated" && slotAddressed(s.escalatedTo)));
+/* The card this event card gave its slot to, while it's being moved. */
+function slotGivenTo(e) {
+  const c = e.id && getCard(e.id);
+  const s = c && c.releasedFor && S.slots.find((x) => x.id === c.releasedFor);
+  return s ? s.from : "";
+}
+function slotCanAsk(key, dates) {
+  const h = holderOf(key);
+  if (!h) return { ok: false, error: "There's nobody to ask about this booking. Ask the office." };
+  if (h.owner === S.me) return { ok: false, error: "This is your own booking. Change it from its request instead." };
+  for (const s of S.slots) {
+    if (s.key !== key) continue;
+    const both = s.dates.filter((d) => dates.includes(d));
+    if (!both.length) continue;
+    if (slotOpen(s)) return { ok: false, error: `${slotDatesText(both)} already has an open ask (${s.id}).` };
+    if (s.status === "kept") return { ok: false, error: `${holderLabel(h)} was kept on ${slotDatesText(both)}. Pick another time.` };
+  }
+  return { ok: true };
+}
+/* Moved to give up a slot: the director only, or approved when there's no director. */
+const slotResubmitStage = (c) => (!c.releasedFor ? evFirstStage(c) : evDirectors(c).length ? "director" : "approved");
+
+function vSlotAsk() {
+  const a = S.slotAsk, h = a && holderOf(a.key);
+  if (!h) return `<div class="empty">Nothing to ask about.</div>`;
+  const from = a.card ? getCard(a.card) : null, d = from ? from : S.draft;
+  if (!d) return `<div class="empty">Nothing to ask about.</div>`;
+  const to = slotAskTo(h, S.me), up = slotEscalateTo(h, S.me);
+  const names = (l) => l.map((x) => (x.startsWith("role:") ? `the ${x.slice(5)}` : fn(x)));
+  const list = (l) => (l.length > 1 ? `${l.slice(0, -1).join(", ")} and ${l.at(-1)}` : l[0]);
+  return `<div class="crumb"><button type="button" data-slotback="1">${from ? esc(from.id) : d.id ? "Edit " + esc(d.id) : "New request"}</button> / Ask to use this time</div>
+  <div><h1>Ask to use this time</h1><p class="lead">${esc(d.title || "Your event")} overlaps ${esc(holderLabel(h))}. Ask ${esc(list(names(to)))} to give it up.</p></div>
+  <div class="panel"><div class="panel-b stack"><form class="f" id="slotForm" autocomplete="off">
+    <div class="fld wide"><span class="lbl">Booked</span><div>${esc(holderLabel(h))}${h.committee ? ` · ${esc(h.committee)}` : " · on the IAR calendar"} · ${esc(room(h.room).name)}, ${holderWindow(h)}</div></div>
+    <div class="fld wide"><span class="lbl">${a.dates.length > 1 ? "The dates you're asking for" : "Date"}</span>${a.dates.length > 1 ? `<div class="checks-inline">${a.dates.map((x) => `<label><input type="checkbox" name="slotDate" value="${x}" checked> ${fmtDate(x)}</label>`).join("")}</div><span class="hint">Only the dates that clash. The rest of their series stays as it is.</span>` : `<div>${fmtDate(a.dates[0])}</div>`}</div>
+    <div class="fld wide"><label for="slotReason">Why you need this time</label><textarea id="slotReason" rows="3" placeholder="e.g. It's the only evening the speaker can come">${esc(a.reason || "")}</textarea></div>
+  </form>
+  <div class="note info">Your request is submitted now and waits for their answer. It doesn't hold the room or go to mission review until they give the time up. If they keep it, it comes back to you to pick another time. No answer in ${SLOT_TIMING.remindDays} days: they're reminded. After ${SLOT_TIMING.escalateDays}: ${esc(list(names(up)))} decide${up.length > 1 || up[0].startsWith("role:") ? "" : "s"} for them.</div>
+  <div class="row"><span class="spacer"></span><button class="btn" type="button" data-slotback="1">Back</button><button class="btn primary" type="button" data-slotsend="1">${from ? "Ask" : "Submit and ask"}</button></div>
+  </div></div>`;
+}
+function slotSend() {
+  const a = S.slotAsk, h = holderOf(a.key);
+  const dates = a.dates.length > 1 ? [...document.querySelectorAll("input[name=slotDate]:checked")].map((x) => x.value) : a.dates;
+  const reason = document.getElementById("slotReason").value.trim();
+  a.reason = reason;
+  if (!dates.length) return toast("Pick at least one date to ask for.");
+  if (!reason) return toast("Say why you need this time, so they can decide.");
+  const ok = slotCanAsk(a.key, dates);
+  if (!ok.ok) return toast(ok.error);
+  let c;
+  if (a.card) { c = getCard(a.card); c.status = "slot"; }
+  else { c = submitEvent({ slot: true }); if (!c) return; }
+  const sr = { id: "SR-" + ++S.seq.SR, from: c.id, by: S.me, key: a.key, dates, reason, askedOf: slotAskTo(h, S.me), escalatedTo: slotEscalateTo(h, S.me), status: "open", t: TODAY };
+  S.slots.unshift(sr);
+  log(c, `Asked for ${slotWhat(sr)}, held by ${holderLabel(h)}. Reason: ${reason}`);
+  if (h.log) log(h, `${nameOf(S.me)} asked for ${slotDatesText(dates)} for ${c.id} “${c.title}”. Reason: ${reason}`);
+  sr.askedOf.forEach((to) => notify(to, `${nameOf(S.me)} asks for ${slotWhat(sr)}, held by ${holderLabel(h)}. Reason: ${reason}`, { card: h.title ? h.id : c.id, email: true, delegable: true }));
+  S.slotAsk = null;
+  toast(`${c.id} submitted. ${slotDeciders(sr).map(nameOf).join(", ")} ${sr.askedOf.length > 1 ? "are" : "is"} asked to give up the time.`);
+  go("card", c.id);
+}
+function slotDecide(id, choice) {
+  const s = S.slots.find((x) => x.id === id);
+  if (!s || !slotCanDecide(s)) return toast("This ask is waiting on someone else.");
+  const h = holderOf(s.key), from = getCard(s.from), what = slotDatesText(s.dates);
+  const note = (document.getElementById("slotNote_" + id)?.value || "").trim();
+  const forWhom = h.owner && h.owner !== S.me ? ` on behalf of ${nameOf(h.owner)}` : "";
+  const by = s.status === "escalated" && !slotAddressed(s.askedOf) ? ` (no answer, so decided by ${s.escalatedTo[0] === "role:executive" ? "the executive" : "the director"})` : "";
+  Object.assign(s, { status: choice === "keep" ? "kept" : "released", choice, decidedBy: S.me, note, decidedOn: TODAY });
+  if (choice === "keep") {
+    from.status = "changes";
+    log(from, `Room ask: ${holderLabel(h)} is keeping ${what}${note ? ` (${note})` : ""}. Pick another time or room`);
+    if (h.log) log(h, `Kept ${what}${forWhom}${by}, so ${from.id} picks another time${note ? `. Note: ${note}` : ""}`);
+    notify(s.by, `${from.id} “${from.title}”: ${holderLabel(h)} is keeping ${what}${note ? ` (${note})` : ""}. Pick another time or room.`, { card: from.id, email: true });
+    if (h.owner) notify(h.owner, `${nameOf(S.me)} kept ${what} of ${h.id} for you`, { card: h.id });
+    toast(`Kept. ${nameOf(s.by)} is asked to pick another time.`);
+    return render();
+  }
+  h.released = [...new Set([...(h.released || []), ...s.dates])];
+  const all = holderDates(h).every((d) => h.released.includes(d));
+  if (h.title && choice === "release_move") {
+    h.releasedFor = s.id; h.status = "changes";
+    log(h, `Room ask: gave up ${what} for ${from.id} (${nameOf(s.by)})${forWhom}${by}. Pick a new time and resubmit; only the director needs to approve it`);
+  } else if (h.title) {
+    if (all) h.status = "cancelled";
+    log(h, `Gave up ${what} for ${from.id} (${nameOf(s.by)})${forWhom}${by}. ${all ? "Cancelled and removed from the IAR calendar" : "Those dates are removed from the IAR calendar; the rest of the series stays"}`);
+  }
+  if (h.owner && h.owner !== S.me) notify(h.owner, `${h.id} “${h.title}” gave up ${what} for ${from.id}${choice === "release_move" ? ". Pick a new time; only the director needs to approve it" : ""}`, { card: h.id, email: choice === "release_move" });
+  from.status = evFirstStage(from);
+  log(from, `Room ask: ${holderLabel(h)} gave up ${what}${h.title ? "" : ` and the office removed it from the IAR calendar`}. Sent to mission review`);
+  notify(s.by, `${holderLabel(h)} gave up ${what}. ${from.id} “${from.title}” goes to mission review.`, { card: from.id });
+  evNotify(from, "slot");
+  if (choice === "release_move" && h.owner === S.me) { toast("Given up. Pick a new time for your event."); S.arg = h.id; return eventAction("edit"); }
+  toast(`Given up. ${from.id} goes to mission review${h.title && choice === "release_move" ? `, and ${fn(h.owner)} is asked to pick a new time` : ""}.`);
+  render();
+}
+function slotWithdraw(id) {
+  const s = S.slots.find((x) => x.id === id), from = getCard(s.from), h = holderOf(s.key);
+  if (!slotOpen(s) || s.by !== S.me) return;
+  s.status = "withdrawn"; from.status = "changes";
+  log(from, "Room ask: withdrawn. Pick another time or room");
+  if (h.log) log(h, `${nameOf(S.me)} withdrew the ask for ${slotDatesText(s.dates)}`);
+  slotDeciders(s).filter((p) => PEOPLE[p]).forEach((p) => notify(p, `${nameOf(S.me)} withdrew the ask for ${slotWhat(s)}`, { card: h.title ? h.id : from.id }));
+  toast("Withdrawn"); render();
+}
+const SLOT_PILL = { open: ["Waiting for an answer", "info"], escalated: ["Waiting for the director", "warn"], released: ["Given up", "ok"], kept: ["Kept", "bad"], withdrawn: ["Withdrawn", "accent"] };
+/* Asks on a card: ones it made, and ones made of it. */
+function slotPanels(c) {
+  return S.slots.filter((s) => s.from === c.id || s.key === c.id).map((s) => {
+    const h = holderOf(s.key), mine = s.from === c.id;
+    const decide = slotCanDecide(s) ? `<div class="fld" style="max-width:520px"><label for="slotNote_${s.id}">Note for ${esc(fn(s.by))} (optional)</label><input type="text" id="slotNote_${s.id}" placeholder="e.g. We can move to the following week"></div>
+      <div class="row">${h.title ? `<button class="btn primary" type="button" data-slotdo="${s.id}|release_move">Give it up and move ${h.owner === S.me ? "my" : "the"} event</button>` : ""}<button class="btn ${h.title ? "" : "primary"}" type="button" data-slotdo="${s.id}|release_cancel">Give it up and cancel ${s.dates.length > 1 || h.recur ? "those dates" : "it"}</button><button class="btn" type="button" data-slotdo="${s.id}|keep">Keep it</button></div>
+      ${s.status === "escalated" && !slotAddressed(s.askedOf) ? `<div class="small muted">Nobody answered in ${SLOT_TIMING.escalateDays} days, so it's yours to decide. The history records that you decided for them.</div>` : ""}` : "";
+    const withdraw = mine && s.by === S.me && slotOpen(s) ? `<div class="row"><button class="btn small" type="button" data-slotwithdraw="${s.id}">Withdraw the ask</button></div>` : "";
+    const [pl, tone] = SLOT_PILL[s.status];
+    const head = mine ? `${s.by === S.me ? "You" : esc(nameOf(s.by))} asked ${esc(slotDeciders(s).map(nameOf).join(", "))} for <strong>${esc(slotWhat(s))}</strong>, held by ${h.title ? `<button class="lnk" type="button" data-card="${h.id}">${esc(holderLabel(h))}</button>` : esc(holderLabel(h))}.`
+      : `${esc(nameOf(s.by))} asks for <strong>${esc(slotWhat(s))}</strong> for <button class="lnk" type="button" data-card="${s.from}">${esc(getCard(s.from).title)}</button>.`;
+    const age = daysBetween(s.t, TODAY);
+    const status = s.status === "open" ? `Asked ${age ? `${age} day${age > 1 ? "s" : ""} ago` : "today"}.${age >= SLOT_TIMING.remindDays ? " A reminder was sent." : ""}`
+      : s.status === "escalated" ? `No answer in ${SLOT_TIMING.escalateDays} days, so ${esc(s.escalatedTo.map((x) => (x.startsWith("role:") ? "the executive" : fn(x))).join(" or "))} can decide now.`
+      : s.status === "withdrawn" ? "Withdrawn." : `${esc(nameOf(s.decidedBy))}: ${s.status === "kept" ? "kept it" : s.choice === "release_move" ? "gave it up; the event is being moved" : "gave it up"}${s.note ? ` · “${esc(s.note)}”` : ""}`;
+    return `<div class="panel"><div class="panel-h"><h2>Room ask <span class="mono small">${s.id}</span></h2><span class="pill dot ${tone}">${pl}</span></div><div class="panel-b stack">
+      <div>${head}</div><div class="small muted">Reason: ${esc(s.reason)}</div><div class="small">${status}</div>${decide}${withdraw}</div></div>`;
+  }).join("");
+}
+/* Sample: Social & Welfare asked for one Tuesday of the Youth Weekly Halaqa a week ago and nobody answered, so it's with the director. */
+function seedSlots() {
+  S.slots = []; S.seq.SR = 1000;
+  S.bookings.forEach((b, i) => (b.id = "CAL-" + (i + 1)));
+  const h = getCard("EV-1022"), day = h && occurrences(h.recur).find((d) => d > addDays(TODAY, 2));
+  if (!day) return;
+  const ago = (n) => addDays(TODAY, -n);
+  const c = ev({ id: "EV-1056", title: "Winter coat drive volunteer night", owner: "swChair", committee: "Social & Welfare", status: "slot", date: day, start: "19:00", end: "20:30", room: "r250", attendance: 20, created: ago(7),
+    description: "Volunteers sort and size donated winter coats before the Saturday giveaway. Pizza for volunteers.", food: true });
+  const sr = { id: "SR-" + ++S.seq.SR, from: c.id, by: "swChair", key: h.id, dates: [day], reason: "The coats arrive that Monday and the giveaway is that Saturday, so Tuesday is the only night we can sort them.", askedOf: slotAskTo(h, "swChair"), escalatedTo: slotEscalateTo(h, "swChair"), status: "escalated", t: ago(7) };
+  c.log = [{ t: ago(7), who: "swChair", text: "Submitted" }, { t: ago(7), who: "swChair", text: `Asked for ${slotWhat(sr)}, held by ${h.title}. Reason: ${sr.reason}` }, { t: ago(4), who: "system", text: "Reminder sent: no answer yet" }, { t: ago(1), who: "system", text: `No answer in ${SLOT_TIMING.escalateDays} days, so sent to the director to decide` }];
+  h.log.push({ t: ago(7), who: "swChair", text: `Asked for ${fmtDate(day)} for ${c.id} “${c.title}”` });
+  S.cards.unshift(c); S.slots.push(sr);
+}
+
 /* ---- Request pages ---------------------------------------------------
    One layout for every request type (events, purchases, marketing, tickets):
    crumb · title, lead line and status · stages · notes · actions ·
@@ -1862,7 +2041,8 @@ const financeName = () => fn(Object.keys(PEOPLE).find((p) => p !== "admin" && ro
 function nextStep(c) {
   const mine = c.owner === S.me, own = mine ? "You" : fn(c.owner), notified = mine ? " You'll get a notification when it's done." : "";
   if (c.kind === "event") return {
-    director: `${evDirectors(c).map(personTo).join(" or ")} (director) reviews it against IAR's mission, then an executive gives final approval.${notified}`,
+    slot: (() => { const s = S.slots.find((x) => x.from === c.id && slotOpen(x)); return s ? `${slotDeciders(s).map((x) => (x.startsWith("ext:") ? x.slice(4) : personTo(x))).join(" or ")} answer${slotDeciders(s).length > 1 ? "" : "s"} the room ask. If they give it up, this goes to mission review; if they keep it, ${mine ? "you pick" : `${own} picks`} another time.` : ""; })(),
+    director: c.releasedFor ? `${evDirectors(c).map(personTo).join(" or ")} (director) approves the new time. No executive review: it moved to give up its slot.${notified}` : `${evDirectors(c).map(personTo).join(" or ")} (director) reviews it against IAR's mission, then an executive gives final approval.${notified}`,
     mission: `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`,
     changes: `${own} make${mine ? "" : "s"} the requested changes and resubmit${mine ? "" : "s"}.`,
     approved: (() => { const open = c.tasks.filter((t) => t.status !== "done").map((t) => TEAM_NAME[t.team]); return `${open.length ? `${open.length > 1 ? `${open.slice(0, -1).join(", ")} and ${open.at(-1)} get` : `${open[0]} gets`} it ready. ` : ""}After the event, ${mine ? "you add" : `${own} adds`} attendance and close${mine ? "" : "s"} it out.`; })(),
@@ -1929,10 +2109,12 @@ function vCard() {
   const noDirector = !evDirectors(c).length;
   const order = ["submitted", "checks", "director", "mission", "approved", "eventday", "closeout", "closed"];
   const labels = { submitted: "Submitted", checks: "Auto checks", director: "Director review", mission: "Executive review", approved: "Approved", eventday: "Event day", closeout: "Close-out", closed: "Closed" };
-  const at = { director: 2, mission: 3, changes: 2, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
+  const at = { slot: 1, director: 2, mission: 3, changes: 2, approved: 4, closeout: 6, closed: 7, denied: 3, cancelled: 3 }[c.status] ?? 1;
+  if (c.status === "slot") labels.checks = "Room ask";
+  if (c.releasedFor) labels.mission = "Executive review (skipped)";
   const steps = order.map((k, i) => {
     let cls = i < at ? "done" : i === at ? "now" : "";
-    if (k === "director" && noDirector) cls += " skip";
+    if ((k === "director" && noDirector) || (k === "mission" && c.releasedFor)) cls += " skip";
     if (k === "eventday" && c.status === "approved" && c.date <= TODAY) cls = "now";
     return { label: labels[k] + (k === "director" && noDirector ? " (skipped)" : ""), cls };
   });
@@ -1945,16 +2127,16 @@ function vCard() {
   if (c.status === "approved" && !c.recur && (c.owner === S.me || has("office"))) actions.push(`<button class="btn" data-act="held" type="button">Mark event as held</button>`);
   if (c.status === "approved" && c.owner === S.me) actions.push(`<button class="btn" data-act="linkPO" type="button">Add a purchase request</button>`);
   const conflictNote = c.status === "mission" && worst(ch) === "bad" ? `<div class="note warn">The checks found a conflict. Approving anyway records an override with your name.</div>` : "";
-  const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question/.test(l.text));
+  const lastAsk = [...c.log].reverse().find((l) => /Requested changes|Question|Room ask/.test(l.text));
   return reqPage({
     back: ["events", "Events & Rooms"], id: c.id, title: esc(c.title),
     lead: ["Event", c.committee, `from ${nameOf(c.owner)}`, `${c.recur ? `${recurText(c.recur)}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))}`, r.name],
     pills: statusPill(c),
     stages: reqStages(steps),
     next: nextStep(c),
-    notes: (c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : "") + (c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""),
+    notes: (c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^(Requested changes|Room ask): /, ""))}</div>` : "") + (c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""),
     actions: actions.length ? `${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div>` : "",
-    main: `${c.recur ? seriesPanel(c) : ""}
+    main: `${slotPanels(c)}${c.recur ? seriesPanel(c) : ""}
       ${c.description ? `<div class="panel"><div class="panel-h"><h2>About this event</h2></div><div class="panel-b" style="white-space:pre-wrap">${esc(c.description)}</div></div>` : ""}
       ${c.isPublic ? briefPanel(c) : ""}
       ${c.av ? avPanel(c) : ""}
@@ -1971,7 +2153,7 @@ function vCard() {
         <dt>Room hold</dt><dd>${fmtRange(toMin(c.start) - c.setup, toMin(c.end) + c.teardown)} (setup ${c.setup} min, cleanup ${c.teardown} min)</dd>
         <dt>Expected</dt><dd>${c.attendance} people</dd><dt>Food</dt><dd>${c.food ? "Yes" : "No"}</dd><dt>Public</dt><dd>${c.isPublic ? "Yes" : "Internal"}</dd>
         <dt>Registration</dt><dd>${c.registration ? "Yes" : "No"}</dd>${c.setupNotes ? `<dt>Setup plan (by requester)</dt><dd>${esc(c.setupNotes)}</dd>` : ""}`)}
-      <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch)}</div></div></div>
+      <div class="panel"><div class="panel-h"><h2>Checks</h2><span class="pill ${worst(ch)}">${{ ok: "All clear", warn: "Flags", bad: "Conflict" }[worst(ch)]}</span></div><div class="panel-b"><div class="checks">${checksHtml(ch, c.owner === S.me && c.status === "changes" && !c.releasedFor ? c.id : undefined)}</div></div></div>
       <div class="panel"><div class="panel-h"><h2>Calendar</h2></div><div class="panel-b">${c.room === "offsite" ? '<span class="muted">Off-site</span>' : timeline(c.date, c.room, c)}</div></div>`,
   });
 }
@@ -4027,6 +4209,9 @@ const STEPS = [
   { as: "youthChair", view: "card", arg: "EV-0998", t: "Close out an event", p: `After the food drive briefing, ${fn("youthChair")} adds attendance. Actual spend comes from the linked purchase, and room condition comes from security.` },
   { as: "youthChair", view: "newEvent", t: "Request a recurring event", reset: () => { S.draft = { ...defaultDraft(), title: "Youth Homework Club", date: nextDow(TODAY, 2, 10), start: "16:30", end: "18:00", room: "r250", attendance: 15, food: false, isPublic: false, av: false, setupNotes: "", budget: 0, recurFreq: "weekly", recurEnd: recurMax(nextDow(TODAY, 2, 10)), description: "Weekly homework help for middle schoolers." }; }, p: "Repeats is set to Every week and Repeats until is filled with the latest allowed date, 3 months out. Try a later date: it is rejected, since a series can't pass 3 months. Every session is checked against the IAR calendar. Move the first date to a Monday and the start to 2:00 PM in the gym: the checks flag the school-hours conflict on every date. A series can't be open-ended." },
   { as: "youthChair", view: "card", arg: "EV-1022", t: "Renew a series", p: `The Youth Weekly Halaqa is a 3-month series about two weeks from its end date, so the renewal window (30 days before the end) is open. Request the next period: the form fills in and starts the day after this one ends. The Weekly Intake Hours series just started, so its button stays off until its window opens. The renewal goes through mission review like any request.` },
+  { as: "swChair", view: "newEvent", t: "Ask for a booked time", reset: () => { const fam = getCard("EV-1031"); S.draft = { ...defaultDraft(), title: "Dinner for new families", committee: "Social & Welfare", date: fam.date, start: "18:30", end: "20:30", room: "mphAB", attendance: 80, food: true, agree: true, description: "A welcome dinner for families who have just moved to Raleigh, with S&W volunteers on hand to explain the food pantry and aid." }; }, p: `${fn("swChair")} wants the MPH on the evening of the Youth Family Night. The checks flag the overlap. Click Ask to use this time under it, say why you need it, and click Submit and ask. The request waits for an answer: it doesn't hold the room or go to mission review yet. ${fn("youthChair")}, who owns Family Night, is emailed. Prayer times and school hours can't be asked for.` },
+  { as: "youthChair", view: "home", t: "Give up the time and move", p: `${fn("youthChair")} sees the ask under Waiting on you. Open Family Night: the Room ask panel shows who asked and why. Click Give it up and move my event. The form opens; move it to the next day, tick the boxes under Confirm and resubmit. A moved event needs only ${fn("commDirector")}, the director: no executive review. The dinner goes on to mission review. Choosing Keep it instead sends the dinner back to ${fn("swChair")} to pick another time.` },
+  { as: "commDirector", view: "home", t: "Nobody answered: the director decides", p: `${fn("commDirector")} approves the moved Family Night, and it's approved straight away. Below it is a week-old ask from ${fn("swChair")} for one Tuesday of the Youth Weekly Halaqa. Nobody answered: a reminder went out after 3 days, and after 6 it came to the director. Open it and click Give it up and cancel those dates. Only that Tuesday comes off the IAR calendar; the rest of the series stays.` },
   { as: "renter", view: "public", t: "An outside group requests the gym", p: `No IAR account needed. Send the request, then switch to ${fn("officeAdmin")} and open Facility Rentals to review it against the same calendar.` },
   { as: "headImam", view: "budget", t: "Budget for all of IAR", reset: () => { S.budTab = "flow"; S.budScope = "IAR"; S.qb = null; }, p: "This is the real FY2026–27 budget: IAR's General Fund cost centers plus the Page Road campus. Money flows from its sources to each cost center, then to spent, committed and available. Hover a band for its amount, or switch to one cost center. Year-to-date spending is sample data." },
   { as: "youthChair", view: "budget", t: "A chair sees only their committee", reset: () => { S.budTab = "flow"; S.budScope = null; }, p: `${fn("youthChair")} chairs Youth, so his view is Youth only: its General Fund budget of $140,000 plus the program revenue Youth has earned itself.` },
@@ -4106,7 +4291,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, card: vCard, purchases: vPurchases, newPO: vNewPO, vendors: vVendors, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, slotAsk: vSlotAsk, card: vCard, purchases: vPurchases, newPO: vNewPO, vendors: vVendors, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
   const preview = mod && mod.preview ? `<div class="note info"><strong>Preview.</strong> ${esc(mod.name)} is planned for after launch. Have a look, but it isn't part of this beta.</div>` : "";
   document.getElementById("main").innerHTML = preview + (V[S.view] || vHome)();
   renderRail();
@@ -4159,6 +4344,11 @@ document.addEventListener("click", (e) => {
   if (ds.reqkind) { S.reqKind = ds.reqkind; return render(); }
   if (ds.jump) { const el = document.getElementById(ds.jump); el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); el.querySelector("input, select, textarea")?.focus({ preventScroll: true }); return; }
   if (ds.go) { if (ds.budtab) { S.budTab = ds.budtab; S.budScope = "IAR"; } if (ds.go === "newEvent") S.draft = null; if (ds.go === "newPO") S.poDraft = null; if (ds.go === "newMarketing") S.mkDraft = null; if (ds.go === "feedback") S.fbSent = false; return go(ds.go, ds.arg); }
+  if (ds.slotask) { const [key, dates, card] = ds.slotask.split("|"); if (card === "draft") readDraft(); S.slotAsk = { key, dates: dates.split(","), card: card === "draft" ? null : card }; return go("slotAsk"); }
+  if (ds.slotback) return S.slotAsk && S.slotAsk.card ? go("card", S.slotAsk.card) : go("newEvent");
+  if (ds.slotsend) return slotSend();
+  if (ds.slotdo) { const [id, choice] = ds.slotdo.split("|"); return slotDecide(id, choice); }
+  if (ds.slotwithdraw) return slotWithdraw(ds.slotwithdraw);
   if (ds.card) return go("card", ds.card);
   if (ds.nopen) { const n = S.notifs.find((x) => x.id === Number(ds.nopen)); if (!n) return; if (!n.readBy.includes(S.me)) n.readBy.push(S.me); return n.card ? go("card", n.card) : go(n.view || "home"); }
   if (ds.nallread) { myNotifs().forEach((n) => { if (!n.readBy.includes(S.me)) n.readBy.push(S.me); }); S.tkx.notifs.filter((n) => n.to === S.me).forEach((n) => (n.read = true)); return render(); }
@@ -4213,7 +4403,11 @@ function eventAction(a) {
   const c = getCard(S.arg); const note = (document.getElementById("actNote")?.value || "").trim();
   const prevStatus = c.status;
   if (["approve", "changes", "deny"].includes(a) && !canReviewEv(c)) return toast("This step is waiting on someone else.");
-  if (a === "approve" && c.status === "director") {
+  if (a === "approve" && c.status === "director" && c.releasedFor) {
+    c.status = "approved"; c.tasks = buildTasks(c, {}); delete c.releasedFor;
+    log(c, "Mission review as director: approved. It was moved to give up its time slot, so no executive review is needed. Room hold confirmed on the IAR calendar" + (note ? `. Note: ${note}` : ""));
+    toast("Approved. The new time is held on the IAR calendar.");
+  } else if (a === "approve" && c.status === "director") {
     c.status = "mission";
     log(c, "Mission review as director: approved. Sent to the executive" + (note ? `. Note: ${note}` : ""));
     toast("Sent to the executive");
