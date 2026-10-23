@@ -3,7 +3,7 @@
  * the checks the old form couldn't make. Plain functions, so they're tested
  * without a server (see purchases.test.ts).
  */
-import { FUNDS, findAccount } from "./accounts";
+import { FUNDS, findAccount, isLaborAccount } from "./accounts";
 import {
   DELIVERY_LABEL,
   type DeliveryMethod,
@@ -29,9 +29,13 @@ export type PurchaseInput = {
   description: string;
   payee?: string;
   invoiceNumber?: string;
+  /** "check" or "ach"; with a check, `delivery` says where it goes. */
+  paymentMethod?: string;
   delivery?: string;
   mailingAddress?: string;
   isLabor?: boolean;
+  /** Set by the server, never by the browser: a W-9 file came with the form, or is already on the request. */
+  w9Attached?: boolean;
   relatedParty?: boolean;
   cardLast4?: string;
   statementMonth?: string;
@@ -85,7 +89,7 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
   if (!FUNDS.includes(fund)) errors.push("Choose the fund or committee this is charged to.");
   else if (kind !== "card" && ctx.funds && !ctx.funds.includes(fund)) errors.push("You can only charge the funds of committees and teams you're on. Ask a member of that committee to submit it.");
 
-  // Payee and check delivery: not for card receipts.
+  // Payee and payment: not for card receipts.
   let payee: string | undefined;
   let delivery: DeliveryMethod | undefined;
   let mailingAddress: string | undefined;
@@ -93,10 +97,13 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
     payee = kind === "reimburse" ? ctx.requesterName : str(raw.payee, 120);
     if (!payee) errors.push("Who should be paid?");
     delivery = str(raw.delivery, 40) as DeliveryMethod;
-    if (!DELIVERIES.includes(delivery)) errors.push("Choose how the payment should be delivered.");
-    if (delivery === "mail") {
+    if (!DELIVERIES.includes(delivery)) {
+      errors.push(str(raw.paymentMethod, 10) === "check" ? "Choose where the check should go." : "Choose check or ACH.");
+      delivery = undefined;
+    } else if (delivery !== "ach") {
+      // Every check, wherever it goes: IAR records the payee's address.
       mailingAddress = str(raw.mailingAddress, 300);
-      if (mailingAddress.length < 8) errors.push("Enter the mailing address for the check.");
+      if (mailingAddress.length < 8) errors.push(kind === "reimburse" ? "Enter your mailing address. IAR records it for every check." : "Enter the payee's mailing address. IAR records it for every check.");
     }
   }
 
@@ -135,18 +142,20 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
   const attestation = str(raw.attestationName, 120);
   if (!attestation) errors.push("Type your name to sign the request.");
 
-  if (errors.length) return { ok: false, errors };
-
-  // A W-9 is needed for labor or a payee IAR hasn't paid before, unless one is on file.
+  // A W-9 is needed only for labor (ticked, or charged to a labor sub-account), unless one is on file.
   let isLabor: boolean | undefined;
   let w9Required: boolean | undefined;
   let relatedParty: boolean | undefined;
   if (kind === "pay") {
-    isLabor = Boolean(raw.isLabor);
-    const known = ctx.vendors.find((v) => v.name.toLowerCase() === payee!.toLowerCase());
-    w9Required = (isLabor || !known) && !known?.w9OnFile;
+    isLabor = Boolean(raw.isLabor) || lines.some((l) => isLaborAccount(findAccount(l.accountId)));
+    const known = payee ? ctx.vendors.find((v) => v.name.toLowerCase() === payee!.toLowerCase()) : undefined;
+    w9Required = isLabor && !known?.w9OnFile;
+    if (w9Required && payee && !raw.w9Attached) errors.push("Upload the payee's W-9. IAR needs one on file before paying for labor.");
     relatedParty = Boolean(raw.relatedParty);
   }
+
+  if (errors.length) return { ok: false, errors };
+
   return {
     ok: true,
     details: {

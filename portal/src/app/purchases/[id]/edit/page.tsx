@@ -6,6 +6,7 @@ import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
 import { isPurchaseCard, permission } from "@/lib/purchases/workflow";
 import { fundsFor, resubmitPurchase } from "../../actions";
 import PurchaseForm from "../../PurchaseForm";
+import { vendorFormProps } from "../../formData";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,6 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   if (!isPurchaseCard(card) || card.ownerEmail.toLowerCase() !== viewer.email.toLowerCase()) notFound();
   if (!permission(card, { email: viewer.email, name: viewer.name, roles: viewer.actingRoles }, "resubmit").ok) redirect(`/purchases/${id}`);
   const p = card.purchase;
-  const vendors = await store.listVendors();
   const ctx = await purchaseContext();
   return (
     <>
@@ -31,8 +31,9 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
         requesterName={viewer.name}
         cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
         funds={await fundsFor(viewer, ctx)}
-        vendors={vendors.map((v) => ({ name: v.name, w9OnFile: v.w9OnFile }))}
+        {...await vendorFormProps(viewer)}
         existingFiles={p.attachments.map((a) => a.name)}
+        existingW9={p.w9Uploaded?.name}
         submitLabel="Resubmit"
         initial={{
           kind: p.kind,

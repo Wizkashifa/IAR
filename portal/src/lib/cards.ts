@@ -70,13 +70,29 @@ export const NEEDS_OWNER: CardStatus[] = ["draft", "changes_requested", "close_o
 /** Statuses a card can still move from. */
 export const OPEN_STATUSES: CardStatus[] = ["submitted", "in_review", "changes_requested", "approved", "paid", "close_out"];
 
-/** A saved payee, so a W-9 is collected once per vendor, not once per request. */
+/**
+ * A saved payee, shared by every committee that pays them, so the address and
+ * W-9 are collected once. Social & Welfare payees are `restricted`: a separate
+ * record only S&W and finance ever see (rules in lib/purchases/vendors.ts).
+ */
 export type Vendor = {
   id: string;
   name: string;
   w9OnFile: boolean;
   /** When finance confirmed the W-9 (the file itself lives only in the restricted W-9 drive). */
   w9Date?: string;
+  /** The W-9 in the restricted drive. Finance only; never shown to requesters or put in a notice. */
+  w9FileId?: string;
+  /** Aid recipient or other Social & Welfare payee. Unset on records saved before this existed: treat as false. */
+  restricted?: boolean;
+  /** Mailing address from the latest check. */
+  address?: string;
+  /** Email or phone, typed by finance. */
+  contact?: string;
+  /** Funds that have paid this vendor. */
+  funds?: string[];
+  lastPaidAt?: string;
+  timesPaid?: number;
 };
 
 export class ConflictError extends Error {
@@ -100,10 +116,10 @@ export interface CardStore {
   save(card: Card, expectedUpdatedAt: string): Promise<void>;
   listVendors(): Promise<Vendor[]>;
   saveVendor(v: Vendor): Promise<void>;
+  deleteVendor(id: string): Promise<void>;
 }
 
-export const vendorId = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "unnamed";
+export { vendorSlug as vendorId } from "./purchases/vendors";
 
 /** Purchase cards worth listing in queues: open, or done with money still owed back. */
 function isOpenPurchase(c: Card): boolean {
@@ -191,6 +207,10 @@ const memoryStore: CardStore = {
     await ensureSeeded();
     mem.vendors.set(v.id, clone(v));
   },
+  async deleteVendor(id) {
+    await ensureSeeded();
+    mem.vendors.delete(id);
+  },
 };
 
 // ---- Production: Firestore ---------------------------------------------
@@ -260,6 +280,9 @@ async function getFirestoreStore(): Promise<CardStore> {
     },
     async saveVendor(v) {
       await vendors.doc(v.id).set(clean(v));
+    },
+    async deleteVendor(id) {
+      await vendors.doc(id).delete();
     },
   };
   return firestoreStore;

@@ -173,6 +173,11 @@ export function waitingOnFor(card: PurchaseCard): string | undefined {
   const p = card.purchase;
   if (card.status === "changes_requested") return `You: ${p.returnNote ?? "make the requested changes"}`;
   if (card.status === "denied" || card.status === "cancelled") return undefined;
+  const why = waitingOnStep(p);
+  return why && p.returnNote && p.stage !== "done" ? `${why} (sent back: ${p.returnNote})` : why;
+}
+
+function waitingOnStep(p: PurchaseDetails): string | undefined {
   switch (p.stage) {
     case "chair":
       return p.approverEmail ? `Chair approval: ${p.approverEmail}` : "Chair approval";
@@ -225,6 +230,9 @@ export function permission(card: PurchaseCard, actor: Actor, action: Action): { 
   if (own) return no("You can't approve, pay or book your own request.");
 
   const isApprovalStage = p.stage === "chair" || p.stage === "finance" || p.stage === "executive";
+  // Whoever acts at the pay or QuickBooks step can still send it back if something's wrong.
+  if (action === "return" && p.stage === "payment") return permission(card, actor, "pay");
+  if (action === "return" && p.stage === "books") return permission(card, actor, "books");
   if (action === "approve" || action === "return" || action === "reject") {
     if (!isApprovalStage) return no("This request is past approval.");
     if (p.stage === "chair" && !same(p.approverEmail, actor.email) && !coveringApprover(card, actor) && !approvingAsDirector(card, actor) && !approvingAsCoChair(card, actor))
@@ -335,15 +343,63 @@ export function approve(card: PurchaseCard, actor: Actor, s: RoutingSettings, no
   return withStage(card, p, now);
 }
 
-export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, note: string): PurchaseCard {
+/** The approval steps in the order a request passes them. */
+const STAGE_ORDER: PurchaseStage[] = ["chair", "finance", "executive", "payment", "books", "done"];
+const stageIndex = (s: PurchaseStage) => STAGE_ORDER.indexOf(s);
+
+export type ReturnTarget = "requester" | "chair" | "finance" | "executive";
+
+/**
+ * Where a request can be sent back to from where it is now: the requester, or
+ * any earlier approval step it actually passed (most recent first).
+ */
+export function returnTargets(card: PurchaseCard): ReturnTarget[] {
+  const p = card.purchase;
+  const passed = new Set(p.approvals.map((a) => a.stage).filter((st) => stageIndex(st) < stageIndex(p.stage)));
+  const earlier = (["executive", "finance", "chair"] as const).filter((st) => passed.has(st));
+  return ["requester", ...earlier];
+}
+
+export const RETURN_TARGET_LABEL: Record<ReturnTarget, string> = {
+  requester: "The requester, to make changes",
+  chair: "Chair approval",
+  finance: "Finance review",
+  executive: "Executive approval",
+};
+
+/**
+ * Send a request back, with a note saying why. To the requester: they edit and
+ * resubmit, and approval starts over. To an earlier step: it waits there again,
+ * on the person who approved that step for a chair step, and every approval
+ * from that step on is cleared.
+ */
+export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, note: string, to: ReturnTarget = "requester"): PurchaseCard {
   must(card, actor, "return");
   if (!note.trim()) throw new WorkflowError("Say what needs to change.");
+  if (!returnTargets(card).includes(to)) throw new WorkflowError("This request hasn't been through that step, so it can't go back to it.");
+  const cur = card.purchase;
+  const from = STAGE_LABEL[cur.stage];
+  const paid = cur.payment ? `Already paid: ${cur.payment.method} ${cur.payment.reference}. Don't pay it again.` : undefined;
+  const history = [...cur.history];
+  if (to === "requester") {
+    history.push(entry(actor, now, `Returned for changes (${from})${behalf(card, actor)}`, note.trim()));
+    if (paid) history.push(entry(actor, now, "Payment already recorded", paid));
+    return withStage(card, { ...cur, returnNote: note.trim(), history }, now, "changes_requested");
+  }
+  const stage: PurchaseStage = to;
+  const chairApproval = [...cur.approvals].reverse().find((a) => a.stage === "chair");
+  history.push(entry(actor, now, `Sent back to ${STAGE_LABEL[stage]} (from ${from})${behalf(card, actor)}`, note.trim()));
+  if (paid) history.push(entry(actor, now, "Payment already recorded", paid));
   const p: PurchaseDetails = {
-    ...card.purchase,
+    ...cur,
+    stage,
+    stageSince: now,
+    approverEmail: stage === "chair" ? chairApproval?.onBehalfOf ?? chairApproval?.by : undefined,
+    approvals: cur.approvals.filter((a) => stageIndex(a.stage) < stageIndex(stage)),
     returnNote: note.trim(),
-    history: [...card.purchase.history, entry(actor, now, `Returned for changes (${STAGE_LABEL[card.purchase.stage]})${behalf(card, actor)}`, note.trim())],
+    history,
   };
-  return withStage(card, p, now, "changes_requested");
+  return withStage(card, p, now);
 }
 
 export function reject(card: PurchaseCard, actor: Actor, now: string, note: string): PurchaseCard {

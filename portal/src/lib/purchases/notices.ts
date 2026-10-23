@@ -51,6 +51,8 @@ function nextActor(c: PurchaseCard): Recipient | null {
   }
 }
 
+const STAGE_ORDER = ["chair", "finance", "executive", "payment", "books", "done"];
+
 const isOpen = (c: PurchaseCard) => c.status === "in_review" || c.status === "approved" || c.status === "paid";
 
 /**
@@ -86,6 +88,13 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
 
   const next = nextActor(after);
   const stage = after.purchase.stage;
+  // Sent back to an earlier step: that step's approver acts again, and the requester hears why.
+  if (before && isOpen(before) && STAGE_ORDER.indexOf(stage) < STAGE_ORDER.indexOf(before.purchase.stage)) {
+    const why = after.purchase.returnNote ?? "see the request";
+    if (next) add(next, `${what} was sent back for your ${STAGE_LABEL[stage].toLowerCase()} again: ${why}`, true, "email" in next);
+    add(owner, `${what} was sent back to ${STAGE_LABEL[stage].toLowerCase()}: ${why}`, false);
+    return out;
+  }
   if (next) {
     const ask =
       stage === "payment" ? `${what} is approved and ready to pay.` :
