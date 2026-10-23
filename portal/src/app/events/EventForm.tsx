@@ -18,6 +18,8 @@ export type EventFormProps = {
   editing?: string;
   /** Moved to give up its time: say so. */
   moved?: boolean;
+  /** Renewing this series: the next period of it. */
+  renews?: { id: string; until: string };
   today: string;
   submitLabel: string;
 };
@@ -103,7 +105,7 @@ export default function EventForm(p: EventFormProps) {
   const clashOnly = blockers.length > 0 && blockers.every((c) => c.rule === "IAR Google Calendar");
   const asking = Boolean(ask && clashOnly && result.clashes.length === 1);
 
-  const payload = useMemo(() => ({ ...d, ...(asking ? { ask } : {}) }), [d, ask, asking]);
+  const payload = useMemo(() => ({ ...d, ...(asking ? { ask } : {}), ...(p.renews ? { renews: p.renews.id } : {}) }), [d, ask, asking, p.renews]);
   const sections = [
     { id: "evSect", n: "Event and room", done: Boolean(d.title && d.description && d.date) },
     ...(d.isPublic ? [{ id: "briefSect", n: "Marketing", done: Boolean(d.brief.subtitle && d.brief.text && d.brief.startOn) }] : []),
@@ -118,6 +120,7 @@ export default function EventForm(p: EventFormProps) {
     <div className="evgrid">
       <form action={formAction} className="form" style={{ marginTop: 0 }}>
         <input type="hidden" name="payload" value={JSON.stringify(payload)} />
+        {p.renews && <div className="callout info">The next period of {p.renews.id}, which ends {longDate(p.renews.until)}. It goes through the same checks and approval as any new request.</div>}
         {p.moved && <div className="callout info">You gave up this event&apos;s time to someone else&apos;s request. Pick a new time; only the director needs to approve it.</div>}
         {state.errors.length > 0 && (
           <div className="error" role="alert">

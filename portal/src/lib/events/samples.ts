@@ -78,7 +78,7 @@ export async function sampleEvents(): Promise<Card[]> {
     make("EV-1102", input({
       title: "Youth Weekly Halaqa",
       description: "A weekly halaqa for high-school boys: Quran reflection, a short talk and Q&A with a youth mentor. The same small group each week.",
-      date: next(3, 2), start: "19:00", end: "20:30", setup: 15, teardown: 15, recur: { freq: "weekly", until: addDays(next(3, 2), 70) }, rooms: ["dev-r280"], attendance: 15,
+      date: next(3, 2), start: "19:00", end: "20:30", setup: 15, teardown: 15, recur: { freq: "weekly", until: addDays(next(3, 2), 21) }, rooms: ["dev-r280"], attendance: 15,
     }), volunteer, 30),
     volunteer, DIRECTORS, at(30),
   );
@@ -120,10 +120,8 @@ export async function sampleEvents(): Promise<Card[]> {
   );
   let movie = wf.approve(wf.approve(movie0, director, DIRECTORS, at(28)), exec, DIRECTORS, at(27));
   const it: wf.EventActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
-  const facilities: wf.EventActor = { email: "facilities@dev.local", name: "Sample Facilities", roles: ["member", "facilities"] };
   const security: wf.EventActor = { email: "security@dev.local", name: "Sample Security", roles: ["member", "security"] };
   movie = actOnTask(movie, "av", it, "done", at(6), "Projector and two speakers set up; returned to the A/V closet.");
-  movie = actOnTask(movie, "facilities", facilities, "done", at(6));
   movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "before", ok: true });
   movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "after", ok: false, note: "Pizza boxes left by the back door and the floor needed sweeping." });
   movie = startCloseOut(movie, at(5));

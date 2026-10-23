@@ -42,7 +42,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Google is the only directory | Sign-in is @islam1.org only, so personal Gmail accounts are out. Google Groups decide who sees which module. No Microsoft Forms |
 | IAR's Google Calendar is the source of truth for bookings | The portal reads and writes the calendar. Nothing gets booked outside it. The raleighmasjid.org reservation page gets retired or fed from the calendar |
 | One card per request, owned by the requester | The sponsoring committee is co-owner, and the chair can reassign the card. A card never ends up with no owner |
-| Teams work their own queues | Marketing, facilities, security and finance see their tasks across all cards. They never need to open each event |
+| Teams work their own queues | Marketing, A/V, security and finance see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
 | Notify only when someone needs to act | Action-needed alerts go out right away. Everything else goes into a digest or the portal's activity feed |
 | Rules are automated as flags, not hard blocks | The office can override with a recorded reason |
 | Mission review for every event | The committee's pillar director reviews first, then any one executive gives the final approval. The office doesn't review events. New programs, outside groups or speakers, fundraisers, and large or costly events are flagged for the reviewers. Recurring series are approved once per season |
@@ -79,7 +79,7 @@ Every event gets mission review in two steps: the director of the committee's pi
 **Tasks added to the card**, each prefilled from the card:
 
 - Marketing: flyer, announcement, webpage, highlight. Locked until approval, per policy
-- AV support and facilities setup
+- AV support (committees do their own setup and cleanup)
 - Security: after-hours coverage and the before/after room check
 - Purchase requests: linked POs, coded to the event
 - Payments: fee and deposit for community MPH use, deposit refund after the room check
@@ -111,7 +111,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | My Requests | Everyone signed in | One list of the person's own cards (events, purchase requests, rentals they sponsor), with status and what is waiting on them | 1 |
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
-| Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
+| Team queues | Marketing, AV, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |

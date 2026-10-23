@@ -19,6 +19,7 @@ import * as sr from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import type { Check, EventInput } from "@/lib/events/types";
 import * as wf from "@/lib/events/workflow";
+import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 
 export type EventFormState = { errors: string[] };
 
@@ -118,7 +119,7 @@ function calendarTrouble(card: wf.EventCard, error: string | undefined): { card:
 export async function submitEvent(editing: string | null, _prev: EventFormState, form: FormData): Promise<EventFormState> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
-  let raw: EventFormInput & { ask?: { key?: string; reason?: string } };
+  let raw: EventFormInput & { ask?: { key?: string; reason?: string }; renews?: string };
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}"));
   } catch {
@@ -133,11 +134,26 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
     const p = wf.permission(card0, actor, "resubmit");
     if (!p.ok) return { errors: [p.reason] };
   }
+  // Renewing a series: the request it renews must be open for renewal, and the next period starts after it ends.
+  let prior: wf.EventCard | undefined;
+  if (!card0 && raw.renews) {
+    const p = await store.get(String(raw.renews));
+    if (!wf.isEventCard(p)) return { errors: ["The series you're renewing no longer exists."] };
+    const next = p.event.renewedBy ? await store.get(p.event.renewedBy) : null;
+    const state = renewalState(p, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, wf.isEventCard(next) ? next : null);
+    if (!state.can) return { errors: [state.why] };
+    prior = p;
+  }
   const committees = committeesFor(viewer, ctx.dir);
-  if (card0 && !committees.some((c) => c.group === card0.event.committeeGroup)) committees.push({ group: card0.event.committeeGroup, name: card0.event.committeeName });
+  const keep = card0 ?? prior;
+  if (keep && !committees.some((c) => c.group === keep.event.committeeGroup)) committees.push({ group: keep.event.committeeGroup, name: keep.event.committeeName });
   const parsed = parseEventInput(raw, { committees, roomIds: ctx.bookable.map((r) => r.id) });
   if (!parsed.ok) return { errors: parsed.errors };
   const input = parsed.input;
+  if (prior) {
+    const bad = checkRenewalDates(prior, input.date);
+    if (bad) return { errors: [bad] };
+  }
 
   const r = await checksFor(ctx, viewer, input, card0);
   const others = r.checks.filter((c) => c.block && c.rule !== "IAR Google Calendar");
@@ -164,6 +180,7 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
   if (card0) card = card0;
   else {
     const { id: _blank, ...draft } = wf.newEvent(input, actor, now, r.checks);
+    if (prior) draft.event = { ...draft.event, renews: prior.id, history: [{ at: now, by: actor.email, action: `Next period of ${prior.id}` }] };
     card = (await store.create(draft, "EV")) as wf.EventCard;
     before = null;
   }
@@ -180,6 +197,15 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
     await store.save(trouble.card, card.updatedAt);
   } catch (err) {
     return { errors: [err instanceof ConflictError ? err.message : "Something went wrong saving the request."] };
+  }
+  if (prior) {
+    // Link the series to its next period; a hiccup here doesn't undo the new request.
+    try {
+      const fresh = await store.get(prior.id);
+      if (wf.isEventCard(fresh)) await store.save({ ...fresh, event: { ...fresh.event, renewedBy: card.id, history: [...fresh.event.history, { at: now, by: actor.email, action: `Next period requested: ${card.id}` }] }, updatedAt: now }, fresh.updatedAt);
+    } catch (err) {
+      console.error("linking a renewal failed", err);
+    }
   }
   await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
   revalidatePath("/events");

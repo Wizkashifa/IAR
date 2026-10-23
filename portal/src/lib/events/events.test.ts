@@ -235,3 +235,37 @@ test("access: approved events are open to everyone; pending ones to the people i
   assert.equal(canViewEvent(sub, { ...someone, roles: ["member", "office"] }), true);
   assert.equal(canViewEvent({ ...sub, status: "approved" }, someone), true);
 });
+
+// ---- Renewal ------------------------------------------------------------
+
+test("renewal: opens 30 days before the series ends; the next period carries the pattern on", async () => {
+  const { nextPeriod, renewalState, checkRenewalDates } = await import("./renewal");
+  const series = base({ date: "2026-11-03", recur: { freq: "weekly", until: "2027-01-26" } });
+  const ok = wf.approve(wf.approve(wf.submit(newCard(series), owner, [director.email], NOW), director, [director.email], NOW), exec, [director.email], NOW);
+  const me = { email: owner.email, office: false };
+  assert.deepEqual(renewalState(ok, me, "2026-12-20"), { can: false, why: "Renewal opens Dec 27, 2026, 30 days before the series ends.", opens: "2026-12-27" });
+  assert.deepEqual(renewalState(ok, me, "2026-12-27"), { can: true });
+  assert.equal(renewalState(ok, { email: "someone@x.org", office: false }, "2026-12-27").can, false);
+  assert.equal(renewalState(ok, { email: "office@x.org", office: true }, "2026-12-27").can, true);
+  assert.equal(renewalState(ok, me, "2027-02-01").can, false, "ended");
+  assert.equal(renewalState(ok, me, "2026-12-27", { ...ok, id: "EV-2000", status: "in_review" }).can, false, "already requested");
+  assert.equal(renewalState(ok, me, "2026-12-27", { ...ok, id: "EV-2000", status: "denied" }).can, true);
+  assert.deepEqual(nextPeriod("2026-11-03", { freq: "weekly", until: "2027-01-26" }), { date: "2027-02-02", recur: { freq: "weekly", until: "2027-05-01" } });
+  assert.equal(nextPeriod("2026-11-03", { freq: "biweekly", until: "2027-01-26" }).date, "2027-02-09");
+  assert.equal(nextPeriod("2026-11-03", { freq: "monthly", until: "2027-01-31" }).date, "2027-02-02", "the 1st Tuesday again");
+  assert.match(checkRenewalDates(ok, "2027-01-20")!, /after the current one ends/);
+  assert.equal(checkRenewalDates(ok, "2027-02-02"), null);
+  assert.equal(renewalState(newCard(base()), me, "2026-12-27").can, false, "one-time events don't renew");
+});
+
+test("renewal: the requester is told once, when renewal opens", async () => {
+  const { renewalDue, renewalReminder } = await import("./renewal");
+  const ok = wf.approve(wf.approve(wf.submit(newCard(base({ date: "2026-11-03", recur: { freq: "weekly", until: "2027-01-26" } })), owner, [director.email], NOW), director, [director.email], NOW), exec, [director.email], NOW);
+  assert.equal(renewalDue(ok, "2026-12-26"), false);
+  assert.equal(renewalDue(ok, "2026-12-27"), true);
+  const r = renewalReminder(ok, NOW);
+  assert.equal(r.notice.alert, true);
+  assert.match(r.notice.text, /request the next period now/);
+  assert.equal(renewalDue(r.card, "2026-12-28"), false);
+  assert.equal(renewalDue({ ...ok, event: { ...ok.event, renewedBy: "EV-2000" } }, "2026-12-28"), false);
+});

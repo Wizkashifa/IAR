@@ -76,7 +76,6 @@ test("tasks: each team the event needs, with due dates; after-hours security; no
   assert.deepEqual(t.map((x) => [x.id, x.team, x.dueDate]), [
     ["marketing", "marketing", "2026-10-30"],
     ["av", "av", "2026-11-14"],
-    ["facilities", "facilities", "2026-11-14"],
     ["security-2026-11-14", "security", "2026-11-14"],
   ]);
   assert.match(t[0].title, /Games Night/);
@@ -92,18 +91,18 @@ test("tasks: a series repeats security on every date; the other teams get one ta
   const t = planTasks(wf.newEvent(series, owner, NOW, []).event);
   assert.equal(t.filter((x) => x.team === "security").length, 4);
   assert.deepEqual(t.filter((x) => x.team === "security").map((x) => x.date), ["2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24"]);
-  assert.equal(t.filter((x) => x.team !== "security").length, 3);
+  assert.equal(t.filter((x) => x.team !== "security").length, 2);
 });
 
 test("tasks: locked until approval, added as to-do on approval, dropped on cancel", () => {
   const sub = submitted(full());
   assert.equal(sub.event.tasks, undefined);
   assert.ok(tasksFor(sub).every((t) => t.status === "locked"));
-  assert.equal(tasksFor(sub).length, 4);
+  assert.equal(tasksFor(sub).length, 3);
   const ok = wf.approve(sub, exec, [], NOW);
-  assert.equal(ok.event.tasks?.length, 4);
+  assert.equal(ok.event.tasks?.length, 3);
   assert.ok(ok.event.tasks!.every((t) => t.status === "todo"));
-  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: Marketing, A\/V, Facilities and Security/.test(h.action)));
+  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: Marketing, A\/V and Security/.test(h.action)));
   const gone = wf.cancel(ok, owner, [], NOW);
   assert.equal(gone.event.tasks, undefined);
   assert.deepEqual(tasksFor(gone), []);
@@ -113,8 +112,8 @@ test("tasks: approval tells each team once, in its Chat space; giving up a date 
   const sub = submitted(full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" }, brief: { ...brief, startOn: "2026-10-27" } }));
   const ok = wf.approve(sub, exec, [], NOW);
   const n = taskUnlockNotices(sub, ok);
-  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["marketing", true], ["av", true], ["facilities", true], ["security", true]]);
-  assert.match(n[3].text, /4 tasks, one per date/);
+  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["marketing", true], ["av", true], ["security", true]]);
+  assert.match(n[2].text, /4 tasks, one per date/);
   const dropped = wf.dropDates(ok, [], NOW, "SR-1001", ["2026-11-24"]);
   assert.equal(dropped.event.tasks!.filter((t) => t.team === "security").length, 3, "the given-up date's security task goes");
   assert.deepEqual(taskUnlockNotices(ok, dropped), []);
@@ -155,7 +154,8 @@ test("tasks: only the team (or the office) works them; take, start, done, and a 
   assert.equal(asked.comments?.length, 1);
   assert.match(asked.comments![0].text, /Can you send the logo/);
   assert.deepEqual(taskNotices(asked, "marketing", marketer, "ask", "Can you send the logo?").map((n) => n.alert), [true]);
-  assert.equal(actOnTask(ok, "facilities", office, "done", NOW).event.tasks!.find((x) => x.id === "facilities")!.status, "done", "the office can work any task");
+  assert.equal(actOnTask(ok, "security-2026-11-14", office, "done", NOW).event.tasks!.find((x) => x.id === "security-2026-11-14")!.status, "done", "the office can work any task");
+  assert.ok(!planTasks(ok.event).some((x) => (x.team as string) === "facilities"), "committees set up themselves: no facilities task");
 });
 
 // ---- Queues -------------------------------------------------------------------
@@ -163,7 +163,7 @@ test("tasks: only the team (or the office) works them; take, start, done, and a 
 test("queues: each person sees their teams' queues; the office sees all; open tasks soonest first", () => {
   assert.deepEqual(queueTeamsFor(["member", "security"]), ["security"]);
   assert.deepEqual(queueTeamsFor(["member", "it", "av"]), ["av"]);
-  assert.deepEqual(queueTeamsFor(["member", "office"]), ["marketing", "av", "facilities", "security"]);
+  assert.deepEqual(queueTeamsFor(["member", "office"]), ["marketing", "av", "security"]);
   assert.deepEqual(queueTeamsFor(["member"]), []);
 
   const later = approved(full({ date: "2026-12-05", brief: { ...brief, startOn: "2026-11-20" } }));

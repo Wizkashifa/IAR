@@ -83,7 +83,7 @@ export const MODULES: PortalModule[] = [
     nav: "Queues",
     name: "Team Queues",
     summary: "Your team's open tasks across every event and request.",
-    visibleTo: ["office", "marketing", "av", "facilities", "security"],
+    visibleTo: ["office", "marketing", "av", "security"],
     phase: 2,
     status: "live",
     href: "/queues",

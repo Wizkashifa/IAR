@@ -82,8 +82,12 @@ export type EventInput = {
   teamNotes: string;
 };
 
-/** The teams that get tasks on an approved event (lib/events/tasks.ts). Each is a queue role. */
-export type TaskTeam = "marketing" | "av" | "facilities" | "security";
+/**
+ * The teams that get tasks on an approved event (lib/events/tasks.ts). Each is
+ * a queue role. Committees set up and clean up their own events, so there is
+ * no facilities task.
+ */
+export type TaskTeam = "marketing" | "av" | "security";
 
 /** "locked" until the event is approved; then to do → in progress → done. */
 export type TaskStatus = "locked" | "todo" | "doing" | "done";
@@ -144,6 +148,11 @@ export type EventDetails = EventInput & {
   releasedFor?: string;
   /** Dates given up to someone else's ask. */
   released?: string[];
+  /** A series' next period: the request it renews, and the request that renewed it. */
+  renews?: string;
+  renewedBy?: string;
+  /** When the requester was told renewal is open (the daily job tells them once). */
+  renewalNotified?: string;
   /** Team tasks, added when it's approved (lib/events/tasks.ts). */
   tasks?: EventTask[];
   /** Security's room checks, per date. */

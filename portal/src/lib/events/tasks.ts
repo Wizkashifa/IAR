@@ -20,9 +20,9 @@ import { dayText } from "./series";
 import type { EventDetails, EventHistoryEntry, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
 
-export const TASK_TEAMS: TaskTeam[] = ["marketing", "av", "facilities", "security"];
+export const TASK_TEAMS: TaskTeam[] = ["marketing", "av", "security"];
 
-export const TEAM_NAME: Record<TaskTeam, string> = { marketing: "Marketing", av: "A/V", facilities: "Facilities", security: "Security" };
+export const TEAM_NAME: Record<TaskTeam, string> = { marketing: "Marketing", av: "A/V", security: "Security" };
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = { locked: "Unlocks on approval", todo: "To do", doing: "In progress", done: "Done" };
 
@@ -52,7 +52,6 @@ export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTa
     const kinds = (e.avNeeds?.kinds ?? []).map((k) => (AV_KINDS[k] ?? k).toLowerCase());
     add({ id: "av", team: "av", title: `A/V: ${kinds.length ? kinds.join(", ") : "support requested"}`, dueDate: first });
   }
-  if (e.setupNotes.trim()) add({ id: "facilities", team: "facilities", title: `Setup: ${short(e.setupNotes)}`, dueDate: first });
   if (e.rooms.length) {
     const title = `Room check before and after${isAfterHours(e) ? " + after-hours coverage" : ""}`;
     for (const d of e.dates) add({ id: `security-${d}`, team: "security", title: e.dates.length > 1 ? `${title} (${dayText(d)})` : title, dueDate: d, date: d });

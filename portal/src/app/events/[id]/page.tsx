@@ -12,6 +12,8 @@ import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
+import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
+import { daysBetween } from "@/lib/events/series";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
 import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { tasksFor } from "@/lib/events/tasks";
@@ -73,6 +75,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     </>
   );
   const statusText = card.status === "in_review" || card.status === "submitted" ? STAGE_LABEL[e.stage] : STATUS_LABEL[card.status];
+  const store = await cardStore();
+  const renewal = e.renewedBy ? await store.get(e.renewedBy) : null;
+  const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
   const tasks = tasksFor(card);
   const isLive = card.status === "approved" || card.status === "close_out" || card.status === "closed";
   // Room checks happen on the day: dates so far (and today).
@@ -149,6 +154,30 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </div>
             <div><dt>Now</dt><dd>{statusText}{card.waitingOn && <div className="sub">{card.waitingOn}</div>}</dd></div>
           </dl>
+
+          {e.recur && (
+            <>
+              <h2>Repeating series</h2>
+              <div className="panel stack">
+                <div>
+                  {recurText(e.date, e.recur)}, {e.dates.length} dates. {ctx.today > e.recur.until ? `Ended ${longDate(e.recur.until)}.` : `Ends ${longDate(e.recur.until)} (${daysBetween(ctx.today, e.recur.until)} days left).`}
+                  {e.renews && <div className="sub">Renews <Link href={`/events/${e.renews}`}>{e.renews}</Link>.</div>}
+                </div>
+                {isEventCard(renewal) && renewal.status !== "denied" && renewal.status !== "cancelled" ? (
+                  <div>Next period requested: <Link href={`/events/${renewal.id}`}>{renewal.id}</Link> <span className={`pill ${renewal.status}`}>{STATUS_LABEL[renewal.status]}</span></div>
+                ) : card.status === "approved" && ctx.today <= e.recur.until ? (
+                  <div className="row" style={{ alignItems: "center" }}>
+                    {renewing?.can ? (
+                      <Link className="button" href={`/events/${card.id}/renew`}>Request the next period</Link>
+                    ) : (
+                      <button className="button" type="button" disabled>Request the next period</button>
+                    )}
+                    <span className="sub">{renewing?.can ? "Renewal is open. It goes through the same checks and approval." : ctx.today < renewalOpens(e.recur) ? `Renewal opens ${longDate(renewalOpens(e.recur))}, ${RENEW_DAYS} days before the series ends.` : renewing && !renewing.can ? renewing.why : ""}</span>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
 
           <h2>About the event</h2>
           <div className="panel pre">{e.description}</div>

@@ -56,6 +56,7 @@ Use testers in these roles: A (a committee member), B (that committee's chair), 
 **Sign-in and alerts**
 - [ ] Someone **not** in `portal-role-beta@` signs in and sees "open to a small group of testers".
 - [ ] A tester already signed in to Google goes straight in, with no account picker.
+- [ ] On a phone, the menu opens as a drawer from the left; the page doesn't scroll sideways.
 - [ ] The IAR Portal app sends B a Chat message when something waits on B, and posts in the Finance space when a request reaches finance.
 
 **Purchase Requests**
@@ -68,6 +69,7 @@ Use testers in these roles: A (a committee member), B (that committee's chair), 
 - [ ] A requests a one-time event. The checks flag a prayer or school-hours clash; A moves the time and it's all clear.
 - [ ] On submit, "Hold (pending approval)" appears on the room's Google Calendar. D gets a Chat message, approves; the Executive space gets a post; E approves and the hold is confirmed.
 - [ ] A weekly series (up to 3 months) books only its dates; a clash on one date is listed by date.
+- [ ] 30 days before a series ends, its requester gets a Chat message; "Request the next period" opens the form with the next dates filled in.
 - [ ] A asks for a time someone else booked. They give it up; the dates leave the calendar at once and A's request moves on.
 - [ ] Food in a room that doesn't allow it, or attendance over capacity, is flagged to the reviewers.
 - [ ] Once approved, the event's tasks appear in Team Queues for marketing, A/V and security.
