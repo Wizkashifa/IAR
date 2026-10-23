@@ -642,21 +642,21 @@ function seed() {
         log: [[now(2), "commDirector", "Submitted"], [now(2), "system", "Auto checks passed"], [now(2), "system", "Requester directs this committee's pillar, so it goes straight to the executive"]] }),
     ],
     pos: [
-      po({ id: "PO-11045", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Food & Hospitality", 142.5], ["Youth – Supplies", 42]], eventId: "EV-1042", status: "chair", approver: "commDirector", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
-      po({ id: "PO-11046", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Programs & Events", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "commDirector", created: now(6) }),
-      po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Pizza and water — food drive briefing", lines: [["Youth – Food & Hospitality", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
-      po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Programs & Events", 1200]], status: "to_pay", w9: true, created: now(4) }),
-      po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Repairs", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
+      po({ id: "PO-11045", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Halaqa snacks and supplies", lines: [["Youth – Program", 142.5, "Snacks for the halaqa"], ["Youth – Admin", 42, "Printing and name tags"]], eventId: "EV-1042", status: "chair", approver: "commDirector", note: "Requester is the Youth chair, so it goes to the committee's director", created: now(1) }),
+      po({ id: "PO-11046", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Triangle Sound & Stage", desc: "Sound system rental — Family Night", lines: [["Youth – Program", 650]], eventId: "EV-1031", status: "finance", w9: true, chairBy: "commDirector", created: now(6) }),
+      po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Pizza and water — food drive briefing", lines: [["Youth – Program", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
+      po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", desc: "Youth retreat deposit", lines: [["Youth – Program", 1200]], status: "to_pay", w9: true, created: now(4) }),
+      po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Program", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
       cardPO({ id: "PO-11051", owner: "swChair", last4: "3051", status: "finance", created: now(2), lines: [
-        { day: 3, merchant: "Food Lion — pantry restock", acct: "S&W – Food Pantry", amount: 286.4 },
-        { day: 9, merchant: "Costco — pantry staples", acct: "S&W – Food Pantry", amount: 214.18 },
-        { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Printing & Design", amount: 129, flag: "refund" },
-        { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Programs & Events", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
-        { day: 24, merchant: "Staples", acct: "S&W – Community Aid", amount: 23.5, noReceipt: true },
+        { day: 3, merchant: "Food Lion — pantry restock", acct: "Social & Welfare – Program", amount: 286.4 },
+        { day: 9, merchant: "Costco — pantry staples", acct: "Social & Welfare – Program", amount: 214.18 },
+        { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Program", amount: 129, flag: "refund" },
+        { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Program", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
+        { day: 24, merchant: "Staples", acct: "Social & Welfare – Program", amount: 23.5, noReceipt: true },
       ] }),
       cardPO({ id: "PO-11037", owner: "youthChair", last4: "7720", status: "done", created: now(9), lines: [
-        { day: 6, merchant: "Costco", acct: "Youth – Food & Hospitality", amount: 188.42 },
-        { day: 20, merchant: "Target (returned items)", acct: "Youth – Supplies", amount: 41.17, flag: "refund" },
+        { day: 6, merchant: "Costco", acct: "Youth – Program", amount: 188.42 },
+        { day: 20, merchant: "Target (returned items)", acct: "Youth – Program", amount: 41.17, flag: "refund" },
       ] }),
     ],
     mreqs: [
@@ -1729,24 +1729,19 @@ function closeoutForm(c, linked, spent) {
 }
 
 /* ---- Purchases ---------------------------------------------------- */
-/* Sample sub-accounts, each belonging to one committee. The real list comes from the chart of accounts. */
-const ACCOUNTS = [
-  ["Facility Maintenance – Repairs", "Facility Maintenance"], ["Facility Maintenance – Supplies", "Facility Maintenance"],
-  ["Youth – Programs & Events", "Youth"], ["Youth – Food & Hospitality", "Youth"], ["Youth – Supplies", "Youth"],
-  ["S&W – Food Pantry", "Social & Welfare"], ["S&W – Community Aid", "Social & Welfare"],
-  ["Outreach – Events", "Outreach"],
-  ["Marketing – Printing & Design", "Marketing"], ["Marketing – Advertising", "Marketing"],
-  ["IT Services – Equipment", "IT Services"], ["IT Services – Software & Subscriptions", "IT Services"],
-  ["Imam Office – Programs", "Imam Office"], ["Imam Office – Supplies", "Imam Office"],
-  ["Shura – Meetings & Governance", "Shura"],
-  ["Women's Committee – Programs & Events", "Women's Committee"], ["Older Adult Community – Programs", "Older Adult Community"],
-  ["Sports & Recreation – Equipment & Leagues", "Sports & Recreation"], ["Volunteer – Appreciation & Supplies", "Volunteer"],
-  ["01-5003 General Fund – Administrative", "Administration"], ["01-5009 General Fund – Cleaning Supplies", "Administration"],
-].map(([name, committee]) => ({ name, committee }));
+/* Sample sub-accounts until IAR has a chart of accounts: Admin, Program and Labor for every committee and team,
+   plus Page Road's building costs and Administration's IAR-wide overhead (Administration is the General Fund).
+   Cleaning, security, IT hardware and building repairs stay with their own cost centers in the budget. */
+const EXTRA_ACCOUNTS = {
+  "Page Road": ["Utilities", "Construction", "Lease"],
+  Administration: ["Utilities", "Insurance", "Bank & card fees", "Professional services", "Software & subscriptions", "Office supplies & postage", "Equipment leases", "Trash & recycling", "Licenses, permits & filings", "Dues & memberships", "Staff benefits & payroll taxes"],
+};
+const ACCOUNTS = COMMITTEES.filter((c) => !c.startsWith("Community"))
+  .flatMap((committee) => ["Admin", "Program", "Labor", ...(EXTRA_ACCOUNTS[committee] || [])].map((k) => ({ name: `${committee} – ${k}`, committee })));
 const ACCT_NAMES = ACCOUNTS.map((a) => a.name);
 const DEMO_UPLOAD_TIP = "Demo only: no file is uploaded. In the portal, the receipt is saved to IAR's Shared Drive with this request.";
 /* A purchase charges only its committee's sub-accounts. Card charges can be for any committee. */
-const acctsFor = (committee) => { const a = ACCOUNTS.filter((x) => x.committee === committee).map((x) => x.name); return a.length ? a : [`${committee || "General"} – Programs & Supplies`]; };
+const acctsFor = (committee) => ACCOUNTS.filter((x) => x.committee === committee).map((x) => x.name);
 const PO_TYPE = { vendor: "Pay a vendor or person", reimburse: "Reimburse me", card: "IAR credit card receipts" };
 /* IAR credit cards: each one is assigned to one person. Only the last four digits are ever stored. */
 const IAR_CARDS = [
@@ -1804,7 +1799,9 @@ function vNewPO() {
   if (!card) d.lines.forEach((l) => { if (!accts.includes(l.acct)) l.acct = accts[0]; });
   const myEvents = S.cards.filter((c) => c.owner === S.me && !["denied", "cancelled", "closed"].includes(c.status));
   const sum = d.lines.reduce((a, l) => a + Number(l.amount || 0), 0);
-  const acctSel = (l, i) => `<select id="l_acct_${i}" data-line="${i}" data-k="acct" aria-label="Sub-account, line ${i + 1}">${accts.map((a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>`;
+  const acctOpt = (l) => (a) => `<option ${a === l.acct ? "selected" : ""}>${esc(a)}</option>`;
+  // Card charges can be for any committee, so their menu is grouped by committee.
+  const acctSel = (l, i) => `<select id="l_acct_${i}" data-line="${i}" data-k="acct" aria-label="Sub-account, line ${i + 1}">${card ? [...new Set(ACCOUNTS.map((a) => a.committee))].map((c) => `<optgroup label="${esc(c)}">${acctsFor(c).map(acctOpt(l)).join("")}</optgroup>`).join("") : accts.map(acctOpt(l)).join("")}</select>`;
   const amt = (l, i) => `<input class="amt" type="number" id="l_amt_${i}" data-line="${i}" data-k="amount" value="${l.amount}" step="0.01" min="0" placeholder="0.00" aria-label="Amount, line ${i + 1}">`;
   const rcpt = (l, i) => (card && l.noReceipt ? '<span class="small muted">No receipt</span>'
     : l.receipt ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><span class="pill ok">${esc(l.receipt)}</span><button class="x" type="button" data-rcptdel="${i}" aria-label="Remove receipt, line ${i + 1}">×</button></span>`
@@ -1831,7 +1828,7 @@ function vNewPO() {
     <div class="fld wide"><span class="lbl">${card ? "Charges" : "Line items"}</span><div class="tablewrap"><table class="lines${card ? " card-lines" : ""}"><thead><tr>${head}</tr></thead><tbody>
       ${lineRows}
       <tr><td colspan="${card ? 3 : 2}"><button class="btn small" type="button" data-addline="1">${card ? "Add a charge" : "Add a line"}</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td colspan="${cols - (card ? 4 : 3)}"></td></tr>
-    </tbody></table></div><span class="hint">${card ? "Sample accounts. The real list comes from the chart of accounts." : `Sub-accounts for ${esc(d.committee)}. Sample accounts; the real list comes from the chart of accounts.`} Attach a receipt to each line; receipts are saved to IAR's Shared Drive, filed by fiscal year. <strong>Demo: uploads don't save a file.</strong></span></div>
+    </tbody></table></div><span class="hint">Sample sub-accounts (Admin, Program, Labor) until IAR has a chart of accounts.${!card && d.committee === "Administration" ? " Administration is the General Fund, so IAR-wide costs like utilities and insurance go here." : ""} Attach a receipt to each line; receipts are saved to IAR's Shared Drive, filed by fiscal year. <strong>Demo: uploads don't save a file.</strong></span></div>
     <div class="actions"><button class="btn" type="button" data-go="purchases">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
   </form></div></div>`;
 }
@@ -3666,7 +3663,7 @@ const STEPS = [
   { as: "mktTeam", view: "queues", t: "Marketing gets its task", p: "Approval unlocked the marketing task. The marketing team sees it in their queue, and the event card holds the announcement text, flyer content and start date, so there's no form to chase. Start it, then mark it done." },
   { as: "youthChair", view: "newMarketing", t: "A request that isn't an event", reset: () => { S.mkDraft = null; }, p: `${fn("youthChair")} needs certificates for the winners of the youth Quran competition. That isn't an event, so it goes in Marketing Requests. Pick Graphic design, describe it, set the date it's needed and submit. Each type asks the same questions as the old Marketing/AV form.` },
   { as: "mktTeam", view: "marketing", arg: "review", t: "Marketing's weekly review", p: "New requests wait under Weekly review. Open one and schedule it with a done-by date, ask the requester a question, or decline it. Scheduled work also shows in the Team Queue, under the event tasks." },
-  { as: "youthChair", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("youthChair")}: add a purchase request linked to Game Night, split across two sub-accounts. Click Upload receipt on each line (in the demo nothing is uploaded), then submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("commDirector")}, the director over Youth.` },
+  { as: "youthChair", view: "newPO", t: "Buy supplies for the event", p: `Back as ${fn("youthChair")}: add a purchase request linked to Game Night, split across two sub-accounts (Program and Admin). Click Upload receipt on each line (in the demo nothing is uploaded), then submit. He chairs Youth and nobody approves their own request, so it goes to ${fn("commDirector")}, the director over Youth.` },
   { as: "commDirector", view: "home", t: "A director approves", p: `${fn("commDirector")} is the Community Director, over Youth, Women, Older Adults, Sports and Volunteer. The request is waiting on their home page and in their notifications. Open it and approve; the history says "as director". She can also approve any of her committees' requests alongside their chairs.` },
   { as: "bookkeeper", view: "purchases", t: "Finance pays", p: `${fn("bookkeeper")} approves it for payment and records the check. ${fn("youthChair")} is notified, and the event card now shows what's been spent against its budget.` },
   { as: "officeAdmin", view: "newPO", card: true, t: "Credit card receipts", p: `${fn("officeAdmin")} holds the office card. She picks the card and statement month and enters each charge with its own sub-account. One charge is marked to be repaid by the Youth Committee, one has no receipt. Submit it; it goes straight to finance.` },
@@ -3717,13 +3714,13 @@ function doStep(i) {
   const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
   S.me = s.as; S.poDraft = null;
   if (s.view === "newPO" && s.card) { const ym = lastMonthYm(); S.poDraft = { type: "card", card: "4417", month: ym, desc: `Card receipts — office card, ${fmtYm(ym)}`, lines: [
-    { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "01-5003 General Fund – Administrative", amount: 42.18, receipt: "staples-receipt.pdf" },
-    { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "01-5009 General Fund – Cleaning Supplies", amount: 156.3, receipt: "costco-receipt.pdf" },
-    { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Supplies", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
-    { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "01-5003 General Fund – Administrative", amount: 12.4, noReceipt: true },
+    { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "Administration – Office supplies & postage", amount: 42.18, receipt: "staples-receipt.pdf" },
+    { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "Administration – Admin", amount: 156.3, receipt: "costco-receipt.pdf" },
+    { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Program", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },
+    { ...cardBlankLine(), date: `${ym}-26`, merchant: "USPS", acct: "Administration – Office supplies & postage", amount: 12.4, noReceipt: true },
   ] }; }
-  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Repairs", amount: 186.4, note: "Run capacitor", receipt: "capacitor-receipt.pdf" }, { acct: "Facility Maintenance – Supplies", amount: 64.2, note: "Air filters (6)", receipt: "" }] };
-  else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "youthChair" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Food & Hospitality", amount: 96.4, note: "Costco snacks", receipt: "" }, { acct: "Youth – Supplies", amount: 38.99, note: "Trivia prizes", receipt: "" }] }; }
+  else if (s.view === "newPO" && s.facilities) S.poDraft = { type: "reimburse", committee: "Facility Maintenance", payee: me().name, desc: "HVAC capacitor and filters, MPH unit 2", eventId: "", lines: [{ acct: "Facility Maintenance – Program", amount: 186.4, note: "Run capacitor", receipt: "capacitor-receipt.pdf" }, { acct: "Facility Maintenance – Program", amount: 64.2, note: "Air filters (6)", receipt: "" }] };
+  else if (s.view === "newPO") { const gn = S.cards.find((c) => c.owner === "youthChair" && /Game Night/.test(c.title)); S.poDraft = { type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, desc: "Game Night snacks and prizes", eventId: gn ? gn.id : "", lines: [{ acct: "Youth – Program", amount: 96.4, note: "Costco snacks", receipt: "" }, { acct: "Youth – Admin", amount: 38.99, note: "Trivia prizes", receipt: "" }] }; }
   if (s.as === "renter") { S.rnDone = null; S.rnDraft = null; }
   if (window.innerWidth < 900) S.guide = false;
   go(s.view, s.arg);
