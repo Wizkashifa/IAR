@@ -69,13 +69,11 @@ export const MODULES: PortalModule[] = [
     summary: "Graphics, signs, announcements, highlights, webpages, short links and staff badges.",
     visibleTo: ["member"],
     phase: 2,
-    status: "planned",
-    href: "/m/marketing-requests",
+    status: "live",
+    href: "/marketing",
     plannedFeatures: [
-      "For marketing work that isn't an event. Event marketing is part of the event request",
-      "Each request type asks the same questions as today's Marketing/AV form",
-      "Weekly review by the marketing team: schedule with a done-by date, ask a question, or decline",
-      "Requesters follow each request in My Requests and get notified when it's done",
+      "A board view for the marketing team, alongside event marketing tasks in Team Queues",
+      "File uploads straight to the marketing Shared Drive, instead of a Drive link",
     ],
   },
   {

@@ -179,6 +179,12 @@ async function ensureSeeded() {
     if (n >= mem.next.PO) mem.next.PO = n + 1;
   }
   for (const v of sampleVendors()) mem.vendors.set(v.id, v);
+  const { sampleMarketing } = await import("./marketing/samples");
+  for (const c of sampleMarketing()) {
+    mem.cards.set(c.id, c);
+    const n = Number(c.id.split("-")[1]);
+    if (n >= mem.next.MK) mem.next.MK = n + 1;
+  }
 }
 
 const clone = <T,>(x: T): T => structuredClone(x);
