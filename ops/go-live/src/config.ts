@@ -107,6 +107,7 @@ export const DRIVES: DriveDef[] = [
     access: (d, sa) => [
       { email: teamGroup("Facility Maintenance", d), type: "group", role: DRIVE_ROLE.contributor },
       { email: teamGroup("IT Services", d), type: "group", role: DRIVE_ROLE.contributor },
+      { email: role("office", d), type: "group", role: "reader" },
       { email: sa, type: "user", role: DRIVE_ROLE.contributor },
     ],
   },

@@ -14,18 +14,19 @@ Open http://localhost:3000. `npm run dev` turns on dev mode: there is no Google 
 
 ## One-time Google setup
 
-Done once by a Workspace super admin and a Google Cloud project owner. Names below are suggestions.
+**go-live does all of this** (`ops/go-live/`, see its [README](../ops/go-live/README.md) and [beta-launch.md](beta-launch.md)): it shows every change first, asks before each step, and checks the steps Google makes you do by hand. The sections below are the same steps by hand, as a reference and a fallback. Done once by a Workspace super admin who can create projects in the islam1.org Cloud organization. The names are the ones go-live uses.
 
 ### 1. Google Cloud project
 
 1. In the Google Cloud console, create a project under the **islam1.org** organization, for example `iar-portal`, and attach billing.
-2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (Purchase Requests receipts), Gmail (alert emails) and Calendar (room bookings, for the Events module).
+2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (receipts, W-9s, maintenance photos), Gmail (fallback emails), Calendar (room bookings), Chat (alerts), Cloud Scheduler (the daily job), Cloud Storage (backups) and Monitoring (uptime alert). go-live also uses Groups Settings, Sheets, Licensing, Billing Budgets and the Marketplace SDK.
 
 ```
 gcloud config set project iar-portal
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
-  drive.googleapis.com gmail.googleapis.com calendar-json.googleapis.com
+  drive.googleapis.com gmail.googleapis.com calendar-json.googleapis.com chat.googleapis.com \
+  cloudscheduler.googleapis.com storage.googleapis.com monitoring.googleapis.com
 ```
 
 ### 2. Firestore
@@ -55,7 +56,9 @@ gcloud firestore indexes composite create --collection-group=notifications \
   --field-config=field-path=at,order=descending
 ```
 
-Cards are stored at `orgs/iar/cards/{cardId}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback at `orgs/iar/feedback`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Turn on point-in-time recovery: `gcloud firestore databases update --database='(default)' --enable-pitr`.
+
+Cards (purchases `PO-12001`…, events `EV-1101`…, marketing `MK-1001`…, IT & maintenance `TK-1001`…) are stored at `orgs/iar/cards/{cardId}`, preventive maintenance schedules at `orgs/iar/ticketSchedules/{id}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback at `orgs/iar/feedback`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -68,19 +71,29 @@ gcloud projects add-iam-policy-binding iar-portal --member=serviceAccount:$SA --
 gcloud iam service-accounts add-iam-policy-binding $SA --member=serviceAccount:$SA --role=roles/iam.serviceAccountTokenCreator
 ```
 
-### 4. Let the portal read group membership
+A second service account, `portal-scheduler`, runs the daily job (§11). It needs only `roles/run.invoker` on the service.
 
-The portal reads, read-only, which Google Groups a person is in, and who is in each `portal-team-*` and `portal-pillar-*` group with their role (Owner, Manager, Member). The same "Groups → Read" privilege and scope cover both.
+### 4. Domain-wide delegation: groups, rooms, calendars and email
 
-1. Create a Workspace user just for this, for example `portal-directory@islam1.org`. Give it a custom admin role that can only **read groups** (Admin console → Account → Admin roles → create role → Admin API privileges → Groups → Read). Don't use a super admin.
+The portal acts as two Workspace users, through its service account and no key:
+- `portal-directory@islam1.org` reads, read-only, which Google Groups a person is in, who is in each `portal-team-*` and `portal-pillar-*` group with their role (Owner, Manager, Member), and IAR's room resources.
+- `portal@islam1.org` (the portal's mailbox, §8) puts room holds on the room calendars and sends the fallback emails.
+
+1. Create `portal-directory@islam1.org`, a user just for this. Give it a custom admin role, "Portal reader", that can only read (Admin console → Account → Admin roles → create role → Admin API privileges → Groups → Read; Calendar resources → Read; Buildings → Read). Don't use a super admin. It needs no license.
 2. Find the service account's numeric **Unique ID** (`gcloud iam service-accounts describe $SA --format='value(uniqueId)'`).
-3. Admin console → Security → Access and data control → API controls → Manage domain-wide delegation → Add new: that Unique ID, scope `https://www.googleapis.com/auth/admin.directory.group.readonly`.
-4. The portal's `DIRECTORY_ADMIN_SUBJECT` is the user from step 1.
+3. Admin console → Security → Access and data control → API controls → Manage domain-wide delegation → Add new: that Unique ID, with these four scopes, comma-separated:
+   - `https://www.googleapis.com/auth/admin.directory.group.readonly` (groups, as `portal-directory@`)
+   - `https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly` (rooms, as `portal-directory@`)
+   - `https://www.googleapis.com/auth/calendar.events` (room holds, as `portal@`)
+   - `https://www.googleapis.com/auth/gmail.send` (fallback emails, as `portal@`)
+4. The portal's `DIRECTORY_ADMIN_SUBJECT` is `portal-directory@`; `PORTAL_MAIL_FROM` and `PORTAL_CALENDAR_SUBJECT` are `portal@`.
+
+Be aware: delegation applies to the service account, not to one user, so these scopes would let it act as any islam1.org user. The portal only ever acts as the two users above, the service account has no key file, and only the Cloud Run service runs as it. Keep the project's owners to two named people.
 
 ### 5. Google sign-in
 
 1. APIs & Services → OAuth consent screen: user type **Internal** (only islam1.org accounts can sign in), app name "IAR Portal".
-2. Credentials → Create OAuth client ID → Web application. Authorized redirect URI: `https://<portal address>/api/auth/callback/google` (add `http://localhost:3000/api/auth/callback/google` to test real sign-in locally).
+2. Credentials → Create OAuth client ID → Web application. (go-live also needs a **Desktop app** client for its own sign-in; save its JSON as `ops/go-live/client_secret.json`, which is gitignored.) Authorized redirect URI: `https://<portal address>/api/auth/callback/google` (add `http://localhost:3000/api/auth/callback/google` to test real sign-in locally).
 3. Store the secrets:
 
 ```
@@ -163,26 +176,31 @@ To change a director, change the pillar's Owner. To move a committee to another 
 
 Portal admins can see every module for support, but being an admin never lets anyone approve or pay: those need membership in that group or team itself (`actingRoles` in `portal/src/lib/viewer.ts`). The rules are plain functions with tests in `portal/src/lib/teams.ts`.
 
-### 7. Purchase Requests
+### 7. Shared Drives, funds and cards
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
 2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-role-finance@` can open. Add the runtime service account (`$SA`) as a **Contributor** only, so it can add files but not manage the drive. Make a top-level folder for the portal and copy its ID; that is `W9_DRIVE_FOLDER_ID`. When a payment is for labor and the payee has no W-9 on file, the requester must upload one with the request. It is saved there as `W-9 — <payee> — <date>`, and only finance gets a link to it. Finance checks it and ticks "W-9 on file" when approving, which marks the saved vendor so the next request to them needs no W-9. The portal never stores tax ID numbers.
-3. **Funds and cards: Portal Settings.** Signed in as a portal admin, open Portal Settings (`/admin`). It lists every team found in Google with its chair, vice chair, director and head count. Pick the fund each team charges; teams whose name matches a fund have it suggested, and the rest show "Needs a fund". Add IAR's cards there too (last four digits, holder, fund). Both are saved in Firestore at `orgs/iar/settings/portal`. There's no file to edit or upload. A team with no fund can't submit purchase requests yet, and a fund no team charges goes straight to finance review.
-4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
-5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
+3. **Maintenance Photos drive.** A Shared Drive for IT & Maintenance photos, with the runtime service account as **Contributor**, the facilities and IT team groups as Contributors and the office as Viewer. Make a top-level folder; its ID is `MAINTENANCE_DRIVE_FOLDER_ID`. Photos are filed as `<year> / TK-1001`.
+4. **Funds and cards: Portal Settings.** Signed in as a portal admin, open Portal Settings (`/admin`). It lists every team found in Google with its chair, vice chair, director and head count. Pick the fund each team charges; teams whose name matches a fund have it suggested, and the rest show "Needs a fund". Add IAR's cards there too (last four digits, holder, fund). Both are saved in Firestore at `orgs/iar/settings/portal`. There's no file to edit or upload. A team with no fund can't submit purchase requests yet, and a fund no team charges goes straight to finance review.
+5. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
+6. **Reminders** come from the daily job (§11): a reminder after 3 days at a step, the committee's director (or finance) after 5, and a weekday morning digest in Chat for each approver and the finance office.
 
-### 8. Email alerts
+### 8. Alerts in Google Chat
 
-The portal emails whoever has to act next: an approver when a request reaches them, finance when one reaches its queue, a requester when a request comes back for changes, and the person covering for someone who's away. Everything else appears only under Notifications in the portal. Until this is set up, nothing is emailed and the bell still works.
+The portal alerts whoever has to act next: an approver when a request reaches them, a requester when it comes back for changes, the person covering for someone away, and a team when there's something new in its queue. A person gets a **direct message from the "IAR Portal" Chat app**; a role or team gets a **post in its Chat space** ("IAR Portal · Finance"), one thread per request. Everything else appears only under Notifications in the portal.
 
-1. Create a mailbox for the portal to send from, for example `portal@islam1.org` (it needs a Gmail license; a shared mailbox nobody signs in to is fine).
-2. Admin console → Security → API controls → Domain-wide delegation: edit the portal's entry from step 4 and add the scope `https://www.googleapis.com/auth/gmail.send` (keep the groups scope; separate them with a comma).
-3. Set `PORTAL_MAIL_FROM=portal@islam1.org` when deploying.
-4. Let `portal@islam1.org` post to the groups the portal emails (`portal-role-finance@`, `portal-role-executive@`, `portal-role-admin@`, and the team groups with a queue, such as `portal-team-marketing@`): in each group's settings, "Who can post" must include that address or the whole organization.
+1. **The Chat app** (Cloud console → Google Chat API → Configuration): app name "IAR Portal", the IAR logo as its avatar, interactive features on, "Receive 1:1 messages" and "Join spaces and group conversations" ticked; connection: **HTTP endpoint URL** `https://<portal address>/api/chat`, authentication audience **HTTP endpoint URL**; visibility: `portal-role-beta@` and `portal-role-admin@` (everyone after the beta). Don't build it as a Workspace add-on. The app sends as the runtime service account itself (the `chat.bot` scope); there's no key and no delegation for it.
+2. **List it privately** (Google Workspace Marketplace SDK → App configuration: visibility Private, Admin-only install; App integrations: Chat app; then the store listing and Publish; private listings aren't reviewed by Google), and **install it** for `portal-role-beta@` and `portal-role-admin@` (Admin console → Apps → Google Workspace Marketplace apps → Add app). Installing it is what lets the app message people.
+3. **Spaces**: one per role or queue team (Finance, Office, Executive, Admins, Marketing, IT & A/V, Facilities, Security), with that team's Google Group added as a member so the space follows the group, and the app added. Save each space's name (`spaces/AAAA…`) in Portal Settings `chatSpaces`, keyed by role (`finance`, `office`, `executive`, `admins`, `marketing`, `it`, `av`, `facilities`, `security`). A role with no space gets its alerts by email to its group.
+4. Set `PORTAL_CHAT=on` when deploying.
 
-Be aware: domain-wide delegation applies to the service account, not to one mailbox, so the gmail.send scope would let it send as any islam1.org user. The portal only ever sends as `PORTAL_MAIL_FROM`, the service account has no key file, and only the Cloud Run service runs as it. Keep the project's owners to the two named in "Who owns what".
+**Email is the fallback**, for someone the app can't reach yet (it isn't installed for them):
+1. The mailbox `portal@islam1.org` needs a license (it also holds the room calendars' holds, §10); a mailbox nobody signs in to is fine.
+2. The `gmail.send` scope is in the delegation entry (§4).
+3. Set `PORTAL_MAIL_FROM=portal@islam1.org` when deploying. `PORTAL_EMAIL_FALLBACK=off` turns the fallback off.
+4. Let `portal@islam1.org` post to the groups it may email (`portal-role-finance@`, `-executive@`, `-office@`, `-admin@`, and the team groups with a queue): "Who can post" must include that address or the whole organization.
 
-To try it locally without Google, run `npm run dev`; every email the portal would send is listed at http://localhost:3000/dev.
+To try it locally without Google, run `npm run dev`; every Chat message and email the portal would send is listed at http://localhost:3000/dev.
 
 ### 9. Deploy
 
@@ -191,13 +209,36 @@ From the repo root:
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,W9_DRIVE_FOLDER_ID=<W-9 folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org \
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,W9_DRIVE_FOLDER_ID=<W-9 folder id>,MAINTENANCE_DRIVE_FOLDER_ID=<photos folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_CALENDAR_SUBJECT=portal@islam1.org,PORTAL_CHAT=on,DAILY_INVOKER=portal-scheduler@iar-portal.iam.gserviceaccount.com,PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 
-Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL (or a custom domain such as portal.islam1.org) and deploy again.
+Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. If the organization's "Domain restricted sharing" policy blocks it, override that policy for this project only. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL and deploy again.
+
+Add the portal to the **Google app launcher** (the 9-dot menu in Gmail and Drive): Admin console → Apps → Web and mobile apps → Add custom app (a bookmark to the portal's address), for everyone.
+
+### 10. Room calendars
+
+IAR's rooms are resources in Google Workspace (Admin console → Directory → Buildings and resources), each with its own calendar. The portal reads the list from there and checks bookings against each room's calendar; nothing about rooms is typed into the portal except what Google doesn't hold.
+
+1. Check the resources against the real room list with the office: every bookable room is a resource with its building and capacity. Add missing ones there.
+2. Share each room's calendar, and IAR's main events calendar, with `portal@islam1.org` with **Make changes to events**. The portal puts a "Hold (pending approval)" on the room calendar when a request is submitted, confirms it on approval and removes it if the request is sent back, denied or cancelled.
+3. Make sure the standing holds are on the room calendars as named recurring events: the daily prayers, Jumuah, school hours (Al-Iman, An-Noor, Al-Furqan) and the food pantry. The portal reads them as standing holds that can't be asked for (it recognises prayer, Jumuah, school and pantry names).
+4. In Portal Settings → Rooms, turn on the rooms people can book, and set food, rooms that share a space (the full gym and its halves) and restricted rooms (Room 240). Policy rules can be turned off there too.
+
+### 11. The daily job, backups and alerts
+
+1. **Daily job**: a Cloud Scheduler job `portal-daily` at 7:00 AM America/New_York, POST `https://<portal address>/api/daily`, with an OIDC token as `portal-scheduler@…` (which has `roles/run.invoker`) and audience `https://<portal address>/api/daily`. Set `DAILY_INVOKER` to that service account. It sends purchase reminders and the morning digest, reminds and escalates unanswered asks for a booked time, moves past events to close-out, opens preventive maintenance tickets and closes tickets the reporter never confirmed.
+2. **Backups**: point-in-time recovery (§2) plus a nightly Firestore export to a Cloud Storage bucket with a 30-day lifecycle.
+3. **Alerts**: an uptime check on the sign-in page and an alert policy emailing `portal-role-admin@`; a $25/month budget alert on the billing account; an Artifact Registry cleanup policy keeping the last 10 images.
+
+### 12. The address: portal.islam1.org
+
+Map the domain with `gcloud beta run domain-mappings create --service iar-portal --domain portal.islam1.org --region us-east1` (Google may first ask you to prove IAR manages islam1.org: `gcloud domains verify islam1.org`). It prints the DNS records to add (a CNAME `portal` → `ghs.googlehosted.com.`); go-live writes them into a Gmail draft for IAR's DNS manager. Once DNS and the certificate are ready, set `NEXTAUTH_URL=https://portal.islam1.org`, add `https://portal.islam1.org/api/auth/callback/google` to the Web client's redirect URIs, change the Chat app's endpoint and the daily job's URL and audience, and deploy again.
 
 ## Who owns what
+
+- People: Google Groups is the record of who is on which committee and who does what. The members Sheet go-live reads is a one-time starting list, archived after launch.
 
 - Google Cloud project: owned by the islam1.org organization, with at least two project owners.
 - Repo: move from the personal GitHub account to an IAR GitHub organization before production.
