@@ -163,6 +163,7 @@ export const deploy: Stage = {
             await c.g.updateServiceEnv(p, opt.region, SERVICE, { NEXTAUTH_URL: custom }, []);
             c.state.portalUrl = custom;
             c.state.customDomainLive = true;
+            c.log(`  Also change the Chat app's HTTP endpoint (Google Chat API → Configuration) to ${custom}/api/chat, so the app keeps answering.`);
           },
         });
       } else out.push({ kind: "check", text: `Waiting for ${host}: ${mapping.message ?? "the DNS records aren't in yet, or the certificate isn't ready"}. Run go-live again later; it switches over once both work.` });
