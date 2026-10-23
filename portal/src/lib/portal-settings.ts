@@ -4,6 +4,7 @@ import { isDevAuth } from "./dev";
 import { ORG } from "./org";
 import { teamGroupEmail } from "./teams";
 import { EMPTY_SETTINGS, type PortalSettings } from "./settings-rules";
+import { DEV_ROOM_SETTINGS } from "./rooms-google";
 
 export { type CreditCard, type PortalSettings } from "./settings-rules";
 
@@ -44,6 +45,8 @@ const mem: { s: PortalSettings } = {
         facilities: "spaces/dev-facilities",
         security: "spaces/dev-security",
       },
+      rooms: DEV_ROOM_SETTINGS,
+      eventRules: {},
     });
   },
   set s(v) {

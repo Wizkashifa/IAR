@@ -40,6 +40,8 @@ export type Hold = {
   /** The team group of the card's committee. */
   committeeGroup?: string;
   calendarEventId?: string;
+  /** The room calendar the entry is on, to free given-up dates of a calendar-only entry. */
+  calendarId?: string;
   /** For a calendar-only entry: who made it. */
   organizerEmail?: string;
   /** Every date the holder's booking has: one for a one-time event. */

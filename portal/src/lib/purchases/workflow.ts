@@ -57,6 +57,8 @@ export type Actor = {
   chairs?: string[];
   /** Funds this person directs: they can take the chair step on them. */
   directs?: string[];
+  /** Team groups this person chairs, vice-chairs or directs: they can open those committees' requests. */
+  leads?: string[];
 };
 
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };

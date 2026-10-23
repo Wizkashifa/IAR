@@ -79,5 +79,6 @@ export async function actorFor(viewer: Viewer): Promise<Actor> {
     console.error("away lookup failed", err);
   }
   const f = personFunds(await purchaseContext(), email);
-  return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: f.oversees, directs: f.directs, chairs: f.chairs };
+  const leads = [...viewer.teams.filter((t) => t.role !== "member").map((t) => t.group), ...viewer.directs];
+  return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: f.oversees, directs: f.directs, chairs: f.chairs, leads: [...new Set(leads)] };
 }

@@ -151,27 +151,23 @@ function isOpenPurchase(c: Card): boolean {
 
 // ---- Development: sample cards in memory -------------------------------
 
-/** Placeholder event cards, until the Events module exists. Shown to every sample user. */
-function sampleEventCards(email: string): Card[] {
-  const day = (d: number) => new Date(Date.now() - d * 864e5).toISOString();
-  const ahead = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
-  const base = { orgId: ORG.id, ownerEmail: email };
-  return [
-    { ...base, id: "EV-1042", type: "event", title: "Youth Halaqa — winter series", status: "changes_requested", committee: "Youth", waitingOn: "You: pick a room without a school-hours conflict", eventDate: ahead(18), updatedAt: day(0) },
-    { ...base, id: "EV-1031", type: "event", title: "Family Night", status: "approved", committee: "Youth", waitingOn: "Marketing: flyer due in 6 days", eventDate: ahead(9), updatedAt: day(3) },
-    { ...base, id: "EV-0998", type: "event", title: "Community Iftar volunteer briefing", status: "close_out", committee: "Social & Welfare", waitingOn: "You: attendance and final costs", eventDate: ahead(-4), updatedAt: day(4) },
-  ];
-}
-
 type MemoryState = { cards: Map<string, Card>; vendors: Map<string, Vendor>; next: Record<string, number>; seeded: boolean };
 
 // Kept on globalThis so dev-server reloads don't wipe what you've submitted.
 const g = globalThis as unknown as { __iarMemory?: MemoryState };
 const mem: MemoryState = (g.__iarMemory ??= { cards: new Map(), vendors: new Map(), next: { ...COUNTER_START }, seeded: false });
 
+// One shared promise, so pages that load several lists at once all wait for the same seeding.
+let seeding: Promise<void> | null = null;
 async function ensureSeeded() {
   if (mem.seeded) return;
-  mem.seeded = true;
+  seeding ??= seed().then(() => {
+    mem.seeded = true;
+  });
+  return seeding;
+}
+
+async function seed() {
   const { samplePurchases, sampleVendors } = await import("./purchases/samples");
   for (const c of await samplePurchases()) {
     mem.cards.set(c.id, c);
@@ -179,6 +175,12 @@ async function ensureSeeded() {
     if (n >= mem.next.PO) mem.next.PO = n + 1;
   }
   for (const v of sampleVendors()) mem.vendors.set(v.id, v);
+  const { sampleEvents } = await import("./events/samples");
+  for (const c of await sampleEvents()) {
+    mem.cards.set(c.id, c);
+    const n = Number(c.id.split("-")[1]);
+    if (n >= mem.next.EV) mem.next.EV = n + 1;
+  }
 }
 
 const clone = <T,>(x: T): T => structuredClone(x);
@@ -187,7 +189,7 @@ const memoryStore: CardStore = {
   async listByOwner(email) {
     await ensureSeeded();
     const own = [...mem.cards.values()].filter((c) => c.ownerEmail.toLowerCase() === email.toLowerCase());
-    return [...own.map(clone), ...sampleEventCards(email)].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return own.map(clone).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   },
   async get(id) {
     await ensureSeeded();
