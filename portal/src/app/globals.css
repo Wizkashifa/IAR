@@ -206,6 +206,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outl
 .choice.on { border-color: var(--gold); background: var(--accent-soft); }
 .choice.disabled { opacity: 0.55; cursor: not-allowed; }
 .choice small { flex-basis: 100%; color: var(--ink-2); font-size: 12px; }
+.choice > span { flex: 1 1 0; min-width: 0; }
 .checks { display: grid; gap: 6px; margin-top: 12px; font-size: 14px; }
 .inline { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
 .note { color: var(--ink-2); font-size: 13px; margin: 0 0 12px; }

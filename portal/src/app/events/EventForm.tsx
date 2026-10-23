@@ -223,7 +223,7 @@ export default function EventForm(p: EventFormProps) {
                 ["fundraiser", "Fundraiser"],
               ] as const).map(([k, l]) => (
                 <label key={k} className={`choice${d[k] ? " on" : ""}`}>
-                  <input type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} /> {l}
+                  <input type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} /> <span>{l}</span>
                 </label>
               ))}
             </div>
@@ -282,7 +282,7 @@ export default function EventForm(p: EventFormProps) {
               <div className="choices">
                 {Object.entries(AV_KINDS).map(([k, l]) => (
                   <label key={k} className={`choice${d.avNeeds.kinds.includes(k) ? " on" : ""}`}>
-                    <input type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => setD((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} /> {l}
+                    <input type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => setD((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} /> <span>{l}</span>
                   </label>
                 ))}
               </div>
@@ -292,7 +292,7 @@ export default function EventForm(p: EventFormProps) {
               <div className="choices">
                 {Object.entries(AV_INCLUDES).map(([k, l]) => (
                   <label key={k} className={`choice${d.avNeeds.includes.includes(k) ? " on" : ""}`}>
-                    <input type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => setD((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} /> {l}
+                    <input type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => setD((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} /> <span>{l}</span>
                   </label>
                 ))}
               </div>

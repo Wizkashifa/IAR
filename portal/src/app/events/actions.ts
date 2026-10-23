@@ -78,7 +78,7 @@ export async function checkDraft(raw: EventFormInput & { editing?: string }): Pr
     const day = input.date;
     const seen = new Set<string>();
     const items = r.busy
-      .filter((b) => b.date === day && b.cardId !== editing?.id)
+      .filter((b) => b.date === day && (!wf.isEventCard(editing) || b.cardId !== editing.id))
       .filter((b) => roomById(ctx.rooms, b.roomId) && (b.roomId === first.id || first.overlaps.includes(b.roomId) || roomById(ctx.rooms, b.roomId)!.overlaps.includes(first.id)))
       .filter((b) => {
         const k = `${b.label}|${b.start}|${b.end}`;
