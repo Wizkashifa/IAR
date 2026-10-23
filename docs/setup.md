@@ -166,7 +166,7 @@ Portal admins can see every module for support, but being an admin never lets an
 ### 7. Purchase Requests
 
 1. **Receipts drive.** Create a Shared Drive under islam1.org, for example "PO Records", and add the runtime service account (`$SA`) as a **Content manager**. Make a top-level folder in it for the portal and copy its ID from the URL; that is `PO_DRIVE_FOLDER_ID`. The portal files each request's receipts and invoices as `<year> / PO-12001 · <fund>`. Give finance and the office access through their groups, not individuals. Retention (seven years) is a yearly review by the office, as in the plan.
-2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-role-finance@` can open. Do **not** add the service account. The portal never stores W-9s or tax IDs; finance confirms "W-9 on file" in the app after saving the form there.
+2. **W-9 drive.** A separate, restricted Shared Drive that only `portal-role-finance@` can open. Add the runtime service account (`$SA`) as a **Contributor** only, so it can add files but not manage the drive. Make a top-level folder for the portal and copy its ID; that is `W9_DRIVE_FOLDER_ID`. When a payment is for labor and the payee has no W-9 on file, the requester must upload one with the request. It is saved there as `W-9 — <payee> — <date>`, and only finance gets a link to it. Finance checks it and ticks "W-9 on file" when approving, which marks the saved vendor so the next request to them needs no W-9. The portal never stores tax ID numbers.
 3. **Funds and cards: Portal Settings.** Signed in as a portal admin, open Portal Settings (`/admin`). It lists every team found in Google with its chair, vice chair, director and head count. Pick the fund each team charges; teams whose name matches a fund have it suggested, and the rest show "Needs a fund". Add IAR's cards there too (last four digits, holder, fund). Both are saved in Firestore at `orgs/iar/settings/portal`. There's no file to edit or upload. A team with no fund can't submit purchase requests yet, and a fund no team charges goes straight to finance review.
 4. **Executive approval.** Once the Shura sets the dollar amount, set `PO_EXECUTIVE_THRESHOLD` (for example `2500`). Unset means no executive step.
 5. The morning digest and overdue reminders aren't built yet. Approvers get an email as soon as a request reaches them once email is set up (next step).
@@ -191,7 +191,7 @@ From the repo root:
 ```
 gcloud run deploy iar-portal --source portal --region us-east1 \
   --service-account $SA --allow-unauthenticated \
-  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org \
+  --set-env-vars ORG_DOMAIN=islam1.org,GOOGLE_CLIENT_ID=<client id>,DIRECTORY_ADMIN_SUBJECT=portal-directory@islam1.org,DIRECTORY_SERVICE_ACCOUNT=$SA,NEXTAUTH_URL=https://<portal address>,PO_DRIVE_FOLDER_ID=<folder id>,W9_DRIVE_FOLDER_ID=<W-9 folder id>,PORTAL_MAIL_FROM=portal@islam1.org,PORTAL_ACCESS_GROUP=portal-role-beta@islam1.org \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 

@@ -15,7 +15,10 @@ export type PurchaseKind = "pay" | "reimburse" | "card";
  */
 export type PurchaseStage = "chair" | "finance" | "executive" | "payment" | "books" | "done";
 
+/** "ach" is a bank transfer; every other value is a check and says where the check goes. */
 export type DeliveryMethod = "committee_box" | "office_pickup" | "security" | "mail" | "ach";
+
+export type PaymentMethod = "check" | "ach";
 
 export type LineFlag = "refund" | "repay";
 
@@ -64,10 +67,16 @@ export type PurchaseDetails = {
   payee?: string;
   invoiceNumber?: string;
   delivery?: DeliveryMethod;
+  /** Required for every check, wherever it goes; IAR records the payee's address. */
   mailingAddress?: string;
-  /** Pay only: labor, or a payee IAR hasn't paid before, needs a W-9 on file. */
+  /** Pay only: labor (ticked, or a labor sub-account) needs a W-9 on file. */
   isLabor?: boolean;
   w9Required?: boolean;
+  /**
+   * The W-9 the requester uploaded. The file is only in the restricted W-9
+   * drive; its ID is for finance and never goes in a notice.
+   */
+  w9Uploaded?: { name: string; at: string; driveFileId?: string };
   /** Requester's disclosure: the payee is a Shura or committee member, or a business one controls. */
   relatedParty?: boolean;
 
@@ -119,6 +128,21 @@ export const DELIVERY_LABEL: Record<DeliveryMethod, string> = {
   mail: "Mail check to payee",
   ach: "ACH / direct transfer",
 };
+
+/** Where a check can go, in the order the form offers them. */
+export const CHECK_DELIVERIES: Exclude<DeliveryMethod, "ach">[] = ["committee_box", "office_pickup", "security", "mail"];
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = { check: "Check", ach: "ACH (bank transfer)" };
+
+export function paymentMethodOf(delivery: DeliveryMethod | undefined): PaymentMethod | undefined {
+  if (!delivery) return undefined;
+  return delivery === "ach" ? "ach" : "check";
+}
+
+/** "Check · Leave check in the committee's box" or "ACH (bank transfer)". */
+export function paymentLabel(delivery: DeliveryMethod): string {
+  return delivery === "ach" ? PAYMENT_METHOD_LABEL.ach : `Check · ${DELIVERY_LABEL[delivery]}`;
+}
 
 export function purchaseTotal(p: Pick<PurchaseDetails, "lines">): number {
   return Math.round(p.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100;

@@ -3,7 +3,9 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ACCOUNTS, FUNDS } from "./accounts";
+import { ACCOUNTS, FUNDS, isLaborAccount } from "./accounts";
+import { mergeVendors, vendorAfterPayment, vendorWithW9, vendorsForFund, visibleVendors } from "./vendors";
+import type { Vendor } from "../cards";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
 import { purchaseCommentNotices, purchaseNotices } from "./notices";
@@ -34,6 +36,7 @@ function input(over: Partial<PurchaseInput> = {}): PurchaseInput {
     description: "Youth night supplies",
     payee: "Known Vendor",
     delivery: "committee_box",
+    mailingAddress: "1 Main St, Raleigh, NC 27601",
     lines: [{ accountId: "a38", amount: "120.50" }],
     attestationName: volunteer.name,
     ...over,
@@ -63,12 +66,23 @@ test("amounts: commas and dollar signs are fine; three decimals or zero are not"
   assert.equal(r.ok, false);
 });
 
-test("input: a mailed check needs an address; card receipts need date and merchant per line", () => {
-  const mail = parsePurchaseInput(input({ delivery: "mail", mailingAddress: "" }), ctx);
-  assert.equal(mail.ok, false);
+test("input: every check needs an address, wherever it goes; card receipts need date and merchant per line", () => {
+  for (const delivery of ["mail", "committee_box", "office_pickup", "security"]) {
+    assert.equal(parsePurchaseInput(input({ delivery, mailingAddress: "" }), ctx).ok, false, delivery);
+    assert.equal(parsePurchaseInput(input({ kind: "reimburse", delivery, mailingAddress: "" }), ctx).ok, false, `reimburse ${delivery}`);
+  }
+  const ach = parsePurchaseInput(input({ delivery: "ach", mailingAddress: "" }), ctx);
+  assert.ok(ach.ok && ach.details.mailingAddress === undefined);
   const cardIn = parsePurchaseInput(input({ kind: "card", cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57" }] }), ctx);
   assert.equal(cardIn.ok, false);
   if (!cardIn.ok) assert.ok(cardIn.errors.some((e) => e.includes("charge date")));
+});
+
+test("input: check or ACH first; a check needs to say where it goes", () => {
+  const noWhere = parsePurchaseInput(input({ paymentMethod: "check", delivery: "" }), ctx);
+  assert.ok(!noWhere.ok && noWhere.errors.includes("Choose where the check should go."));
+  const nothing = parsePurchaseInput(input({ delivery: "" }), ctx);
+  assert.ok(!nothing.ok && nothing.errors.includes("Choose check or ACH."));
 });
 
 test("input: someone can only submit receipts for a card they hold, and the fund follows the card", () => {
@@ -78,15 +92,71 @@ test("input: someone can only submit receipts for a card they hold, and the fund
   assert.ok(mine.ok && mine.details.fund === "Imam's Office Fund Expenses");
 });
 
-test("W-9: needed for labor or a new payee, unless one is on file", () => {
+test("labor sub-accounts: every temp labor, salary, payroll and honorarium line, nothing else", () => {
+  const ids = ACCOUNTS.filter(isLaborAccount).map((a) => a.id);
+  assert.deepEqual(ids, ["a1", "a13", "a16", "a25", "a32", "a36", "a37", "a40", "a43", "a47", "a51", "a74", "a81", "a86", "a93", "a97"]);
+});
+
+test("W-9: only for labor (ticked or a labor sub-account), unless one is on file", () => {
   const known = parsePurchaseInput(input({ isLabor: true }), ctx);
   assert.ok(known.ok && known.details.w9Required === false);
-  const fresh = parsePurchaseInput(input({ payee: "Brand New LLC" }), ctx);
-  assert.ok(fresh.ok && fresh.details.w9Required === true);
-  const labor = parsePurchaseInput(input({ payee: "No W9 Co", isLabor: true }), ctx);
-  assert.ok(labor.ok && labor.details.w9Required === true);
+  const freshSupplies = parsePurchaseInput(input({ payee: "Brand New LLC" }), ctx);
+  assert.ok(freshSupplies.ok && freshSupplies.details.w9Required === false);
   const repeatSupplies = parsePurchaseInput(input({ payee: "No W9 Co" }), ctx);
   assert.ok(repeatSupplies.ok && repeatSupplies.details.w9Required === false);
+
+  const ticked = parsePurchaseInput(input({ payee: "No W9 Co", isLabor: true }), ctx);
+  assert.ok(!ticked.ok && ticked.errors.some((e) => e.includes("Upload the payee's W-9")));
+  const laborLine = parsePurchaseInput(input({ payee: "Brand New LLC", lines: [{ accountId: "a37", amount: "90" }] }), ctx);
+  assert.ok(!laborLine.ok && laborLine.errors.some((e) => e.includes("W-9")));
+  const withW9 = parsePurchaseInput(input({ payee: "Brand New LLC", lines: [{ accountId: "a37", amount: "90" }], w9Attached: true }), ctx);
+  assert.ok(withW9.ok && withW9.details.w9Required === true && withW9.details.isLabor === true);
+  const reimburse = parsePurchaseInput(input({ kind: "reimburse", lines: [{ accountId: "a37", amount: "90" }] }), ctx);
+  assert.ok(reimburse.ok && reimburse.details.w9Required === undefined);
+});
+
+test("vendors: one shared list; Social & Welfare payees walled off", () => {
+  const all: Vendor[] = [
+    { id: "triangle-sound", name: "Triangle Sound", w9OnFile: true, funds: ["Youth Expenses"], timesPaid: 1 },
+    { id: "sw-a-person", name: "A. Person", w9OnFile: false, restricted: true },
+  ];
+  assert.deepEqual(visibleVendors(all, volunteer.roles).restricted, []);
+  assert.deepEqual(vendorsForFund(all, volunteer.roles, "Social & Welfare"), []);
+  assert.equal(visibleVendors(all, ["member", "admins"]).restricted.length, 0);
+  assert.equal(vendorsForFund(all, sw.roles, "Social & Welfare")[0].name, "A. Person");
+  assert.equal(vendorsForFund(all, finance.roles, "Social & Welfare").length, 1);
+  // Finance matching a Youth request never sees the S&W record.
+  assert.deepEqual(vendorsForFund(all, finance.roles, "Youth Expenses").map((v) => v.name), ["Triangle Sound"]);
+
+  // Events pays the vendor Youth used: one record, both funds, address from the check.
+  const events = vendorAfterPayment(all, { kind: "pay", payee: "triangle sound", fund: "Event Committee Expenses", delivery: "mail", mailingAddress: "77 Capital Blvd" }, T(1))!;
+  assert.equal(events.id, "triangle-sound");
+  assert.deepEqual(events.funds, ["Youth Expenses", "Event Committee Expenses"]);
+  assert.equal(events.timesPaid, 2);
+  assert.equal(events.address, "77 Capital Blvd");
+
+  // An S&W payee with a shared vendor's name gets its own restricted record.
+  const aid = vendorAfterPayment(all, { kind: "pay", payee: "Triangle Sound", fund: "Social & Welfare", delivery: "ach" }, T(1))!;
+  assert.equal(aid.id, "sw-triangle-sound");
+  assert.equal(aid.restricted, true);
+  assert.equal(aid.timesPaid, 1);
+  assert.equal(vendorAfterPayment(all, { kind: "reimburse", payee: "Vol", fund: "Youth Expenses" }, T(1)), null);
+
+  const w9 = vendorWithW9(all, { payee: "New Coach", fund: "Youth Expenses", w9Uploaded: { name: "w9.pdf", at: T(0), driveFileId: "f1" } }, T(2))!;
+  assert.ok(w9.w9OnFile && w9.w9FileId === "f1" && !w9.restricted);
+});
+
+test("vendors: merging keeps the W-9 and adds up the history; never across the S&W wall", () => {
+  const keep: Vendor = { id: "a", name: "Capital Plumbing", w9OnFile: false, funds: ["Facility Maintenance Expenses"], timesPaid: 2, lastPaidAt: T(1) };
+  const drop: Vendor = { id: "b", name: "Capital Plumbing Co.", w9OnFile: true, w9Date: T(0), w9FileId: "f9", address: "88 Trade St", funds: ["Youth Expenses"], timesPaid: 1, lastPaidAt: T(5) };
+  const m = mergeVendors(keep, drop);
+  assert.equal(m.id, "a");
+  assert.ok(m.w9OnFile && m.w9FileId === "f9");
+  assert.equal(m.address, "88 Trade St");
+  assert.equal(m.timesPaid, 3);
+  assert.equal(m.lastPaidAt, T(5));
+  assert.deepEqual(m.funds, ["Facility Maintenance Expenses", "Youth Expenses"]);
+  assert.throws(() => mergeVendors(keep, { ...drop, restricted: true }));
 });
 
 test("a normal request goes chair → finance → payment → books → done", () => {
@@ -161,12 +231,52 @@ test("no executive step when the threshold isn't set", () => {
 });
 
 test("finance can't approve a payee that needs a W-9 until it's confirmed", () => {
-  let c = submitted({ payee: "Brand New LLC", isLabor: true });
+  let c = submitted({ payee: "Brand New LLC", isLabor: true, w9Attached: true });
   c = wf.approve(c, chair, settings, T(1));
   assert.throws(() => wf.approve(c, finance, settings, T(2)), /W-9/);
   c = wf.approve(c, finance, settings, T(2), { w9Received: true });
   assert.equal(c.purchase.w9Required, false);
   assert.ok(c.purchase.history.some((h) => h.action === "Confirmed W-9 on file"));
+});
+
+test("send back to an earlier step: from finance to the chair, and from the pay step", () => {
+  let c = submitted();
+  assert.deepEqual(wf.returnTargets(c), ["requester"]);
+  assert.throws(() => wf.returnForChanges(c, chair, T(1), "Fix it", "finance"), wf.WorkflowError);
+  c = wf.approve(c, chair, settings, T(1));
+  assert.deepEqual(wf.returnTargets(c), ["requester", "chair"]);
+  const before = c;
+  c = wf.returnForChanges(c, finance, T(2), "Which event is this for?", "chair");
+  assert.equal(c.purchase.stage, "chair");
+  assert.equal(c.status, "in_review");
+  assert.equal(c.purchase.approverEmail, chair.email);
+  assert.equal(c.purchase.approvals.length, 0);
+  assert.equal(c.waitingOn, `Chair approval: ${chair.email} (sent back: Which event is this for?)`);
+  const notes = purchaseNotices(before, c, finance);
+  assert.ok(notes.some((n) => "email" in n.to && n.to.email === chair.email && n.email && n.text.includes("sent back")));
+  assert.ok(notes.some((n) => "email" in n.to && n.to.email === volunteer.email && !n.email));
+
+  c = wf.approve(c, chair, settings, T(3));
+  assert.equal(c.purchase.returnNote, undefined);
+  c = wf.approve(c, finance, settings, T(4));
+  assert.equal(c.purchase.stage, "payment");
+  // The pay step: finance or the office can send it back; the requester can't.
+  assert.equal(wf.permission(c, volunteer, "return").ok, false);
+  assert.equal(wf.permission(c, chair, "return").ok, false);
+  assert.deepEqual(wf.returnTargets(c), ["requester", "finance", "chair"]);
+  const atFinance = wf.returnForChanges(c, office, T(5), "Invoice total doesn't match", "finance");
+  assert.equal(atFinance.purchase.stage, "finance");
+  assert.deepEqual(atFinance.purchase.approvals.map((a) => a.stage), ["chair"]);
+
+  // After payment: send back from QuickBooks; history warns not to pay twice.
+  c = wf.recordPayment(c, office, T(5), "Check", "20431");
+  assert.equal(wf.permission(c, office, "return").ok, false);
+  c = wf.returnForChanges(c, finance, T(6), "Wrong sub-account", "finance");
+  assert.equal(c.purchase.stage, "finance");
+  assert.ok(c.purchase.history.some((h) => h.action === "Payment already recorded" && h.note?.includes("20431")));
+  c = wf.recordBooks(wf.recordPayment(wf.approve(c, finance, settings, T(7)), office, T(8), "Check", "20431"), finance, T(9));
+  assert.equal(c.status, "closed");
+  assert.equal(wf.permission(c, finance, "return").ok, false);
 });
 
 test("return needs a note; the requester edits and approval starts over", () => {

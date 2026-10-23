@@ -1,6 +1,6 @@
 import "server-only";
 import type { Card, Vendor } from "../cards";
-import { vendorId } from "../cards";
+import { vendorKey } from "./vendors";
 import type { Role } from "../org";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
 import { purchaseContext } from "./settings";
@@ -20,13 +20,18 @@ const finance = person("finance@dev.local", "Sample Finance", ["member", "financ
 
 export function sampleVendors(): Vendor[] {
   const at = (d: number) => new Date(Date.now() - d * 864e5).toISOString();
-  const v = (name: string, w9OnFile: boolean, days?: number): Vendor => ({ id: vendorId(name), name, w9OnFile, w9Date: days ? at(days) : undefined });
+  const v = (name: string, w9OnFile: boolean, days: number | undefined, more: Partial<Vendor> = {}): Vendor => ({
+    id: vendorKey(name, Boolean(more.restricted)), name, w9OnFile, w9Date: days ? at(days) : undefined, ...more,
+  });
   return [
-    v("Triangle Janitorial Supply", true, 400),
-    v("Capital Plumbing Co.", true, 220),
-    v("Example Media LLC", true, 90),
-    v("Bright Signs Printing", true, 1300),
-    v("Office Depot", false),
+    v("Triangle Janitorial Supply", true, 400, { address: "1200 Industrial Dr, Raleigh, NC 27610", funds: ["Cleaning Committee Expenses", "General Fund Expenses"], timesPaid: 6, lastPaidAt: at(20) }),
+    v("Capital Plumbing Co.", true, 220, { address: "88 Trade St, Raleigh, NC 27601", funds: ["Facility Maintenance Expenses"], timesPaid: 2, lastPaidAt: at(60) }),
+    v("Example Media LLC", true, 90, { funds: ["Event Committee Expenses"], timesPaid: 1, lastPaidAt: at(80) }),
+    v("Bright Signs Printing", true, 1300, { address: "410 Glenwood Ave, Raleigh, NC 27603", funds: ["General Fund Expenses", "Youth Expenses"], timesPaid: 4, lastPaidAt: at(3) }),
+    v("Triangle Sound & Stage", false, undefined, { address: "77 Capital Blvd, Raleigh, NC 27604", funds: ["Youth Expenses", "Event Committee Expenses"], timesPaid: 3, lastPaidAt: at(30) }),
+    v("Office Depot", false, undefined),
+    // Social & Welfare: a separate record only S&W and finance see.
+    v("Sample Aid Recipient", false, undefined, { restricted: true, address: "PO Box 100, Raleigh, NC 27601", funds: ["Social & Welfare"], timesPaid: 1, lastPaidAt: at(40) }),
   ];
 }
 
@@ -77,9 +82,10 @@ export async function samplePurchases(): Promise<Card[]> {
   // Labor for a new payee: needs a W-9; waiting on the chair.
   c = make(volunteer, {
     kind: "pay", fund: "Sports & Recreation Expenses", description: "League scorekeeping, weeks 1 and 2",
-    payee: "A. Rahman (scorekeeper)", delivery: "committee_box", isLabor: true,
+    payee: "A. Rahman (scorekeeper)", delivery: "committee_box", mailingAddress: "15 Sample St, Raleigh, NC 27606", isLabor: true, w9Attached: true,
     lines: [{ accountId: "a36", amount: "90", note: "2 weeks at $45" }],
   }, 4);
+  c.purchase.w9Uploaded = { name: "W-9 — A. Rahman (scorekeeper).pdf", at: c.createdAt ?? c.updatedAt };
   out.push(c);
 
   // Approved, waiting to be paid.
@@ -94,7 +100,7 @@ export async function samplePurchases(): Promise<Card[]> {
 
   // Returned to the requester.
   c = make(volunteer, {
-    kind: "reimburse", fund: "Youth Expenses", description: "Youth night supplies and snacks", delivery: "office_pickup",
+    kind: "reimburse", fund: "Youth Expenses", description: "Youth night supplies and snacks", delivery: "office_pickup", mailingAddress: "20 Sample Ln, Cary, NC 27511",
     lines: [{ accountId: "a38", amount: "142.80", note: "Supplies" }, { accountId: "a39", amount: "96.00", note: "Snacks" }],
   }, 5, ["receipt-1003.jpg"]);
   c = wf.returnForChanges(c, chair, t(2), "The receipt for the snacks is missing. Please attach it.");
@@ -103,7 +109,7 @@ export async function samplePurchases(): Promise<Card[]> {
   // Paid, waiting for QuickBooks entry.
   c = make(volunteer, {
     kind: "pay", fund: "General Fund Expenses", description: "Jumuah announcement banners",
-    payee: "Bright Signs Printing", invoiceNumber: "BS-118", delivery: "security",
+    payee: "Bright Signs Printing", invoiceNumber: "BS-118", delivery: "security", mailingAddress: "410 Glenwood Ave, Raleigh, NC 27603",
     lines: [{ accountId: "a2", amount: "415" }],
   }, 12, ["invoice-BS-118.pdf"]);
   c = wf.approve(c, chair, s, t(11));
@@ -113,7 +119,7 @@ export async function samplePurchases(): Promise<Card[]> {
 
   // A chair's own request goes to the fund's backup approver, not skipped.
   c = make(chair, {
-    kind: "reimburse", fund: "Youth Expenses", description: "Halaqa snacks and supplies", delivery: "committee_box",
+    kind: "reimburse", fund: "Youth Expenses", description: "Halaqa snacks and supplies", delivery: "committee_box", mailingAddress: "30 Sample Ct, Raleigh, NC 27609",
     lines: [{ accountId: "a38", amount: "184.50" }],
   }, 1, ["receipt-costco.jpg"]);
   out.push(c);

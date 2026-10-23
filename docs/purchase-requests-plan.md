@@ -60,8 +60,8 @@ The five goals from the office, plus what the current form already does that mus
 **Carried over from the current form**
 
 - Requester name and email, committee, and whether the requester is the committee chair
-- Payee ("Issue check to"), mailing address, and how the check is delivered
-- Labor flag and first-time vendor flag, which drive the W-9 requirement
+- Payee ("Issue check to"), check or ACH, and for a check where it goes. Every check records a mailing address, wherever it goes, for vendors and reimbursements alike.
+- Labor flag (also set by any labor sub-account), which drives the W-9 requirement
 - Description, invoice number, receipts, comments
 - Electronic signature attestation and typed name
 - Request number, overall status, current approver, chair approval status
@@ -101,9 +101,9 @@ Every request is one record with one status and one named person it is waiting o
 
 &#91;embedded content: approval flow · 6 steps, 1 optional\]
 
-The dashed step applies only above the dollar limit; any approver can send a request back to the requester.
+The dashed step applies only above the dollar limit. At any step, including "to pay" and QuickBooks entry, whoever acts there can send the request back, either to the requester or to an earlier approval step it already passed.
 
-1. **Submitted.** Requester fills the form, adds line items and attachments. If the payee is new or the work is labor, a W-9 is required unless one is already on file.
+1. **Submitted.** Requester fills the form, adds line items and attachments. If the work is labor, the requester uploads the payee's W-9 unless one is already on file. It goes straight to the restricted W-9 drive.
 2. **Chair approval.** Routed to the committee chair listed in the Committees tab. Skipped automatically when the requester is the chair.
 3. **Finance review.** The office checks coding, receipts and W-9, and can fix a sub-account without sending the request back.
 4. **Executive approval (only above a set amount).** The threshold and approver live in a Settings tab, so they can change without code.
@@ -177,7 +177,7 @@ The prototype uses IAR's real list of 24 funds and 97 sub-accounts from the resp
 **Stage 2: working pilot.** Built in Apps Script with Claude Code, scoped to what proves the model:
 
 - [ ] Request form with line items, Accounts dropdowns, uploads to the Shared Drive
-- [ ] Vendor registry with W-9 upload to the restricted drive
+- [x] Vendor registry with W-9 upload to the restricted drive (portal: shared saved vendors, with Social & Welfare payees kept separate)
 - [ ] Chair and finance approval with the dashboard queue, morning digest and 3-day reminder
 - [ ] Mark paid and QuickBooks-entered
 - [ ] Audit log
