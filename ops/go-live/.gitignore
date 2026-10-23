@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# IDs of what go-live created (no people data), and OAuth client files.
+.state.json
+.state.json.tmp
+client_secret*.json

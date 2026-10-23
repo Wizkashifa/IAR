@@ -1,0 +1,359 @@
+/**
+ * Marketing Requests rules, as plain functions over a card so they can be
+ * tested without a server. Pages and server actions call these; they never
+ * change a marketing card's stage themselves.
+ *
+ * The flow (docs/plan.md, Marketing requests): a new request waits for the
+ * marketing team's weekly review. The team schedules it with a done-by date,
+ * asks the requester a question (it comes back to review when they answer),
+ * or declines it with a reason. Scheduled work is started, then marked done.
+ *
+ * - The marketing team is whoever is on portal-team-marketing@ (role "marketing").
+ * - A marketing member can submit a request, but someone else on the team
+ *   reviews it (schedules, asks or declines). They can still do the work.
+ * - The requester answers questions, can edit the request until it's
+ *   scheduled, and can cancel it until then.
+ * - Portal admins can open every request for support but act only if they're
+ *   on the marketing team themselves.
+ * - Every step is written to the card's history.
+ */
+import type { Card, CardStatus } from "../cards";
+import { ORG } from "../org";
+import type { Actor } from "../purchases/workflow";
+import { LEAD_DAYS, MARKETING_TYPES, addDays, daysBetween, isDate, neededBy, titleFor, type ParsedMarketing } from "./forms";
+import { type HistoryEntry, type MarketingDetails, type MarketingStage, STAGE_LABEL } from "./types";
+
+export type { Actor };
+
+export type MarketingCard = Card & { type: "marketing"; marketing: MarketingDetails };
+
+export class WorkflowError extends Error {}
+
+const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+
+export function isMarketingCard(c: Card | null | undefined): c is MarketingCard {
+  return Boolean(c && c.type === "marketing" && c.marketing);
+}
+
+/** Today in Raleigh (YYYY-MM-DD) for an ISO time. */
+const dayOf = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+
+/** "Nov 4" for a YYYY-MM-DD day. */
+export const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+/** "Wednesday, November 4" for a YYYY-MM-DD day. */
+export const longDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+
+// ---- Stages ----------------------------------------------------------------
+
+/** The shared card status for a marketing stage. */
+export function statusForStage(stage: MarketingStage): CardStatus {
+  switch (stage) {
+    case "review":
+      return "submitted";
+    case "question":
+      return "changes_requested";
+    case "scheduled":
+    case "doing":
+      return "approved";
+    case "done":
+      return "closed";
+    case "declined":
+      return "denied";
+    case "cancelled":
+      return "cancelled";
+  }
+}
+
+/** Open stages: still waiting on someone. */
+export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled", "doing"];
+export const isOpen = (c: MarketingCard) => OPEN_STAGES.includes(c.marketing.stage);
+
+/** What the card is waiting on, in words, for My Requests and the lists. */
+export function waitingOnFor(card: MarketingCard): string | undefined {
+  const m = card.marketing;
+  switch (m.stage) {
+    case "review":
+      return "Marketing: weekly review";
+    case "question":
+      return "You: answer marketing's question";
+    case "scheduled":
+      return m.doneBy ? `Marketing: due ${shortDay(m.doneBy)}` : "Marketing: scheduled";
+    case "doing":
+      return m.doneBy ? `Marketing: in progress, due ${shortDay(m.doneBy)}` : "Marketing: in progress";
+    default:
+      return undefined;
+  }
+}
+
+/** Words search should find the request by: its type and its key answers. */
+export function searchTextFor(m: MarketingDetails): string {
+  const t = MARKETING_TYPES[m.kind];
+  const a = m.answers;
+  return [t.label, a.desc, a.text, a.url, a.from, a.to, a.first, a.last, a.title, m.requesterName]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .slice(0, 1500);
+}
+
+/** Days until the requester needs it, from `today`; null if the type doesn't ask. */
+export function daysUntilNeeded(card: MarketingCard, today: string): number | null {
+  const due = neededBy(card.marketing.answers);
+  return due ? daysBetween(today, due) : null;
+}
+
+/** Needed sooner than marketing's usual 1–2 weeks, and still open. */
+export function isTight(card: MarketingCard, today: string): boolean {
+  const d = daysUntilNeeded(card, today);
+  return d !== null && d < LEAD_DAYS && (card.marketing.stage === "review" || card.marketing.stage === "question");
+}
+
+// ---- Who can act -------------------------------------------------------------
+
+export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel";
+
+/** The actions the marketing team takes; the others are the requester's. */
+export const TEAM_ACTIONS: Action[] = ["schedule", "ask", "decline", "start", "finish", "reschedule"];
+/** Review decisions, which nobody makes on their own request. */
+const REVIEW_ACTIONS: Action[] = ["schedule", "ask", "decline"];
+
+/** Whether `actor` may take `action` now, and if not, why. */
+export function permission(card: MarketingCard, actor: Actor, action: Action): { ok: true } | { ok: false; reason: string } {
+  const m = card.marketing;
+  const own = same(card.ownerEmail, actor.email);
+  const no = (reason: string) => ({ ok: false as const, reason });
+
+  if (action === "answer") {
+    if (!own) return no("Only the requester can answer marketing's question.");
+    if (m.stage !== "question") return no("Marketing hasn't asked a question.");
+    return { ok: true };
+  }
+  if (action === "edit" || action === "cancel") {
+    if (!own) return no(action === "edit" ? "Only the requester can change the request." : "Only the requester can cancel a request.");
+    if (m.stage !== "review" && m.stage !== "question")
+      return no(m.stage === "scheduled" || m.stage === "doing" ? "Marketing has already scheduled this. Add a comment to ask for a change." : "This request is closed.");
+    return { ok: true };
+  }
+
+  if (!actor.roles.includes("marketing")) return no("This step is for the marketing team.");
+  if (own && REVIEW_ACTIONS.includes(action)) return no("Someone else on the marketing team reviews your own request.");
+  switch (action) {
+    case "schedule":
+    case "ask":
+      return m.stage === "review" ? { ok: true } : no("This request isn't waiting for the weekly review.");
+    case "decline":
+      return m.stage === "review" || m.stage === "question" || m.stage === "scheduled" ? { ok: true } : no("This request can't be declined now.");
+    case "start":
+      return m.stage === "scheduled" ? { ok: true } : no("Only a scheduled request can be started.");
+    case "finish":
+      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("This request isn't scheduled or in progress.");
+    case "reschedule":
+      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("Only scheduled work has a done-by date to change.");
+  }
+  return no("Unknown action.");
+}
+
+function must(card: MarketingCard, actor: Actor, action: Action) {
+  const r = permission(card, actor, action);
+  if (!r.ok) throw new WorkflowError(r.reason);
+}
+
+/** The team actions `actor` can take on this request now. */
+export function teamActionsFor(card: MarketingCard, actor: Actor): Action[] {
+  return TEAM_ACTIONS.filter((a) => permission(card, actor, a).ok);
+}
+
+/** Requests waiting for the weekly review that `actor` can review (not their own). */
+export function reviewableBy(cards: MarketingCard[], actor: Actor): MarketingCard[] {
+  return cards.filter((c) => permission(c, actor, "schedule").ok);
+}
+
+// ---- Transitions ---------------------------------------------------------
+// Each returns a new card; the caller saves it.
+
+function entry(actor: Actor | string, now: string, action: string, note?: string): HistoryEntry {
+  const by = typeof actor === "string" ? actor : actor.email;
+  return note ? { at: now, by, action, note } : { at: now, by, action };
+}
+
+function withStage(card: MarketingCard, m: MarketingDetails, now: string): MarketingCard {
+  const next: MarketingCard = { ...card, marketing: m, status: statusForStage(m.stage), updatedAt: now };
+  next.waitingOn = waitingOnFor(next);
+  next.searchText = searchTextFor(m);
+  return next;
+}
+
+const moved = (m: MarketingDetails, stage: MarketingStage, now: string): MarketingDetails => ({ ...m, stage, stageSince: now });
+
+/** A done-by date: a real day, today or later. */
+function checkDoneBy(doneBy: string, now: string): string {
+  const d = doneBy.trim();
+  if (!isDate(d)) throw new WorkflowError("Pick the date marketing aims to finish by.");
+  if (d < dayOf(now)) throw new WorkflowError("The done-by date has already passed.");
+  return d;
+}
+
+/** The note for history when a request is needed sooner than marketing's usual lead time. */
+function tightNote(answers: Record<string, string>, now: string): string | undefined {
+  const due = neededBy(answers);
+  if (!due) return undefined;
+  const days = daysBetween(dayOf(now), due);
+  if (days >= LEAD_DAYS) return undefined;
+  return `Needed in ${days} day${days === 1 ? "" : "s"}. Marketing usually takes 1–2 weeks, so this may not be ready in time.`;
+}
+
+/** A new request from checked form input, waiting for the weekly review. The store assigns the ID. */
+export function newMarketing(details: ParsedMarketing, owner: Actor, now: string): MarketingCard {
+  const m: MarketingDetails = {
+    kind: details.kind,
+    answers: details.answers,
+    requesterName: owner.name,
+    ...(details.driveLink ? { driveLink: details.driveLink } : {}),
+    ...(details.notes ? { notes: details.notes } : {}),
+    stage: "review",
+    stageSince: now,
+    history: [entry(owner, now, "Submitted")],
+  };
+  const tight = tightNote(details.answers, now);
+  if (tight) m.history.push(entry("Portal", now, "Short notice", tight));
+  const card: MarketingCard = {
+    id: "",
+    orgId: ORG.id,
+    type: "marketing",
+    title: titleFor(details.kind, details.answers),
+    status: "submitted",
+    ownerEmail: owner.email.toLowerCase(),
+    committee: details.committee,
+    createdAt: now,
+    updatedAt: now,
+    marketing: m,
+  };
+  return withStage(card, m, now);
+}
+
+/** Accept it at the weekly review, with the date marketing aims to finish by. */
+export function schedule(card: MarketingCard, actor: Actor, now: string, doneBy: string, note?: string): MarketingCard {
+  must(card, actor, "schedule");
+  const d = checkDoneBy(doneBy, now);
+  const m: MarketingDetails = {
+    ...moved(card.marketing, "scheduled", now),
+    doneBy: d,
+    remindedFor: undefined,
+    history: [...card.marketing.history, entry(actor, now, `Scheduled, to finish by ${longDay(d)}`, note?.trim() || undefined)],
+  };
+  return withStage(card, m, now);
+}
+
+/** Ask the requester something. It comes back to the weekly review when they answer. */
+export function ask(card: MarketingCard, actor: Actor, now: string, question: string): MarketingCard {
+  must(card, actor, "ask");
+  const q = question.trim();
+  if (!q) throw new WorkflowError("Write your question for the requester.");
+  const m: MarketingDetails = { ...moved(card.marketing, "question", now), question: q, history: [...card.marketing.history, entry(actor, now, "Asked a question", q)] };
+  return withStage(card, m, now);
+}
+
+/** The edits a requester can make: the answers, committee, Drive link and comments. */
+export type MarketingEdit = ParsedMarketing;
+
+function applyEdit(card: MarketingCard, edited: MarketingEdit | undefined): { card: MarketingCard; changed: boolean } {
+  if (!edited) return { card, changed: false };
+  if (edited.kind !== card.marketing.kind) throw new WorkflowError("The request type can't change. Cancel this one and start a new request.");
+  const m = card.marketing;
+  const changed =
+    JSON.stringify(edited.answers) !== JSON.stringify(m.answers) ||
+    edited.committee !== card.committee ||
+    (edited.driveLink ?? "") !== (m.driveLink ?? "") ||
+    (edited.notes ?? "") !== (m.notes ?? "");
+  if (!changed) return { card, changed };
+  return {
+    changed,
+    card: {
+      ...card,
+      title: titleFor(m.kind, edited.answers),
+      committee: edited.committee,
+      marketing: { ...m, answers: edited.answers, driveLink: edited.driveLink, notes: edited.notes },
+    },
+  };
+}
+
+/** The requester answers marketing's question (and may edit the request too); it goes back to the weekly review. */
+export function answer(card: MarketingCard, actor: Actor, now: string, text: string, edited?: MarketingEdit): MarketingCard {
+  must(card, actor, "answer");
+  const a = text.trim();
+  if (!a) throw new WorkflowError("Write your answer to marketing's question.");
+  const { card: base, changed } = applyEdit(card, edited);
+  const history = [...base.marketing.history, entry(actor, now, "Answered marketing's question", a)];
+  if (changed) history.push(entry(actor, now, "Edited the request"));
+  const m: MarketingDetails = { ...moved(base.marketing, "review", now), question: undefined, history };
+  return withStage(base, m, now);
+}
+
+/** The requester changes the request before it's scheduled. It stays where it is. */
+export function edit(card: MarketingCard, actor: Actor, now: string, edited: MarketingEdit): MarketingCard {
+  must(card, actor, "edit");
+  const { card: base, changed } = applyEdit(card, edited);
+  if (!changed) throw new WorkflowError("Nothing changed.");
+  const m: MarketingDetails = { ...base.marketing, history: [...base.marketing.history, entry(actor, now, "Edited the request")] };
+  return withStage(base, m, now);
+}
+
+/** Someone on the team starts the work; they're recorded as working on it. */
+export function start(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
+  must(card, actor, "start");
+  const m: MarketingDetails = {
+    ...moved(card.marketing, "doing", now),
+    assignee: actor.email.toLowerCase(),
+    history: [...card.marketing.history, entry(actor, now, "Started", note?.trim() || undefined)],
+  };
+  return withStage(card, m, now);
+}
+
+/** Change the done-by date of scheduled or in-progress work. A new date can get its own reminder. */
+export function reschedule(card: MarketingCard, actor: Actor, now: string, doneBy: string, note?: string): MarketingCard {
+  must(card, actor, "reschedule");
+  const d = checkDoneBy(doneBy, now);
+  if (d === card.marketing.doneBy) throw new WorkflowError("That's already the done-by date.");
+  const m: MarketingDetails = {
+    ...card.marketing,
+    doneBy: d,
+    remindedFor: undefined,
+    history: [...card.marketing.history, entry(actor, now, `Done-by date changed to ${longDay(d)}`, note?.trim() || undefined)],
+  };
+  return withStage(card, m, now);
+}
+
+/** The work is finished. `note` can link the finished work. */
+export function finish(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
+  must(card, actor, "finish");
+  const n = note?.trim() || undefined;
+  const m: MarketingDetails = {
+    ...moved(card.marketing, "done", now),
+    doneNote: n,
+    assignee: card.marketing.assignee ?? actor.email.toLowerCase(),
+    history: [...card.marketing.history, entry(actor, now, "Done", n)],
+  };
+  return withStage(card, m, now);
+}
+
+export function decline(card: MarketingCard, actor: Actor, now: string, reason: string): MarketingCard {
+  must(card, actor, "decline");
+  const r = reason.trim();
+  if (!r) throw new WorkflowError("Say why marketing can't take this on.");
+  const m: MarketingDetails = { ...moved(card.marketing, "declined", now), declineReason: r, question: undefined, history: [...card.marketing.history, entry(actor, now, "Declined", r)] };
+  return withStage(card, m, now);
+}
+
+export function cancel(card: MarketingCard, actor: Actor, now: string): MarketingCard {
+  must(card, actor, "cancel");
+  const m: MarketingDetails = { ...moved(card.marketing, "cancelled", now), question: undefined, history: [...card.marketing.history, entry(actor, now, "Cancelled by requester")] };
+  return withStage(card, m, now);
+}
+
+/** The done-by date marketing would suggest when scheduling: when it's needed, or two weeks out. */
+export function suggestedDoneBy(card: MarketingCard, today: string): string {
+  const due = neededBy(card.marketing.answers);
+  return due && due >= today ? due : addDays(today, LEAD_DAYS);
+}
+
+export { STAGE_LABEL };

@@ -11,8 +11,9 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      // Show only accounts on the organization's domain in Google's picker.
-      authorization: { params: { hd: ORG.domain, prompt: "select_account" } },
+      // Someone already signed in to their IAR Google account goes straight in.
+      // hd only hints Google to use the organization's account; signIn() below enforces it.
+      authorization: { params: { hd: ORG.domain } },
     }),
   ],
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },

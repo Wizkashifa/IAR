@@ -104,6 +104,8 @@ export type PurchaseDetails = {
   eventCardId?: string;
   /** Denormalized for queries: a refund or repayment is still outstanding. Set by the store. */
   hasOpenReturns?: boolean;
+  /** The daily job's reminder and escalation for the current stage, so each is sent once (see reminders.ts). */
+  followUp?: { stage: PurchaseStage; since: string; remindedAt?: string; escalatedAt?: string };
 };
 
 export const KIND_LABEL: Record<PurchaseKind, string> = {

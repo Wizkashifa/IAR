@@ -42,7 +42,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Google is the only directory | Sign-in is @islam1.org only, so personal Gmail accounts are out. Google Groups decide who sees which module. No Microsoft Forms |
 | IAR's Google Calendar is the source of truth for bookings | The portal reads and writes the calendar. Nothing gets booked outside it. The raleighmasjid.org reservation page gets retired or fed from the calendar |
 | One card per request, owned by the requester | The sponsoring committee is co-owner, and the chair can reassign the card. A card never ends up with no owner |
-| Teams work their own queues | Marketing, facilities, security and finance see their tasks across all cards. They never need to open each event |
+| Teams work their own queues | Marketing, A/V, security and finance see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
 | Notify only when someone needs to act | Action-needed alerts go out right away. Everything else goes into a digest or the portal's activity feed |
 | Rules are automated as flags, not hard blocks | The office can override with a recorded reason |
 | Mission review for every event | The committee's pillar director reviews first, then any one executive gives the final approval. The office doesn't review events. New programs, outside groups or speakers, fundraisers, and large or costly events are flagged for the reviewers. Recurring series are approved once per season |
@@ -79,7 +79,7 @@ Every event gets mission review in two steps: the director of the committee's pi
 **Tasks added to the card**, each prefilled from the card:
 
 - Marketing: flyer, announcement, webpage, highlight. Locked until approval, per policy
-- AV support and facilities setup
+- AV support (committees do their own setup and cleanup)
 - Security: after-hours coverage and the before/after room check
 - Purchase requests: linked POs, coded to the event
 - Payments: fee and deposit for community MPH use, deposit refund after the room check
@@ -111,13 +111,12 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | My Requests | Everyone signed in | One list of the person's own cards (events, purchase requests, rentals they sponsor), with status and what is waiting on them | 1 |
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
-| Team queues | Marketing, AV, facilities, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
+| Team queues | Marketing, AV, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
 | Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
-| Social & Welfare aid | S&W committee and finance only | Private case record and aid payments, kept out of general purchase requests | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
 | IT & Maintenance tickets | Everyone submits; IT and facilities teams work their queues | Report a problem with a room and, optionally, a piece of equipment; urgency; photo. New → assigned → in progress → waiting on parts → resolved, with the reporter notified. Facilities is a paid team that works in Jira today; this module brings that work into the portal so requesters can see how their request is progressing | 2 |
 | Asset tracker | Facilities, IT, office | Tagged equipment with location, cost, warranty and serial; repair history from tickets; portable items checked out to a committee or event and checked back in; warranty-ending alerts | 2 |
@@ -241,9 +240,9 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | Phase | Scope | Gate to start the next phase |
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
-| 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags; pilot with a few committees | Pilot runs clean; old Requisition and Program Request forms retired |
+| 1 · Shell, Purchase Requests, Event cards (beta) | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. The beta also brings in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; pilot with a small group of testers | Pilot runs clean; old Requisition and Program Request forms retired |
 | 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
-| 3 · Gym rentals, S&W aid, public calendar | Public front door for outside renters; private aid cases; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
+| 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
 
 Purchase Requests and Event cards share the shell, so building them together costs little more than building one.
@@ -255,8 +254,8 @@ The biggest risk is people, not code. The portal only works if every booking goe
 | Risk | Mitigation |
 | --- | --- |
 | Bookings still made outside the calendar | The portal is the only way to book. The office stops confirming by email once the pilot ends |
-| Office or teams keep working from email | Their queue is the only place approvals happen. Email alerts link straight to the card |
-| Too many alerts, as with the current PO form | Alerts only go to whoever must act; everything else goes in a digest |
+| Office or teams keep working from email | Their queue is the only place approvals happen. Chat alerts link straight to the card |
+| Too many alerts, as with the current PO form | Chat alerts only go to whoever must act; a weekday morning digest; everything else stays in the portal's notifications |
 | Mission review turns into gatekeeping or a bottleneck | Shura-approved criteria, any executive can give the final approval, a time limit for each reviewer |
 | One builder holds all the knowledge | Repo owned by IAR, written setup guide, admin role held by a group, not a person |
 | Scope creep before Phase 1 ships | Phase 1 is only the shell, POs and event cards. Everything else waits for its gate |
@@ -264,7 +263,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 **Open questions**
 
 - [ ] Who approves events today, and does it vary by room or campus?
-- [ ] Is IAR's calendar one shared calendar, or one per room? Per-room calendars make conflict checks reliable
+- [x] Is IAR's calendar one shared calendar, or one per room? One per room: IAR already has a room resource and calendar for each
 - [ ] What happens to the raleighmasjid.org reservation page: retire it, or feed it from the calendar?
 - [ ] Who runs the marketing weekly review, and who owns AV?
 - [ ] Gym rental rates, deposit and insurance terms
@@ -280,13 +279,16 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Connect the existing repo (`wizkashifa/iar`)
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
-- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation (`docs/setup.md`)
+- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/beta-launch.md`)
 - [x] Purchase Requests module on the shell (design in purchase-requests-plan.md)
-- [x] Portal-wide notifications (bell plus email to whoever acts next), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
-- [ ] Set up the portal's sending mailbox and the gmail.send scope (`docs/setup.md`, step 8)
-- [ ] Event cards with calendar holds and rule flags
-- [ ] Create the access groups and a service account in Google Workspace
-- [ ] Pull the room list and calendar IDs from IAR's Google Calendar
+- [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
+- [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
+- [x] Event cards with calendar holds and rule flags, and asking for a booked time
+- [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built for the beta ahead of their phases
+- [x] The daily job: purchase reminders and morning digest, ask reminders and escalation, close-out, preventive maintenance
+- [x] `go-live`: one command that sets up Workspace and Cloud after showing every change, and the members template
+- [ ] Office fills in the members Sheet; go-live creates the groups and service accounts
+- [ ] Office checks the room list against IAR's room resources; go-live shares the room calendars with the portal
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)
@@ -304,7 +306,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 
 Committees and teams work the same way: each is a Google Group, everyone belongs to at least one, and a person requests events, marketing and purchases for their own committees and teams, plus any committee they direct. The list for the initial launch:
 
-Administration · Al-Furqan School · Al-Iman School · An-Noor School · Cemetery · Cleaning · Construction · Da'wah · Education · Events Committee · Facility Maintenance · Fundraising · Health & Wellness · IAR Cafe · Imam Office · IT Services · Marketing · Older Adult Community · Outreach · Page Road · Safety & Security · Shura · Social & Welfare · Sports & Recreation · Volunteer · Women's Committee · Youth
+Administration · Al-Furqan School · Al-Iman School · An-Noor School · Cemetery · Cleaning · Construction · Da'wah · Education · Events Committee · Facility Maintenance · Fundraising · Health & Wellness · IAR Cafe · Imam Office · IT Services · Marketing · Older Adult Community · Page Road · Safety & Security · Shura · Social & Welfare · Sports & Recreation · Volunteer · Women's Committee · Youth
 
 Budget and financial reporting are not part of the initial launch, so this list doesn't follow the budget's cost centers (which combine Marketing & Fundraising, for example). Matching committees to budget lines is left for when Budget is designed.
 

@@ -3,14 +3,16 @@ import { notFound } from "next/navigation";
 import { DEV_PERSONAS, devDirectory, isDevAuth } from "@/lib/dev";
 import { rolesFromGroups } from "@/lib/org";
 import { directedTeamGroups, membershipsOf, teamRoles } from "@/lib/teams";
+import { devChatOutbox } from "@/lib/chat";
 import { devOutbox } from "@/lib/mail";
 import { fmtDateTime } from "../purchases/ui";
-import { choosePersona } from "./actions";
+import { choosePersona, runDailyNow } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function DevPage() {
+export default async function DevPage({ searchParams }: { searchParams: Promise<{ daily?: string }> }) {
   if (!isDevAuth()) notFound();
+  const { daily } = await searchParams;
   const current = (await cookies()).get("dev_persona")?.value ?? DEV_PERSONAS[0].id;
   const dir = devDirectory();
   const ROLE = { chair: "chair", vice: "vice chair", member: "member" } as const;
@@ -37,10 +39,32 @@ export default async function DevPage() {
         ))}
       </div>
 
-      <h2>Emails the portal would have sent</h2>
-      <p className="note">Nothing is emailed in dev mode. Newest first; restart the dev server to clear.</p>
-      {devOutbox().length === 0 ? (
+      <h2>Daily job</h2>
+      <p className="note">In production, Cloud Scheduler runs this every morning: reminders, the morning digest, escalations and preventive maintenance tickets.</p>
+      <form action={runDailyNow}>
+        <button className="button secondary" type="submit">Run the daily job now</button>
+      </form>
+      {daily && <div className="flash" role="status">{daily}</div>}
+
+      <h2>Google Chat messages the portal would have sent</h2>
+      <p className="note">Alerts go to whoever has to act next: a direct message to a person, or a post in a team&apos;s space. Nothing is sent in dev mode. Newest first; restart the dev server to clear.</p>
+      {devChatOutbox().length === 0 ? (
         <div className="panel empty">None yet. Submit or approve a request to see them.</div>
+      ) : (
+        <ul className="notifs">
+          {devChatOutbox().map((m, i) => (
+            <li key={i} className="notif">
+              <span className="t"><strong>{m.to}</strong>: {m.text}</span>
+              <span className="sub">{fmtDateTime(m.at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2>Emails the portal would have sent</h2>
+      <p className="note">Email is only the fallback, for someone Chat can&apos;t reach yet. Nothing is emailed in dev mode.</p>
+      {devOutbox().length === 0 ? (
+        <div className="panel empty">None.</div>
       ) : (
         <ul className="notifs">
           {devOutbox().map((m, i) => (

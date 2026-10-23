@@ -2,17 +2,25 @@
  * Checks for what admins save in Portal Settings: which fund each team
  * charges, and IAR's credit cards. Plain functions so they can be tested.
  */
+import type { RoomSetting } from "./events/rooms";
+import type { Role } from "./org";
 
 export type CreditCard = { last4: string; holderEmail: string; holderName: string; fund: string };
 export type PortalSettings = {
   /** Team group → fund it charges. Teams not listed use the suggested fund. */
   teamFunds: Record<string, string>;
   cards: CreditCard[];
+  /** Role → its Google Chat space ("spaces/AAAA…"), where alerts for that role are posted. Set by go-live. */
+  chatSpaces?: Partial<Record<Role, string>>;
+  /** Room resource ID → what Google doesn't hold: bookable, food, shared space, restricted (see lib/events/rooms.ts). */
+  rooms?: Record<string, RoomSetting>;
+  /** Event policy rules an admin turned off (rule ID → false). See RULES in lib/events/rules.ts. */
+  eventRules?: Record<string, boolean>;
   updatedAt?: string;
   updatedBy?: string;
 };
 
-export const EMPTY_SETTINGS: PortalSettings = { teamFunds: {}, cards: [] };
+export const EMPTY_SETTINGS: PortalSettings = { teamFunds: {}, cards: [], chatSpaces: {}, rooms: {}, eventRules: {} };
 
 const EMAIL = /^[^\s@<>(),;:"\\]+@[^\s@<>(),;:"\\]+$/;
 
@@ -38,4 +46,18 @@ export function checkTeamFund(group: string, fund: string, ctx: { funds: string[
   if (!ctx.teamGroups.includes(group.toLowerCase())) return { ok: false, error: "That team isn't in Google Groups any more. Reload the page." };
   if (fund && !ctx.funds.includes(fund)) return { ok: false, error: "Choose a fund from the chart of accounts." };
   return { ok: true };
+}
+
+/** A room's portal settings, checked. Only rooms Google lists can be set; shared space only with other listed rooms. */
+export function checkRoomSetting(
+  roomId: string,
+  raw: { bookable?: unknown; food?: unknown; restricted?: unknown; mph?: unknown; overlaps?: unknown; note?: unknown },
+  ctx: { roomIds: string[] },
+): { ok: true; setting: RoomSetting } | { ok: false; error: string } {
+  if (!ctx.roomIds.includes(roomId)) return { ok: false, error: "That room isn't in Google any more. Reload the page." };
+  const on = (v: unknown) => v === true || v === "on";
+  const overlaps = (Array.isArray(raw.overlaps) ? raw.overlaps.map(String) : []).filter((x) => x !== roomId);
+  if (overlaps.some((x) => !ctx.roomIds.includes(x))) return { ok: false, error: "Pick shared rooms from the list." };
+  const note = typeof raw.note === "string" ? raw.note.trim().slice(0, 200) : "";
+  return { ok: true, setting: { bookable: on(raw.bookable), food: on(raw.food), restricted: on(raw.restricted), mph: on(raw.mph), overlaps, note } };
 }

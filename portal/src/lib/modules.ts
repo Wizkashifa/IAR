@@ -9,6 +9,8 @@ export type PortalModule = {
   phase: 1 | 2 | 3 | 4;
   /** "live" modules link to a working page; others show what is coming. */
   status: "live" | "building" | "planned";
+  /** Short name for the top menu, shown once the module is live. */
+  nav?: string;
   href: string;
   plannedFeatures: string[];
 };
@@ -26,77 +28,81 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "purchase-requests",
+    nav: "Purchases",
     name: "Purchase Requests",
     summary: "Pay a vendor, get reimbursed, or submit IAR credit card receipts.",
     visibleTo: ["member"],
     phase: 1,
     status: "live",
     href: "/purchases",
-    plannedFeatures: [
-      "Three request types: pay a vendor or person, reimburse me, card receipts",
-      "Line items split across sub-accounts, picked from the chart of accounts",
-      "Vendor registry with W-9 on file, stored in a restricted Shared Drive",
-      "Chair and finance approval queues, morning digest, overdue escalation",
-      "Link a purchase to an event card so event costs roll up",
-    ],
+    plannedFeatures: [],
   },
   {
     id: "events",
+    nav: "Events",
     name: "Events & Rooms",
     summary: "Request a program or event; rooms are checked against the IAR calendar automatically.",
     visibleTo: ["member"],
     phase: 1,
-    status: "building",
-    href: "/m/events",
-    plannedFeatures: [
-      "One event card replaces the Program Request and Marketing/AV forms",
-      "Room holds placed on IAR's Google Calendar, with setup and teardown time",
-      "Room policy rules flagged automatically (school hours, prayers, MPH cleaning gap, food rooms, fees)",
-      "Ask another committee to give up a booked time; a moved event needs only the director's approval",
-      "Marketing, AV, facilities and security tasks added to the card, unlocked on approval",
-      "Marketing and A/V questions asked on the event request, so there's no separate marketing form",
-      "Mission review for every event: the pillar director first, then any executive",
-    ],
+    status: "live",
+    href: "/events",
+    plannedFeatures: [],
   },
   {
     id: "marketing-requests",
+    nav: "Marketing",
     name: "Marketing Requests",
     summary: "Graphics, signs, announcements, highlights, webpages, short links and staff badges.",
     visibleTo: ["member"],
     phase: 2,
-    status: "planned",
-    href: "/m/marketing-requests",
+    status: "live",
+    href: "/marketing",
     plannedFeatures: [
-      "For marketing work that isn't an event. Event marketing is part of the event request",
-      "Each request type asks the same questions as today's Marketing/AV form",
-      "Weekly review by the marketing team: schedule with a done-by date, ask a question, or decline",
-      "Requesters follow each request in My Requests and get notified when it's done",
+      "A board view for the marketing team, alongside event marketing tasks in Team Queues",
+      "File uploads straight to the marketing Shared Drive, instead of a Drive link",
+    ],
+  },
+  {
+    id: "it-maintenance",
+    nav: "IT & Maintenance",
+    name: "IT & Maintenance",
+    summary: "Report a building or tech problem and follow it until it's fixed.",
+    visibleTo: ["member"],
+    phase: 2,
+    status: "live",
+    href: "/it-maintenance",
+    plannedFeatures: [
+      "Equipment list with each item's repair history (the asset tracker)",
+      "Rooms from IAR's Google Calendar instead of a fixed list",
+      "Jira-style planning (sprints, backlog, grouped work, reports) if the facilities team uses it after the move",
+      "Retire Jira after two weeks side by side",
     ],
   },
   {
     id: "team-queues",
+    nav: "Queues",
     name: "Team Queues",
     summary: "Your team's open tasks across every event and request.",
-    visibleTo: ["office", "finance", "marketing", "av", "facilities", "security"],
+    visibleTo: ["office", "marketing", "av", "security"],
     phase: 2,
-    status: "planned",
-    href: "/m/team-queues",
+    status: "live",
+    href: "/queues",
     plannedFeatures: [
-      "Board and list views filtered to your team",
-      "Due dates, owners and escalation for overdue tasks",
+      "A board view, alongside the list",
+      "Reminders and escalation for overdue tasks",
     ],
   },
   {
     id: "run-sheet",
+    nav: "Run sheet",
     name: "Daily Run Sheet",
     summary: "One printable page of what's happening where, per day and campus.",
     visibleTo: ["office", "facilities", "security"],
     phase: 2,
-    status: "planned",
-    href: "/m/run-sheet",
+    status: "live",
+    href: "/run-sheet",
     plannedFeatures: [
-      "Time, room, event, contact, setup notes and after-hours flags",
-      "Security check-in and check-out recorded back to the event card",
+      "Approved facility rentals on the sheet, once rentals move into the portal",
     ],
   },
   {
@@ -112,16 +118,6 @@ export const MODULES: PortalModule[] = [
       "Fees, deposits, agreements and insurance uploads",
       "Same approval flow as event cards",
     ],
-  },
-  {
-    id: "sw-aid",
-    name: "Social & Welfare Aid",
-    summary: "Private aid cases and payments, visible only to S&W and finance.",
-    visibleTo: ["sw", "finance"],
-    phase: 3,
-    status: "planned",
-    href: "/m/sw-aid",
-    plannedFeatures: ["Case records kept out of general purchase requests", "Aid payments with restricted visibility"],
   },
   {
     id: "budget",
@@ -165,6 +161,11 @@ export const MODULES: PortalModule[] = [
 
 export function visibleModules(roles: Role[]): PortalModule[] {
   return MODULES.filter((m) => m.visibleTo.some((r) => roles.includes(r)));
+}
+
+/** Top-menu links: live modules this person can see. */
+export function navModules(roles: Role[]): PortalModule[] {
+  return visibleModules(roles).filter((m) => m.status === "live" && m.nav);
 }
 
 export function findModule(id: string): PortalModule | undefined {

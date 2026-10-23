@@ -1,0 +1,332 @@
+/**
+ * Event operations: team tasks, Team Queues, the daily run sheet, security's
+ * room checks, close-out, and linking a purchase to an event.
+ * Run with `npm test`.
+ */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import type { Card } from "../cards";
+import { parsePurchaseInput, type PurchaseInput } from "../purchases/input";
+import { campusesOf, runSheetRows } from "../runsheet";
+import { closeOutNotices, closeOutPermission, dueForCloseOut, linkedPurchases, markNudged, needsNudge, spendOf, startCloseOut, submitCloseOut } from "./closeout";
+import { linkableEvents } from "./link";
+import { lockedCount, marketingQueue, nearTerm, queueItems, queueTeamsFor, recentlyDone } from "./queues";
+import { recordRoomCheck, roomCheckNotices } from "./roomchecks";
+import { type GoogleRoom, mergeRooms } from "./rooms";
+import type { BusyItem } from "./rules";
+import { TaskError, actOnTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
+import type { EventInput } from "./types";
+import * as wf from "./workflow";
+
+const D = "x.org";
+const google: GoogleRoom[] = [
+  { id: "mphA", name: "MPH A", building: "Main campus", capacity: 75, calendarId: "mpha@resource" },
+  { id: "mphB", name: "MPH B", building: "Main campus", capacity: 75, calendarId: "mphb@resource" },
+  { id: "r250", name: "Room 250", building: "Main campus", capacity: 20, calendarId: "r250@resource" },
+  { id: "pr1", name: "Page Road Hall", building: "Page Road", capacity: 100, calendarId: "pr1@resource" },
+];
+const rooms = mergeRooms(google, { mphA: { bookable: true, mph: true }, mphB: { bookable: true, mph: true }, r250: { bookable: true }, pr1: { bookable: true } });
+
+const base = (over: Partial<EventInput> = {}): EventInput => ({
+  title: "Youth Game Night",
+  description: "Board games and dinner.",
+  committeeGroup: `portal-team-youth@${D}`,
+  committeeName: "Youth",
+  date: "2026-11-14",
+  start: "18:00",
+  end: "20:00",
+  setup: 30,
+  teardown: 30,
+  rooms: ["r250"],
+  attendance: 15,
+  budget: 400,
+  food: false,
+  isPublic: false,
+  registration: false,
+  av: false,
+  setupNotes: "",
+  newProgram: false,
+  outsideSpeaker: false,
+  fundraiser: false,
+  teamNotes: "",
+  ...over,
+});
+const brief = { subtitle: "Games Night", text: "Come play.", flyer: "", regLink: "", payment: "", startOn: "2026-10-30", files: "", final: true };
+const full = (over: Partial<EventInput> = {}) =>
+  base({ isPublic: true, brief, av: true, avNeeds: { kinds: ["projector", "sound"], includes: [], ack: true }, setupNotes: "8 round tables and a small stage", rooms: ["mphA"], ...over });
+
+const owner: wf.EventActor = { email: `ychair@${D}`, name: "Youth Chair", roles: ["member", "chairs"] };
+const exec: wf.EventActor = { email: `exec@${D}`, name: "Exec", roles: ["member", "executive"] };
+const office: wf.EventActor = { email: `office@${D}`, name: "Office", roles: ["member", "office"] };
+const security: wf.EventActor = { email: `sec@${D}`, name: "Security Staff", roles: ["member", "security"] };
+const av: wf.EventActor = { email: `av@${D}`, name: "A/V Volunteer", roles: ["member", "it", "av"] };
+const av2: wf.EventActor = { email: `av2@${D}`, name: "A/V Volunteer 2", roles: ["member", "it", "av"] };
+const marketer: wf.EventActor = { email: `mk@${D}`, name: "Marketing Volunteer", roles: ["member", "marketing"] };
+const NOW = "2026-10-23T14:00:00Z";
+let seq = 1101;
+const newCard = (input = base()) => ({ ...wf.newEvent(input, owner, NOW, []), id: `EV-${seq++}` });
+/** Submitted with no director, so it goes straight to the executive. */
+const submitted = (input = base()) => wf.submit(newCard(input), owner, [], NOW);
+const approved = (input = base()) => wf.approve(submitted(input), exec, [], NOW);
+
+// ---- Tasks ------------------------------------------------------------------
+
+test("tasks: each team the event needs, with due dates; after-hours security; nothing for an off-site private event", () => {
+  const t = planTasks(wf.newEvent(full(), owner, NOW, []).event);
+  assert.deepEqual(t.map((x) => [x.id, x.team, x.dueDate]), [
+    ["marketing", "marketing", "2026-10-30"],
+    ["av", "av", "2026-11-14"],
+    ["security-2026-11-14", "security", "2026-11-14"],
+  ]);
+  assert.match(t[0].title, /Games Night/);
+  assert.match(t[1].title, /projector/i);
+  assert.equal(t.find((x) => x.team === "security")!.title, "Room check before and after");
+  const late = planTasks(wf.newEvent(base({ end: "22:00" }), owner, NOW, []).event);
+  assert.match(late[0].title, /after-hours coverage/);
+  assert.deepEqual(planTasks(wf.newEvent(base({ rooms: [] }), owner, NOW, []).event), []);
+});
+
+test("tasks: a series repeats security on every date; the other teams get one task", () => {
+  const series = full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" }, brief: { ...brief, startOn: "2026-10-27" } });
+  const t = planTasks(wf.newEvent(series, owner, NOW, []).event);
+  assert.equal(t.filter((x) => x.team === "security").length, 4);
+  assert.deepEqual(t.filter((x) => x.team === "security").map((x) => x.date), ["2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24"]);
+  assert.equal(t.filter((x) => x.team !== "security").length, 2);
+});
+
+test("tasks: locked until approval, added as to-do on approval, dropped on cancel", () => {
+  const sub = submitted(full());
+  assert.equal(sub.event.tasks, undefined);
+  assert.ok(tasksFor(sub).every((t) => t.status === "locked"));
+  assert.equal(tasksFor(sub).length, 3);
+  const ok = wf.approve(sub, exec, [], NOW);
+  assert.equal(ok.event.tasks?.length, 3);
+  assert.ok(ok.event.tasks!.every((t) => t.status === "todo"));
+  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: Marketing, A\/V and Security/.test(h.action)));
+  const gone = wf.cancel(ok, owner, [], NOW);
+  assert.equal(gone.event.tasks, undefined);
+  assert.deepEqual(tasksFor(gone), []);
+});
+
+test("tasks: approval tells each team once, in its Chat space; giving up a date doesn't tell them again", () => {
+  const sub = submitted(full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" }, brief: { ...brief, startOn: "2026-10-27" } }));
+  const ok = wf.approve(sub, exec, [], NOW);
+  const n = taskUnlockNotices(sub, ok);
+  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["marketing", true], ["av", true], ["security", true]]);
+  assert.match(n[2].text, /4 tasks, one per date/);
+  const dropped = wf.dropDates(ok, [], NOW, "SR-1001", ["2026-11-24"]);
+  assert.equal(dropped.event.tasks!.filter((t) => t.team === "security").length, 3, "the given-up date's security task goes");
+  assert.deepEqual(taskUnlockNotices(ok, dropped), []);
+});
+
+test("tasks: re-approval after a move keeps work already done", () => {
+  const ok = approved(full());
+  const done = actOnTask(ok, "av", av, "done", NOW, "Projector tested");
+  const moved = wf.releaseToMove(done, [], NOW, "SR-1002", done.event.dates);
+  const back = wf.resubmit(moved, { ...moved.event, date: "2026-11-21" }, owner, [], NOW, []);
+  assert.equal(back.status, "approved");
+  assert.equal(back.event.tasks!.find((t) => t.id === "av")!.status, "done");
+  assert.ok(back.event.tasks!.some((t) => t.id === "security-2026-11-21"));
+});
+
+test("tasks: only the team (or the office) works them; take, start, done, and a question for the requester", () => {
+  const ok = approved(full());
+  assert.equal(taskPermission(ok, "av", marketer, "take").ok, false);
+  assert.equal(taskPermission(submitted(full()), "av", av, "take").ok, false, "locked before approval");
+  assert.throws(() => actOnTask(ok, "av", marketer, "start", NOW), TaskError);
+
+  const taken = actOnTask(ok, "av", av, "take", NOW);
+  assert.equal(taken.event.tasks!.find((t) => t.id === "av")!.assignee, av.email);
+  assert.throws(() => actOnTask(taken, "av", av2, "take", NOW), /already took/);
+  const started = actOnTask(taken, "av", av, "start", NOW);
+  assert.equal(started.event.tasks!.find((t) => t.id === "av")!.status, "doing");
+  const done = actOnTask(started, "av", av2, "done", NOW, "Two mics set up");
+  const t = done.event.tasks!.find((x) => x.id === "av")!;
+  assert.equal(t.status, "done");
+  assert.equal(t.note, "Two mics set up");
+  assert.equal(t.history.length, 4);
+  assert.ok(done.event.history.some((h) => /A\/V task: done/.test(h.action)));
+  assert.throws(() => actOnTask(done, "av", av, "start", NOW), /already done/);
+  assert.deepEqual(taskNotices(done, "av", av2, "done", "Two mics set up").map((n) => ["email" in n.to ? n.to.email : "", n.alert]), [[owner.email, false]]);
+
+  assert.throws(() => actOnTask(ok, "marketing", marketer, "ask", NOW, "  "), /question/);
+  const asked = actOnTask(ok, "marketing", { ...marketer, name: "Marketing Volunteer" }, "ask", NOW, "Can you send the logo?");
+  assert.equal(asked.comments?.length, 1);
+  assert.match(asked.comments![0].text, /Can you send the logo/);
+  assert.deepEqual(taskNotices(asked, "marketing", marketer, "ask", "Can you send the logo?").map((n) => n.alert), [true]);
+  assert.equal(actOnTask(ok, "security-2026-11-14", office, "done", NOW).event.tasks!.find((x) => x.id === "security-2026-11-14")!.status, "done", "the office can work any task");
+  assert.ok(!planTasks(ok.event).some((x) => (x.team as string) === "facilities"), "committees set up themselves: no facilities task");
+});
+
+// ---- Queues -------------------------------------------------------------------
+
+test("queues: each person sees their teams' queues; the office sees all; open tasks soonest first", () => {
+  assert.deepEqual(queueTeamsFor(["member", "security"]), ["security"]);
+  assert.deepEqual(queueTeamsFor(["member", "it", "av"]), ["av"]);
+  assert.deepEqual(queueTeamsFor(["member", "office"]), ["marketing", "av", "security"]);
+  assert.deepEqual(queueTeamsFor(["member"]), []);
+
+  const later = approved(full({ date: "2026-12-05", brief: { ...brief, startOn: "2026-11-20" } }));
+  const sooner = approved(full({ date: "2026-11-07", brief: { ...brief, startOn: "2026-10-20" } }));
+  const finished = actOnTask(approved(full()), "av", av, "done", NOW);
+  const pending = submitted(full());
+  const cards = [later, sooner, finished, pending];
+  const avq = queueItems(cards, "av", "2026-10-23");
+  assert.deepEqual(avq.map((x) => x.card.id), [sooner.id, later.id], "done and locked tasks aren't in the queue");
+  const mk = queueItems(cards, "marketing", "2026-10-23");
+  assert.equal(mk[0].card.id, sooner.id);
+  assert.equal(mk[0].overdue, true, "marketing should have started on Oct 20");
+  assert.equal(lockedCount(cards, "security"), 1);
+  assert.deepEqual(recentlyDone(cards, "av").map((x) => x.card.id), [finished.id]);
+
+  const weekly = approved(base({ date: "2026-10-28", recur: { freq: "weekly", until: "2026-12-30" } }));
+  const sec = queueItems([weekly, sooner], "security", "2026-10-23");
+  const near = nearTerm(sec, "2026-11-06");
+  assert.deepEqual(near.map((x) => x.task.dueDate), ["2026-10-28", "2026-11-04", "2026-11-07"], "two weeks ahead, plus each event's next task");
+  assert.ok(sec.length > near.length);
+
+  const mkCard = (id: string, stage: string, doneBy?: string) => ({ id, type: "marketing", status: "approved", marketing: { stage, doneBy } }) as unknown as Card;
+  assert.deepEqual(marketingQueue([mkCard("MK-1", "review"), mkCard("MK-2", "doing", "2026-11-02"), mkCard("MK-3", "scheduled", "2026-10-28"), mkCard("MK-4", "done")]).map((c) => c.id), ["MK-3", "MK-2"]);
+});
+
+// ---- Run sheet -----------------------------------------------------------------
+
+test("run sheet: the day's approved events by time, with setup and cleanup; other calendar entries marked; one campus at a time", () => {
+  const night = approved(base({ title: "Game Night", rooms: ["mphA"], start: "19:00", end: "22:00", food: true, attendance: 120, setupNotes: "Tables in rows", av: true, avNeeds: { kinds: ["sound"], includes: [], ack: true } }));
+  const morning = approved(base({ title: "Breakfast", rooms: ["r250"], start: "09:00", end: "10:00", setup: 0, teardown: 15 }));
+  const other = approved(base({ title: "Elsewhere", rooms: ["pr1"] }));
+  const pending = submitted(base({ title: "Not yet", rooms: ["mphB"] }));
+  const offDay = approved(base({ title: "Other day", date: "2026-11-15" }));
+  const busy: BusyItem[] = [
+    { roomId: "mphA", date: "2026-11-14", start: "18:30", end: "22:30", label: "Game Night", kind: "booking", cardId: night.id },
+    { roomId: "mphA", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "standing", eventId: "j1" },
+    { roomId: "mphB", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "standing", eventId: "j2" },
+    { roomId: "mphB", date: "2026-11-14", start: "17:00", end: "19:00", label: "Not yet", kind: "pending", cardId: pending.id },
+    { roomId: "r250", date: "2026-11-14", start: "15:00", end: "16:00", label: "Quran class", kind: "booking", eventId: "q1" },
+    { roomId: "pr1", date: "2026-11-14", start: "15:00", end: "16:00", label: "Page Road class", kind: "booking", eventId: "p1" },
+  ];
+  assert.deepEqual(campusesOf(rooms), ["Main campus", "Page Road"]);
+  const rows = runSheetRows([night, morning, other, pending, offDay], busy, rooms, "2026-11-14", "Main campus");
+  assert.deepEqual(rows.map((r) => [r.kind, r.title, r.start, r.end]), [
+    ["event", "Breakfast", "09:00", "10:15"],
+    ["calendar", "Jumuah", "12:30", "14:30"],
+    ["calendar", "Quran class", "15:00", "16:00"],
+    ["event", "Game Night", "18:30", "22:30"],
+  ]);
+  const jumuah = rows[1];
+  assert.ok(jumuah.kind === "calendar" && jumuah.entry === "standing" && jumuah.rooms.length === 2, "one row for an entry on several rooms");
+  const gn = rows[3];
+  assert.ok(gn.kind === "event");
+  if (gn.kind === "event") {
+    assert.equal(gn.afterHours, true);
+    assert.equal(gn.contact, owner.email);
+    assert.equal(gn.av, "Sound system support");
+    assert.ok(gn.security.some((s) => /Food served/.test(s)) && gn.security.some((s) => /parking/.test(s)) && gn.security.some((s) => /After hours/.test(s)));
+  }
+  assert.deepEqual(runSheetRows([night, other], busy, rooms, "2026-11-14", "Page Road").map((r) => r.title), ["Page Road class", "Elsewhere"]);
+});
+
+// ---- Room checks ------------------------------------------------------------------
+
+test("room checks: security records before and after; a problem needs a note and goes to the requester and the office", () => {
+  const ok = approved();
+  const date = ok.event.dates[0];
+  assert.throws(() => recordRoomCheck(ok, av, NOW, { date, when: "before", ok: true }), /Only security/);
+  assert.throws(() => recordRoomCheck(submitted(), security, NOW, { date, when: "before", ok: true }), /approved/);
+  assert.throws(() => recordRoomCheck(ok, security, NOW, { date: "2026-12-01", when: "before", ok: true }), /dates/);
+  assert.throws(() => recordRoomCheck(ok, security, NOW, { date, when: "after", ok: false }), /problem/);
+
+  const before = recordRoomCheck(ok, security, NOW, { date, when: "before", ok: true });
+  assert.equal(before.event.roomChecks?.length, 1);
+  assert.equal(before.event.tasks!.find((t) => t.date === date)!.status, "doing");
+  assert.deepEqual(roomCheckNotices(before, security, { date, when: "before", ok: true }), []);
+
+  const input = { date, when: "after" as const, ok: false, note: "Spill by the door" };
+  const after = recordRoomCheck(before, security, NOW, input);
+  const task = after.event.tasks!.find((t) => t.date === date)!;
+  assert.equal(task.status, "done");
+  assert.match(task.note ?? "", /Spill/);
+  assert.ok(after.event.history.some((h) => /Room check after the event .*: problem/.test(h.action)));
+  assert.deepEqual(roomCheckNotices(after, security, input).map((n) => ["role" in n.to ? n.to.role : n.to.email, n.alert]), [["office", true], [owner.email, false]]);
+
+  const fixed = recordRoomCheck(after, security, NOW, { date, when: "after", ok: true });
+  assert.equal(fixed.event.roomChecks!.length, 2, "a second check replaces the first");
+  assert.equal(fixed.event.roomChecks![1].ok, true);
+});
+
+// ---- Close-out ---------------------------------------------------------------------
+
+test("close-out: after the last date it waits on the requester, with a reminder a week later", () => {
+  const ok = approved();
+  assert.equal(dueForCloseOut(ok, "2026-11-14"), false, "not on the day itself");
+  assert.equal(dueForCloseOut(ok, "2026-11-15"), true);
+  const series = approved(base({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" } }));
+  assert.equal(dueForCloseOut(series, "2026-11-20"), false, "a series closes out after its last date");
+
+  const co = startCloseOut(ok, "2026-11-15T11:00:00Z");
+  assert.equal(co.status, "close_out");
+  assert.equal(co.waitingOn, "You: attendance and final costs");
+  assert.equal(wf.holdsWanted(co), "confirmed");
+  assert.deepEqual(closeOutNotices(ok, co, null).map((n) => ["email" in n.to ? n.to.email : "", n.alert]), [[owner.email, false]]);
+  assert.equal(needsNudge(co, "2026-11-21"), false);
+  assert.equal(needsNudge(co, "2026-11-22"), true);
+  const nudged = markNudged(co, "2026-11-22T11:00:00Z");
+  assert.equal(needsNudge(nudged, "2026-11-29"), false, "only once");
+  assert.deepEqual(closeOutNotices(co, nudged, null).map((n) => n.alert), [true]);
+});
+
+test("close-out: the requester gives attendance and confirms costs; the office can close it for them; deposits go to finance", () => {
+  const co = startCloseOut(approved(), NOW);
+  const stranger: wf.EventActor = { email: `vol@${D}`, name: "Volunteer", roles: ["member"] };
+  assert.equal(closeOutPermission(co, stranger).ok, false);
+  assert.equal(closeOutPermission(approved(), owner).ok, false);
+  assert.throws(() => submitCloseOut(co, owner, NOW, { attendance: "", notes: "", costsConfirmed: true }, 0), /how many/);
+  assert.throws(() => submitCloseOut(co, owner, NOW, { attendance: "40", notes: "", costsConfirmed: false }, 0), /Confirm the final costs/);
+  assert.throws(() => submitCloseOut(co, owner, NOW, { attendance: "-3", notes: "", costsConfirmed: true }, 0), /whole number/);
+
+  const closed = submitCloseOut(co, owner, NOW, { attendance: "42", notes: "Good turnout", costsConfirmed: true, depositRefund: true }, 310.5);
+  assert.equal(closed.status, "closed");
+  assert.equal(closed.event.stage, "done");
+  assert.deepEqual([closed.event.closeOut?.attendance, closed.event.closeOut?.spent, closed.event.closeOut?.depositRefund], [42, 310.5, undefined], "only the office marks a deposit refund");
+  assert.deepEqual(closeOutNotices(co, closed, owner), []);
+  assert.throws(() => submitCloseOut(closed, owner, NOW, { attendance: "1", notes: "", costsConfirmed: true }, 0), /already closed/);
+
+  const byOffice = submitCloseOut(co, office, NOW, { attendance: "", notes: "", costsConfirmed: false, depositRefund: true }, 0);
+  assert.equal(byOffice.status, "closed");
+  assert.equal(byOffice.event.closeOut?.byOffice, true);
+  assert.deepEqual(closeOutNotices(co, byOffice, office).map((n) => ["role" in n.to ? n.to.role : n.to.email, n.alert]), [[owner.email, false], ["finance", true]]);
+});
+
+test("close-out: actual spend is the linked purchases that weren't cancelled or rejected", () => {
+  const po = (id: string, status: string, eventCardId: string | undefined, amount: number) =>
+    ({ id, type: "purchase", status, purchase: { eventCardId, lines: [{ id: "L1", accountId: "a38", amount, hasReceipt: true }] } }) as unknown as Card;
+  const cards = [po("PO-1", "in_review", "EV-1", 100.25), po("PO-2", "paid", "EV-1", 50), po("PO-3", "cancelled", "EV-1", 999), po("PO-4", "denied", "EV-1", 999), po("PO-5", "paid", "EV-2", 20), po("PO-6", "paid", undefined, 20)];
+  const linked = linkedPurchases(cards, "EV-1");
+  assert.deepEqual(linked.map((c) => c.id), ["PO-1", "PO-2"]);
+  assert.equal(spendOf(linked), 150.25);
+});
+
+// ---- Linking a purchase to an event --------------------------------------------------
+
+test("purchase link: your own approved events and your committees' upcoming ones; the form only accepts those", () => {
+  const mine = approved(base({ title: "Mine" }));
+  const mineDone = startCloseOut(approved(base({ title: "Mine, over", date: "2026-10-10" })), NOW);
+  const committee = { ...approved(base({ title: "Committee's" })), ownerEmail: `other@${D}` };
+  const committeePast = { ...approved(base({ title: "Committee's, past", date: "2026-10-01" })), ownerEmail: `other@${D}` };
+  const otherCommittee = { ...approved(base({ title: "Other committee", committeeGroup: `portal-team-women@${D}` })), ownerEmail: `other@${D}` };
+  const notApproved = submitted(base({ title: "In review" }));
+  const choices = linkableEvents([mine, mineDone, committee, committeePast, otherCommittee, notApproved], { email: owner.email, groups: [`portal-team-youth@${D}`] }, "2026-10-23");
+  assert.deepEqual(choices.map((c) => c.id).sort(), [mine.id, mineDone.id, committee.id].sort());
+  assert.ok(choices.find((c) => c.id === mineDone.id)!.label.includes("closing out"));
+
+  const input = (eventCardId?: string): PurchaseInput => ({ kind: "reimburse", fund: "Youth Expenses", description: "Game night snacks", delivery: "ach", lines: [{ accountId: "a38", amount: "25" }], attestationName: "Youth Chair", eventCardId });
+  const ctx = { requesterName: "Youth Chair", cards: [], vendors: [], events: [mine.id] };
+  const ok = parsePurchaseInput(input(mine.id), ctx);
+  assert.ok(ok.ok && ok.details.eventCardId === mine.id);
+  const none = parsePurchaseInput(input(""), ctx);
+  assert.ok(none.ok && none.details.eventCardId === undefined);
+  const notOffered = parsePurchaseInput(input(otherCommittee.id), ctx);
+  assert.equal(notOffered.ok, false);
+  if (!notOffered.ok) assert.match(notOffered.errors.join(" "), /Choose one of your events/);
+  assert.equal(parsePurchaseInput(input("PO-12001"), { ...ctx, events: undefined }).ok, false, "only event cards");
+});

@@ -1,6 +1,8 @@
+import { statusText } from "@/lib/status-text";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
-import { cardStore, STATUS_LABEL, TYPE_LABEL } from "@/lib/cards";
+import { cardStore, TYPE_LABEL } from "@/lib/cards";
+import { hrefOf } from "@/lib/card-links";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ export default async function MyRequests() {
   return (
     <>
       <h1>My Requests</h1>
-      <p className="lead">Events and purchase requests you own, newest activity first.</p>
+      <p className="lead">Everything you&apos;ve asked for: events, purchases, marketing and IT &amp; maintenance requests, newest activity first.</p>
       {cards.length === 0 ? (
         <div className="panel empty">You haven&apos;t submitted anything yet.</div>
       ) : (
@@ -33,8 +35,8 @@ export default async function MyRequests() {
               {cards.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    {c.type === "purchase" ? (
-                      <Link href={`/purchases/${c.id}`}>
+                    {hrefOf(c) ? (
+                      <Link href={hrefOf(c)!}>
                         <strong>{c.title}</strong>
                       </Link>
                     ) : (
@@ -47,7 +49,7 @@ export default async function MyRequests() {
                     </div>
                   </td>
                   <td>
-                    <span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                    <span className={`pill ${c.status}`}>{statusText(c)}</span>
                   </td>
                   <td>{c.waitingOn ?? <span className="sub">Nothing</span>}</td>
                   <td className="sub">{fmtDate(c.updatedAt)}</td>

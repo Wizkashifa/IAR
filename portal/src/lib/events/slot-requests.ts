@@ -40,6 +40,8 @@ export type Hold = {
   /** The team group of the card's committee. */
   committeeGroup?: string;
   calendarEventId?: string;
+  /** The room calendar the entry is on, to free given-up dates of a calendar-only entry. */
+  calendarId?: string;
   /** For a calendar-only entry: who made it. */
   organizerEmail?: string;
   /** Every date the holder's booking has: one for a one-time event. */
@@ -352,12 +354,12 @@ export function afterDirector(card: { releasedFor?: string }): "mission" | "appr
 
 const recipient = (a: string): Recipient => (a.startsWith("role:") ? { role: a.slice(5) as Role } : { email: a });
 
-/** Who hears about a change to an ask, and whether by email. Only people who have to act get an email. */
+/** Who hears about a change to an ask, and whether they get an alert. Only people who have to act get one. */
 export function slotNotices(before: SlotRequest | null, after: SlotRequest, actorEmail: string): Notice[] {
   const out: Notice[] = [];
-  const add = (to: string, cardId: string, text: string, email: boolean) => {
+  const add = (to: string, cardId: string, text: string, alert: boolean) => {
     if (same(to, actorEmail)) return;
-    out.push({ to: recipient(to), cardId, href: `/m/events/${cardId}`, text, email, delegable: email });
+    out.push({ to: recipient(to), cardId, href: `/events/${cardId}`, text, alert, delegable: alert });
   };
   const slot = `${after.hold.room}, ${datesText(after.dates)}, ${fmtTime(after.hold.start)}–${fmtTime(after.hold.end)}`;
   const holder = after.hold.cardId ?? after.fromCard;

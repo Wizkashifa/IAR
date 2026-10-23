@@ -23,7 +23,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
               : "Sign-in didn't work. Please try again."}
         </div>
       )}
-      <SignInButton />
+      <SignInButton auto={!error} />
     </div>
   );
 }

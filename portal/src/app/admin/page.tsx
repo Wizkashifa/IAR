@@ -6,15 +6,19 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, saveRoom, saveTeamFund } from "./actions";
+import { googleRooms } from "@/lib/rooms-google";
+import { mergeRooms } from "@/lib/events/rooms";
+import { RULES, ruleOn } from "@/lib/events/rules";
 
 export const dynamic = "force-dynamic";
 
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
-const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "S&W aid", shura: "Shura", it: "IT queue", av: "A/V queue" };
+const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W purchase requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
+const SPACE_LABEL: Record<string, string> = { office: "IAR office", finance: "Finance", executive: "Executive", admins: "Portal admins", marketing: "Marketing", it: "IT", av: "A/V", facilities: "Facilities", security: "Security" };
 const ROLE_LABEL: Record<string, string> = {
   office: "Rentals, run sheet; submits for any committee",
-  finance: "Finance review, payment, QuickBooks, S&W aid; submits for any fund",
+  finance: "Finance review, payment, QuickBooks, restricted S&W requests; submits for any fund",
   executive: "Executive offices (Head Imam, Shura chair, CEO): final mission review of events, and executive approvals. One person can hold several",
   admins: "Sees everything and this page; never approves or pays",
 };
@@ -23,7 +27,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { ok, error } = await searchParams;
   const viewer = await requireViewer();
   if (!viewer.actingRoles.includes("admins")) redirect("/");
-  const [dir, settings] = await Promise.all([directory(), portalSettings()]);
+  const [dir, settings, google] = await Promise.all([directory(), portalSettings(), googleRooms()]);
+  const rooms = mergeRooms(google, settings.rooms ?? {});
   const funds = effectiveTeamFunds(dir, settings.teamFunds, FUNDS);
   const teams = [...dir.teams].sort((a, b) => a.name.localeCompare(b.name));
   const nameOf = (g: string) => dir.teams.find((t) => t.email === g)?.name ?? g;
@@ -150,6 +155,89 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <td><code>{beta}</code></td>
                 <td>During the beta, only this group and the admins can sign in</td>
               </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Rooms ({rooms.filter((r) => r.bookable).length} of {rooms.length} bookable)</h2>
+      <p className="note">
+        Rooms come from Google (Admin console → Buildings and resources), each with its own calendar. Add or rename rooms there. Here you choose which ones
+        can be booked through the portal and set what Google doesn&apos;t know: food, rooms that share a space (the full gym and its halves), and who may book.
+      </p>
+      {rooms.length === 0 ? (
+        <div className="panel empty">No room resources found in Google yet.</div>
+      ) : (
+        <div className="tablewrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Room</th>
+                <th>Settings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rooms.map((r) => (
+                <tr key={r.id}>
+                  <td>
+                    <strong>{r.name}</strong>
+                    <div className="sub">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
+                    <div className="sub">{r.calendarId}</div>
+                  </td>
+                  <td>
+                    <form action={saveRoom} className="stack">
+                      <input type="hidden" name="room" value={r.id} />
+                      <div className="row">
+                        <label className="inline"><input type="checkbox" name="bookable" defaultChecked={r.bookable} /> Bookable in the portal</label>
+                        <label className="inline"><input type="checkbox" name="food" defaultChecked={r.food} /> Food allowed</label>
+                        <label className="inline"><input type="checkbox" name="mph" defaultChecked={r.mph} /> Part of the MPH (cleaning gap)</label>
+                        <label className="inline"><input type="checkbox" name="restricted" defaultChecked={r.restricted} /> Leadership, imams and chairs only</label>
+                      </div>
+                      <label className="field">
+                        <span>Shares space with (booking one blocks the other)</span>
+                        <select name="overlaps" multiple defaultValue={r.overlaps} size={Math.min(4, rooms.length - 1)}>
+                          {rooms.filter((x) => x.id !== r.id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>Note shown on the form (optional)</span>
+                        <input name="note" defaultValue={r.note} maxLength={200} placeholder="$100/hour minimum food and drink purchase" />
+                      </label>
+                      <div><button className="button secondary" type="submit">Save</button></div>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2>Event rules</h2>
+      <p className="note">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
+      <form action={saveEventRules} className="panel stack">
+        {RULES.map((rule) => (
+          <label key={rule.id} className="inline">
+            <input type="checkbox" name={rule.id} defaultChecked={ruleOn(settings.eventRules ?? {}, rule.id)} /> {rule.name} <span className="sub">· {rule.policy}</span>
+          </label>
+        ))}
+        <div><button className="button secondary" type="submit">Save rules</button></div>
+      </form>
+
+      <h2>Google Chat spaces</h2>
+      <p className="note">Alerts for a role or team are posted in its Chat space. go-live creates the spaces and fills these in.</p>
+      <div className="tablewrap">
+        <table className="table">
+          <tbody>
+            {Object.entries(settings.chatSpaces ?? {}).length === 0 ? (
+              <tr><td className="sub">No Chat spaces yet. Until go-live sets them up, role alerts go to the role&apos;s group by email.</td></tr>
+            ) : (
+              Object.entries(settings.chatSpaces ?? {}).map(([role, space]) => (
+                <tr key={role}>
+                  <td>{SPACE_LABEL[role] ?? role}</td>
+                  <td><code>{space}</code></td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

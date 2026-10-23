@@ -3,13 +3,17 @@ import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { ORG } from "./org";
 import type { Comment } from "./comments";
+import type { EventDetails } from "./events/types";
+import type { MarketingDetails } from "./marketing/types";
 import type { PurchaseDetails } from "./purchases/types";
+import type { TicketDetails } from "./tickets/types";
 
 /**
- * A card is one request moving through its stages: an event, a purchase,
- * a rental or an aid case. Modules add their own fields on top of these.
+ * A card is one request moving through its stages: an event, a purchase, a
+ * marketing request, an IT or maintenance ticket, or (later) a rental.
+ * Modules add their own fields on top of these.
  */
-export type CardType = "event" | "purchase" | "rental" | "aid";
+export type CardType = "event" | "purchase" | "marketing" | "ticket" | "rental";
 export type CardStatus =
   | "draft"
   | "submitted"
@@ -40,8 +44,16 @@ export type Card = {
   createdAt?: string;
   /** Purchase Requests module fields (type "purchase"). */
   purchase?: PurchaseDetails;
+  /** Events & Rooms module fields (type "event"). */
+  event?: EventDetails;
+  /** Marketing Requests module fields (type "marketing"). */
+  marketing?: MarketingDetails;
+  /** IT & Maintenance module fields (type "ticket"). */
+  ticket?: TicketDetails;
   /** Comments from anyone who can open the request (see comments.ts). */
   comments?: Comment[];
+  /** Extra words search should find it by (room, payee, equipment…), set by the module. */
+  searchText?: string;
 };
 
 export const STATUS_LABEL: Record<CardStatus, string> = {
@@ -60,9 +72,16 @@ export const STATUS_LABEL: Record<CardStatus, string> = {
 export const TYPE_LABEL: Record<CardType, string> = {
   event: "Event",
   purchase: "Purchase",
+  marketing: "Marketing",
+  ticket: "IT & Maintenance",
   rental: "Rental",
-  aid: "Aid",
 };
+
+/**
+ * Request numbers by prefix, and where each starts. Purchases start after the
+ * old Requisition Form's numbers.
+ */
+export const COUNTER_START: Record<string, number> = { PO: 12001, EV: 1101, MK: 1001, TK: 1001 };
 
 /** Statuses where the owner has to do something. */
 export const NEEDS_OWNER: CardStatus[] = ["draft", "changes_requested", "close_out"];
@@ -108,8 +127,12 @@ export interface CardStore {
   listOpenPurchases(): Promise<Card[]>;
   /** Purchase cards created since an ISO time, any status (for the card receipts checklist). */
   listPurchasesSince(iso: string): Promise<Card[]>;
+  /** Purchase cards linked to an event card (purchase.eventCardId), any status. */
+  listPurchasesForEvent(eventId: string): Promise<Card[]>;
   /** The most recently updated cards of any type (for search). */
   listRecent(limit: number): Promise<Card[]>;
+  /** Cards of one type in any of these statuses (default: the open ones), for queues and lists. */
+  listByType(type: CardType, statuses?: CardStatus[], limit?: number): Promise<Card[]>;
   /** Assigns the next ID with the given prefix ("PO") and saves. */
   create(card: Omit<Card, "id">, prefix: string): Promise<Card>;
   /** Saves only if nobody else saved since `expectedUpdatedAt`. */
@@ -130,27 +153,23 @@ function isOpenPurchase(c: Card): boolean {
 
 // ---- Development: sample cards in memory -------------------------------
 
-/** Placeholder event cards, until the Events module exists. Shown to every sample user. */
-function sampleEventCards(email: string): Card[] {
-  const day = (d: number) => new Date(Date.now() - d * 864e5).toISOString();
-  const ahead = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
-  const base = { orgId: ORG.id, ownerEmail: email };
-  return [
-    { ...base, id: "EV-1042", type: "event", title: "Youth Halaqa — winter series", status: "changes_requested", committee: "Youth", waitingOn: "You: pick a room without a school-hours conflict", eventDate: ahead(18), updatedAt: day(0) },
-    { ...base, id: "EV-1031", type: "event", title: "Family Night", status: "approved", committee: "Youth", waitingOn: "Marketing: flyer due in 6 days", eventDate: ahead(9), updatedAt: day(3) },
-    { ...base, id: "EV-0998", type: "event", title: "Community Iftar volunteer briefing", status: "close_out", committee: "Social & Welfare", waitingOn: "You: attendance and final costs", eventDate: ahead(-4), updatedAt: day(4) },
-  ];
-}
-
 type MemoryState = { cards: Map<string, Card>; vendors: Map<string, Vendor>; next: Record<string, number>; seeded: boolean };
 
 // Kept on globalThis so dev-server reloads don't wipe what you've submitted.
 const g = globalThis as unknown as { __iarMemory?: MemoryState };
-const mem: MemoryState = (g.__iarMemory ??= { cards: new Map(), vendors: new Map(), next: { PO: 12001 }, seeded: false });
+const mem: MemoryState = (g.__iarMemory ??= { cards: new Map(), vendors: new Map(), next: { ...COUNTER_START }, seeded: false });
 
+// One shared promise, so pages that load several lists at once all wait for the same seeding.
+let seeding: Promise<void> | null = null;
 async function ensureSeeded() {
   if (mem.seeded) return;
-  mem.seeded = true;
+  seeding ??= seed().then(() => {
+    mem.seeded = true;
+  });
+  return seeding;
+}
+
+async function seed() {
   const { samplePurchases, sampleVendors } = await import("./purchases/samples");
   for (const c of await samplePurchases()) {
     mem.cards.set(c.id, c);
@@ -158,6 +177,25 @@ async function ensureSeeded() {
     if (n >= mem.next.PO) mem.next.PO = n + 1;
   }
   for (const v of sampleVendors()) mem.vendors.set(v.id, v);
+  const { sampleEvents } = await import("./events/samples");
+  // Event samples include a purchase linked to an event, so count each ID under its own prefix.
+  for (const c of await sampleEvents()) {
+    mem.cards.set(c.id, c);
+    const [prefix, num] = c.id.split("-");
+    if (Number(num) >= (mem.next[prefix] ?? 0)) mem.next[prefix] = Number(num) + 1;
+  }
+  const { sampleMarketing } = await import("./marketing/samples");
+  for (const c of sampleMarketing()) {
+    mem.cards.set(c.id, c);
+    const n = Number(c.id.split("-")[1]);
+    if (n >= mem.next.MK) mem.next.MK = n + 1;
+  }
+  const { sampleTickets } = await import("./tickets/samples");
+  for (const c of sampleTickets()) {
+    mem.cards.set(c.id, c);
+    const n = Number(c.id.split("-")[1]);
+    if (n >= mem.next.TK) mem.next.TK = n + 1;
+  }
 }
 
 const clone = <T,>(x: T): T => structuredClone(x);
@@ -166,7 +204,7 @@ const memoryStore: CardStore = {
   async listByOwner(email) {
     await ensureSeeded();
     const own = [...mem.cards.values()].filter((c) => c.ownerEmail.toLowerCase() === email.toLowerCase());
-    return [...own.map(clone), ...sampleEventCards(email)].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return own.map(clone).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   },
   async get(id) {
     await ensureSeeded();
@@ -181,13 +219,25 @@ const memoryStore: CardStore = {
     await ensureSeeded();
     return [...mem.cards.values()].filter((c) => c.type === "purchase" && (c.createdAt ?? c.updatedAt) >= iso).map(clone);
   },
+  async listPurchasesForEvent(eventId) {
+    await ensureSeeded();
+    return [...mem.cards.values()].filter((c) => c.type === "purchase" && c.purchase?.eventCardId === eventId).map(clone);
+  },
   async listRecent(limit) {
     await ensureSeeded();
     return [...mem.cards.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit).map(clone);
   },
+  async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+    await ensureSeeded();
+    return [...mem.cards.values()]
+      .filter((c) => c.type === type && statuses.includes(c.status))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, limit)
+      .map(clone);
+  },
   async create(card, prefix) {
     await ensureSeeded();
-    const n = mem.next[prefix] ?? 1;
+    const n = mem.next[prefix] ?? COUNTER_START[prefix] ?? 1001;
     mem.next[prefix] = n + 1;
     const saved = { ...clone(card), id: `${prefix}-${n}` } as Card;
     mem.cards.set(saved.id, saved);
@@ -250,15 +300,25 @@ async function getFirestoreStore(): Promise<CardStore> {
       const snap = await cards.where("type", "==", "purchase").where("createdAt", ">=", iso).limit(1000).get();
       return snap.docs.map(toCard);
     },
+    async listPurchasesForEvent(eventId) {
+      // Equality on two fields: served by Firestore's single-field indexes, no composite index needed.
+      const snap = await cards.where("type", "==", "purchase").where("purchase.eventCardId", "==", eventId).limit(200).get();
+      return snap.docs.map(toCard);
+    },
     async listRecent(limit) {
       const snap = await cards.orderBy("updatedAt", "desc").limit(limit).get();
       return snap.docs.map(toCard);
     },
+    async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+      const snap = await cards.where("type", "==", type).where("status", "in", statuses.slice(0, 30)).limit(limit).get();
+      return snap.docs.map(toCard).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    },
     async create(card, prefix) {
       const counter = org.collection("counters").doc(prefix);
+      const start = COUNTER_START[prefix] ?? 1001;
       return db.runTransaction(async (tx) => {
         const c = await tx.get(counter);
-        const n = (c.exists ? (c.data()?.next as number) : 12001) ?? 12001;
+        const n = (c.exists ? (c.data()?.next as number) : start) ?? start;
         const id = `${prefix}-${n}`;
         const saved = { ...card, id, ownerEmail: card.ownerEmail.toLowerCase() } as Card;
         tx.set(counter, { next: n + 1 });

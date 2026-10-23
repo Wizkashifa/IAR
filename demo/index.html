@@ -712,7 +712,7 @@ const fn = (id) => PEOPLE[id].first || PEOPLE[id].name;
 /* A person for menus and labels: "Name (Title)" when they have a real name, otherwise just their role. */
 const who = (id) => (PEOPLE[id].name === PEOPLE[id].title ? PEOPLE[id].title : `${PEOPLE[id].name} (${PEOPLE[id].title})`);
 /* Committees and teams work the same way: each is a Google Group. The last entry is for outside groups' private events. */
-const COMMITTEES = ["Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education", "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing", "Older Adult Community", "Outreach", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer", "Women's Committee", "Youth", "Community member (private event)"];
+const COMMITTEES = ["Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education", "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing", "Older Adult Community", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer", "Women's Committee", "Youth", "Community member (private event)"];
 
 /* ------------------------------------------------------------------ */
 /* Rooms (from the Program Request Form) and room rules                */
@@ -1145,7 +1145,7 @@ function myTasks() {
 /* Library: shared drives whose access follows Google Groups           */
 /* ------------------------------------------------------------------ */
 const slug = (t) => t.toLowerCase().replace(/[^a-z]+/g, "");
-const COMMITTEE_DRIVES = ["Youth", "Outreach", "Education", "Women's Committee", "Da'wah", "Administration"];
+const COMMITTEE_DRIVES = ["Youth", "Education", "Women's Committee", "Da'wah", "Administration"];
 /* Each folder is either filed by fiscal year (IAR's year runs July 1 to June 30) or evergreen (no year folders). */
 const byYear = (...n) => n.map((x) => ({ n: x, fy: true }));
 const evergreen = (...n) => n.map((x) => ({ n: x, fy: false }));
@@ -1162,7 +1162,9 @@ const folderDef = (d, n) => d.folders.find((f) => f.n === n) || { n, fy: false }
 const filePath = (x) => { const d = libDrive(x.drive); return folderDef(d, x.folder).fy ? `${x.folder} / ${fyOf(x.updated)}` : x.folder; };
 /* portal-<kind>-<slug>@: lowercase, apostrophes, "&" and "Committee" dropped, words hyphenated ("Women's Committee" → women). */
 const groupSlug = (name) => name.toLowerCase().replace(/['’]s\b/g, "").replace(/['’]/g, "").replace(/&/g, " ").replace(/\bcommittee\b/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-const teamGroup = (name) => `portal-team-${groupSlug(name)}@`;
+/* The launch teams' addresses as IAR named them (some are short); a team added later gets one from its name. */
+const TEAM_SLUGS = { "Events Committee": "events", "Facility Maintenance": "maintenance", "Health & Wellness": "hw", "IAR Cafe": "cafe", "Imam Office": "imams", "IT Services": "tech", "Older Adult Community": "seniors", "Page Road": "page", "Safety & Security": "security", "Social & Welfare": "welfare", "Sports & Recreation": "sports" };
+const teamGroup = (name) => `portal-team-${TEAM_SLUGS[name] || groupSlug(name)}@`;
 const ROLE_GROUP = { office: "portal-role-office@", finance: "portal-role-finance@", executive: "portal-role-executive@", admins: "portal-role-admin@", it: teamGroup("IT Services"), av: teamGroup("IT Services"), marketing: teamGroup("Marketing"), facilities: teamGroup("Facility Maintenance"), security: teamGroup("Safety & Security"), sw: teamGroup("Social & Welfare"), shura: teamGroup("Shura") };
 const groupOf = (t) => (t === "member" ? "every islam1.org account" : t.startsWith("c:") ? teamGroup(t.slice(2)) : ROLE_GROUP[t] || `portal-role-${t}@`);
 const GROUP_TOKENS = ["shura", "sw", "finance", "office", "facilities", "security", "av", "it", ...COMMITTEE_DRIVES.map((c) => "c:" + c)];
@@ -1190,7 +1192,7 @@ function libSeed() {
     f("c-youth", "Planning", "Halaqa winter series outline.docx", "youthChair", 4, { link: ["EV-1042"] }),
     f("c-youth", "Events", "Retreat itinerary — Camp Cedar Ridge.pdf", "youthChair", 18, { link: ["PO-11039"] }),
     f("c-youth", "Events", "Summer camp schedule.pdf", "youthChair", 190),
-    f("c-outreach", "Planning", "Invitation list.xlsx", "officeAdmin", 12),
+    f("c-dawah", "Planning", "Invitation list.xlsx", "officeAdmin", 12),
     f("c-education", "Planning", "Sunday school curriculum 2026-27.pdf", "officeAdmin", 50),
     f("c-education", "Planning", "Teacher roster.xlsx", "officeAdmin", 22),
     f("c-womenscommittee", "Events", "Sisters' Tafsir Circle — plan.docx", "officeAdmin", 8, { link: ["EV-1050"] }),
@@ -1330,7 +1332,6 @@ const MODULES = [
   { id: "library", icon: "folder", name: "Library", vis: ["member"], group: "Files", preview: true },
   { id: "shura", icon: "landmark", name: "Shura / Board", vis: ["shura"], group: "Finance", preview: true },
   { id: "budget", icon: "pie", name: "Budget", vis: ["chairs", "finance", "executive", "shura"], group: "Finance", preview: true },
-  { id: "aid", icon: "heart", name: "S&W Aid", vis: ["sw", "finance"], group: "Restricted" },
   { id: "settings", icon: "sliders", name: "Portal Settings", vis: ["admins"], group: "Admin" },
   { id: "away", icon: "clock", name: "Out of office", vis: ["member"], group: "You" },
 ];
@@ -1342,7 +1343,6 @@ const BLURB = {
   marketing: "Graphics, signs, announcements, highlights, webpages, short links and staff badges. Event marketing is part of the event request.",
   queues: "Your team's tasks across every event, unlocked when an event is approved.",
   rentals: "Outside groups' requests for the gym and halls.",
-  aid: "Private aid cases, visible only to S&W and finance.",
   tickets: "Report a building or tech problem, or run the team's board, backlog, sprints and reports.",
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
@@ -2681,13 +2681,7 @@ function vPublicRental() {
   </form></div></div></div>`;
 }
 
-/* ---- Aid and settings --------------------------------------------- */
-function vAid() {
-  return `<div><h1>Social & Welfare Aid</h1><p class="lead">Visible only to the S&W committee and finance. Everyone else sees that aid exists in the budget, not who received it.</p></div>
-  <div class="panel"><div class="tablewrap"><table><thead><tr><th>Case</th><th>Recipient</th><th>Need</th><th class="num">Amount</th><th>Status</th></tr></thead><tbody>
-  ${S.aid.map((a) => `<tr><td class="mono">${a.id}</td><td>${esc(a.who)}</td><td>${esc(a.need)}</td><td class="num">${money(a.amount)}</td><td>${esc(a.status)}</td></tr>`).join("")}
-  </tbody></table></div></div>`;
-}
+/* ---- Settings ------------------------------------------------------ */
 function vSettings() {
   return `<div><h1>Portal Settings</h1><p class="lead">Rooms, booking rules and committees.</p></div>
   <div class="panel"><div class="panel-h"><h2>Policy rules</h2><span class="small muted">Switch one off and the event form's checks change immediately</span></div><div class="panel-b"><div class="list">
@@ -3167,7 +3161,7 @@ function vShura() {
     ${tile("IT cases open", H.it.open.length, kinds(H.it), "tickets", flag(H.it.overdue + H.it.late, "late", "bad") + flag(H.it.urgent, "high priority"))}
     ${tile("Purchase requests in progress", H.poOpen.length, `${money(H.poAmt)} waiting to be approved or paid`, "purchases", flag(H.poSlow.length, "waiting over a week"))}
     ${tile("General Fund cushion", sgn(gfAfter), `Unrestricted giving minus spending and commitments. ${kfmt(R)} received, ${kfmt(SP + CM)} spent or committed of ${kfmt(B)}.`, "budget", flag(ahead.length, `committee${ahead.length === 1 ? "" : "s"} ahead of pace`))}
-    ${tile("Community care", H.aid.n, `Aid cases this year, ${money(H.aid.amt)} in total. Details stay with Social & Welfare.`, has("sw") || has("finance") ? "aid" : "", flag(H.aid.waiting, "awaiting a decision", "info"))}
+    ${tile("Community care", H.aid.n, `Aid cases this year, ${money(H.aid.amt)} in total. Details stay with Social & Welfare.`, has("sw") || has("finance") ? "purchases" : "", flag(H.aid.waiting, "awaiting a decision", "info"))}
   </div>
   <div class="grid2">
     <div class="panel"><div class="panel-h"><h2>Needs the Shura</h2><span class="pill ${asks.length ? "warn" : "ok"}">${asks.length || "Nothing"}</span></div>
@@ -4231,11 +4225,11 @@ const STEPS = [
   { as: "youthChair", view: "library", t: "Restricted drives stay closed", reset: () => libReset(null, "budget"), p: `${fn("youthChair")} sees Policies and the Youth drive, and the restricted drives show as locked. The search for 'budget' finds nothing, because the approved budget lives in the Shura drive and search only covers drives he can open. Clear the box and try 'policy'.` },
   { as: "bookkeeper", view: "library", t: "Finance files link to requests", reset: () => libReset("finance"), p: `${fn("bookkeeper")}'s finance group opens the Finance drive. Open the W-9 for Triangle Sound & Stage: it is linked to the purchase request that needed it. Click the request to jump to the card.` },
   { as: "officeAdmin", view: "library", t: "Policies with review dates", reset: () => libReset("policies"), p: "Policies aren't split by year: a new version replaces the file, and retired ones go to Archive. Each has a review date; the room use policy is overdue and the catering rules are due soon. Try uploading a file to Minutes with a June date and watch the folder it lands in." },
-  { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: `The Access tab shows each group and who is in it. Add ${fn("shuraChair")} (Shura) to portal-team-social-welfare@, then switch to ${fn("shuraChair")}: he now has Social & Welfare as well as the Shura drive, and S&W Aid appears in his sidebar. Remove him with the × to undo.` },
+  { as: "admin", view: "library", t: "Groups add up", reset: () => { libReset(); S.lib.tab = "access"; }, p: `The Access tab shows each group and who is in it. Add ${fn("shuraChair")} (Shura) to portal-team-welfare@, then switch to ${fn("shuraChair")}: he now has Social & Welfare as well as the Shura drive, and can open Social & Welfare's restricted purchase requests. Remove him with the × to undo.` },
   { as: "admin", view: "settings", t: "Committees, chairs and directors", p: `Portal Settings shows each committee and team as it is in Google Groups: the group's Owner is the chair, a Manager is the vice chair, and everyone else is a member. Roles are per team, so ${fn("youthChair")} chairs Youth and nothing else. ${fn("commDirector")} is the Community Director: the Community pillar covers Youth, Women, Older Adults, Sports and Volunteer. ${fn("headImam")} and ${fn("shuraChair")} are in the executive group; ${fn("shuraChair")} is Shura chair and acting CEO, and nothing about that is fixed in code. When someone else takes an office, they're added to the group and he's removed. Nobody edits code or files: people are changed in Google Admin.` },
   { as: "maintStaff", view: "feedback", arg: "purchases", t: "Send feedback (beta)", reset: () => { S.fbSent = false; }, p: `Every page has a Feedback button at the top that remembers which page you were on. ${fn("maintStaff")} reports something confusing; it's emailed to the portal admins.` },
   { as: "admin", view: "feedback", t: "Admins read feedback", reset: () => { S.fbSent = false; }, p: `${fn("admin")} reads everything sent, with the page it came from, and marks items done.` },
-  { as: "swChair", view: "home", t: "Groups decide what people see", p: `${fn("swChair")} chairs Social & Welfare, so she sees S&W Aid. ${fn("youthChair")} never does. Try ${PEOPLE.admin.name} and Portal Settings: switch off a rule and watch the event checks change.` },
+  { as: "swChair", view: "home", t: "Groups decide what people see", p: `${fn("swChair")} chairs Social & Welfare, so she can open its restricted purchase requests and payees. ${fn("youthChair")} never can. Try ${PEOPLE.admin.name} and Portal Settings: switch off a rule and watch the event checks change.` },
 ];
 function renderGuide() {
   const g = document.getElementById("guide");
@@ -4291,7 +4285,7 @@ function render() {
   if (S.me !== "renter" && S.view === "public") S.view = "home";
   const mod = MODULES.find((m) => m.id === S.view);
   if (mod && !visible(mod)) S.view = "home";
-  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, slotAsk: vSlotAsk, card: vCard, purchases: vPurchases, newPO: vNewPO, vendors: vVendors, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, aid: vAid, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
+  const V = { home: vHome, requests: vRequests, events: vEvents, newEvent: vNewEvent, slotAsk: vSlotAsk, card: vCard, purchases: vPurchases, newPO: vNewPO, vendors: vVendors, marketing: vMarketing, newMarketing: vNewMarketing, queues: vQueues, runsheet: vRunSheet, rentals: vRentals, settings: vSettings, public: vPublicRental, tickets: vTickets, assets: vAssets, budget: vBudget, shura: vShura, library: vLibrary, search: vSearch, notifs: vNotifs, feedback: vFeedback, away: vAway };
   const preview = mod && mod.preview ? `<div class="note info"><strong>Preview.</strong> ${esc(mod.name)} is planned for after launch. Have a look, but it isn't part of this beta.</div>` : "";
   document.getElementById("main").innerHTML = preview + (V[S.view] || vHome)();
   renderRail();

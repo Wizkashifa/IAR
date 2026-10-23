@@ -11,3 +11,11 @@ export async function choosePersona(formData: FormData) {
   }
   redirect("/");
 }
+
+/** Run the daily job now, as Cloud Scheduler does each morning in production. */
+export async function runDailyNow() {
+  if (!isDevAuth()) redirect("/");
+  const { runDaily } = await import("@/lib/daily");
+  const results = await runDaily();
+  redirect(`/dev?daily=${encodeURIComponent(results.map((r) => `${r.job}: ${r.summary}`).join(" · "))}`);
+}

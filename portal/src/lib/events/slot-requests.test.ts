@@ -173,22 +173,22 @@ test("no pillar director: the executive decides", () => {
   assert.equal(sr.canDecide(up, exec), true);
 });
 
-test("notices: the people asked get an email; the requester hears the answer", () => {
+test("notices: the people asked get an alert; the requester hears the answer", () => {
   const r = ask(oneTime, ["2026-11-07"]);
   const created = sr.slotNotices(null, r, requester.email);
   assert.equal(created.length, 3);
-  assert.ok(created.every((n) => n.email && n.href === "/m/events/EV-1031"));
+  assert.ok(created.every((n) => n.alert && n.href === "/events/EV-1031"));
 
   const kept = decided(r, owner, "keep", "Tickets sold").request;
   const keptN = sr.slotNotices(r, kept, owner.email);
-  assert.deepEqual(keptN.map((n) => [n.to, n.email]), [[{ email: requester.email }, true]]);
+  assert.deepEqual(keptN.map((n) => [n.to, n.alert]), [[{ email: requester.email }, true]]);
   assert.match(keptN[0].text, /Tickets sold/);
 
   const byChair = decided(r, ychair, "release_move").request;
   const relN = sr.slotNotices(r, byChair, ychair.email);
-  assert.deepEqual(relN.map((n) => [n.to, n.email]), [[{ email: requester.email }, false], [{ email: owner.email }, true]]);
+  assert.deepEqual(relN.map((n) => [n.to, n.alert]), [[{ email: requester.email }, false], [{ email: owner.email }, true]]);
 
   const up = sr.escalate(r, dir, T(6));
   const upN = sr.slotNotices(r, up, "portal");
-  assert.deepEqual(upN.filter((n) => n.email).map((n) => n.to), [{ email: director.email }]);
+  assert.deepEqual(upN.filter((n) => n.alert).map((n) => n.to), [{ email: director.email }]);
 });

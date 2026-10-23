@@ -8,6 +8,8 @@ import { isActive, todayLocal } from "@/lib/away";
 import { peopleStore } from "@/lib/people";
 import { Suspense } from "react";
 import { FeedbackLink } from "./FeedbackLink";
+import { MenuDrawer } from "./MenuDrawer";
+import { navModules } from "@/lib/modules";
 
 export const metadata: Metadata = {
   title: `${ORG.shortName} Portal`,
@@ -39,36 +41,44 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {ORG.shortName} <span>Portal</span>
             </Link>
             {viewer && (
-              <nav className="nav">
-                <Link href="/">Home</Link>
-                <Link href="/requests">My Requests</Link>
-                <Link href="/purchases">Purchases</Link>
-              </nav>
+              <Link href="/notifications" className="bell bell-mobile" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                {unread > 0 && <span className="count">{unread > 49 ? "50+" : unread}</span>}
+              </Link>
             )}
             {viewer && (
-              <form action="/search" className="topsearch" role="search">
-                <input type="search" name="q" placeholder="Search requests" aria-label="Search requests" />
-              </form>
-            )}
-            {viewer && (
-              <div className="user">
-                {viewer.dev && (
-                  <Link href="/dev" className="devbadge" title="Local development: switch sample user">
-                    Dev mode
+              <MenuDrawer>
+                <nav className="nav">
+                  <Link href="/">Home</Link>
+                  <Link href="/requests">My Requests</Link>
+                  {navModules(viewer.roles).map((m) => (
+                    <Link key={m.id} href={m.href}>
+                      {m.nav}
+                    </Link>
+                  ))}
+                </nav>
+                <form action="/search" className="topsearch" role="search">
+                  <input type="search" name="q" placeholder="Search requests" aria-label="Search requests" />
+                </form>
+                <div className="user">
+                  {viewer.dev && (
+                    <Link href="/dev" className="devbadge" title="Local development: switch sample user">
+                      Dev mode
+                    </Link>
+                  )}
+                  <Link href="/notifications" className="bell" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+                    Notifications{unread > 0 && <span className="count">{unread > 49 ? "50+" : unread}</span>}
                   </Link>
-                )}
-                <Link href="/notifications" className="bell" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
-                  Notifications{unread > 0 && <span className="count">{unread > 49 ? "50+" : unread}</span>}
-                </Link>
-                <Suspense fallback={null}>
-                  <FeedbackLink />
-                </Suspense>
-                <Link href="/away" className="me" title="Out of office">
-                  {viewer.name}
-                  {awayNow && <span className="awaybadge">Away</span>}
-                </Link>
-                {!viewer.dev && <a href="/api/auth/signout">Sign out</a>}
-              </div>
+                  <Suspense fallback={null}>
+                    <FeedbackLink />
+                  </Suspense>
+                  <Link href="/away" className="me" title="Out of office">
+                    {viewer.name}
+                    {awayNow && <span className="awaybadge">Away</span>}
+                  </Link>
+                  {!viewer.dev && <a href="/api/auth/signout">Sign out</a>}
+                </div>
+              </MenuDrawer>
             )}
           </div>
         </header>

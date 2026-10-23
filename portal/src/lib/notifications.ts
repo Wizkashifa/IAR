@@ -2,14 +2,18 @@ import "server-only";
 import { isActive, todayLocal } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
+import { type Alert, type Delivery, alertEmail, chatMessage, fallbackFor, routeAlerts } from "./alerts";
+import { ChatUnreachable, chatEnabled, postToSpace, sendDm } from "./chat";
 import { mailEnabled, sendMail } from "./mail";
 import { roleMailbox, type Role } from "./org";
 import { peopleStore } from "./people";
+import { type PortalSettings, portalSettings } from "./portal-settings";
 import type { Notice } from "./purchases/notices";
 import type { Viewer } from "./viewer";
 
 /**
- * In-portal notifications (the bell) and the emails that go with them.
+ * In-portal notifications (the bell) and the alerts that go with them
+ * (Google Chat, with email as the fallback; routing in lib/alerts.ts).
  *
  * A notification is addressed to one person ("someone@islam1.org") or to a
  * role ("role:finance"), so a finance-queue item reaches whoever in finance
@@ -111,19 +115,22 @@ export async function markRead(viewer: Viewer, ids: string[] | "all"): Promise<v
 }
 
 const portalUrl = (href: string) => `${(process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}${href}`;
-const roleGroup = (r: Role) => (r === "member" ? null : roleMailbox(r));
+const groupMailbox = (r: Role) => (r === "member" ? null : roleMailbox(r));
+/** Email is the fallback when Chat can't reach someone. PORTAL_EMAIL_FALLBACK=off makes alerts Chat only. */
+const emailFallback = () => mailEnabled() && process.env.PORTAL_EMAIL_FALLBACK !== "off";
 
 /**
- * Deliver notices: write them to the bell and email the ones marked for it.
+ * Deliver notices: write them to the bell, and send an alert (Google Chat,
+ * or email when Chat can't reach someone) for the ones marked for it.
  * Approvals waiting on someone who's away also go to the person covering.
- * Never throws, so a mail or database hiccup can't undo the action that
- * caused it; failures are logged.
+ * Never throws, so a Chat, mail or database hiccup can't undo the action
+ * that caused it; failures are logged.
  */
 export async function deliver(notices: Notice[], by: string, now = new Date().toISOString()): Promise<void> {
   if (notices.length === 0) return;
   const actor = by.toLowerCase();
   const items: Omit<Notification, "id">[] = [];
-  const mails: { to: string; subject: string; text: string; href: string }[] = [];
+  const alerts: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
 
@@ -132,20 +139,19 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
       const base = { cardId: n.cardId, href: n.href, at: now, by: actor, readBy: [] as string[] };
       if ("role" in n.to) {
         items.push({ ...base, to: `role:${n.to.role}`, text: n.text });
-        const group = roleGroup(n.to.role);
-        if (n.email && group) mails.push({ to: group, subject: n.text, text: n.text, href: n.href });
+        if (n.alert) alerts.push({ to: `role:${n.to.role}`, text: n.text, href: n.href, cardId: n.cardId });
         continue;
       }
       const to = n.to.email.toLowerCase();
       items.push({ ...base, to, text: n.text });
-      if (n.email) mails.push({ to, subject: n.text, text: n.text, href: n.href });
+      if (n.alert) alerts.push({ to, text: n.text, href: n.href, cardId: n.cardId });
       if (n.delegable) {
         people ??= await peopleStore();
         const away = await people.getAway(to);
         if (away && isActive(away, today) && away.delegate !== actor) {
           const text = `Covering for ${away.name}: ${n.text}`;
           items.push({ ...base, to: away.delegate, text });
-          if (n.email) mails.push({ to: away.delegate, subject: text, text: `${text}\n\n${away.name} is away until ${away.until} and asked you to cover their approvals.`, href: n.href });
+          if (n.alert) alerts.push({ to: away.delegate, text, href: n.href, cardId: n.cardId, cover: { name: away.name, until: away.until } });
         }
       }
     }
@@ -153,15 +159,40 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   } catch (err) {
     console.error("notification write failed", err);
   }
+  await sendAlerts(alerts);
+}
 
-  if (!mailEnabled()) return;
+/** Send alerts by Chat, falling back to email. Never throws. */
+export async function sendAlerts(alerts: Alert[]): Promise<void> {
+  if (alerts.length === 0) return;
+  const chat = chatEnabled();
+  if (!chat && !mailEnabled()) return;
+  let spaces: PortalSettings["chatSpaces"] = {};
+  if (chat) spaces = (await portalSettings()).chatSpaces ?? {};
+  const deliveries = routeAlerts(alerts, { chat, spaces, groupMailbox });
   await Promise.all(
-    mails.map(async (m) => {
+    deliveries.map(async (d) => {
       try {
-        await sendMail([m.to], m.subject, `${m.text}\n\nOpen it in the IAR Portal: ${portalUrl(m.href)}\n\nYou're getting this because it's waiting on you. Everything else stays in the portal's notifications.`);
+        await send(d);
       } catch (err) {
-        console.error("notification email failed", err);
+        const fb = emailFallback() ? fallbackFor(d, groupMailbox) : null;
+        if (!(err instanceof ChatUnreachable)) console.error(`alert by ${d.via} failed`, err);
+        if (!fb) return;
+        try {
+          await send(fb);
+        } catch (err2) {
+          console.error("alert email fallback failed", err2);
+        }
       }
     }),
   );
+}
+
+async function send(d: Delivery): Promise<void> {
+  const url = portalUrl(d.alert.href);
+  if (d.via === "dm") return sendDm(d.email, chatMessage(d.alert, url));
+  if (d.via === "space") return postToSpace(d.space, chatMessage(d.alert, url), d.alert.cardId);
+  if (!mailEnabled()) return;
+  const m = alertEmail(d.alert, url);
+  return sendMail([d.to], m.subject, m.text);
 }

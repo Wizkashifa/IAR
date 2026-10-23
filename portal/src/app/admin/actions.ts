@@ -6,7 +6,9 @@ import { DEV_DOMAIN, isDevAuth } from "@/lib/dev";
 import { ORG } from "@/lib/org";
 import { settingsStore } from "@/lib/portal-settings";
 import { FUNDS } from "@/lib/purchases/accounts";
-import { checkCard, checkTeamFund } from "@/lib/settings-rules";
+import { checkCard, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
+import { googleRooms } from "@/lib/rooms-google";
+import { RULES } from "@/lib/events/rules";
 import { requireViewer } from "@/lib/viewer";
 
 async function requireAdmin() {
@@ -58,4 +60,31 @@ export async function removeCard(form: FormData): Promise<void> {
   const s = await store.get();
   await store.save({ ...s, cards: s.cards.filter((c) => c.last4 !== last4), updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   back({ ok: `Card ending ${last4} removed. Its past receipts are kept.` });
+}
+
+/** A room's portal settings: bookable, food, shared space, restricted, a note. */
+export async function saveRoom(form: FormData): Promise<void> {
+  const viewer = await requireAdmin();
+  const roomId = String(form.get("room") ?? "");
+  const rooms = await googleRooms();
+  const r = checkRoomSetting(
+    roomId,
+    { bookable: form.get("bookable"), food: form.get("food"), restricted: form.get("restricted"), mph: form.get("mph"), overlaps: form.getAll("overlaps"), note: form.get("note") },
+    { roomIds: rooms.map((x) => x.id) },
+  );
+  if (!r.ok) return back({ error: r.error });
+  const store = await settingsStore();
+  const s = await store.get();
+  await store.save({ ...s, rooms: { ...(s.rooms ?? {}), [roomId]: r.setting }, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
+  back({ ok: `${rooms.find((x) => x.id === roomId)?.name ?? "Room"} saved.` });
+}
+
+/** Turn event policy rules on or off. */
+export async function saveEventRules(form: FormData): Promise<void> {
+  const viewer = await requireAdmin();
+  const store = await settingsStore();
+  const s = await store.get();
+  const eventRules = Object.fromEntries(RULES.map((rule) => [rule.id, form.get(rule.id) === "on"]));
+  await store.save({ ...s, eventRules, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
+  back({ ok: "Event rules saved." });
 }

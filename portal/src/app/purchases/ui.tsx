@@ -4,13 +4,8 @@ import { shortFund } from "@/lib/purchases/accounts";
 import { KIND_LABEL, STAGE_LABEL, purchaseTotal } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, REMINDER_DAYS, daysWaiting, type PurchaseCard } from "@/lib/purchases/workflow";
 
-export const fmtMoney = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-export const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
-export const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
-export const fmtMonth = (ym: string) =>
-  new Date(`${ym}-15T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+export { fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
+import { fmtMoney, fmtMonth } from "../ui";
 
 export function StatusPill({ card }: { card: PurchaseCard }) {
   return <span className={`pill ${card.status}`}>{STATUS_LABEL[card.status]}</span>;

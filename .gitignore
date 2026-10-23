@@ -1,3 +1,6 @@
 # People data never goes in this public repo.
 roster*.json
 *roster*.md
+
+# Claude Code worktrees
+.claude/worktrees/

@@ -17,7 +17,9 @@ import {
   requestableFunds,
   slugOf,
   suggestFund,
+  TEAM_SLUGS,
   teamGroupEmail,
+  teamSlug,
   teamPeople,
   teamRoles,
 } from "./teams";
@@ -25,19 +27,21 @@ import {
 const NAMES = [
   "Administration", "Al-Furqan School", "Al-Iman School", "An-Noor School", "Cemetery", "Cleaning", "Construction", "Da'wah", "Education",
   "Events Committee", "Facility Maintenance", "Fundraising", "Health & Wellness", "IAR Cafe", "Imam Office", "IT Services", "Marketing",
-  "Older Adult Community", "Outreach", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
+  "Older Adult Community", "Page Road", "Safety & Security", "Shura", "Social & Welfare", "Sports & Recreation", "Volunteer",
   "Women's Committee", "Youth",
 ];
 
-test("slugs: one rule turns every team's name into its group address", () => {
-  assert.deepEqual(NAMES.map(slugOf), [
+test("slugs: every launch team has the group address IAR chose; a new team's is worked out from its name", () => {
+  assert.deepEqual(NAMES.map(teamSlug), [
     "administration", "al-furqan-school", "al-iman-school", "an-noor-school", "cemetery", "cleaning", "construction", "dawah", "education",
-    "events", "facility-maintenance", "fundraising", "health-wellness", "iar-cafe", "imam-office", "it-services", "marketing",
-    "older-adult-community", "outreach", "page-road", "safety-security", "shura", "social-welfare", "sports-recreation", "volunteer",
+    "events", "maintenance", "fundraising", "hw", "cafe", "imams", "tech", "marketing",
+    "seniors", "page", "security", "shura", "welfare", "sports", "volunteer",
     "women", "youth",
   ]);
-  assert.equal(teamGroupEmail("Women's Committee", "x.org"), "portal-team-women@x.org");
-  assert.equal(new Set(NAMES.map(slugOf)).size, NAMES.length);
+  assert.deepEqual(Object.keys(TEAM_SLUGS).sort(), [...NAMES].sort(), "the slug list and the launch list match");
+  assert.equal(teamGroupEmail("IT Services", "x.org"), "portal-team-tech@x.org");
+  assert.equal(teamGroupEmail("Girls' Scouts Committee", "x.org"), "portal-team-girls-scouts@x.org");
+  assert.equal(new Set(NAMES.map(teamSlug)).size, NAMES.length);
 });
 
 test("funds: suggested only when the name clearly matches; the rest wait for an admin", () => {
@@ -50,7 +54,7 @@ test("funds: suggested only when the name clearly matches; the rest wait for an 
   assert.equal(got["Page Road"], "Page Rd");
   assert.equal(got["Al-Furqan School"], "Al-Furqan School Expenses");
   assert.equal(got["Social & Welfare"], "Social & Welfare");
-  for (const n of ["Administration", "Older Adult Community", "Fundraising", "Marketing", "IT Services", "Outreach", "Shura", "Volunteer"]) assert.equal(got[n], null, n);
+  for (const n of ["Administration", "Older Adult Community", "Fundraising", "Marketing", "IT Services", "Shura", "Volunteer"]) assert.equal(got[n], null, n);
 });
 
 // A small org: Youth (chair + vice + members), Education (co-chairs), S&W, Marketing,
@@ -136,7 +140,7 @@ test("roles: team queues come from being on the team, at any level; chairs from 
   assert.deepEqual(teamRoles(membershipsOf(dir, "mk@x.org")), ["marketing"]);
   assert.deepEqual(teamRoles(membershipsOf(dir, "sw@x.org")).sort(), ["chairs", "sw"]);
   assert.deepEqual(teamRoles(membershipsOf(dir, "vol@x.org")), []);
-  const it = teamRoles([{ name: "IT Services", group: "portal-team-it-services@x.org", role: "member" }]);
+  const it = teamRoles([{ name: "IT Services", group: "portal-team-tech@x.org", role: "member" }]);
   assert.deepEqual(it.sort(), ["av", "it"]);
 });
 
@@ -146,7 +150,9 @@ test("roles: role groups plus team roles, with queue email going to the team's g
   assert.deepEqual(directRolesFromGroups([`portal-finance@${d}`]), ["member"]);
   assert.equal(roleMailbox("finance"), `portal-role-finance@${d}`);
   assert.equal(roleMailbox("marketing"), `portal-team-marketing@${d}`);
-  assert.equal(roleMailbox("av"), `portal-team-it-services@${d}`);
+  assert.equal(roleMailbox("av"), `portal-team-tech@${d}`);
+  assert.equal(roleMailbox("facilities"), `portal-team-maintenance@${d}`);
+  assert.equal(roleMailbox("sw"), `portal-team-welfare@${d}`);
   assert.equal(roleMailbox("chairs"), null);
 });
 
