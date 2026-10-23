@@ -11,7 +11,7 @@
   --surface-2: #f3ecd6;
   --ink: #16221a;
   --ink-2: #545f52;
-  --ink-3: #737a6c;
+  --ink-3: #656c5e;
   --line: #e6dcc0;
   --accent: #0b2e12;
   --accent-ink: #f6eedb;
@@ -80,7 +80,7 @@ a { color: var(--accent-text); }
 .ic-svg.lg { width: 20px; height: 20px; }
 
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #0b2e12; }
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: #0b2e12; color: var(--cream); border-bottom: 2px solid var(--gold); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 7; background: #0b2e12; color: var(--cream); border-bottom: 2px solid var(--gold); }
 .top::before { content: ""; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23d4af37' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E"); background-size: 56px 56px; opacity: 0.07; pointer-events: none; }
 .top-inner { position: relative; }
 .top-inner { display: flex; align-items: center; gap: 10px 8px; flex-wrap: wrap; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -149,6 +149,9 @@ h1.greet { font-family: var(--font-display); font-style: italic; font-weight: 50
 h2 { font-family: var(--font-head); font-weight: 600; font-size: 15px; margin: 0; }
 h3 { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin: 0; }
 .lead { color: var(--ink-2); margin: 4px 0 0; max-width: 68ch; }
+.title-row { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.next { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
+.next .ic-svg { color: var(--gold); margin-top: 2px; }
 .hero { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 4px 0 8px; }
 .hero::before { content: ""; position: absolute; inset: -28px -16px 0 40%; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23d4af37' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E"); background-size: 56px 56px; opacity: .14; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 60%); mask-image: linear-gradient(90deg, transparent, #000 60%); }
 .hero > * { position: relative; }
@@ -293,7 +296,7 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .stage.done { color: var(--ink-2); }
 .stage.skip { opacity: 0.45; }
 
-.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13.5px; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13.5px; margin: 0; }
 .kv dt { color: var(--ink-2); }
 .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 /* Question-and-answer lists: the question sits above its answer, so long questions never squeeze the answer. */
@@ -355,6 +358,8 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } }
 
 @media (min-width: 1200px) { body.guide-open .shell { margin-right: 380px; } }
+/* With the guide open there's less room, so the board's columns scroll inside the panel instead of being cut off. */
+body.guide-open .kb { grid-auto-columns: minmax(190px, 1fr); }
 .sankey { width: 100%; min-width: 640px; height: auto; display: block; }
 .sankey text { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .sankey .sk-l { font-size: 12px; fill: var(--ink); font-weight: 600; }
@@ -383,6 +388,8 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .chip:hover { border-color: var(--ink-3); }
 .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
 .chipx { display: inline-flex; align-items: center; gap: 2px; }
+.ctl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.chiprow { display: flex; gap: 6px; flex: 1 1 300px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; padding: 0 7px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); max-width: 100%; }
 .tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
 .tag.flag { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
@@ -413,7 +420,9 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 .kc.dragging { opacity: .45; }
 .kc-t { font-size: 13.5px; line-height: 1.35; overflow-wrap: anywhere; }
 .kc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.kc-f { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12px; }
+.kc-f { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); }
+.kc-f .key { font-size: 11.5px; color: var(--ink-3); }
+.kc .tag { font-size: 11px; }
 .sub { color: var(--ink-2); font-size: 12px; }
 .lane { display: flex; flex-direction: column; gap: 6px; }
 .lane-h { font-size: 13px; display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
@@ -458,6 +467,7 @@ select, input[type=search], input[type=date], input[type=number], input[type=tex
 
 .tiles2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .tile2 { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.kpi { font-family: var(--font-head); font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .tile2 .big { font-family: var(--font-head); font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .big.gold { background: linear-gradient(180deg, #fff3c4, #f7dc86 40%, #d4af37); -webkit-background-clip: text; background-clip: text; color: transparent; }
 :root:not([data-theme="dark"]) .big.gold { background: linear-gradient(180deg, #b8921f, #6e4c06); -webkit-background-clip: text; background-clip: text; }
@@ -1258,7 +1268,7 @@ function libAccess() {
     const opens = LIB_DRIVES.filter((d) => d.tokens.includes(t)).map((d) => d.name);
     return `<tr><td class="mono">${groupOf(t)}</td><td>${esc(opens.join(", ") || "Portal module only")}</td><td>${mem.map((k) => `<span class="pill" style="margin:0 4px 4px 0">${esc(PEOPLE[k].name)}${(S.extra[k] || []).includes(t) ? ` <button class="lk" type="button" data-libremove="${k}|${esc(t)}" title="Remove from group" aria-label="Remove ${esc(PEOPLE[k].name)} from ${groupOf(t)}">×</button>` : ""}</span>`).join("") || '<span class="muted">Nobody</span>'}</td></tr>`;
   }).join("");
-  return `<div class="note info">Groups add up. Someone can belong to any number of them: a Shura member who is also on Social & Welfare is in both <span class="mono">portal-team-shura@</span> and <span class="mono">portal-team-social-welfare@</span>, and sees both drives and both portal modules. People with × were added by hand; the rest come from their role or committee.</div>
+  return `<p class="small muted" style="margin:0">People marked × were added by hand; the rest come from their role or committee.</p>
   <div class="panel"><div class="panel-h"><h2>Add someone to a group</h2></div><div class="panel-b"><div class="row">
     <select id="libPerson" aria-label="Person">${people.map((k) => `<option value="${k}">${esc(who(k))}</option>`).join("")}</select>
     <select id="libGroup" aria-label="Group">${GROUP_TOKENS.map((t) => `<option value="${esc(t)}">${groupOf(t)}</option>`).join("")}</select>
@@ -1274,11 +1284,11 @@ function libClick(ds) {
   if (ds.libfile) { L.sel = ds.libfile; return render(), true; }
   if (ds.libgo) { const x = L.files.find((y) => y.id === ds.libgo); Object.assign(L, { drive: x.drive, folder: null, sel: x.id, q: "" }); return render(), true; }
   if (ds.libtab) { L.tab = ds.libtab; return render(), true; }
-  if (ds.libopen) { toast("In production this opens the file in Drive, which checks your access again."); return true; }
+  if (ds.libopen) { toast("This opens the file in Google Drive. Not in this demo."); return true; }
   if (ds.libadd) {
     const k = document.getElementById("libPerson").value, t = document.getElementById("libGroup").value;
     if (personIn(k, t)) toast(`${PEOPLE[k].name} is already in ${groupOf(t)}`);
-    else { (S.extra[k] = S.extra[k] || []).push(t); toast(`${PEOPLE[k].name} added to ${groupOf(t)}. Switch to them to see what opened up.`); }
+    else { (S.extra[k] = S.extra[k] || []).push(t); toast(`${PEOPLE[k].name} added to ${groupOf(t)}. Switch to them to see what opened up.`, () => { S.extra[k] = S.extra[k].filter((x) => x !== t); render(); }); }
     return render(), true;
   }
   if (ds.libremove) { const [k, t] = ds.libremove.split("|"); S.extra[k] = (S.extra[k] || []).filter((x) => x !== t); toast(`Removed from ${groupOf(t)}`); return render(), true; }
@@ -1316,7 +1326,7 @@ const MODULES = [
 const visible = (m) => m.vis.some(has);
 const BLURB = {
   requests: "Everything you own, where it stands, and who it's waiting on.",
-  events: "Request a program or event. Rooms are checked against the IAR calendar as you type.",
+  events: "Request a program or event and book its room.",
   purchases: "Pay a vendor, get reimbursed, or submit card receipts, split across sub-accounts.",
   marketing: "Graphics, signs, announcements, highlights, webpages, short links and staff badges. Event marketing is part of the event request.",
   queues: "Your team's tasks across every event, unlocked when an event is approved.",
@@ -1326,8 +1336,8 @@ const BLURB = {
   assets: "Tagged equipment with location, warranty, checkouts and repair history.",
   budget: "Where the money comes from and where it stands, by committee or for all of IAR.",
   shura: "How IAR is doing: events, building and IT cases, requests, money and what needs a Shura decision.",
-  library: "Policies, Shura documents and each committee's files, in shared drives that follow your Google Groups.",
-  settings: "Rooms, access groups and the policy rules the portal checks.",
+  library: "Policies, Shura documents and each committee's files.",
+  settings: "Rooms, booking rules and committees.",
   away: "Going away? Hand your approvals to someone until you're back.",
 };
 
@@ -1347,7 +1357,13 @@ function setNav(open) {
 }
 function go(view, arg) { if (document.body.classList.contains("nav-open")) setNav(false);
  if (view === "library" && S.view !== "library") { S.lib.q = ""; S.lib.drive = null; S.lib.folder = null; S.lib.sel = null; } S.view = view; S.arg = arg ?? null; if (S.tk) S.tk.modal = null; render(); window.scrollTo({ top: 0 }); }
-function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
+/* A short confirmation at the bottom of the screen. Pass undo to offer a way back. */
+function toast(msg, undo) {
+  const t = document.getElementById("toast");
+  toast.undo = undo || null;
+  t.innerHTML = `${icon("check")}<span>${esc(msg)}</span>${undo ? '<button type="button" class="lnk" data-toastundo="1">Undo</button>' : ""}`;
+  t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), undo ? 6000 : 2600);
+}
 const log = (c, text) => c.log.push({ t: TODAY, who: S.me, text });
 
 /* ------------------------------------------------------------------ */
@@ -1453,7 +1469,7 @@ function searchCards(q) {
 function vSearch() {
   const q = S.arg || "";
   const hits = searchCards(q);
-  return `<div><h1>Search</h1><p class="lead">Find a request by its number (11046, PO-11046) or by words in it. You only see requests you could open anyway.</p></div>
+  return `<div><h1>Search</h1><p class="lead">Find a request by its number (11046, PO-11046) or by words in it. </p></div>
   <form id="srchForm" class="row"><input type="search" name="q" class="srch wide" value="${esc(q)}" placeholder="Request number, or words from the title, payee or committee" aria-label="Search requests"><button class="btn primary" type="submit">Search</button></form>
   ${q ? `<div class="panel"><div class="panel-h"><h2>${hits.length} result${hits.length === 1 ? "" : "s"}</h2></div>${hits.length ? `<div class="list">${hits.map((c) => itemRow(c, waitingOn(c))).join("")}</div>` : `<div class="empty">Nothing matches “${esc(q)}” among requests you can open.</div>`}</div>` : ""}`;
 }
@@ -1466,7 +1482,7 @@ function vNotifs() {
   const row = (x) => x.k === "p"
     ? `<button type="button" class="item ${x.unread ? "unread" : ""}" data-nopen="${x.n.id}"><div><div class="t">${esc(x.n.text)}</div><div class="s">${ago(x.n.t)}${x.n.to.startsWith("role:") ? " · sent to your team" : ""}</div></div><div class="r">${x.n.email ? '<span class="pill info">Also emailed</span>' : ""}</div></button>`
     : `<button type="button" class="item ${x.unread ? "unread" : ""}" data-tk2="notifopen|${x.n.id}"><div><div class="t">${esc(x.n.text)}</div><div class="s">${x.n.ticket} · ${ago(x.n.t)}</div></div></button>`;
-  return `<div class="head"><div><h1>Notifications</h1><p class="lead">What reached you or changed. When something is waiting on you, you also get an email; everything else stays here.</p></div>${all.some((x) => x.unread) ? '<button class="btn" type="button" data-nallread="1">Mark all read</button>' : ""}</div>
+  return `<div class="head"><div><h1>Notifications</h1><p class="lead">Updates on your requests and anything waiting on you.</p></div>${all.some((x) => x.unread) ? '<button class="btn" type="button" data-nallread="1">Mark all read</button>' : ""}</div>
   <div class="panel">${all.length ? `<div class="list">${all.map(row).join("")}</div>` : '<div class="empty">Nothing yet. Requests show up here when they reach you or change.</div>'}</div>`;
 }
 
@@ -1499,7 +1515,7 @@ function vAway() {
     <div class="fld wide"><label for="aw_note">Note for them (optional)</label><input type="text" id="aw_note" name="note" value="${esc(mine?.note || "")}" placeholder="Travelling for Umrah; reachable by text for anything urgent"></div>
     <div class="actions"><button class="btn primary" type="submit">${mine ? "Update" : "Turn on"}</button></div>
   </form></div>
-  <div class="note info">This hands off approvals that wait on you by name, like a committee's chair approval. Finance and executive steps already go to everyone in that group, so they don't need covering.</div>
+  <p class="small muted" style="margin:0">Finance and executive approvals are already shared, so they don't need cover.</p>
   ${covering.length ? `<div class="panel"><div class="panel-h"><h2>You're covering for</h2></div><div class="list">${covering.map(([p, a]) => `<div class="item" style="cursor:default"><div><div class="t">${esc(nameOf(p))}</div><div class="s">${fmtLong(a.from)} to ${fmtLong(a.until)}${awayNow(p) ? " · now" : ""}${a.note ? ` · “${esc(a.note)}”` : ""}</div></div></div>`).join("")}</div></div>` : ""}`;
 }
 function saveAway(f) {
@@ -1570,7 +1586,7 @@ const modHead = (title, lead, btns) => `<div class="head"><div><h1>${esc(title)}
 function listPanel(title, items, o = {}) {
   const n = o.count ?? items.length;
   const right = o.right ?? (o.queue ? (n ? `<span class="pill warn">${n}</span>` : "") : `<span class="small muted">${o.countLabel ? o.countLabel(n) : n}</span>`);
-  return `<div class="panel"><div class="panel-h"><h2>${esc(title)}</h2>${right}</div>${items.length ? `<div class="list">${items.map((c) => itemRow(c, o.why ? o.why(c) : String(c.id).startsWith("TK-") ? undefined : waitingOn(c))).join("")}</div>` : `<div class="empty">${o.empty || "Nothing here."}</div>`}</div>`;
+  return `<div class="panel"><div class="panel-h"><h2>${esc(title)}</h2>${right}</div>${items.length ? `<div class="list">${items.map((c) => itemRow(c, o.why ? o.why(c) : String(c.id).startsWith("TK-") ? undefined : waitingOn(c))).join("")}</div>` : `<div class="empty">${icon("inbox")}${o.empty || "Nothing here."}</div>`}</div>`;
 }
 const FINISHED = ["paid", "done", "rejected", "denied", "cancelled", "declined", "resolved", "closed"];
 const isFinished = (c) => FINISHED.includes(c.status) || (c.kind === "event" && c.status === "approved" && (c.recur ? c.recur.end : c.date) < TODAY);
@@ -1831,10 +1847,34 @@ function seriesPanel(c) {
    crumb · title, lead line and status · stages · notes · actions ·
    main column (the request, comments, history) and a side column (details). */
 const reqStages = (steps, at) => `<div class="stages">${steps.map((s, i) => { const o = typeof s === "string" ? { label: s } : s; return `<div class="stage ${o.cls ?? (i < at ? "done" : i === at ? "now" : "")}"><div class="bar"></div>${esc(o.label)}</div>`; }).join("")}</div>`;
+/* "What happens next" on a request page: who acts next and what follows, in a sentence. */
+const personTo = (id) => (id === S.me ? "You" : fn(id));
+const financeName = () => fn(Object.keys(PEOPLE).find((p) => p !== "admin" && roleOf(p, "finance")) || "bookkeeper");
+function nextStep(c) {
+  const mine = c.owner === S.me, own = mine ? "You" : fn(c.owner), notified = mine ? " You'll get a notification when it's done." : "";
+  if (c.kind === "event") return {
+    director: `${evDirectors(c).map(personTo).join(" or ")} (director) reviews it against IAR's mission, then an executive gives final approval.${notified}`,
+    mission: `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`,
+    changes: `${own} make${mine ? "" : "s"} the requested changes and resubmit${mine ? "" : "s"}.`,
+    approved: (() => { const open = c.tasks.filter((t) => t.status !== "done").map((t) => TEAM_NAME[t.team]); return `${open.length ? `${open.length > 1 ? `${open.slice(0, -1).join(", ")} and ${open.at(-1)} get` : `${open[0]} gets`} it ready. ` : ""}After the event, ${mine ? "you add" : `${own} adds`} attendance and close${mine ? "" : "s"} it out.`; })(),
+    closeout: `${own} add${mine ? "" : "s"} the attendance and close${mine ? "" : "s"} it out.`,
+  }[c.status] || "";
+  if (c.kind === "po") return {
+    chair: `${chairsOf(c).map(personTo).join(" or ") || "The chair"} approves it for ${c.committee}, then finance reviews it.${notified}`,
+    finance: `Finance checks the ${c.type === "card" ? "charges" : "receipts and accounts"}, then it's paid.${notified}`,
+    to_pay: `${financeName()} pays ${c.payee || "it"}.${mine ? " You'll get a notification when it's paid." : ""}`,
+    paid: `${financeName()} enters it in QuickBooks.`, books: `${financeName()} enters it in QuickBooks.`,
+    returned: `${own} fix${mine ? "" : "es"} it and resubmit${mine ? "" : "s"}.`,
+  }[c.status] || "";
+  if (c.kind === "mkt") return { submitted: "The marketing team reviews new requests each week.", changes: `${own} answer${mine ? "" : "s"} the marketing team's question below.`, scheduled: "The marketing team has it scheduled.", doing: "The marketing team is working on it." }[c.status] || "";
+  if (c.kind === "rental") return c.status === "submitted" ? "The IAR office checks it against the calendar and replies." : "";
+  return "";
+}
 function reqPage(o) {
+  const next = o.next ?? "";
   return `<div class="crumb"><button type="button" data-go="${o.back[0]}">${esc(o.back[1])}</button> / ${o.trail || ""}<span class="mono">${esc(o.id)}</span></div>
-  <div class="head"><div style="min-width:0">${o.titleForm || `<h1 class="ih">${o.title}</h1>`}<p class="lead">${o.lead.filter(Boolean).map(esc).join(" · ")}</p></div><div class="row">${o.pills}</div></div>
-  <div class="panel panel-b">${o.stages}</div>
+  <div style="min-width:0"><div class="title-row">${o.titleForm || `<h1 class="ih">${o.title}</h1>`}<div class="row">${o.pills}</div></div><p class="lead">${o.lead.filter(Boolean).map(esc).join(" · ")}</p></div>
+  <div class="panel panel-b">${o.stages}${next ? `<div class="next">${icon("chevR")}<span><strong>What happens next:</strong> ${esc(next)}</span></div>` : ""}</div>
   ${o.notes || ""}
   ${o.actions ? `<div class="panel panel-b stack">${o.actions}</div>` : ""}
   <div class="issue"><div class="stack" style="min-width:0">${o.main}</div><aside class="stack side">${o.side}</aside></div>`;
@@ -1902,6 +1942,7 @@ function vCard() {
     lead: ["Event", c.committee, `from ${nameOf(c.owner)}`, `${c.recur ? `${recurText(c.recur)}, starting ` : ""}${fmtDate(c.date)}, ${fmtRange(toMin(c.start), toMin(c.end))}`, r.name],
     pills: statusPill(c),
     stages: reqStages(steps),
+    next: nextStep(c),
     notes: (c.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Requested changes: /, ""))}</div>` : "") + (c.status === "closeout" && c.owner === S.me ? closeoutForm(c, linked, spent) : ""),
     actions: actions.length ? `${conflictNote}<div class="row">${actions.join("")}</div><div class="fld" style="max-width:520px"><label for="actNote">Note to include (optional)</label><input type="text" id="actNote" placeholder="e.g. Move to 4:00 PM or pick Room 250"></div>` : "",
     main: `${c.recur ? seriesPanel(c) : ""}
@@ -2051,14 +2092,14 @@ function vNewPO() {
     ${card
       ? `<div class="fld"><label for="p_card">Card</label><select id="p_card" name="card">${myCards().map((k) => `<option value="${k.last4}" ${k.last4 === d.card ? "selected" : ""}>···${k.last4} · ${esc(k.label)} (${esc(k.committee)})</option>`).join("")}</select></div>
          <div class="fld"><label for="p_month">Statement month</label><input type="month" id="p_month" name="month" value="${esc(d.month)}"></div>`
-      : `<div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${poCommittees().map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">${has("office") || has("finance") ? "The office and finance can submit for any committee." : "Your committees and teams, from Google Groups."}</span></div>
+      : `<div class="fld"><label for="p_committee">Committee</label><select id="p_committee" name="committee">${poCommittees().map((c) => `<option ${c === d.committee ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><span class="hint">${has("office") || has("finance") ? "The office and finance can submit for any committee." : ""}</span></div>
          <div class="fld"><label for="p_payee">Pay to</label><input type="text" id="p_payee" name="payee" value="${esc(d.payee)}"></div>`}
     <div class="fld wide"><label for="p_desc">What is it for?</label><input type="text" id="p_desc" name="desc" value="${esc(d.desc)}" placeholder="${card ? "Card receipts" : "Snacks and supplies for Youth Game Night"}"></div>
     ${card ? "" : `<div class="fld wide"><label for="p_event">Link to an event (optional)</label><select id="p_event" name="eventId"><option value="">No event</option>${myEvents.map((c) => `<option value="${c.id}" ${c.id === d.eventId ? "selected" : ""}>${c.id} · ${esc(c.title)}</option>`).join("")}</select></div>`}
     <div class="fld wide"><span class="lbl">${card ? "Charges" : "Line items"}</span><div class="tablewrap"><table class="lines${card ? " card-lines" : ""}"><thead><tr>${head}</tr></thead><tbody>
       ${lineRows}
       <tr><td colspan="${card ? 3 : 2}"><button class="btn small" type="button" data-addline="1">${card ? "Add a charge" : "Add a line"}</button></td><td class="num"><strong id="poSum">${money(sum)}</strong></td><td colspan="${cols - (card ? 4 : 3)}"></td></tr>
-    </tbody></table></div><span class="hint">Sample sub-accounts (Admin, Program, Labor) until IAR has a chart of accounts.${!card && d.committee === "Administration" ? " Administration is the General Fund, so IAR-wide costs like utilities and insurance go here." : ""} Attach a receipt to each line; receipts are saved to IAR's Shared Drive, filed by fiscal year. <strong>Demo: uploads don't save a file.</strong></span></div>
+    </tbody></table></div><span class="hint">${!card && d.committee === "Administration" ? "Administration is the General Fund, so IAR-wide costs like utilities and insurance go here." : ""} Attach a receipt to each line; receipts are saved to IAR's Shared Drive, filed by fiscal year. <strong>Demo: uploads don't save a file.</strong></span></div>
     <div class="actions"><button class="btn" type="button" data-go="purchases">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
   </form></div></div>`;
 }
@@ -2078,7 +2119,6 @@ function vPOCard(c) {
   if (canAct && c.status === "finance") act = `<button class="btn primary" data-po="approveFin" type="button">${isCard ? "Approve the charges" : "Approve for payment"}</button><button class="btn" data-po="return" type="button">Return to requester</button>`;
   if (canAct && c.status === "to_pay") act = `<button class="btn primary" data-po="paid" type="button">Record payment (check #20431)</button>`;
   if (canAct && c.status === "books") act = `<button class="btn primary" data-po="books" type="button">Mark entered in QuickBooks</button>`;
-  const why = !act && c.owner === S.me && ["chair", "finance", "to_pay", "books"].includes(c.status) && (has("finance") || has("chairs")) ? `<div class="note info">You can't approve or book your own request. It's waiting on ${esc(waitingOn(c))}.</div>` : "";
   const owed = owedLines(c);
   const tag = (l, i) => [
     l.noReceipt || !l.receipt ? '<span class="pill warn">No receipt</span>' : `<span class="pill">${esc(l.receipt)}</span>`,
@@ -2098,7 +2138,8 @@ function vPOCard(c) {
     lead: [PO_TYPE[c.type], c.committee, `from ${nameOf(c.owner)}`, money(total(c))],
     pills: statusPill(c) + (restrictedPO(c) ? ' <span class="pill bad">Restricted</span>' : ""),
     stages: reqStages(steps, at),
-    notes: actNote + (act ? "" : why),
+    next: nextStep(c),
+    notes: actNote,
     actions: act ? `<div class="row">${act}</div>` : "",
     main: `<div class="panel"><div class="panel-h"><h2>${isCard ? "Charges" : "Line items"}</h2><strong>${money(total(c))}</strong></div><div class="tablewrap"><table>${lineTable}</table></div></div>
       ${commentsPanel(c.id, c.comments)}
@@ -2285,6 +2326,7 @@ function vMKCard(r) {
     lead: [t.label, r.committee, `from ${nameOf(r.owner)}`, due ? `needed by ${fmtDate(due)}` : ""],
     pills: statusPill(r),
     stages: reqStages(order, at),
+    next: nextStep(r),
     notes: (r.status === "changes" && lastAsk ? `<div class="note warn"><strong>${esc(nameOf(lastAsk.who))}:</strong> ${esc(lastAsk.text.replace(/^Question: /, ""))}</div>` : "") + (tight ? `<div class="note warn">Needed in ${daysBetween(TODAY, due)} days. Marketing usually takes 1–2 weeks.</div>` : ""),
     actions: actions.length ? `<div class="row">${actions.join("")}</div>
       ${team && r.status === "submitted" ? `<div class="fld" style="max-width:260px"><label for="mkDoneBy">Done by (when scheduling)</label><input type="date" id="mkDoneBy" value="${due || addDays(TODAY, 14)}" min="${TODAY}"></div>` : ""}
@@ -2336,7 +2378,7 @@ function vRunSheet() {
   const date = S.arg || TODAY;
   const rows = dayRows(date);
   return `<div class="crumb noprint"><button type="button" data-go="home">Home</button> / Today at IAR</div>
-  <div class="head"><div><h1>Today at IAR</h1><p class="lead">What's happening where, built from approved requests and the IAR calendar. Each requester sets up and cleans up their own event.</p></div>
+  <div class="head"><div><h1>Today at IAR</h1><p class="lead">What's happening where. Each group sets up and cleans up its own event.</p></div>
     <div class="row noprint"><input type="date" id="rsDate" class="btn small" value="${date}" aria-label="Day"><button class="btn small primary" type="button" data-print="1">Print</button></div></div>
   ${dates.length ? `<div class="row small noprint"><span class="muted">Days with bookings:</span>${dates.slice(0, 6).map((d) => `<button class="btn small ${d === date ? "primary" : ""}" type="button" data-go="runsheet" data-arg="${d}">${fmtDate(d)}</button>`).join("")}</div>` : ""}
   <div class="sheet"><div class="sheet-h"><h2>Main campus · ${fmtDate(date)}</h2><span class="small muted">Prayer times and school hours are standing holds and not listed</span></div>
@@ -2347,9 +2389,8 @@ function vRunSheet() {
 
 /* ---- Rentals ------------------------------------------------------ */
 function vRentals() {
-  return `<div><h1>Facility Rentals</h1><p class="lead">Requests from outside groups come in through a public page. They're checked against the same calendar and rules as events.</p></div>
-  <div class="panel"><div class="list">${S.rentals.map((r) => itemRow(r, waitingOn(r))).join("")}</div></div>
-  <div class="note info">Rental rates and insurance terms aren't in the room policy yet. They're on the list for the Shura's policy refresh.</div>`;
+  return `<div><h1>Facility Rentals</h1><p class="lead">Requests from outside groups to use the gym or a hall.</p></div>
+  <div class="panel"><div class="list">${S.rentals.map((r) => itemRow(r, waitingOn(r))).join("")}</div></div>`;
 }
 function vRentalCard(r) {
   if (!has("office")) return `<div class="empty">Rentals are reviewed by the IAR office.</div>`;
@@ -2392,12 +2433,11 @@ function vAid() {
   </tbody></table></div></div>`;
 }
 function vSettings() {
-  return `<div><h1>Portal Settings</h1><p class="lead">Rooms and rules are settings, not code. People and their roles come from Google Groups, so nobody edits code or files to assign anyone. Another masjid would change these and nothing else.</p></div>
+  return `<div><h1>Portal Settings</h1><p class="lead">Rooms, booking rules and committees.</p></div>
   <div class="panel"><div class="panel-h"><h2>Policy rules</h2><span class="small muted">Switch one off and the event form's checks change immediately</span></div><div class="panel-b"><div class="list">
     ${RULES.map((r) => `<div class="task"><div><div>${esc(r.name)}</div><div class="small muted">${esc(r.policy)}</div></div><label class="toggle" title="Turn this rule on or off"><input type="checkbox" id="rule_${r.id}" data-rule="${r.id}" ${r.on ? "checked" : ""} aria-label="${esc(r.name)}"><span></span></label></div>`).join("")}
   </div></div></div>
   <div class="panel"><div class="panel-h"><h2>Recurring reservations</h2><span class="small muted">Proposed · up for debate</span></div><div class="panel-b stack">
-    <div class="note info">Every series has an end date. There is no open-ended option, so there is nothing to switch off.</div>
     <div class="f">
       <div class="fld"><label for="polTerms">Longest a series can run (from its first date)</label><select id="polTerms"><option value="3" ${POLICY.maxMonths === 3 ? "selected" : ""}>3 months</option><option value="6" ${POLICY.maxMonths === 6 ? "selected" : ""}>6 months</option></select></div>
       <div class="fld"><label for="polRenew">Renewal opens (days before the end date)</label><input type="number" id="polRenew" value="${POLICY.renewDays}" min="0" max="90"></div>
@@ -2650,7 +2690,7 @@ function vBudget() {
   const scope = S.budScope && (S.budScope === "IAR" ? all : list.includes(S.budScope)) ? S.budScope : all ? "IAR" : list[0];
   if (!scope) return `<h1>Budget</h1><div class="panel empty">Your committee isn't a cost center in the ${FY_LABEL()} budget file. Social &amp; Welfare is funded from restricted zakat and sadaqah and is tracked separately.</div>`;
   const tab = S.budTab === "rev" ? "rev" : S.budTab === "ytd" && scope === "IAR" ? "ytd" : "flow", mode = S.budMode || "status";
-  return `<div class="head"><div><h1>Budget</h1><p class="lead">The FY2026–27 budget (July 1 to June 30) by committee and cost center, and where each one stands. Budgets are from the approved budget file. Year-to-date spending and receipts are sample figures until the first QuickBooks import; commitments come from purchase requests in the portal.</p></div><span class="pill info">QuickBooks data through ${esc(fmtDate(S.imports[0].date))}</span></div>
+  return `<div class="head"><div><h1>Budget</h1><p class="lead">The FY2026–27 budget (July 1 to June 30) by committee and cost center, and where each one stands.</p></div><span class="pill info">QuickBooks data through ${esc(fmtDate(S.imports[0].date))}</span></div>
   <div class="row">
     <label class="small muted" for="budScope">Show</label><select id="budScope" class="btn small">${all ? `<option value="IAR" ${scope === "IAR" ? "selected" : ""}>IAR as a whole</option>` : ""}${list.map((n) => `<option ${n === scope ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
     ${tab === "flow" ? `<label class="small muted" for="budMode">Flow</label><select id="budMode" class="btn small"><option value="status" ${mode === "status" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} → spent / committed / available</option><option value="fund" ${mode === "fund" ? "selected" : ""}>Funding → ${scope === "IAR" ? "cost center" : "fund"} only</option></select>` : ""}
@@ -2685,7 +2725,7 @@ function budFlow(scope, mode) {
   const rows = (scope === "IAR" ? comms.map((c) => ({ name: c.name, ls: c.lines })) : mids.map((m) => ({ name: m.label, ls: lines.filter((l) => midOf(l) === m.id) })));
   const bySrc = (ls, s) => ls.filter((l) => l.source === s).reduce((a, l) => a + l.budget, 0);
   return `<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
-    ${[["Budget", B], ["Spent", SP], ["Committed", CM], ["Available", AV]].map(([l, v]) => `<div class="panel panel-b"><div class="small muted">${l}</div><div style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">${kfmt(v)}</div><div class="small muted">${l === "Budget" ? `${comms.length} committee${comms.length > 1 ? "s" : ""}` : Math.round((v / B) * 100) + "% of budget"}</div></div>`).join("")}
+    ${[["Budget", B], ["Spent", SP], ["Committed", CM], ["Available", AV]].map(([l, v]) => `<div class="panel panel-b"><div class="small muted">${l}</div><div class="big gold kpi">${kfmt(v)}</div><div class="small muted">${l === "Budget" ? `${comms.length} committee${comms.length > 1 ? "s" : ""}` : Math.round((v / B) * 100) + "% of budget"}</div></div>`).join("")}
   </div>
   <div class="panel"><div class="panel-h"><h2>${esc(scope === "IAR" ? "IAR" : scope)} · ${FY_LABEL()} budget flow</h2><div class="legend">${srcIds.map((s) => `<span><i style="background:${SRC[s].color}"></i>${SRC[s].label}</span>`).join("")}</div></div>
     <div class="panel-b">${sankeySvg(cols, links, { h, total: B, aria: `Budget flow for ${scope}` })}<p class="small muted" style="margin:6px 0 0">Band width is dollars. Hover a band for its amount. Restricted money only flows to the purposes it was given for. Page Road costs are shown against its three revenue streams (tuition, endowment, donations) in proportion.</p></div></div>
@@ -2862,7 +2902,7 @@ function vShura() {
     ...openSR.map((r) => [`${r.id} · ${SR_TYPES[r.type].label}`, `Open with ${SR_TYPES[r.type].to} since ${fmtDate(r.created)}`, "info"]),
   ];
   const big = H.evLive.flatMap((x) => x.dates.map((d) => ({ d, c: x.c }))).filter((x) => x.c.isPublic || x.c.attendance >= 50).sort((a, b) => (a.d > b.d ? 1 : -1)).slice(0, 5);
-  return `<div class="head"><div><h1>Shura / Board</h1><p class="lead">How IAR is doing across events, the building, IT, requests and money. Counts are live from the portal; money is from the QuickBooks import of ${esc(fmtDate(S.imports[0].date))}. Nothing here names the people behind a request or an aid case.</p></div>
+  return `<div class="head"><div><h1>Shura / Board</h1><p class="lead">How IAR is doing across events, the building, IT, requests and money.</p><p class="small muted" style="margin:4px 0 0">Money as of ${esc(fmtDate(S.imports[0].date))}.</p></div>
     <div class="row">${H.meeting ? `<span class="pill info">Next Shura meeting ${esc(fmtDate(H.meeting.date))}</span>` : ""}<button class="btn primary" type="button" data-shnew="1">${S.shForm ? "Close form" : "Ask finance or the executive"}</button></div></div>
   ${S.shForm ? `<div class="panel"><div class="panel-h"><h2>New Shura request</h2></div>${srForm()}</div>` : ""}
   <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
@@ -3296,11 +3336,9 @@ function vTickets() {
   const teams = myTeams();
   if (teams.length === 1) tk.team = teams[0];
   if (tk.team !== "all" && teams.length > 1 && !teams.includes(tk.team)) tk.team = "all";
-  const unread = S.tkx.notifs.filter((n) => n.to === S.me && !n.read).length;
   if (!worker) return modHead("IT & Maintenance", "Report a problem once. It goes to the right team, you can see where it stands, and fixes are logged against the equipment.", `<button class="btn primary" type="button" data-tk2="create">Report a problem</button>`) + vTkMine();
-  const head = `<div class="head"><div><h1>IT & Maintenance</h1><p class="lead">Track every building and tech issue from report to fix: boards, backlog, sprints, SLAs, preventive schedules and reports.</p></div>
+  const head = `<div class="head"><div><h1>IT & Maintenance</h1><p class="lead">Report a problem and follow it to the fix.</p></div>
     <div class="row">${teams.length > 1 ? `<select id="tkTeam" aria-label="Team"><option value="all" ${tk.team === "all" ? "selected" : ""}>All teams</option>${teams.map((x) => `<option value="${x}" ${tk.team === x ? "selected" : ""}>${TK_TEAM[x].name}</option>`).join("")}</select>` : ""}
-    <button class="btn" type="button" data-tk2="notifs" aria-label="Notifications">Notifications${unread ? ` <span class="count">${unread}</span>` : ""}</button>
     <button class="btn primary" type="button" data-tk2="create">Create</button></div></div>`;
   const tabs = `<div class="btabs tkt" role="tablist">${TK_TABS_W.map(([id, n]) => `<button type="button" role="tab" aria-selected="${tk.tab === id}" class="${tk.tab === id ? "on" : ""}" data-tk2="tab|${id}">${n}</button>`).join("")}</div>`;
   const body = { board: vTkBoard, list: vTkList, backlog: vTkBacklog, calendar: vTkCalendar, timeline: vTkTimeline, reports: vTkReports, schedules: vTkSchedules, settings: vTkSettings }[tk.tab] || vTkBoard;
@@ -3342,12 +3380,12 @@ function vTkBoard() {
   return `<div class="panel panel-b stack">
     <div class="row">${sp && tk.scope === "sprint" ? `<strong>${esc(sp.name)}</strong><span class="small muted">${fmtDate(sp.start)} – ${fmtDate(sp.end)} · ${daysBetween(TODAY, sp.end) >= 0 ? daysBetween(TODAY, sp.end) + " days left" : "ended"}</span>` : '<strong>All issues</strong>'}
       <span class="spacer"></span>
-      <label class="small muted" for="tkScope">Show</label><select id="tkScope"><option value="sprint" ${tk.scope === "sprint" ? "selected" : ""}>Active sprint</option><option value="all" ${tk.scope === "all" ? "selected" : ""}>All issues</option></select>
-      <label class="small muted" for="tkSwim">Group by</label><select id="tkSwim">${[["none", "None"], ["assignee", "Assignee"], ["priority", "Priority"], ["epic", "Epic"], ["type", "Issue type"]].map(([v, n]) => `<option value="${v}" ${tk.swim === v ? "selected" : ""}>${n}</option>`).join("")}</select>
-      <label class="small muted" for="tkEpicF">Epic</label><select id="tkEpicF"><option value="">All</option>${epics.map((e) => `<option value="${e.id}" ${tk.epicF === e.id ? "selected" : ""}>${esc(e.title)}</option>`).join("")}</select></div>
-    <div class="row"><input type="search" id="tkbq" class="srch" placeholder="Search this board" value="${esc(tk.bq || "")}" aria-label="Search board">${qfs.map(([k, n]) => `<button type="button" class="chip ${tk.qf[k] ? "on" : ""}" data-tk2="qf|${k}">${n}</button>`).join("")}${Object.values(tk.qf).some(Boolean) || tk.bq ? '<button type="button" class="chip" data-tk2="qfclear">Clear</button>' : ""}</div>
+      <span class="ctl"><label class="small muted" for="tkScope">Show</label><select id="tkScope"><option value="sprint" ${tk.scope === "sprint" ? "selected" : ""}>Active sprint</option><option value="all" ${tk.scope === "all" ? "selected" : ""}>All issues</option></select></span>
+      <span class="ctl"><label class="small muted" for="tkSwim">Group by</label><select id="tkSwim">${[["none", "None"], ["assignee", "Assignee"], ["priority", "Priority"], ["epic", "Epic"], ["type", "Issue type"]].map(([v, n]) => `<option value="${v}" ${tk.swim === v ? "selected" : ""}>${n}</option>`).join("")}</select></span>
+      <span class="ctl"><label class="small muted" for="tkEpicF">Epic</label><select id="tkEpicF" style="max-width:220px"><option value="">All</option>${epics.map((e) => `<option value="${e.id}" ${tk.epicF === e.id ? "selected" : ""}>${esc(e.title)}</option>`).join("")}</select></span></div>
+    <div class="row"><input type="search" id="tkbq" class="srch" placeholder="Search this board" value="${esc(tk.bq || "")}" aria-label="Search board"><div class="chiprow">${qfs.map(([k, n]) => `<button type="button" class="chip ${tk.qf[k] ? "on" : ""}" data-tk2="qf|${k}">${n}</button>`).join("")}${Object.values(tk.qf).some(Boolean) || tk.bq ? '<button type="button" class="chip" data-tk2="qfclear">Clear</button>' : ""}</div></div>
     ${lanes.length ? lanes.map((l) => (tk.swim === "none" ? cols(l.items, "") : `<div class="lane"><h3 class="lane-h">${l.k && tk.swim === "assignee" ? avatar(l.k) : ""} ${esc(l.n)} <span class="muted small">${l.items.length} issue${l.items.length === 1 ? "" : "s"}</span></h3>${cols(l.items, l.k)}</div>`)).join("") : '<div class="empty">No issues match.</div>'}
-    <div class="hint">Drag cards between columns to change status. Moves follow the workflow; resolving asks for a resolution. Click a card for details.</div></div>`;
+    <div class="hint">Drag a card to change its status, or open it for details.</div></div>`;
 }
 
 /* ---- List + JQL ---- */
@@ -3634,11 +3672,16 @@ function tkModalHTML() {
   if (m.kind === "delete") return tkModalShell(`Delete ${t.id}?`, `<p>This permanently deletes <strong>${esc(t.title)}</strong>, its sub-tasks and its history. Resolve or close it instead if you want a record.</p><div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-tk2="closemodal">Cancel</button><button type="button" class="btn danger" data-tk2="confirmdelete|${t.id}">Delete</button></div>`);
   return "";
 }
+/* Closing a dialog puts keyboard focus back on the button that opened it. */
+let tkOpener = null, tkWasOpen = false;
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-tk2]"); if (b && S.tk && !S.tk.modal) tkOpener = b.getAttribute("data-tk2"); }, true);
 function tkPaintModal() {
   const el = document.getElementById("tkModal"); if (!el) return;
   el.innerHTML = tkModalHTML();
   document.body.classList.toggle("modal-open", !!S.tk.modal);
   if (S.tk.modal) { const f = el.querySelector("input[type=text]:not([type=hidden]), textarea, select, button.btn.primary"); if (f && !S.tk.modal.keep) f.focus(); tkDupes(); }
+  else if (tkWasOpen && tkOpener) document.querySelector(`[data-tk2="${CSS.escape(tkOpener)}"]`)?.focus();
+  tkWasOpen = Boolean(S.tk.modal);
 }
 function tkReadCreate() {
   const f = document.getElementById("tkCreateForm"); if (!f || !S.tk.modal || S.tk.modal.kind !== "create") return;
@@ -4031,6 +4074,7 @@ window.addEventListener("resize", () => document.documentElement.style.setProper
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button, [data-card]"); if (!b) return;
   const ds = b.dataset;
+  if (ds.toastundo) { const u = toast.undo; document.getElementById("toast").hidden = true; toast.undo = null; if (u) { u(); toast("Undone"); } return; }
   if (ds.persona) { S.whoOpen = false; S.me = ds.persona; S.draft = null; S.poDraft = null; S.mkDraft = null; document.getElementById("personaBtn").focus(); return go(S.me === "renter" ? "public" : "home"); }
   if (ds.guide) { setNav(false); S.guide = !S.guide; return render(); }
   if (ds.themeNext) return nextTheme();
