@@ -181,6 +181,12 @@ async function seed() {
     const n = Number(c.id.split("-")[1]);
     if (n >= mem.next.EV) mem.next.EV = n + 1;
   }
+  const { sampleMarketing } = await import("./marketing/samples");
+  for (const c of sampleMarketing()) {
+    mem.cards.set(c.id, c);
+    const n = Number(c.id.split("-")[1]);
+    if (n >= mem.next.MK) mem.next.MK = n + 1;
+  }
 }
 
 const clone = <T,>(x: T): T => structuredClone(x);
