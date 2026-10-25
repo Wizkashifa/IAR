@@ -1,4 +1,9 @@
 @layer pages {
   .form { display: flex; gap: var(--s-2); }
   .form input { flex: 1; min-width: 0; }
+  .policies { margin: 0; padding: 0; list-style: none; }
+  .policies li { display: flex; flex-direction: column; padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
+  .policies li:first-child { border-top: 0; }
+  .policies a { font-weight: 600; }
+  .policySub { color: var(--ink-2); font-size: var(--t-sm); }
 }

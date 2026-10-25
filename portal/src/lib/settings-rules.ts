@@ -18,6 +18,8 @@ export type PortalSettings = {
   eventRules?: Record<string, boolean>;
   /** Link to the room reservation policy (a Shared Drive file), shown next to the agreement on the event form. */
   roomPolicyUrl?: string;
+  /** The Policies Shared Drive's ID, listed in the Library (lib/library.ts). */
+  policiesDrive?: string;
   updatedAt?: string;
   updatedBy?: string;
 };

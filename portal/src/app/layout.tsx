@@ -29,13 +29,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#0b3a24" };
 
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
-const MENU: Record<string, { group: "request" | "team" | "admin"; label: string; icon: IconName }> = {
+const MENU: Record<string, { group: "request" | "team" | "files" | "admin"; label: string; icon: IconName }> = {
   events: { group: "request", label: "Events & Rooms", icon: "calendar" },
   "purchase-requests": { group: "request", label: "Purchase Requests", icon: "receipt" },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: "megaphone" },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
   "run-sheet": { group: "team", label: "Daily Run Sheet", icon: "book" },
+  library: { group: "files", label: "Library", icon: "folder" },
   admin: { group: "admin", label: "Portal Settings", icon: "sliders" },
 };
 
@@ -56,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<ReturnType<typeof getViewer>>>; children: React.ReactNode }) {
   const [unread, away] = await Promise.all([unreadCount(viewer), (await peopleStore()).getAway(viewer.email).catch(() => null)]);
   const live = visibleModules(viewer.roles).filter((m) => m.status === "live" && MENU[m.id]);
-  const linksIn = (group: "request" | "team" | "admin"): NavLink[] =>
+  const linksIn = (group: "request" | "team" | "files" | "admin"): NavLink[] =>
     Object.keys(MENU)
       .filter((id) => MENU[id]!.group === group)
       .flatMap((id) => live.filter((m) => m.id === id))
@@ -79,6 +80,7 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
     },
     { label: "Request", links: linksIn("request") },
     { label: "Your team", links: linksIn("team") },
+    { label: "Files", links: linksIn("files") },
     { label: "Admin", links: linksIn("admin") },
     { label: "You", links: [{ href: "/away", label: "Out of office", icon: "clock" }] },
   ];
