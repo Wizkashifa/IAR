@@ -70,3 +70,12 @@ export function devDirectory(): Directory {
   }));
   return { teams, pillars };
 }
+
+/** Sample users' and sample teams' names by address, for dev mode (lib/names.ts). */
+export function devNames(): Map<string, string> {
+  const dir = devDirectory();
+  return new Map([
+    ...DEV_PERSONAS.map((p) => [p.email.toLowerCase(), p.name] as const),
+    ...[...dir.teams, ...dir.pillars].map((g) => [g.email.toLowerCase(), g.name] as const),
+  ]);
+}

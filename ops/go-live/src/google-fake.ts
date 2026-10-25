@@ -125,6 +125,7 @@ export class FakeGoogle implements Google {
         this.delegation.set(sa.uniqueId, [
           "https://www.googleapis.com/auth/admin.directory.group.readonly",
           "https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly",
+          "https://www.googleapis.com/auth/admin.directory.user.readonly",
           "https://www.googleapis.com/auth/gmail.send",
           "https://www.googleapis.com/auth/calendar.events",
         ]);

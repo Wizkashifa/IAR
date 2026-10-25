@@ -5,7 +5,7 @@
  * the portal uses it as, exactly as the portal does. To run that test, you get
  * Token Creator on the service account for a minute, removed straight after.
  */
-import { DELEGATION, RUNTIME_SA, console_, delegationScopes, directoryUser, mailbox } from "../config";
+import { DELEGATION, RUNTIME_SA, console_, delegationScopes, directoryUser, mailbox, scopeCount } from "../config";
 import { byHand, confirm } from "../run";
 import { type Change, type Ctx, type Stage, Stop } from "../types";
 import { runtimeSa } from "./cloud";
@@ -34,7 +34,7 @@ async function testAll(ctx: Ctx): Promise<string | null> {
     const r = await ctx.g.testDelegation(sa, subject, d.scope);
     if (!r.ok) failed.push(`${d.scope.split("/").pop()} as ${subject}${r.error ? ` (${r.error})` : ""}`);
   }
-  return failed.length ? `Google didn't allow: ${failed.join("; ")}. Check the Client ID and that all four scopes are in one entry. A new entry can take a few minutes to work.` : null;
+  return failed.length ? `Google didn't allow: ${failed.join("; ")}. Check the Client ID and that all ${scopeCount()} are in one entry. A new entry can take a few minutes to work.` : null;
 }
 
 export const delegation: Stage = {
@@ -49,7 +49,7 @@ export const delegation: Stage = {
     const out: Change[] = [
       {
         kind: "manual",
-        text: `Add one domain-wide delegation entry for ${RUNTIME_SA} with the portal's four scopes`,
+        text: `Add one domain-wide delegation entry for ${RUNTIME_SA} with the portal's ${scopeCount()}`,
         detail: steps(id, ctx),
         ask: "access",
         required: true,
@@ -79,7 +79,7 @@ export const delegation: Stage = {
           }
           const now = await c.g.getServiceAccount(saEmail);
           c.state.delegationVerified = `${now!.uniqueId}|${delegationScopes()}`;
-          c.log("  All four scopes work, and your temporary Token Creator role is removed.");
+          c.log(`  All ${scopeCount()} work, and your temporary Token Creator role is removed.`);
         },
       },
     ];

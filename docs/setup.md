@@ -76,14 +76,15 @@ A second service account, `portal-scheduler`, runs the daily job (§11). It need
 ### 4. Domain-wide delegation: groups, rooms, calendars and email
 
 The portal acts as two Workspace users, through its service account and no key:
-- `portal-directory@islam1.org` reads, read-only, which Google Groups a person is in, who is in each `portal-team-*` and `portal-pillar-*` group with their role (Owner, Manager, Member), and IAR's room resources.
+- `portal-directory@islam1.org` reads, read-only, which Google Groups a person is in, who is in each `portal-team-*` and `portal-pillar-*` group with their role (Owner, Manager, Member), people's names from the public directory, and IAR's room resources.
 - `portal@islam1.org` (the portal's mailbox, §8) puts room holds on the room calendars and sends the fallback emails.
 
 1. Create `portal-directory@islam1.org`, a user just for this. Give it a custom admin role, "Portal reader", that can only read (Admin console → Account → Admin roles → create role → Admin API privileges → Groups → Read; Calendar resources → Read; Buildings → Read). Don't use a super admin. It needs no license.
 2. Find the service account's numeric **Unique ID** (`gcloud iam service-accounts describe $SA --format='value(uniqueId)'`).
-3. Admin console → Security → Access and data control → API controls → Manage domain-wide delegation → Add new: that Unique ID, with these four scopes, comma-separated:
+3. Admin console → Security → Access and data control → API controls → Manage domain-wide delegation → Add new: that Unique ID, with these five scopes, comma-separated:
    - `https://www.googleapis.com/auth/admin.directory.group.readonly` (groups, as `portal-directory@`)
    - `https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly` (rooms, as `portal-directory@`)
+   - `https://www.googleapis.com/auth/admin.directory.user.readonly` (people's names, as `portal-directory@`; the portal asks only for the public directory view, so the "Portal reader" role needs no user privilege)
    - `https://www.googleapis.com/auth/calendar.events` (room holds, as `portal@`)
    - `https://www.googleapis.com/auth/gmail.send` (fallback emails, as `portal@`)
 4. The portal's `DIRECTORY_ADMIN_SUBJECT` is `portal-directory@`; `PORTAL_MAIL_FROM` and `PORTAL_CALENDAR_SUBJECT` are `portal@`.
