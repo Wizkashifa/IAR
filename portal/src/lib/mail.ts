@@ -1,6 +1,7 @@
 import "server-only";
 import { isDevAuth } from "./dev";
 import { delegatedToken } from "./google";
+import { failed } from "./health";
 
 /**
  * Plain-text email through the Gmail API, sent as the portal's own mailbox
@@ -61,5 +62,5 @@ export async function sendMail(to: string[], subject: string, text: string): Pro
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({ raw: Buffer.from(message, "utf8").toString("base64url") }),
   });
-  if (!res.ok) throw new Error(`Gmail send failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw failed("mail", `Gmail send failed: ${res.status} ${await res.text()}`);
 }
