@@ -3,13 +3,7 @@
   /* The bar above the calendar: Week/Month, what's shown, Previous/Today/Next. */
   .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
   .title { margin: 0; font-family: var(--font-head); font-size: 17px; font-weight: 700; }
-  .views, .nav { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chip {
-    display: inline-flex; align-items: center; min-height: 30px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px;
-    background: var(--surface); color: var(--ink); font-size: var(--t-sm); text-decoration: none;
-  }
-  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
-  .chip[aria-current="page"] { background: var(--nav-on); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .nav { display: flex; gap: 6px; flex-wrap: wrap; }
   .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-3); align-items: end; }
   .filters[aria-busy="true"] { opacity: 0.7; }
 

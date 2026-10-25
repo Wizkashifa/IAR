@@ -2,7 +2,9 @@ import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { ItemRow, Rows } from "@/components/ItemRow";
+import { Chips } from "@/components/Chips";
 import { Panel } from "@/components/Panel";
+import { SearchForm } from "@/components/SearchForm";
 import { Pill } from "@/components/Pill";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
@@ -74,6 +76,13 @@ export function Pieces() {
           <Field label="Note">
             <input placeholder="grid split: a narrow field beside a wide one" />
           </Field>
+        </div>
+      </Panel>
+
+      <Panel title="Search and filter" right="components/SearchForm.tsx, components/Chips.tsx">
+        <div className="stack">
+          <SearchForm action="/dev/styles" label="Search the Library" placeholder="Search policies by name or by words inside them" />
+          <Chips label="Folders" chips={[{ label: "All folders", href: "/dev/styles", on: true }, { label: "Purchasing", href: "/dev/styles?f=p", count: 3 }, { label: "Rooms and rentals", href: "/dev/styles?f=r", count: 2 }]} />
         </div>
       </Panel>
 

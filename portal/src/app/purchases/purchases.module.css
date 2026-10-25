@@ -10,7 +10,6 @@
   .files li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 
   /* The action row on a request page. */
-  .search input { flex: 1 1 240px; width: auto; min-width: 0; }
   .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
   .why { margin: 0; color: var(--ink-2); }
 

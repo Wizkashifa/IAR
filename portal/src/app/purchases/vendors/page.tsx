@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Button, buttonClass } from "@/components/Button";
+import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Field } from "@/components/Field";
 import { ModuleHead } from "@/components/ModuleHead";
@@ -17,6 +17,7 @@ import { mergeVendor, updateVendor } from "./actions";
 import styles from "../purchases.module.css";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
+import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -50,17 +51,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
       />
       <div className={`stack ${styles.body}`}>
         <FlashNote ok={ok} error={error} messages={OK_TEXT} />
-        <form action="/purchases/vendors" className={`row ${styles.search}`} role="search">
-          <input name="q" defaultValue={q} placeholder="Search by name or address" aria-label="Search vendors" />
-          <Button type="submit" icon="search">
-            Search
-          </Button>
-          {q && (
-            <Link href="/purchases/vendors" className={buttonClass({ variant: "quiet" })}>
-              Clear
-            </Link>
-          )}
-        </form>
+        <SearchForm action="/purchases/vendors" label="Search vendors" value={q} placeholder="Search by name or address" clear />
 
         <Panel title="Vendors" right={`${shared.filter(match).length}`} flush>
           <VendorTable list={shared.filter(match)} finance={finance} />

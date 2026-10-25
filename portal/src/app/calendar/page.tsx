@@ -16,6 +16,7 @@ import { dayText } from "@/lib/events/series";
 import { Filters } from "./Filters";
 import styles from "./calendar.module.css";
 import { isDate } from "@/lib/dates";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendar" };
@@ -62,14 +63,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <Panel>
         <div className="stack">
           <div className={styles.bar}>
-            <nav className={styles.views} aria-label="View">
-              <Link href={link({ view: "week" })} className={styles.chip} aria-current={view === "week" ? "page" : undefined}>
-                Week
-              </Link>
-              <Link href={link({ view: "month" })} className={styles.chip} aria-current={view === "month" ? "page" : undefined}>
-                Month
-              </Link>
-            </nav>
+            <Chips label="View" chips={[{ label: "Week", href: link({ view: "week" }), on: view === "week" }, { label: "Month", href: link({ view: "month" }), on: view === "month" }]} />
             <h2 className={styles.title}>{viewTitle(view, date)}</h2>
             <div className={styles.nav}>
               <Button href={link({ date: stepView(view, date, -1) })} size="small">

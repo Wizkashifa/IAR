@@ -13,6 +13,7 @@ import { reviewState, type LibraryFile } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDate } from "@/lib/format";
 import styles from "./library.module.css";
+import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Library" };
@@ -61,12 +62,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   return (
     <div className="stack">
       {head}
-      <form action="/library" className={styles.search} role="search">
-        <input type="search" name="q" defaultValue={q} placeholder="Search policies by name or by words inside them" aria-label="Search the Library" />
-        <Button type="submit" variant="primary" icon="search">
-          Search
-        </Button>
-      </form>
+      <SearchForm action="/library" label="Search the Library" value={q} placeholder="Search policies by name or by words inside them" />
       {!q && folders.length > 0 && (
         <Chips label="Folders" chips={[{ label: "All folders", href: "/library", on: !folder }, ...folders.map((f) => ({ label: f.name, href: `/library?folder=${encodeURIComponent(f.id)}`, on: f.id === folder, count: f.count }))]} />
       )}

@@ -1,8 +1,5 @@
 /* Who's who (app/teams): the search box, team rows and the team page's two columns. */
 @layer pages {
-  .search { display: flex; gap: var(--s-2); margin: var(--s-4) 0 var(--s-5); }
-  .search input { flex: 1; min-width: 0; }
-
   .count { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--ink-3); white-space: nowrap; }
 
   .crumb { font-size: var(--t-sm); color: var(--ink-2); margin-bottom: var(--s-2); }

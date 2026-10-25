@@ -1,4 +1,0 @@
-@layer pages {
-  .form { display: flex; gap: var(--s-2); }
-  .form input { flex: 1; min-width: 0; }
-}

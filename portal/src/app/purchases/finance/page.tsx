@@ -20,6 +20,7 @@ import { DeskBatch, type DeskRow } from "./DeskBatch";
 import { DeskFilters } from "./DeskFilters";
 import { RESULT_COOKIE, readResult } from "./result";
 import styles from "./finance.module.css";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Finance desk" };
@@ -114,16 +115,15 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
           </Note>
         )}
 
-        <nav className={styles.tabs} aria-label="Finance desk lists">
-          {DESK_TABS.map((t) => {
-            const n = t.id === "returns" ? openReturns(deskCards(open, "returns")).length : deskCards(open, t.id).length;
-            return (
-              <Link key={t.id} href={`/purchases/finance${keep({ tab: t.id, fund: undefined, month: undefined, type: undefined })}`} className={t.id === tab ? `${styles.tab} ${styles.on}` : styles.tab} aria-current={t.id === tab ? "page" : undefined}>
-                {t.label} <span>{n}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <Chips
+          label="Finance desk lists"
+          chips={DESK_TABS.map((t) => ({
+            label: t.label,
+            href: `/purchases/finance${keep({ tab: t.id, fund: undefined, month: undefined, type: undefined })}`,
+            on: t.id === tab,
+            count: t.id === "returns" ? openReturns(deskCards(open, "returns")).length : deskCards(open, t.id).length,
+          }))}
+        />
 
         <div className={styles.filterRow}>
           <DeskFilters
