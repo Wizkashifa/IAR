@@ -1,12 +1,21 @@
+import type { Metadata } from "next";
+import { Button } from "@/components/Button";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
+import type { PersonOption } from "@/components/PeoplePicker";
 import { isActive, isCurrentOrUpcoming, MAX_AWAY_DAYS, todayLocal } from "@/lib/away";
-import { DEV_DOMAIN, DEV_PERSONAS } from "@/lib/dev";
-import { ORG } from "@/lib/org";
+import { directory } from "@/lib/groups";
+import { namesFor } from "@/lib/names";
 import { peopleStore } from "@/lib/people";
+import { membershipsOf } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { AwayForm } from "./AwayForm";
 import { clearAway } from "./actions";
+import styles from "./away.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Out of office" };
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
@@ -15,52 +24,66 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
   const viewer = await requireViewer();
   const people = await peopleStore();
   const today = todayLocal();
-  const [stored, coverFor] = await Promise.all([people.getAway(viewer.email), people.listAwayByDelegate(viewer.email)]);
+  const [stored, coverFor, dir] = await Promise.all([people.getAway(viewer.email), people.listAwayByDelegate(viewer.email), directory()]);
   const mine = stored && isCurrentOrUpcoming(stored, today) ? stored : null;
   const covering = coverFor.filter((a) => isCurrentOrUpcoming(a, today));
-  const suggestions = viewer.dev ? DEV_PERSONAS.map((p) => p.email).filter((e) => e !== viewer.email) : [];
+
+  // Everyone on a committee or team (from Google Groups), by name, with the first team they're on.
+  const me = viewer.email.toLowerCase();
+  const emails = new Set<string>();
+  for (const g of [...dir.teams, ...dir.pillars]) for (const m of g.members) if (m.type === "USER") emails.add(m.email.toLowerCase());
+  if (mine) emails.add(mine.delegate.toLowerCase());
+  emails.delete(me);
+  const names = await namesFor([...emails, ...covering.map((a) => a.email)]);
+  const choices: PersonOption[] = [...emails]
+    .map((e) => ({ email: e, name: names.get(e) ?? e, note: membershipsOf(dir, e)[0]?.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const nameOf = (e: string) => names.get(e.toLowerCase()) ?? e;
 
   return (
-    <>
-      <h1>Out of office</h1>
-      <p className="lead">
-        Going away? Hand your approvals to someone so requests don&apos;t wait for you. Up to {MAX_AWAY_DAYS} days at a time; it switches off by itself after your last day.
-      </p>
-      {ok === "saved" && <div className="flash" role="status">Saved. The person covering has been told.</div>}
-      {ok === "cleared" && <div className="flash" role="status">Welcome back. Your approvals come to you again.</div>}
+    <div className="stack">
+      <ModuleHead
+        title="Out of office"
+        lead={`Going away? Hand your approvals to someone so requests don't wait for you. Up to ${MAX_AWAY_DAYS} days at a time; it switches off by itself after your last day.`}
+      />
+      {ok === "saved" && <Note tone="ok">Saved. The person covering has been told.</Note>}
+      {ok === "cleared" && <Note tone="ok">Welcome back. Your approvals come to you again.</Note>}
 
       {mine && (
-        <div className="callout info">
-          {isActive(mine, today) ? "You're away now" : `You'll be away from ${fmtDay(mine.from)}`} until {fmtDay(mine.until)}. {mine.delegate} is covering.{" "}
-          <form action={clearAway} className="inlineform">
-            <button className="linkbtn" type="submit">{isActive(mine, today) ? "I'm back" : "Cancel it"}</button>
+        <Note>
+          {isActive(mine, today) ? "You're away now" : `You'll be away from ${fmtDay(mine.from)}`} until {fmtDay(mine.until)}. {nameOf(mine.delegate)} is covering.{" "}
+          <form action={clearAway} className={styles.back}>
+            <Button type="submit" variant="quiet" size="small">
+              {isActive(mine, today) ? "I'm back" : "Cancel it"}
+            </Button>
           </form>
-        </div>
+        </Note>
       )}
 
-      <AwayForm current={mine} today={today} domain={viewer.dev ? DEV_DOMAIN : ORG.domain} suggestions={suggestions} />
+      <Panel title={mine ? "Change your time away" : "Set your time away"}>
+        <AwayForm current={mine} today={today} people={choices} />
+      </Panel>
 
-      <p className="note" style={{ marginTop: 12 }}>
+      <p className="note">
         This hands off approvals that wait on you by name, such as a committee&apos;s chair approval. Finance and executive steps already go to everyone in that group, so they don&apos;t need covering.
       </p>
 
       {covering.length > 0 && (
-        <>
-          <h2>You&apos;re covering for</h2>
-          <div className="attention">
-            <ul>
-              {covering.map((a) => (
-                <li key={a.email}>
-                  <strong>{a.name}</strong> <span className="sub">{a.email}</span>
-                  <div className="what">
-                    {fmtDay(a.from)} to {fmtDay(a.until)}{isActive(a, today) ? " · now" : ""}{a.note ? ` · “${a.note}”` : ""}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
+        <Panel title="You're covering for" right={<span>{covering.length}</span>} flush>
+          <ul className={styles.covering}>
+            {covering.map((a) => (
+              <li key={a.email}>
+                <strong>{a.name}</strong>
+                <span>
+                  {fmtDay(a.from)} to {fmtDay(a.until)}
+                  {isActive(a, today) ? " · now" : ""}
+                  {a.note ? ` · “${a.note}”` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }

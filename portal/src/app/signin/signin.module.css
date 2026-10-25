@@ -1,0 +1,12 @@
+@layer pages {
+  .card {
+    max-width: 420px; margin: var(--s-6) auto; padding: var(--s-6) var(--s-5); display: grid; gap: var(--s-3); justify-items: center; text-align: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
+  }
+  .card h1 { margin: 0; }
+  .card :global(.lead) { margin: 0; }
+  .logo { height: 96px; width: auto; }
+  .onDark { display: none; }
+  :global([data-mantine-color-scheme="dark"]) .onLight { display: none; }
+  :global([data-mantine-color-scheme="dark"]) .onDark { display: block; }
+}
