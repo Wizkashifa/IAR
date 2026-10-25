@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Card } from "../cards";
 import { canOpenCard } from "../access";
-import { hrefOf } from "../card-links";
+import { hrefOf } from "../kinds";
 import { withComment } from "../comments";
 import { MARKETING_KINDS } from "./types";
 import { MARKETING_TYPES, type MarketingInput, parseMarketingInput, redirectSource, titleFor } from "./forms";

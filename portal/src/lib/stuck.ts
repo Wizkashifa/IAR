@@ -10,7 +10,7 @@
  * reaches the same people, through the same Chat or email path.
  */
 import type { Card } from "./cards";
-import { hrefOf } from "./card-links";
+import { historyOf, hrefOf, stepSinceOf, withHistory } from "./kinds";
 import type { Role } from "./org";
 import type { Notice, Recipient } from "./notices";
 import { waitingOn as purchaseWaitingOn } from "./purchases/reminders";
@@ -20,6 +20,7 @@ import { STATUS_LABEL as TICKET_STEP } from "./tickets/types";
 import { reviewersFor } from "./events/workflow";
 import { TEAM_ROLE } from "./tickets/workflow";
 import { lc } from "./text";
+import { historyEntry, type HistoryEntry } from "./workflow-core";
 
 const DAY = 864e5;
 
@@ -28,15 +29,8 @@ export const REMINDER_ACTION = "Reminder sent from What's stuck";
 /** One reminder from this page per request per day. */
 export const REMIND_EVERY_MS = DAY;
 
-type Entry = { at: string; by: string; action: string; note?: string };
-
-/** The request's own history, whatever kind it is. */
-function historyOf(card: Card): Entry[] {
-  return card.purchase?.history ?? card.event?.history ?? card.marketing?.history ?? card.ticket?.history ?? [];
-}
-
 /** Reminders (the daily job's and this page's) don't move a request on, so they don't restart its wait. */
-const isReminder = (e: Entry) => /^(reminder|overdue)/i.test(e.action) || e.action === REMINDER_ACTION;
+const isReminder = (e: HistoryEntry) => /^(reminder|overdue)/i.test(e.action) || e.action === REMINDER_ACTION;
 
 /**
  * When the request started waiting at its current step (an ISO time): the
@@ -44,7 +38,7 @@ const isReminder = (e: Entry) => /^(reminder|overdue)/i.test(e.action) || e.acti
  * requester or waiting on their close-out, the last thing that happened to it.
  */
 export function waitingSince(card: Card): string {
-  const step = card.purchase?.stageSince ?? card.event?.stageSince ?? card.marketing?.stageSince ?? card.ticket?.statusSince;
+  const step = stepSinceOf(card);
   if (card.status === "changes_requested" || card.status === "close_out") {
     const last = historyOf(card).filter((e) => !isReminder(e)).map((e) => e.at).sort().pop();
     if (last && (!step || last > step)) return last;
@@ -215,12 +209,7 @@ export function reminderNotices(item: StuckItem, by: { email: string; name: stri
  * the request's place in everyone's lists.
  */
 export function withReminder(card: Card, by: string, now: string, who: string): Card {
-  const entry: Entry = { at: now, by: lc(by), action: REMINDER_ACTION, note: `To ${who}` };
-  if (card.purchase) return { ...card, purchase: { ...card.purchase, history: [...card.purchase.history, entry] } };
-  if (card.event) return { ...card, event: { ...card.event, history: [...card.event.history, entry] } };
-  if (card.marketing) return { ...card, marketing: { ...card.marketing, history: [...card.marketing.history, entry] } };
-  if (card.ticket) return { ...card, ticket: { ...card.ticket, history: [...card.ticket.history, entry] } };
-  return card;
+  return withHistory(card, historyEntry(by, now, REMINDER_ACTION, `To ${who}`));
 }
 
 /** The roles that can open What's stuck. */

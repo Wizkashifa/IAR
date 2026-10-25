@@ -5,7 +5,7 @@
  * module page builds its list in one line (components/ItemList.tsx).
  */
 import type { Card } from "./cards";
-import { hrefOf } from "./card-links";
+import { hrefOf } from "./kinds";
 import { MARKETING_TYPES } from "./marketing/forms";
 import { fallbackName, type NameOf } from "./next-step";
 import { isFinished, needsViewer, type NeedsContext, type NeedsViewer } from "./needs-you";

@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Away, checkAway, coveringFor, isActive } from "./away";
 import type { Card } from "./cards";
-import { hrefOf } from "./card-links";
+import { hrefOf } from "./kinds";
 import { internalPath } from "./links";
 import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";

@@ -21,6 +21,7 @@ import {
 } from "@/lib/measures";
 import { requireViewer } from "@/lib/viewer";
 import styles from "./measures.module.css";
+import { historyOf } from "@/lib/kinds";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Beta measures" };
@@ -30,7 +31,6 @@ const WEEKS = 6;
 /** The most recent requests read for the step times and sent-back counts. */
 const RECENT = 2000;
 
-const historyOf = (c: Card) => c.purchase?.history ?? c.event?.history ?? c.marketing?.history ?? c.ticket?.history ?? [];
 const toMeasure = (c: Card): MeasureCard => ({ type: c.type, createdAt: c.createdAt, updatedAt: c.updatedAt, history: historyOf(c) });
 const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const pct = (n: number, of: number) => (of ? Math.round((n / of) * 100) : 0);

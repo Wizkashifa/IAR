@@ -68,14 +68,6 @@ export const STATUS_LABEL: Record<CardStatus, string> = {
   closed: "Closed",
 };
 
-export const TYPE_LABEL: Record<CardType, string> = {
-  event: "Event",
-  purchase: "Purchase",
-  marketing: "Marketing",
-  ticket: "IT & Maintenance",
-  rental: "Rental",
-};
-
 /**
  * Request numbers by prefix, and where each starts. Purchases start after the
  * old Requisition Form's numbers.

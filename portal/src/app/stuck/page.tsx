@@ -9,9 +9,9 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { canOpenCard } from "@/lib/access";
-import { hrefOf } from "@/lib/card-links";
+import { KINDS, hrefOf, kindOf } from "@/lib/kinds";
 import { ROW_TONE, type RowState } from "@/lib/card-row";
-import { cardStore, type Card, type CardType } from "@/lib/cards";
+import { cardStore, type Card } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";
 import { actorFor } from "@/lib/people";
 import { AGE_LABEL, ageGroup, canRemind, groupByAge, lastReminder, mayOpenStuck, reminderLabel, stuckItems, whoWaiting, type AgeGroup, type StuckItem } from "@/lib/stuck";
@@ -23,15 +23,6 @@ import styles from "./stuck.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "What's stuck" };
-
-/** The module filter: chip label for each kind of request. */
-const KINDS: { kind: CardType; label: string }[] = [
-  { kind: "event", label: "Events" },
-  { kind: "purchase", label: "Purchases" },
-  { kind: "marketing", label: "Marketing" },
-  { kind: "ticket", label: "AV/IT/Maintenance" },
-];
-const KIND_NAME: Partial<Record<CardType, string>> = { event: "Event", purchase: "Purchase", marketing: "Marketing", ticket: "AV/IT/Maintenance" };
 
 /** The edge and the days pill: red over a week, gold 3–7 days, blue under 3. */
 const AGE_STATE: Record<AgeGroup, RowState> = { week: "bad", days: "act", recent: "wait" };
@@ -57,7 +48,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
   const now = new Date().toISOString();
   const all = stuckItems([...purchases, ...events, ...marketing, ...tickets], now, ctx);
 
-  const kind = KINDS.find((k) => k.kind === sp.kind)?.kind;
+  const kind = KINDS.find((k) => k.type === sp.kind)?.type;
   const ofKind = kind ? all.filter((i) => i.card.type === kind) : all;
   const committees = [...new Set(ofKind.map((i) => committeeOf(i.card)))].sort((a, b) => a.localeCompare(b));
   const committee = sp.committee && committees.includes(sp.committee) ? sp.committee : undefined;
@@ -89,7 +80,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
         key={card.id}
         title={link ? <Link href={link}>{title}</Link> : title}
         id={card.id}
-        sub={`${KIND_NAME[card.type] ?? card.type} · ${committeeOf(card)} · ${holder.step}`}
+        sub={`${kindOf(card.type)?.one ?? card.type} · ${committeeOf(card)} · ${holder.step}`}
         who={holder.to.length ? `Waiting on ${who}` : "The daily job follows this one up"}
         state={state}
         right={
@@ -136,8 +127,8 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
             All <span>{all.length}</span>
           </Link>
           {KINDS.map((k) => (
-            <Link key={k.kind} href={href({ kind: k.kind })} className={kind === k.kind ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={kind === k.kind ? "page" : undefined}>
-              {k.label} <span>{all.filter((i) => i.card.type === k.kind).length}</span>
+            <Link key={k.type} href={href({ kind: k.type })} className={kind === k.type ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={kind === k.type ? "page" : undefined}>
+              {k.many} <span>{all.filter((i) => i.card.type === k.type).length}</span>
             </Link>
           ))}
         </nav>
