@@ -1,65 +1,83 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/away";
 import { MARKETING_TYPES, isMarketingKind } from "@/lib/marketing/forms";
 import { MARKETING_KINDS } from "@/lib/marketing/types";
+import { Button } from "@/components/Button";
+import { Icon } from "@/components/Icon";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
 import { committeesFor, createMarketing } from "../actions";
 import MarketingForm from "../MarketingForm";
+import { TYPE_ICON } from "../ui";
+import styles from "../marketing.module.css";
 
 export const dynamic = "force-dynamic";
 
-/** Pick a type from the tiles, then answer that type's questions. */
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ type?: string }> }): Promise<Metadata> {
+  const { type } = await searchParams;
+  return { title: isMarketingKind(type) ? `${MARKETING_TYPES[type].label} · Marketing` : "New marketing request" };
+}
+
+/** Pick a type from the cards, then answer that type's questions. */
 export default async function NewMarketing({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const { type } = await searchParams;
   const viewer = await requireViewer();
   const crumb = (
-    <p className="crumb">
-      <Link href="/marketing">Marketing Requests</Link>
-    </p>
+    <nav className="crumb" aria-label="Breadcrumb">
+      <Link href="/marketing">Marketing Requests</Link> / New request
+    </nav>
   );
 
   if (!isMarketingKind(type)) {
     return (
-      <>
-        {crumb}
-        <h1>What do you need from marketing?</h1>
-        <p className="lead">Requests are reviewed and prioritized each week by the team that oversees IAR Marketing.</p>
-        <div className="callout info">
-          Marketing a program or event? Put it on the event request. It asks marketing&apos;s questions and unlocks marketing once the event is approved.
+      <div className="stack loose">
+        <div className="stack tight">
+          {crumb}
+          <ModuleHead title="What do you need from marketing?" lead="Requests are reviewed and prioritized each week by the team that oversees IAR Marketing." />
         </div>
-        <div className="tiles">
+        <Note>
+          Marketing a program or event? Put it on the <Link href="/events/new">event request</Link>. It asks marketing&apos;s questions and unlocks marketing once the event is approved.
+        </Note>
+        <div className={styles.types}>
           {MARKETING_KINDS.map((k) => (
-            <Link key={k} href={`/marketing/new?type=${k}`} className="tile">
-              <h3>{MARKETING_TYPES[k].label}</h3>
-              <p>{MARKETING_TYPES[k].blurb}</p>
+            <Link key={k} href={`/marketing/new?type=${k}`} className={styles.type}>
+              <span className={styles.typeIcon} aria-hidden="true">
+                <Icon name={TYPE_ICON[k]} />
+              </span>
+              <div>
+                <h3>{MARKETING_TYPES[k].label}</h3>
+                <p>{MARKETING_TYPES[k].blurb}</p>
+              </div>
             </Link>
           ))}
         </div>
-      </>
+      </div>
     );
   }
 
   const t = MARKETING_TYPES[type];
   const committees = await committeesFor(viewer);
   return (
-    <>
-      {crumb}
-      <div className="pagehead">
-        <div>
-          <h1>{t.label}</h1>
-          <p className="lead">{t.blurb}</p>
-        </div>
-        <div className="row">
-          <Link href="/marketing/new" className="button secondary">
-            Change type
-          </Link>
-        </div>
+    <div className="stack loose">
+      <div className="stack tight">
+        {crumb}
+        <ModuleHead
+          title={t.label}
+          lead={t.blurb}
+          actions={
+            <Button href="/marketing/new" icon="chevL">
+              Change type
+            </Button>
+          }
+        />
       </div>
-      {t.note && <div className="callout info">{t.note}</div>}
+      {t.note && <Note>{t.note}</Note>}
       {committees.length === 0 && (
-        <div className="callout warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</div>
+        <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
       )}
-      <MarketingForm action={createMarketing} kind={type} committees={committees} today={todayLocal()} cancelHref="/marketing" submitLabel="Submit request" />
-    </>
+      <MarketingForm action={createMarketing} kind={type} committees={committees} today={todayLocal()} cancelHref="/marketing" submitLabel="Send request" />
+    </div>
   );
 }
