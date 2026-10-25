@@ -1,0 +1,22 @@
+@layer components {
+  .page { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+  .crumb { font-size: var(--t-sm); color: var(--ink-2); }
+  .crumb a { color: var(--accent-text); }
+  .id { font-variant-numeric: tabular-nums; }
+  .head { min-width: 0; }
+  .head :global(.lead) { margin-bottom: 0; }
+  .titleRow { display: flex; align-items: center; gap: var(--s-2) var(--s-3); flex-wrap: wrap; }
+  .title { margin: 0; overflow-wrap: anywhere; }
+  .pills { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); padding: var(--s-4); min-width: 0; }
+  .next { display: flex; gap: var(--s-2); align-items: flex-start; margin: 14px 0 0; padding-top: var(--s-3); border-top: 1px solid var(--line); font-size: 14px; }
+  .next.alone { margin-top: 0; padding-top: 0; border-top: 0; }
+  .next > :first-child { color: var(--gold); margin-top: 2px; flex: none; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-2); }
+  /* The main column and a 340px side column, as in the demo; one column on narrow screens, details after the request. */
+  .issue { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  .main, .side { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+  @media (max-width: 900px) {
+    .issue { grid-template-columns: minmax(0, 1fr); }
+  }
+}

@@ -10,6 +10,10 @@ import { permission as marketingPermission, type MarketingCard } from "./marketi
 import { openExpectedReturns } from "./purchases/types";
 import { actionableBy, permission as purchasePermission, type Actor, type PurchaseCard } from "./purchases/workflow";
 import { onTeam, type TicketCard } from "./tickets/workflow";
+import type { Role } from "./org";
+import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";
+import { queueItems, type QueueItem } from "./events/queues";
+import { TASK_TEAMS } from "./events/tasks";
 
 /**
  * The person looking: their own group roles (never the admin "see everything"
@@ -84,4 +88,27 @@ export function groupForViewer<C extends Card>(cards: C[], viewer: NeedsViewer, 
     else out.waiting.push(c);
   }
   return out;
+}
+
+// ---- Waiting on you outside a card's own steps -----------------------------------
+
+/**
+ * Asks for a booked time this person can answer (lib/events/slot-requests.ts).
+ * An ask belongs to the event that holds the room, not the asker's card, so
+ * it isn't part of needsViewer; the home page lists these next to it.
+ */
+export function slotAsksFor(asks: SlotRequest[], actor: SlotActor): SlotRequest[] {
+  return asks.filter((r) => canDecide(r, actor)).sort((a, b) => a.askedAt.localeCompare(b.askedAt));
+}
+
+/**
+ * Open event tasks for the teams this person is on (marketing, A/V, security),
+ * soonest due first. Team tasks stay in Team Queues; this is for a count or a
+ * short list that links there. The office sees every queue in Team Queues, but
+ * those tasks aren't "waiting on you".
+ */
+export function teamTasksFor(cards: EventCard[], roles: Role[], today: string): QueueItem[] {
+  return TASK_TEAMS.filter((t) => roles.includes(t))
+    .flatMap((t) => queueItems(cards, t, today))
+    .sort((a, b) => a.task.dueDate.localeCompare(b.task.dueDate) || a.card.id.localeCompare(b.card.id));
 }

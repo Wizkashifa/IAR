@@ -1,0 +1,14 @@
+@layer components {
+  .wrap { min-width: 0; }
+  .stages { display: flex; gap: 0; margin: 0; padding: 0 0 2px; list-style: none; overflow-x: auto; scrollbar-width: thin; }
+  /* relative: keeps the screen-reader-only labels inside the scrolling bar. */
+  .stage { position: relative; flex: 1 0 84px; display: flex; flex-direction: column; gap: 6px; font-size: var(--t-xs); color: var(--ink-3); min-width: 0; }
+  .bar { display: block; height: 4px; margin-right: 3px; border-radius: 2px; background: var(--line); }
+  .label { padding-right: var(--s-2); }
+  .done { color: var(--ink-2); }
+  .done .bar { background: var(--accent); }
+  .now { color: var(--ink); font-weight: 600; }
+  .now .bar { background: var(--warn); }
+  .skip { opacity: 0.45; }
+  .flag { margin-top: var(--s-2); }
+}
