@@ -55,7 +55,7 @@ export async function createMarketing(prev: FormState, form: FormData): Promise<
   const created = (await store.create(toCreate, "MK")) as wf.MarketingCard;
   await deliver(marketingNotices(null, created, actor), actor.email);
   revalidatePath("/marketing");
-  redirect(`/marketing/${created.id}?ok=submitted`);
+  redirect(`/marketing/${created.id}?sent=1`);
 }
 
 /**
