@@ -1,13 +1,18 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
-import { committeesFor, eventActor, eventContext } from "@/lib/events/context";
+import { eventActor, eventContext } from "@/lib/events/context";
 import { isEventCard, permission } from "@/lib/events/workflow";
 import { submitEvent } from "../../actions";
+import { Crumb } from "../../Crumb";
 import EventForm from "../../EventForm";
+import { formProps } from "../../form-props";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Update and resend" };
 
 export default async function EditEvent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,25 +21,20 @@ export default async function EditEvent({ params }: { params: Promise<{ id: stri
   if (!isEventCard(card) || card.ownerEmail !== viewer.email.toLowerCase()) notFound();
   if (!permission(card, eventActor(viewer), "resubmit").ok) redirect(`/events/${id}`);
   const ctx = await eventContext();
-  const committees = committeesFor(viewer, ctx.dir);
-  if (!committees.some((c) => c.group === card.event.committeeGroup)) committees.unshift({ group: card.event.committeeGroup, name: card.event.committeeName });
+  const props = await formProps(viewer, ctx, { group: card.event.committeeGroup, name: card.event.committeeName });
+  const moved = Boolean(card.event.releasedFor);
   return (
-    <>
-      <p className="crumb">
-        <Link href="/events">Events &amp; Rooms</Link> / <Link href={`/events/${id}`}>{id}</Link>
-      </p>
-      <h1>Update and resubmit</h1>
-      {card.event.returnNote && !card.event.releasedFor && <div className="callout warn"><strong>What to change:</strong> {card.event.returnNote}</div>}
-      <EventForm
-        action={submitEvent.bind(null, id)}
-        committees={committees}
-        rooms={ctx.bookable.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, building: r.building, food: r.food }))}
-        initial={card.event}
-        editing={id}
-        moved={Boolean(card.event.releasedFor)}
-        today={ctx.today}
-        submitLabel="Resubmit"
-      />
-    </>
+    <div className="stack loose">
+      <div className="stack tight">
+        <Crumb trail={[{ href: "/events", label: "Events & Rooms" }, { href: `/events/${id}`, label: id }]} here={moved ? "New time" : "Edit"} />
+        <ModuleHead title={moved ? "Pick a new time" : "Update and resend"} lead={card.title} />
+      </div>
+      {card.event.returnNote && !moved && (
+        <Note tone="warn">
+          <strong>What to change:</strong> {card.event.returnNote}
+        </Note>
+      )}
+      <EventForm action={submitEvent.bind(null, id)} {...props} initial={card.event} editing={id} moved={moved} submitLabel="Send again" />
+    </div>
   );
 }
