@@ -16,6 +16,8 @@ export type PortalSettings = {
   rooms?: Record<string, RoomSetting>;
   /** Event policy rules an admin turned off (rule ID → false). See RULES in lib/events/rules.ts. */
   eventRules?: Record<string, boolean>;
+  /** Link to the room reservation policy (a Shared Drive file), shown next to the agreement on the event form. */
+  roomPolicyUrl?: string;
   updatedAt?: string;
   updatedBy?: string;
 };

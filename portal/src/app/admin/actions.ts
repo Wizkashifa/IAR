@@ -85,6 +85,9 @@ export async function saveEventRules(form: FormData): Promise<void> {
   const store = await settingsStore();
   const s = await store.get();
   const eventRules = Object.fromEntries(RULES.map((rule) => [rule.id, form.get(rule.id) === "on"]));
-  await store.save({ ...s, eventRules, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
+  // Only a web link: it opens in a new tab from the event form.
+  const url = String(form.get("roomPolicyUrl") ?? "").trim().slice(0, 500);
+  const roomPolicyUrl = /^https:\/\/\S+$/.test(url) ? url : "";
+  await store.save({ ...s, eventRules, roomPolicyUrl, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   back({ ok: "Event rules saved." });
 }

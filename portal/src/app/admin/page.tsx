@@ -238,6 +238,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <input type="checkbox" name={rule.id} defaultChecked={ruleOn(settings.eventRules ?? {}, rule.id)} /> {rule.name} <span className="sub">· {rule.policy}</span>
           </label>
         ))}
+        <label className="field">
+          <span>Link to the room reservation policy (optional)</span>
+          <input type="url" name="roomPolicyUrl" defaultValue={settings.roomPolicyUrl ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
+          <small>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</small>
+        </label>
         <div><button className="button secondary" type="submit">Save rules</button></div>
       </form>
 

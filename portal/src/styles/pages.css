@@ -148,34 +148,7 @@
 
   .section > .field { margin-top: 12px; }
 
-  /* ---- Events & Rooms ---------------------------------------------------- */
-  .evchecks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
-  .evcheck { display: flex; gap: 10px; align-items: flex-start; }
-  .evcheck .ic { flex: 0 0 22px; height: 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; background: var(--line); color: var(--ink-2); }
-  .evcheck.ok .ic { background: var(--accent-soft); color: var(--accent-text); }
-  .evcheck.warn .ic { background: var(--warn-soft); color: var(--warn); }
-  .evcheck.bad .ic { background: var(--bad-soft); color: var(--bad); }
-  .evcheck.info .ic { background: var(--info-soft); color: var(--info); }
-  .evcheck .rule { font-size: 12px; color: var(--ink-2); }
-  .tl { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; margin-top: 6px; overflow: hidden; }
-  .tl .blk { position: absolute; height: 26px; border-radius: 6px; font-size: 11.5px; line-height: 26px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tl .blk.standing { background: var(--hold-standing); color: var(--ink-2); }
-  .tl .blk.booking, .tl .blk.pending { background: var(--info-soft); color: var(--info); }
-  .tl .blk.pending { opacity: 0.75; }
-  .tl .blk.req { background: transparent; border: 2px solid var(--gold); color: var(--ink); font-weight: 600; }
-  .tl-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-2); margin-top: 2px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--ink-2); margin-top: 8px; }
-  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  .legend i.standing { background: var(--hold-standing); }
-  .legend i.booking { background: var(--info-soft); }
-  .legend i.req { border: 2px solid var(--gold); }
-  .evgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; margin-top: 16px; }
-  .evgrid .sticky { position: sticky; top: 12px; display: grid; gap: 12px; }
-  @media (max-width: 900px) { .evgrid { grid-template-columns: 1fr; } .evgrid .sticky { position: static; } }
-  .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 12px; align-items: center; justify-content: center; margin-right: 8px; }
-  .askbox { border: 1px solid var(--gold); border-radius: 8px; padding: 12px; margin-top: 8px; background: var(--warn-soft); color: var(--ink); }
-  .roompick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
-  .roompick label { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+  /* ---- Events & Rooms: in app/events/events.module.css -------------------- */
   /* ---- Marketing -------------------------------------------------------- */
   .mk-group { border: 0; padding: 0; margin: 0; }
   .mk-example { color: var(--ink-2); background: var(--bg); border-radius: 6px; padding: 6px 8px; }
@@ -220,21 +193,11 @@
   .taskmore > summary::-webkit-details-marker { display: none; }
   .taskmore[open] { flex-basis: 100%; }
   .taskmore form { margin-top: 8px; min-width: 240px; text-align: left; }
-  .checkcells { display: grid; gap: 4px; font-size: 13px; margin-top: 4px; }
-  .check.ok { color: var(--accent-text); font-weight: 600; }
-  .check.bad { color: var(--bad); font-weight: 600; }
-  .check .sub { font-weight: 400; }
   .flag { display: inline-block; margin-top: 4px; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; background: var(--warn-soft); color: var(--warn); }
-  .sheet-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-  .runsheet td { vertical-align: top; font-size: 13.5px; }
-  .runsheet .calrow td { color: var(--ink-2); }
   @media (max-width: 640px) { .qitem, .task { flex-direction: column; } .taskside { align-items: flex-start; max-width: none; } .taskacts { justify-content: flex-start; } }
   @media print {
     .noprint, footer, .flash, .error, details.taskmore { display: none !important; }
-    .runsheet { font-size: 11px; }
-    .runsheet th, .runsheet td { padding: 4px 6px; }
     .tablewrap { overflow: visible; border: 0; }
-    .sheet-h h2 { margin: 0; }
     a { color: inherit; text-decoration: none; }
   }
 }
