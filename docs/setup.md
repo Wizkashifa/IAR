@@ -229,7 +229,7 @@ IAR's rooms are resources in Google Workspace (Admin console → Directory → B
 
 1. **Daily job**: a Cloud Scheduler job `portal-daily` at 7:00 AM America/New_York, POST `https://<portal address>/api/daily`, with an OIDC token as `portal-scheduler@…` (which has `roles/run.invoker`) and audience `https://<portal address>/api/daily`. Set `DAILY_INVOKER` to that service account. It sends purchase reminders and the morning digest, reminds and escalates unanswered asks for a booked time, moves past events to close-out, opens preventive maintenance tickets and closes tickets the reporter never confirmed.
 2. **Backups**: point-in-time recovery (§2) plus a nightly Firestore export to a Cloud Storage bucket with a 30-day lifecycle.
-3. **Alerts**: an uptime check on the sign-in page and an alert policy emailing `portal-role-admin@`; a $25/month budget alert on the billing account; an Artifact Registry cleanup policy keeping the last 10 images.
+3. **Alerts**: an uptime check on the sign-in page and an alert policy emailing `portal-role-admin@`; two log-based alerts emailing the same group, one when more than 3 pages fail with a server error (5xx) in five minutes and one when the portal can't reach Google Groups, the room calendars, Chat, Drive or Gmail (log lines with `jsonPayload.portalHealth`; the portal also messages the admins itself, at most every 6 hours per service); a $25/month budget alert on the billing account; an Artifact Registry cleanup policy keeping the last 10 images.
 
 ### 12. The address: portal.islam1.org
 

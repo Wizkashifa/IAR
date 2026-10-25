@@ -27,6 +27,7 @@ import { type FsValue, fieldPath, fromFields, toFields } from "./firestore-value
 import {
   type AdminRole, type AlertPolicy, type Bucket, type Budget, type ClientFile, type CloudService, type DeployRequest, type DnsRecord, type DomainMapping,
   type DrivePermission, type Google, type License, type Member, type MemberRole, NoFreeLicense, type Privilege, type SchedulerJob, type UptimeCheck,
+  type LogMetric,
 } from "./google";
 import type { FirestoreIndex } from "./indexes";
 import type { Tab } from "./sheet";
@@ -742,6 +743,48 @@ export class RealGoogle implements Google {
       notificationChannels: [channel],
       documentation: { mimeType: "text/markdown", content: "The IAR Portal's sign-in page has stopped answering. Check Cloud Run logs: `gcloud run services logs read iar-portal`." },
     });
+  }
+  private logMetricsUrl = (project: string) => `https://logging.googleapis.com/v2/projects/${project}/metrics`;
+  async listLogMetrics(project: string): Promise<LogMetric[]> {
+    type M = { metrics?: { name: string; description?: string; filter: string }[] };
+    const r = await this.rest<M | null>(project, "GET", `${this.logMetricsUrl(project)}?pageSize=200`);
+    return (r?.metrics ?? []).map((m) => ({ name: m.name, description: m.description ?? "", filter: m.filter }));
+  }
+  async createLogMetric(project: string, m: LogMetric) {
+    await this.rest(project, "POST", this.logMetricsUrl(project), { name: m.name, description: m.description, filter: m.filter });
+  }
+  async createLogAlertPolicy(project: string, p: { displayName: string; metric: string; above: number; email: string; doc: string }) {
+    const channel = await this.emailChannel(project, p.email);
+    const body = {
+      displayName: p.displayName,
+      combiner: "OR",
+      conditions: [
+        {
+          displayName: p.displayName,
+          conditionThreshold: {
+            filter: `metric.type="logging.googleapis.com/user/${p.metric}" AND resource.type="cloud_run_revision"`,
+            comparison: "COMPARISON_GT",
+            thresholdValue: p.above,
+            duration: "0s",
+            trigger: { count: 1 },
+            aggregations: [{ alignmentPeriod: "300s", perSeriesAligner: "ALIGN_SUM", crossSeriesReducer: "REDUCE_SUM" }],
+          },
+        },
+      ],
+      alertStrategy: { autoClose: "1800s" },
+      notificationChannels: [channel],
+      documentation: { mimeType: "text/markdown", content: p.doc },
+    };
+    // A log metric made a moment ago can take a minute before Monitoring knows it.
+    for (let i = 1; ; i++) {
+      try {
+        await this.rest(project, "POST", this.mon(project, "alertPolicies"), body);
+        return;
+      } catch (err) {
+        if (i >= 6 || !/failed: (400|404)/.test(String(err))) throw err;
+        await sleep(10_000);
+      }
+    }
   }
   // Budgets calls are charged to the portal's project (x-goog-user-project).
   async listBudgets(project: string, billingAccount: string): Promise<Budget[]> {

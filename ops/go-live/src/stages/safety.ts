@@ -1,11 +1,12 @@
 /**
  * Step 11. What keeps the portal running and safe once it's live: the daily
  * job (reminders, digests), a nightly Firestore backup kept 30 days, an
- * uptime check on the sign-in page that emails the admins if it fails, a
+ * uptime check on the sign-in page that emails the admins if it fails, alerts
+ * on server errors and on the portal failing to reach Google (log-based), a
  * $25/month budget alert (asked), and a cleanup rule so old builds don't pile up.
  */
-import { BACKUP_JOB, DAILY_JOB, IMAGE_REPO, backupBucket, role } from "../config";
-import type { SchedulerJob } from "../google";
+import { BACKUP_JOB, DAILY_JOB, IMAGE_REPO, SERVICE, backupBucket, role } from "../config";
+import type { LogMetric, SchedulerJob } from "../google";
 import { type Change, type Ctx, type Stage } from "../types";
 import { schedulerSa } from "./cloud";
 
@@ -15,12 +16,34 @@ const ALERT = "IAR Portal is down";
 const BUDGET = "IAR Portal";
 const KEEP = 10;
 
+const RUN = `resource.type="cloud_run_revision" AND resource.labels.service_name="${SERVICE}"`;
+
+/** The log metrics and the alerts on them. Exported for the tests. */
+export const logAlerts = (): { metric: LogMetric; policy: string; above: number; what: string; when: string; doc: string }[] => [
+  {
+    metric: { name: "iar_portal_server_errors", description: "IAR Portal requests that ended in a server error (5xx).", filter: `${RUN} AND httpRequest.status>=500` },
+    policy: "IAR Portal server errors",
+    above: 3,
+    what: "server errors (5xx)",
+    when: "more than 3 pages fail with a server error in five minutes",
+    doc: "Pages on the IAR Portal are failing with server errors. Check the logs: `gcloud run services logs read iar-portal`.",
+  },
+  {
+    metric: { name: "iar_portal_health", description: "The portal couldn't reach a Google service (lib/health.ts).", filter: `${RUN} AND jsonPayload.portalHealth:*` },
+    policy: "IAR Portal can't reach Google",
+    above: 0,
+    what: "times it couldn't reach a Google service",
+    when: "the portal can't reach Google Groups, the room calendars, Chat, Drive or Gmail",
+    doc: "The IAR Portal couldn't reach a Google service. In Cloud Logging, search for `jsonPayload.portalHealth` to see which one and why. The portal also messages the admins itself, at most every 6 hours per service.",
+  },
+];
+
 const same = (a: SchedulerJob | null, b: SchedulerJob) =>
   Boolean(a) && a!.schedule === b.schedule && a!.timeZone === b.timeZone && a!.uri === b.uri && (a!.audience ?? "") === (b.audience ?? "") && a!.serviceAccount === b.serviceAccount;
 
 export const safety: Stage = {
   id: "safety",
-  title: "Running costs and safety: daily job, backups, uptime alert, budget",
+  title: "Running costs and safety: daily job, backups, uptime and error alerts, budget",
   async plan(ctx: Ctx) {
     const { g, opt, state } = ctx;
     const p = opt.project, r = opt.region;
@@ -77,6 +100,20 @@ export const safety: Stage = {
             if (!id) throw new Error(`The uptime check "${uptime}" wasn't found.`);
             await c.g.createAlertPolicy(p, { displayName: alert, uptimeCheckId: id, email: admins });
           },
+        });
+    }
+
+    // Log-based alerts: server errors, and the portal's own "couldn't reach Google" lines (lib/health.ts).
+    const metrics = await g.listLogMetrics(p);
+    const logPolicies = await g.listAlertPolicies(p);
+    for (const a of logAlerts()) {
+      const hasMetric = metrics.some((m) => m.name === a.metric.name);
+      if (!hasMetric) out.push({ kind: "create", text: `Count ${a.what} in the portal's logs (log metric ${a.metric.name})`, run: (c) => c.g.createLogMetric(p, a.metric) });
+      if (!logPolicies.some((x) => x.displayName === a.policy && x.channelEmails.includes(admins)))
+        out.push({
+          kind: "create",
+          text: `Email ${admins} when ${a.when} (alert policy "${a.policy}")`,
+          run: (c) => c.g.createLogAlertPolicy(p, { displayName: a.policy, metric: a.metric.name, above: a.above, email: admins, doc: a.doc }),
         });
     }
 

@@ -1,5 +1,6 @@
 import "server-only";
 import { GoogleAuth } from "google-auth-library";
+import { failed } from "./health";
 
 /**
  * Uploads to IAR's Shared Drives, for every module that keeps files
@@ -42,7 +43,7 @@ export async function findOrCreateFolder(token: string, parent: string, name: st
   search.searchParams.set("includeItemsFromAllDrives", "true");
   search.searchParams.set("corpora", "allDrives");
   const found = await fetch(search, { headers: { authorization: `Bearer ${token}` } });
-  if (!found.ok) throw new Error(`Drive search failed: ${found.status}`);
+  if (!found.ok) throw failed("drive", `Drive search failed: ${found.status}`);
   const hit = ((await found.json()) as { files?: { id: string }[] }).files?.[0];
   if (hit) return hit.id;
   const res = await fetch(`${API}?supportsAllDrives=true&fields=id`, {
@@ -50,7 +51,7 @@ export async function findOrCreateFolder(token: string, parent: string, name: st
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({ name, parents: [parent], mimeType: "application/vnd.google-apps.folder" }),
   });
-  if (!res.ok) throw new Error(`Drive folder create failed: ${res.status}`);
+  if (!res.ok) throw failed("drive", `Drive folder create failed: ${res.status}`);
   return ((await res.json()) as { id: string }).id;
 }
 
@@ -65,7 +66,7 @@ export async function uploadFile(token: string, folder: string, file: File): Pro
     headers: { authorization: `Bearer ${token}`, "content-type": `multipart/related; boundary=${boundary}` },
     body,
   });
-  if (!res.ok) throw new Error(`Drive upload failed for ${file.name}: ${res.status}`);
+  if (!res.ok) throw failed("drive", `Drive upload failed for ${file.name}: ${res.status}`);
   const out = (await res.json()) as { id: string; webViewLink?: string };
   return { name: file.name, size: file.size, driveFileId: out.id, url: out.webViewLink };
 }

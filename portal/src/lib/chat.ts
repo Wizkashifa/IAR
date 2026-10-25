@@ -1,6 +1,7 @@
 import "server-only";
 import { GoogleAuth } from "google-auth-library";
 import { isDevAuth } from "./dev";
+import { failed } from "./health";
 
 /**
  * Google Chat, as the "IAR Portal" Chat app. The app authenticates as the
@@ -57,7 +58,7 @@ async function dmSpace(email: string): Promise<string> {
   if (hit) return hit;
   const res = await call(`spaces:findDirectMessage?name=${encodeURIComponent(`users/${key}`)}`, { method: "GET" });
   if (res.status === 404 || res.status === 403) throw new ChatUnreachable(`No Chat conversation with ${key} yet.`);
-  if (!res.ok) throw new Error(`Chat lookup failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw failed("chat", `Chat lookup failed: ${res.status} ${await res.text()}`);
   const space = ((await res.json()) as { name?: string }).name;
   if (!space) throw new ChatUnreachable(`No Chat conversation with ${key} yet.`);
   dmSpaces.set(key, space);
@@ -68,7 +69,7 @@ async function post(space: string, msg: ChatMessage, threadKey?: string): Promis
   const q = threadKey ? "?messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" : "";
   const res = await call(`${space}/messages${q}`, { method: "POST", body: threadKey ? { ...msg, thread: { threadKey } } : msg });
   if (res.status === 404 || res.status === 403) throw new ChatUnreachable(`The portal can't post in ${space}.`);
-  if (!res.ok) throw new Error(`Chat send failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw failed("chat", `Chat send failed: ${res.status} ${await res.text()}`);
 }
 
 function keep(to: string, text: string) {
