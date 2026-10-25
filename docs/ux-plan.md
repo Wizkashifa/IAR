@@ -19,6 +19,10 @@ The live portal moved the rules over (`lib/*/workflow.ts`, with tests) but not t
 
 Most of the fix is to build these pieces once in `portal/` and use them on every page.
 
+## Stage 0: the design foundation
+
+Do `design-system.md` steps 1–3 first: the demo's tokens and fonts, the base components (button, pill, panel, list row, stages) and the `/dev/styles` page. Stage 1 below is built from those pieces.
+
 ## Stage 1: shared pieces (the biggest gain)
 
 ### 1.1 Request page layout with steps and "What happens next"
