@@ -40,6 +40,16 @@ export type TicketPhoto = {
 
 export type TicketHistoryEntry = { at: string; by: string; action: string; note?: string };
 
+/** How two tickets are linked. Each side keeps the link, worded from its own side. */
+export type TicketLinkKind = "relates" | "duplicates" | "duplicated_by";
+export type TicketLink = { kind: TicketLinkKind; id: string };
+
+export const LINK_LABEL: Record<TicketLinkKind, string> = {
+  relates: "Related to",
+  duplicates: "Same problem as",
+  duplicated_by: "Also reported as",
+};
+
 export type TicketDetails = {
   team: TicketTeam;
   kind: TicketKind;
@@ -76,6 +86,8 @@ export type TicketDetails = {
   closedAt?: string;
   /** When the daily job last reminded someone it's waiting past its response time. */
   remindedAt?: string;
+  /** Other tickets this one is linked to (both tickets keep the link). */
+  links?: TicketLink[];
 };
 
 export const TEAM_LABEL: Record<TicketTeam, string> = { it: "IT", facilities: "Facilities" };

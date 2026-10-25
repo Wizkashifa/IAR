@@ -27,11 +27,13 @@ import { type Directory, type Membership, groupSlug } from "../teams";
 import {
   type TicketDetails,
   type TicketHistoryEntry,
+  type TicketLinkKind,
   type TicketKind,
   type TicketPhoto,
   type TicketStatus,
   type TicketTeam,
   type Urgency,
+  LINK_LABEL,
   TEAM_LABEL,
   TEAM_NAME,
   URGENCY,
@@ -216,7 +218,7 @@ export function newTicket(input: NewTicketInput, reporter: { email: string; name
 
 // ---- Who can act -------------------------------------------------------------
 
-export type Action = "assign" | "start" | "wait" | "resolve" | "due" | "confirm" | "reopen" | "cancel" | "photos";
+export type Action = "assign" | "start" | "wait" | "resolve" | "due" | "confirm" | "reopen" | "cancel" | "photos" | "link";
 
 /** Whether `actor` may take `action` now, and if not, why. */
 export function permission(card: TicketCard, actor: TicketActor, action: Action): { ok: true } | { ok: false; reason: string } {
@@ -242,6 +244,9 @@ export function permission(card: TicketCard, actor: TicketActor, action: Action)
       return { ok: true };
     case "photos":
       if (!own && !team) return no(`Only the reporter and ${teamName} can add photos.`);
+      return { ok: true };
+    case "link":
+      if (!team && !office) return no(`Only ${teamName} or the IAR office can link tickets.`);
       return { ok: true };
   }
 
@@ -448,6 +453,50 @@ export function isWatching(card: TicketCard, email: string): boolean {
   return same(card.ownerEmail, email) || card.ticket.watchers.some((w) => same(w, email));
 }
 
+// ---- Linked tickets --------------------------------------------------------------
+
+/** The same link seen from the other ticket. */
+export const LINK_INVERSE: Record<TicketLinkKind, TicketLinkKind> = { relates: "relates", duplicates: "duplicated_by", duplicated_by: "duplicates" };
+
+/**
+ * Link `card` to `other` ("relates", or "duplicates": card is the same
+ * problem as other). Both tickets keep the link, each worded from its own
+ * side, and both histories say so. The other ticket may be closed (a repeat
+ * of an old problem). Returns both cards; the caller saves both.
+ */
+export function linkTickets(card: TicketCard, other: TicketCard, actor: TicketActor, now: string, kind: TicketLinkKind): [TicketCard, TicketCard] {
+  must(card, actor, "link");
+  if (!LINK_INVERSE[kind]) throw new WorkflowError("Choose how they're linked.");
+  if (card.id === other.id) throw new WorkflowError("A ticket can't be linked to itself.");
+  if ((card.ticket.links ?? []).some((l) => l.id === other.id)) throw new WorkflowError(`It's already linked to ${other.id}.`);
+  const back = LINK_INVERSE[kind];
+  const a: TicketDetails = {
+    ...card.ticket,
+    links: [...(card.ticket.links ?? []), { kind, id: other.id }],
+    history: [...card.ticket.history, entry(actor.email, now, `Linked: ${LINK_LABEL[kind].toLowerCase()} ${other.id}`)],
+  };
+  const b: TicketDetails = {
+    ...other.ticket,
+    links: [...(other.ticket.links ?? []).filter((l) => l.id !== card.id), { kind: back, id: card.id }],
+    history: [...other.ticket.history, entry(actor.email, now, `Linked: ${LINK_LABEL[back].toLowerCase()} ${card.id}`)],
+  };
+  return [withStatus(card, a, now), withStatus(other, b, now)];
+}
+
+/** Remove the link between two tickets, from both sides. `other` is null if it no longer exists. */
+export function unlinkTickets(card: TicketCard, other: TicketCard | null, otherId: string, actor: TicketActor, now: string): [TicketCard, TicketCard | null] {
+  must(card, actor, "link");
+  if (!(card.ticket.links ?? []).some((l) => l.id === otherId)) throw new WorkflowError(`It isn't linked to ${otherId}.`);
+  const a: TicketDetails = {
+    ...card.ticket,
+    links: (card.ticket.links ?? []).filter((l) => l.id !== otherId),
+    history: [...card.ticket.history, entry(actor.email, now, `Unlinked ${otherId}`)],
+  };
+  if (!other) return [withStatus(card, a, now), null];
+  const b: TicketDetails = { ...other.ticket, links: (other.ticket.links ?? []).filter((l) => l.id !== card.id), history: [...other.ticket.history, entry(actor.email, now, `Unlinked ${card.id}`)] };
+  return [withStatus(card, a, now), withStatus(other, b, now)];
+}
+
 // ---- The daily job's decisions ----------------------------------------------------
 
 /** Resolved tickets close themselves this long after, if the reporter hasn't confirmed. */
@@ -508,4 +557,25 @@ export function isOverdue(card: TicketCard, now: Date, today: string): boolean {
   const t = card.ticket;
   if (!withTeam(t)) return false;
   return Boolean(t.dueDate && t.dueDate < today) || pastResponseTarget(t, now);
+}
+
+/** Whole days from one YYYY-MM-DD to another. */
+const daysFrom = (from: string, to: string) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 864e5);
+
+/**
+ * How late an open ticket is, in words ("3 days late", "Not started for
+ * 30 hours"), or null when it isn't. The same rule as isOverdue.
+ */
+export function lateText(card: TicketCard, now: Date, today: string): string | null {
+  const t = card.ticket;
+  if (!withTeam(t)) return null;
+  if (t.dueDate && t.dueDate < today) {
+    const d = daysFrom(t.dueDate, today);
+    return `${d} day${d === 1 ? "" : "s"} late`;
+  }
+  if (pastResponseTarget(t, now)) {
+    const h = Math.floor(hoursUntouched(t, now) ?? 0);
+    return h < 48 ? `Not started for ${h} hour${h === 1 ? "" : "s"}` : `Not started for ${Math.floor(h / 24)} days`;
+  }
+  return null;
 }

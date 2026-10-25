@@ -68,6 +68,9 @@
   .history .sub { display: block; }
   .textarea { width: 100%; }
 
+  .links { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); font-size: var(--t-md); }
+  .links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s-2); }
+
   /* Schedules and the Jira import */
   .rowList { margin: 0; padding: 0; }
   .scheduleActions { display: inline-flex; align-items: center; gap: var(--s-3); }

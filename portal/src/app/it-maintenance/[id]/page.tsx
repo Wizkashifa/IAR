@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -23,9 +24,9 @@ import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { statusText } from "@/lib/status-text";
-import { KIND_LABEL, TEAM_NAME, URGENCY } from "@/lib/tickets/types";
+import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY } from "@/lib/tickets/types";
 import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission } from "@/lib/tickets/workflow";
-import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, watchTicket } from "../actions";
+import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
 import { CommentBox } from "../CommentBox";
 import { TicketFlash, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
@@ -95,12 +96,30 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <input type="hidden" name="expected" value={card.updatedAt} />
     </>
   );
-  const permitted = (["assign", "start", "wait", "resolve", "due", "cancel"] as Action[]).filter(can);
+  const permitted = (["assign", "start", "wait", "resolve", "due", "link", "cancel"] as Action[]).filter(can);
   const primary = primaryFor(card).filter(can);
   const more = permitted.filter((a) => !primary.includes(a) && a !== "cancel");
 
   // ---- The action forms, each usable in the row or under "More" ----------------
   const forms: Record<string, ReactNode> = {
+    link: (
+      <form key="link" action={linkTicket} className={`stack ${styles.grow}`}>
+        <input type="hidden" name="id" value={card.id} />
+        <Field label="Link another ticket" hint="Its number, like TK-1003.">
+          <input name="other" maxLength={20} required placeholder="TK-1003" />
+        </Field>
+        <Field label="How are they linked?">
+          <select name="kind" defaultValue="relates">
+            <option value="relates">Related</option>
+            <option value="duplicates">This is the same problem as that one</option>
+            <option value="duplicated_by">That one is the same problem as this</option>
+          </select>
+        </Field>
+        <div>
+          <Button type="submit">Link</Button>
+        </div>
+      </form>
+    ),
     confirm: (
       <form key="confirm" action={actOnTicket} className={`stack ${styles.grow}`}>
         {base}
@@ -345,6 +364,27 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           ]}
         />
       </Panel>
+      {(t.links ?? []).length > 0 && (
+        <Panel title="Linked tickets">
+          <ul className={styles.links}>
+            {(t.links ?? []).map((l) => (
+              <li key={l.id}>
+                <span className={styles.sub}>{LINK_LABEL[l.kind]}</span>
+                <Link href={`/it-maintenance/${l.id}`}>{l.id}</Link>
+                {can("link") && (
+                  <form action={linkTicket}>
+                    <input type="hidden" name="id" value={card.id} />
+                    <input type="hidden" name="unlink" value={l.id} />
+                    <button type="submit" className={styles.linkBtn} aria-label={`Remove the link to ${l.id}`}>
+                      Remove
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
       {!own && isOpen(t) && (
         <Panel title="Follow">
           <form action={watchTicket} className="stack">

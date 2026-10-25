@@ -1,0 +1,31 @@
+/* "My work today": one big card per ticket, made for a phone in one hand. */
+@layer pages {
+  .list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-3); }
+  .card {
+    display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4);
+    border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+    box-shadow: inset 4px 0 0 var(--line); scroll-margin-top: 80px;
+  }
+  .hot { box-shadow: inset 4px 0 0 var(--bad); }
+  .card:target { border-color: var(--gold); }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); }
+  .title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--ink); }
+  .title:hover { text-decoration: underline; }
+  .id { color: var(--ink-3); font-size: var(--t-sm); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .where { display: flex; gap: 6px; align-items: flex-start; margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+  .where a { color: var(--accent-text); }
+  .who { display: block; margin: 0; color: var(--ink-3); font-size: var(--t-sm); }
+
+  /* Big tap targets: the buttons fill the card on a phone, sit side by side when there's room. */
+  .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-2); margin-top: var(--s-1); }
+  .actions > form > button, .actions > form > a { min-height: 48px; font-size: var(--t-base); }
+  .more { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: var(--s-2); }
+  .summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; color: var(--accent-text); font-weight: 700; list-style: none; }
+  .summary::-webkit-details-marker { display: none; }
+  .summary::before { content: "▸"; margin-right: var(--s-2); color: var(--ink-3); }
+  .more[open] > .summary::before { content: "▾"; }
+  .more button { min-height: 48px; }
+
+  .upcoming { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); }
+}

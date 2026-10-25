@@ -113,6 +113,106 @@ export async function actOnTicket(form: FormData): Promise<void> {
   redirect(back(id, error ? err(error) : `ok=${action}`));
 }
 
+// ---- My work today --------------------------------------------------------------
+
+const TODAY_PAGE = "/it-maintenance/today";
+const QUICK: wf.Action[] = ["assign", "start", "wait", "resolve"];
+
+/**
+ * One tap from "My work today": take it, start, waiting on parts, or mark fixed
+ * (with what was done and, optionally, a photo). Back to the same list.
+ */
+export async function actFromToday(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = ticketActor(viewer);
+  const id = field(form, "id");
+  const action = field(form, "action") as wf.Action;
+  const note = field(form, "note").slice(0, 2000);
+  const photos = filesFrom(form, "photos");
+  const store = await cardStore();
+  const card = await store.get(id);
+  const toList = (q: string) => `${TODAY_PAGE}?${q}#${id}`;
+  if (!wf.isTicketCard(card) || !QUICK.includes(action) || !canViewTicket(card, { ...actor, seeAll: false })) redirect(TODAY_PAGE);
+  if (field(form, "expected") !== card.updatedAt) redirect(toList(err(`${id} changed while you were looking at it. Check it again.`)));
+
+  const now = nowIso();
+  let error: string | null = checkPhotos(photos)[0] ?? null;
+  if (!error) {
+    try {
+      let next: wf.TicketCard;
+      if (action === "assign") next = wf.assign(card, actor, now, actor.email, (await teamMembers())[card.ticket.team]);
+      else if (action === "start") next = wf.start(card, actor, now);
+      else if (action === "wait") next = wf.waitForParts(card, actor, now, note);
+      else next = wf.resolve(card, actor, now, note);
+      await store.save(next, card.updatedAt);
+      await deliver(ticketNotices(card, next, actor), actor.email);
+      if (photos.length) {
+        try {
+          const saved = await savePhotos(card.id, photos, actor.email);
+          const fresh = await store.get(id);
+          if (wf.isTicketCard(fresh)) await store.save(wf.addPhotos(fresh, actor, nowIso(), saved), fresh.updatedAt);
+        } catch (e) {
+          console.error("ticket photo upload failed", e);
+          error = `${id} was updated, but the photo didn't upload. Add it on the ticket page.`;
+        }
+      }
+    } catch (e) {
+      if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+      else {
+        console.error("ticket action failed", e);
+        error = "Something went wrong. Nothing was changed.";
+      }
+    }
+  }
+  revalidatePath(TODAY_PAGE);
+  revalidatePath("/it-maintenance");
+  revalidatePath(`/it-maintenance/${id}`);
+  redirect(toList(error ? err(error) : `ok=${action}`));
+}
+
+// ---- Linked tickets --------------------------------------------------------------
+
+/** Link this ticket to another by its number ("TK-1003" or "1003"), or remove a link (`unlink`). Both tickets change. */
+export async function linkTicket(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = ticketActor(viewer);
+  const id = field(form, "id");
+  const unlink = field(form, "unlink");
+  const raw = field(form, "other").trim().toUpperCase();
+  const otherId = unlink || (/^\d+$/.test(raw) ? `TK-${raw}` : raw);
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
+  let error: string | null = null;
+  try {
+    if (!otherId) throw new wf.WorkflowError("Type the other ticket's number, like TK-1003.");
+    const other = await store.get(otherId);
+    // A ticket this person can't open looks the same as one that doesn't exist.
+    const otherTicket = wf.isTicketCard(other) && canViewTicket(other, { ...actor, seeAll: viewer.roles.includes("admins") }) ? other : null;
+    const now = nowIso();
+    if (unlink) {
+      const [a, b] = wf.unlinkTickets(card, otherTicket, otherId, actor, now);
+      await store.save(a, card.updatedAt);
+      if (b && otherTicket) await store.save(b, otherTicket.updatedAt);
+    } else {
+      if (!otherTicket) throw new wf.WorkflowError(`There's no ticket ${otherId}.`);
+      const kind = field(form, "kind") as Parameters<typeof wf.linkTickets>[4];
+      const [a, b] = wf.linkTickets(card, otherTicket, actor, now, kind);
+      await store.save(a, card.updatedAt);
+      await store.save(b, otherTicket.updatedAt);
+    }
+  } catch (e) {
+    if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+    else {
+      console.error("ticket link failed", e);
+      error = "Something went wrong. Nothing was changed.";
+    }
+  }
+  revalidatePath(`/it-maintenance/${id}`);
+  if (otherId) revalidatePath(`/it-maintenance/${otherId}`);
+  redirect(back(id, error ? err(error) : unlink ? "ok=unlinked" : "ok=linked"));
+}
+
 /** For forms with several submit buttons: each button binds its own action. */
 export async function actOnTicketWith(action: wf.Action, form: FormData): Promise<void> {
   form.set("action", action);
