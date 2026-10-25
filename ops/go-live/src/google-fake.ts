@@ -11,6 +11,7 @@ import {
   type AclRule, type AdminRole, type BillingAccount, type Bucket, type Budget, type CalendarEvent, type CalendarResource, type ChatMembership, type ClientFile,
   type CloudService, type DeployRequest, type DnsRecord, type DomainMapping, type DrivePermission, type FirestoreDb, type Google, type Group, type GroupSettings,
   type License, type Member, type MemberRole, NoFreeLicense, type Privilege, type Project, type SchedulerJob, type ServiceAccount, type UptimeCheck, type User, type AlertPolicy,
+  type LogMetric,
 } from "./google";
 
 export const MUTATING = /^(create|add|update|remove|assign|link|enable|deploy|put|set|merge|rename|append)(?=[A-Z])|^deploy$/;
@@ -79,6 +80,7 @@ export class FakeGoogle implements Google {
   buckets = new Map<string, Bucket & { bindings: Set<string> }>();
   uptime: UptimeCheck[] = [];
   alerts: AlertPolicy[] = [];
+  logMetrics: LogMetric[] = [];
   budgets: Budget[] = [];
   cleanupKeep: number | null = null;
 
@@ -478,6 +480,16 @@ export class FakeGoogle implements Google {
     return structuredClone(this.alerts);
   }
   async createAlertPolicy(_p: string, a: { displayName: string; uptimeCheckId: string; email: string }) {
+    this.alerts.push({ id: this.id("policy"), displayName: a.displayName, channelEmails: [a.email] });
+  }
+  async listLogMetrics() {
+    return structuredClone(this.logMetrics);
+  }
+  async createLogMetric(_p: string, m: LogMetric) {
+    this.logMetrics.push(structuredClone(m));
+  }
+  async createLogAlertPolicy(_p: string, a: { displayName: string; metric: string; above: number; email: string; doc: string }) {
+    if (!this.logMetrics.some((m) => m.name === a.metric)) throw new Error(`No log metric ${a.metric}.`);
     this.alerts.push({ id: this.id("policy"), displayName: a.displayName, channelEmails: [a.email] });
   }
   async listBudgets() {

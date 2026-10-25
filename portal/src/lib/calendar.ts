@@ -1,5 +1,6 @@
 import "server-only";
 import { isDevAuth } from "./dev";
+import { failed } from "./health";
 import { delegatedToken } from "./google";
 import { type BusyItem, isStandingTitle } from "./events/rules";
 import { addDays, dayOfWeek, eventDates, fromMinutes, rrule, toMinutes, weekOfMonth } from "./events/series";
@@ -96,7 +97,7 @@ async function call<T>(path: string, init: { method?: string; body?: unknown; qu
     body: init.body ? JSON.stringify(init.body) : undefined,
   });
   if (res.status === 204 || res.status === 410) return undefined as T;
-  if (!res.ok) throw new Error(`Calendar ${init.method ?? "GET"} ${path.split("?")[0]} failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw failed("calendar", `Calendar ${init.method ?? "GET"} ${path.split("?")[0]} failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as T;
 }
 

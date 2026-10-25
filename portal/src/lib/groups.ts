@@ -1,6 +1,7 @@
 import "server-only";
 import { devDirectory, isDevAuth } from "./dev";
 import { delegatedToken } from "./google";
+import { reportFailure, reportOk } from "./health";
 import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, TEAM_PREFIX } from "./teams";
 
 /**
@@ -91,9 +92,11 @@ export async function directory(): Promise<Directory> {
       const [teams, pillars] = await Promise.all([groupsWithPrefix(token, TEAM_PREFIX), groupsWithPrefix(token, PILLAR_PREFIX)]);
       const dir = { teams, pillars };
       cache.__iarDirectory = { at: Date.now(), dir };
+      reportOk("directory");
       return dir;
     } catch (err) {
       console.error("team directory lookup failed", err);
+      reportFailure("directory", err);
       const dir = c?.dir ?? EMPTY_DIRECTORY;
       // Try again in a minute rather than on every page load.
       cache.__iarDirectory = { at: Date.now() - DIRECTORY_REFRESH_MS + 60_000, dir };

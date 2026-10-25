@@ -204,6 +204,11 @@ test("apply from nothing creates everything, then a second run plans no changes"
   assert.equal(fake.buckets.get(`${P}-firestore-backups`)?.deleteAfterDays, 30);
   assert.equal(fake.uptime.length, 1);
   assert.equal(fake.alerts[0].channelEmails[0], "portal-role-admin@x.org");
+  assert.deepEqual(fake.logMetrics.map((m) => m.name), ["iar_portal_server_errors", "iar_portal_health"]);
+  assert.match(fake.logMetrics[0].filter, /service_name="iar-portal" AND httpRequest\.status>=500/);
+  assert.match(fake.logMetrics[1].filter, /jsonPayload\.portalHealth:\*/);
+  for (const name of ["IAR Portal server errors", "IAR Portal can't reach Google"])
+    assert.deepEqual(fake.alerts.find((a) => a.displayName === name)?.channelEmails, ["portal-role-admin@x.org"], name);
   assert.equal(fake.budgets[0].amountUsd, 25);
   assert.equal(fake.cleanupKeep, 10);
 
