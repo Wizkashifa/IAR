@@ -61,7 +61,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
               <span>Note for the requester (optional)</span>
               <input name="note" maxLength={1000} placeholder={task.team === "marketing" ? "e.g. Flyer posted; link to the listing" : "e.g. Set up and tested"} />
             </label>
-            <div><Button variant="primary" size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
+            <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
         </details>
       )}
@@ -136,7 +136,7 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
               <span>Note (say what&apos;s wrong if there&apos;s a problem)</span>
               <input name="note" maxLength={1000} defaultValue={check?.note ?? ""} placeholder="e.g. Chairs left out, spill by the door" />
             </label>
-            <div><Button variant="primary" size="small" type="submit">Save check</Button></div>
+            <div><Button size="small" type="submit">Save check</Button></div>
           </form>
         </details>
       )}

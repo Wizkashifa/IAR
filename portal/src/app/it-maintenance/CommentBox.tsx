@@ -35,7 +35,7 @@ export function CommentBox({ id, max, action, replies }: { id: string; max: numb
         <textarea ref={box} name="text" rows={3} maxLength={max} required className={styles.textarea} />
       </Field>
       <div>
-        <Button variant="primary" type="submit">
+        <Button type="submit">
           Comment
         </Button>
       </div>

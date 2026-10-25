@@ -92,16 +92,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 const queue = (QUEUE_ROLES[groupSlug(t.email)] ?? []).map((r) => QUEUE_LABEL[r]).join(", ");
                 return (
                   <tr key={t.email}>
-                    <td>
+                    <td data-label="Team">
                       <strong>{t.name}</strong>
                       <div className="sub">{t.email}</div>
                       {queue && <div className="sub">Also gives: {queue}</div>}
                     </td>
-                    <td>{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
-                    <td>{p.vices.join(", ") || <span className="sub">None</span>}</td>
-                    <td>{p.directors.join(", ") || <span className="sub">None</span>}</td>
-                    <td className="num">{p.memberCount}</td>
-                    <td>
+                    <td data-label="Chair">{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
+                    <td data-label="Vice chair">{p.vices.join(", ") || <span className="sub">None</span>}</td>
+                    <td data-label="Director">{p.directors.join(", ") || <span className="sub">None</span>}</td>
+                    <td data-label="People" className="num">{p.memberCount}</td>
+                    <td data-label="Fund">
                       <form action={saveTeamFund} className="row">
                         <input type="hidden" name="group" value={t.email} />
                         <select name="fund" defaultValue={saved ?? ""} aria-label={`Fund for ${t.name}`}>
@@ -146,12 +146,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {pillarsOf(dir).map((p) => (
                 <tr key={p.group}>
-                  <td>
+                  <td data-label="Pillar">
                     <strong>{p.name}</strong>
                     <div className="sub">{p.group}</div>
                   </td>
-                  <td>{p.directors.join(", ") || <span className="pill changes_requested">No director</span>}</td>
-                  <td>{p.teams.map(nameOf).join(", ")}</td>
+                  <td data-label="Director">{p.directors.join(", ") || <span className="pill changes_requested">No director</span>}</td>
+                  <td data-label="Committees">{p.teams.map(nameOf).join(", ")}</td>
                 </tr>
               ))}
             </tbody>
@@ -201,12 +201,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {rooms.map((r) => (
                 <tr key={r.id}>
-                  <td>
+                  <td data-label="Room">
                     <strong>{r.name}</strong>
                     <div className="sub">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
                     <div className="sub">{r.calendarId}</div>
                   </td>
-                  <td>
+                  <td data-label="Settings">
                     <form action={saveRoom} className="stack">
                       <input type="hidden" name="room" value={r.id} />
                       <div className="row">
@@ -330,9 +330,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {settings.cards.map((c) => (
                 <tr key={c.last4}>
-                  <td>···{c.last4}</td>
-                  <td>{c.holderName}<div className="sub">{c.holderEmail}</div></td>
-                  <td>{shortFund(c.fund)}</td>
+                  <td data-label="Card">···{c.last4}</td>
+                  <td data-label="Cardholder">{c.holderName}<div className="sub">{c.holderEmail}</div></td>
+                  <td data-label="Fund">{shortFund(c.fund)}</td>
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />

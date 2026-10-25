@@ -26,9 +26,9 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Preventive schedules" };
 
 const crumb = (
-  <p className="crumb">
+  <nav className="crumb" aria-label="Breadcrumb">
     <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-  </p>
+  </nav>
 );
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; error?: string }> }) {

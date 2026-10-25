@@ -55,10 +55,10 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
   return (
     <>
-      <div className={styles.crumb}>
+      <nav className={styles.crumb} aria-label="Breadcrumb">
         <Link href="/teams">Who&apos;s who</Link>
         {team.pillar ? ` / ${team.pillar}` : ""}
-      </div>
+      </nav>
       <ModuleHead
         title={team.name}
         lead={team.description ?? "What this team handles hasn't been written yet."}

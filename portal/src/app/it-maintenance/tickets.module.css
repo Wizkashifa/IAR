@@ -74,7 +74,8 @@
   /* Schedules and the Jira import */
   .rowList { margin: 0; padding: 0; }
   .scheduleActions { display: inline-flex; align-items: center; gap: var(--s-3); }
-  .linkBtn { border: 0; background: none; padding: 0; font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
+  .scheduleActions > a { display: inline-block; padding: 4px 2px; }
+  .linkBtn { border: 0; background: none; padding: 4px 2px; min-height: 24px; font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
   .linkBtn:hover { text-decoration: underline; }
   .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
   .check { display: inline-flex; gap: var(--s-2); align-items: center; font-size: var(--t-md); }

@@ -62,7 +62,7 @@
   .fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-2); min-width: 0; }
   .fieldset > legend { font-size: var(--t-sm); font-weight: 700; color: var(--ink-2); padding: 0; margin-bottom: var(--s-2); }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
-  .steps a { display: flex; align-items: center; gap: var(--s-2); color: var(--ink); text-decoration: none; font-size: var(--t-md); }
+  .steps a { display: flex; align-items: center; gap: var(--s-2); min-height: 28px; color: var(--ink); text-decoration: none; font-size: var(--t-md); }
   .steps a:hover { color: var(--accent-text); }
   .done { background: var(--accent); }
   .ask { border: 1px solid var(--gold); border-radius: var(--r-sm); padding: var(--s-3); background: var(--warn-soft); color: var(--ink); font-size: var(--t-md); display: grid; gap: var(--s-2); }

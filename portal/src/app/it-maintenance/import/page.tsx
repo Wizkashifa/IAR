@@ -16,9 +16,9 @@ export default async function ImportPage() {
   const allowed = canImportJira(ticketActor(viewer));
   return (
     <div className="stack">
-      <p className="crumb">
+      <nav className="crumb" aria-label="Breadcrumb">
         <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-      </p>
+      </nav>
       <ModuleHead
         title="Import from Jira"
         lead="Bring the facilities team's open Jira issues over once, so everything is in one place and the people who reported them can follow along. Importing the same file again is safe: issues already brought over are skipped."

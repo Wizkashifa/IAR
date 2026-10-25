@@ -51,7 +51,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
                 <Icon name={TYPE_ICON[k]} />
               </span>
               <div>
-                <h3>{MARKETING_TYPES[k].label}</h3>
+                <h2>{MARKETING_TYPES[k].label}</h2>
                 <p>{MARKETING_TYPES[k].blurb}</p>
               </div>
             </Link>

@@ -283,7 +283,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
               </Field>
               <div className="row end">
-                <Button variant="primary" type="submit">Comment</Button>
+                <Button type="submit">Comment</Button>
               </div>
             </form>
             {(card.comments ?? []).length === 0 ? (
