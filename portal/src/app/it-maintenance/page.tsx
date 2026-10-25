@@ -67,9 +67,12 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         title="IT & Maintenance"
         lead="Ask once for anything broken or needed in the building, IT or A/V. It goes to the right team, and you can follow it until it's done."
         actions={
-          <Button variant="primary" icon="plus" href="/it-maintenance/new">
-            AV/IT/Maintenance
-          </Button>
+          <>
+            {teamsOf(actor).length > 0 && <Button href="/it-maintenance/today" icon="sun">My work today</Button>}
+            <Button variant="primary" icon="plus" href="/it-maintenance/new">
+              AV/IT/Maintenance
+            </Button>
+          </>
         }
       />
       <TicketFlash ok={sp.ok} error={sp.error} />

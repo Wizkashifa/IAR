@@ -3,7 +3,7 @@ import { Note } from "@/components/Note";
 import { Pill } from "@/components/Pill";
 import type { NameOf } from "@/lib/next-step";
 import { TEAM_LABEL, URGENCY, type TicketStatus, type Urgency } from "@/lib/tickets/types";
-import { type TicketCard, isOverdue } from "@/lib/tickets/workflow";
+import { type TicketCard, lateText } from "@/lib/tickets/workflow";
 import styles from "./tickets.module.css";
 
 export { fmtDate, fmtDateTime, fmtDay } from "../ui";
@@ -22,6 +22,8 @@ export const FLASH: Record<string, string> = {
   watch: "You're following this ticket. You'll hear when it moves.",
   unwatch: "You've stopped following this ticket.",
   commented: "Comment added. The people on this ticket can see it.",
+  linked: "Linked. Both tickets show the link.",
+  unlinked: "Link removed from both tickets.",
   added: "Schedule added.",
   updated: "Schedule saved.",
   paused: "Schedule paused. It won't open tickets until you resume it.",
@@ -41,15 +43,16 @@ export const todayRaleigh = () => new Date().toLocaleDateString("en-CA", { timeZ
 export function TicketTags({ card, reopened }: { card: TicketCard; reopened?: boolean }) {
   const t = card.ticket;
   const u: Urgency = t.urgency;
+  const late = lateText(card, new Date(), todayRaleigh());
   const tags = [
     u !== "normal" && (
       <Pill key="u" tone={u === "urgent" ? "bad" : u === "high" ? "warn" : "neutral"}>
         {URGENCY[u].label}
       </Pill>
     ),
-    isOverdue(card, new Date(), todayRaleigh()) && (
+    late && (
       <Pill key="late" tone="bad">
-        Late
+        {late}
       </Pill>
     ),
     reopened && t.status === "reopened" && (

@@ -19,6 +19,7 @@ import { unreadCount } from "@/lib/notifications";
 import { isActive, todayLocal } from "@/lib/away";
 import { peopleStore } from "@/lib/people";
 import { visibleModules } from "@/lib/modules";
+import { teamsOf } from "@/lib/tickets/workflow";
 
 export const metadata: Metadata = {
   title: { template: `%s · ${ORG.shortName} Portal`, default: `${ORG.shortName} Portal` },
@@ -78,7 +79,10 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
       ],
     },
     { label: "Request", links: linksIn("request") },
-    { label: "Your team", links: linksIn("team") },
+    {
+      label: "Your team",
+      links: [...(teamsOf({ roles: viewer.actingRoles }).length > 0 ? [{ href: "/it-maintenance/today", label: "My work today", icon: "sun" as IconName }] : []), ...linksIn("team")],
+    },
     { label: "Admin", links: linksIn("admin") },
     { label: "You", links: [{ href: "/away", label: "Out of office", icon: "clock" }] },
   ];
