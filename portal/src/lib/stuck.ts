@@ -13,12 +13,7 @@ import type { Card } from "./cards";
 import { historyOf, hrefOf, stepSinceOf, withHistory } from "./kinds";
 import type { Role } from "./org";
 import type { Notice, Recipient } from "./notices";
-import { waitingOn as purchaseWaitingOn } from "./purchases/reminders";
-import { STAGE_LABEL as PURCHASE_STEP } from "./purchases/types";
-import { STAGE_LABEL as MARKETING_STEP } from "./marketing/types";
-import { STATUS_LABEL as TICKET_STEP } from "./tickets/types";
-import { reviewersFor } from "./events/workflow";
-import { TEAM_ROLE } from "./tickets/workflow";
+import { moduleFor } from "./registry";
 import { lc } from "./text";
 import { historyEntry, type HistoryEntry } from "./workflow-core";
 
@@ -63,58 +58,10 @@ export type StuckContext = {
   directorsOf?: (committeeGroup: string) => string[];
 };
 
-const OWNER = (c: Card): Recipient => ({ email: c.ownerEmail });
-
 /** Who the request is waiting on and at which step. Null when it isn't waiting on anyone (done, approved, closed). */
 export function holderOf(card: Card, ctx: StuckContext = {}): Holder | null {
   if (["denied", "cancelled", "closed", "draft"].includes(card.status)) return null;
-  if (card.purchase) {
-    const p = card.purchase;
-    if (card.status === "changes_requested") return { to: [OWNER(card)], step: "Back with the requester" };
-    if (p.stage === "chair" && !p.approverEmail) return { to: [], step: PURCHASE_STEP.chair };
-    const who = purchaseWaitingOn(card as Parameters<typeof purchaseWaitingOn>[0]);
-    // QuickBooks entry is the finance office's batch work: not "stuck", same as the daily job.
-    return who ? { to: [who], step: PURCHASE_STEP[p.stage] } : null;
-  }
-  if (card.event) {
-    const e = card.event;
-    if (card.status === "changes_requested") return { to: [OWNER(card)], step: e.releasedFor ? "Picking a new time" : "Back with the requester" };
-    if (card.status === "close_out") return { to: [OWNER(card)], step: "Close-out" };
-    switch (e.stage) {
-      case "slot":
-        // The ask has its own reminders and escalation in the daily job.
-        return { to: [], step: "Waiting for a booked time" };
-      case "director": {
-        const who = reviewersFor(card.ownerEmail, ctx.directorsOf?.(e.committeeGroup) ?? []);
-        return { to: who.length ? who.map((email) => ({ email })) : [{ role: "executive" }], step: "Director review" };
-      }
-      case "mission":
-        return { to: [{ role: "executive" }], step: "Executive review" };
-      default:
-        return null;
-    }
-  }
-  if (card.marketing) {
-    const m = card.marketing;
-    switch (m.stage) {
-      case "review":
-      case "scheduled":
-        return { to: [{ role: "marketing" }], step: MARKETING_STEP[m.stage] };
-      case "doing":
-        return { to: [m.assignee ? { email: m.assignee } : { role: "marketing" }], step: MARKETING_STEP.doing };
-      case "question":
-        return { to: [OWNER(card)], step: MARKETING_STEP.question };
-      default:
-        return null;
-    }
-  }
-  if (card.ticket) {
-    const t = card.ticket;
-    if (["closed", "cancelled"].includes(t.status)) return null;
-    if (t.status === "resolved") return { to: [OWNER(card)], step: "Fixed: waiting for the reporter to confirm" };
-    return { to: [t.assigneeEmail ? { email: t.assigneeEmail } : { role: TEAM_ROLE[t.team] }], step: TICKET_STEP[t.status] };
-  }
-  return null;
+  return moduleFor(card)?.holder(card, ctx) ?? null;
 }
 
 export type StuckItem = { card: Card; since: string; days: number; holder: Holder };

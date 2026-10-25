@@ -1,7 +1,7 @@
 import type { Comment } from "@/lib/comments";
 import { COMMENT_MAX } from "@/lib/comments";
 import type { HistoryEntry } from "@/lib/workflow-core";
-import type { NameOf } from "@/lib/next-step";
+import type { NameOf } from "@/lib/steps";
 import { Button } from "@/components/Button";
 import { Panel } from "@/components/Panel";
 import { fmtDateTime } from "../ui";

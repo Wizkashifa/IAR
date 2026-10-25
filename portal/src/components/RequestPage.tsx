@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Steps } from "@/lib/next-step";
+import type { Steps } from "@/lib/steps";
 import { Icon } from "./Icon";
 import { Note } from "./Note";
 import { Stages } from "./Stages";

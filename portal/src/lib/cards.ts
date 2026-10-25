@@ -55,19 +55,6 @@ export type Card = {
   searchText?: string;
 };
 
-export const STATUS_LABEL: Record<CardStatus, string> = {
-  draft: "Draft",
-  submitted: "Submitted",
-  in_review: "In review",
-  changes_requested: "Changes requested",
-  approved: "Approved",
-  denied: "Denied",
-  cancelled: "Cancelled",
-  paid: "Paid",
-  close_out: "Close-out",
-  closed: "Closed",
-};
-
 /**
  * Request numbers by prefix, and where each starts. Purchases start after the
  * old Requisition Form's numbers.

@@ -5,7 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Away, checkAway, coveringFor, isActive } from "./away";
 import type { Card } from "./cards";
-import { hrefOf } from "./kinds";
+import { KINDS, hrefOf } from "./kinds";
+import { MODULE_TYPES } from "./registry";
 import { internalPath } from "./links";
 import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";
@@ -116,4 +117,8 @@ test("beta gate: only the access group and portal admins get in while it's set",
     if (before === undefined) delete process.env.PORTAL_ACCESS_GROUP;
     else process.env.PORTAL_ACCESS_GROUP = before;
   }
+});
+
+test("registry: every kind of request has a module, and every module a kind", () => {
+  assert.deepEqual([...MODULE_TYPES].sort(), KINDS.map((k) => k.type).sort());
 });

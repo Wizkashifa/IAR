@@ -5,11 +5,9 @@
  * decide who can act, so this never disagrees with the buttons on the page.
  */
 import type { Card, CardStatus } from "./cards";
-import { permission as eventPermission, type EventCard } from "./events/workflow";
-import { permission as marketingPermission, type MarketingCard } from "./marketing/workflow";
-import { openExpectedReturns } from "./purchases/types";
-import { actionableBy, permission as purchasePermission, type Actor, type PurchaseCard } from "./purchases/workflow";
-import { onTeam, type TicketCard } from "./tickets/workflow";
+import type { EventCard } from "./events/workflow";
+import type { Actor } from "./purchases/workflow";
+import { moduleFor } from "./registry";
 import type { Role } from "./org";
 import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";
 import { queueItems, type QueueItem } from "./events/queues";
@@ -32,39 +30,10 @@ const OWNER_ACTS: CardStatus[] = ["draft", "changes_requested", "close_out"];
 /** Statuses with nothing left to do for the requester. */
 const FINISHED: CardStatus[] = ["paid", "closed", "denied", "cancelled"];
 
-function purchaseNeeds(card: PurchaseCard, v: NeedsViewer): boolean {
-  if (actionableBy([card], v).length) return true;
-  // Finance records refunds and repayments still owed on a finished request.
-  return openExpectedReturns(card.purchase).length > 0 && purchasePermission(card, v, "resolve").ok;
-}
-
-function eventNeeds(card: EventCard, v: NeedsViewer, ctx: NeedsContext): boolean {
-  const directors = ctx.directorsOf?.(card.event.committeeGroup) ?? [];
-  return eventPermission(card, v, "approve", directors).ok;
-}
-
-function marketingNeeds(card: MarketingCard, v: NeedsViewer): boolean {
-  const m = card.marketing;
-  if (marketingPermission(card, v, "schedule").ok) return true; // the weekly review, for the team
-  return (m.stage === "scheduled" || m.stage === "doing") && same(m.assignee, v.email);
-}
-
-function ticketNeeds(card: TicketCard, v: NeedsViewer): boolean {
-  const t = card.ticket;
-  if (!onTeam(v, t.team)) return false;
-  if (t.status === "new") return true;
-  if (t.status === "assigned" || t.status === "in_progress" || t.status === "waiting_parts" || t.status === "reopened") return t.assigneeEmail ? same(t.assigneeEmail, v.email) : true;
-  return false;
-}
-
 /** True when the request is waiting on this person: to fix, answer, approve, pay, pick up or confirm it. */
 export function needsViewer(card: Card, viewer: NeedsViewer, ctx: NeedsContext = {}): boolean {
   if (same(card.ownerEmail, viewer.email) && OWNER_ACTS.includes(card.status)) return true;
-  if (card.purchase) return purchaseNeeds(card as PurchaseCard, viewer);
-  if (card.event) return eventNeeds(card as EventCard, viewer, ctx);
-  if (card.marketing) return marketingNeeds(card as MarketingCard, viewer);
-  if (card.ticket) return ticketNeeds(card as TicketCard, viewer);
-  return false;
+  return moduleFor(card)?.needs(card, viewer, ctx) ?? false;
 }
 
 /** Finished from the requester's side: paid, closed, declined or withdrawn. */

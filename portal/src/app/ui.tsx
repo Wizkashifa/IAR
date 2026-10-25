@@ -1,4 +1,5 @@
-import { STATUS_LABEL, type CardStatus } from "@/lib/cards";
+import type { CardStatus } from "@/lib/cards";
+import { STATUS_LABEL } from "@/lib/glossary";
 import { COMMENT_MAX, type Comment } from "@/lib/comments";
 
 /** Shared formatting and pieces every request page uses. Times are shown in Raleigh time. */

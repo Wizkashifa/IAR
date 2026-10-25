@@ -7,7 +7,7 @@
 import type { Card } from "./cards";
 import { hrefOf } from "./kinds";
 import { MARKETING_TYPES } from "./marketing/forms";
-import { fallbackName, type NameOf } from "./next-step";
+import { fallbackName, type NameOf } from "./steps";
 import { isFinished, needsViewer, type NeedsContext, type NeedsViewer } from "./needs-you";
 import { TEAM_NAME as TICKET_TEAM } from "./tickets/types";
 import { lc, same } from "./text";
@@ -95,8 +95,8 @@ export function subText(card: Card): string {
 
 /**
  * Everything a list row needs, for the person looking. `status` is the
- * request's status in words (lib/status-text.ts `statusText`, which reads
- * server-only labels; components/ItemList.tsx `rowsFor` passes it in).
+ * request's status in words (lib/status-text.ts `statusText`;
+ * components/ItemList.tsx `rowsFor` passes it in).
  */
 export function cardRow(card: Card, viewer: NeedsViewer, status: string, o: RowOptions = {}): RowData {
   return {

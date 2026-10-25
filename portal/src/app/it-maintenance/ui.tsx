@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Note } from "@/components/Note";
 import { Pill } from "@/components/Pill";
-import type { NameOf } from "@/lib/next-step";
+import type { NameOf } from "@/lib/steps";
 import { TEAM_LABEL, URGENCY, type TicketStatus, type Urgency } from "@/lib/tickets/types";
 import { type TicketCard, lateText } from "@/lib/tickets/workflow";
 import styles from "./tickets.module.css";
