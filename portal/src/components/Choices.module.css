@@ -22,4 +22,12 @@
   .plain .list { display: flex; flex-direction: column; gap: var(--s-2); }
   .plain .choice { min-height: 28px; padding: 0; border: 0; background: none; }
   .plain .choice:has(input:checked) { background: none; }
+
+  /* A plain tick box with its label. */
+  .tick { display: flex; gap: var(--s-2); align-items: flex-start; min-height: 28px; font-size: var(--t-md); color: var(--ink); cursor: pointer; }
+  .tick input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+  .tick a { font-weight: 700; }
+  .tick small { color: var(--ink-2); }
+  .quiet { align-items: center; min-height: 0; font-size: var(--t-sm); color: var(--ink-2); }
+  .quiet input { margin: 0; }
 }

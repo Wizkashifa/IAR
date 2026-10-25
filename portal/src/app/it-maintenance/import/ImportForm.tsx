@@ -10,6 +10,7 @@ import { Panel } from "@/components/Panel";
 import styles from "../tickets.module.css";
 import { STATUS_LABEL, TEAM_LABEL, URGENCY, type TicketStatus, type TicketTeam } from "@/lib/tickets/types";
 import type { ImportState } from "../actions";
+import { Checkbox } from "@/components/Choices";
 
 function Submit({ label, busy }: { label: string; busy: string }) {
   const { pending } = useFormStatus();
@@ -190,9 +191,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           <li>Upload the file here. You&apos;ll see what would happen before anything is saved.</li>
         </ol>
         <FileDrop name="file" label="CSV file" accept={["text/csv", ".csv"]} multiple={false} maxSizeMb={5} required />
-        <label className={styles.check}>
-          <input type="checkbox" name="includeDone" /> Also bring over done issues, as closed tickets (for the record)
-        </label>
+        <Checkbox name="includeDone">Also bring over done issues, as closed tickets (for the record)</Checkbox>
         </div>
       </Panel>
       <input type="hidden" name="step" value="preview" />

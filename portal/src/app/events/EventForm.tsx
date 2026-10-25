@@ -18,7 +18,7 @@ import { type DraftCheck, checkDraft } from "./actions";
 import { ChecksList, Timeline, checksSummary } from "./ui";
 import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
-import { Choice, Choices } from "@/components/Choices";
+import { Checkbox, Choice, Choices } from "@/components/Choices";
 
 export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
@@ -371,31 +371,22 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Notes for the teams (optional)">
               <textarea rows={2} value={d.teamNotes} onChange={(e) => set("teamNotes", e.target.value)} placeholder="Anything marketing, A/V or security should know" maxLength={1000} />
             </Field>
-            <label className={styles.agree}>
-              <input type="checkbox" checked={d.agree} onChange={(e) => set("agree", e.target.checked)} />
-              <span>
-                I&apos;ve read the{" "}
-                {p.policyUrl ? (
-                  <a href={p.policyUrl} target="_blank" rel="noreferrer">
-                    room reservation policy
-                  </a>
-                ) : (
-                  "room reservation policy"
-                )}{" "}
-                and accept its rules and liability statement.
-              </span>
-            </label>
+            <Checkbox checked={d.agree} onChange={(e) => set("agree", e.target.checked)}>
+              I&apos;ve read the{" "}
+              {p.policyUrl ? (
+              <a href={p.policyUrl} target="_blank" rel="noreferrer">
+              room reservation policy
+              </a>
+              ) : (
+              "room reservation policy"
+              )}{" "}
+              and accept its rules and liability statement.
+            </Checkbox>
             {d.av && (
-              <label className={styles.agree}>
-                <input type="checkbox" checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))} />
-                <span>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.</span>
-              </label>
+              <Checkbox checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))}>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.</Checkbox>
             )}
             {d.isPublic && (
-              <label className={styles.agree}>
-                <input type="checkbox" checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)} />
-                <span>The details I&apos;ve given are final, so marketing can publish them.</span>
-              </label>
+              <Checkbox checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)}>The details I&apos;ve given are final, so marketing can publish them.</Checkbox>
             )}
           </div>
         </fieldset>

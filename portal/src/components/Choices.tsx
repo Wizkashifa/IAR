@@ -29,3 +29,13 @@ export function Choice({ label, hint, ...input }: Omit<InputHTMLAttributes<HTMLI
     </label>
   );
 }
+
+/** A plain tick box with its label (no card): "I confirm…", "Show sub-accounts from every fund". `quiet` for a small grey one in a panel header. */
+export function Checkbox({ children, quiet, ...input }: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { children: ReactNode; quiet?: boolean }) {
+  return (
+    <label className={quiet ? `${styles.tick} ${styles.quiet}` : styles.tick}>
+      <input type="checkbox" {...input} />
+      <span>{children}</span>
+    </label>
+  );
+}

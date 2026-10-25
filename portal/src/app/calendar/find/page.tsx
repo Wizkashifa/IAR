@@ -13,6 +13,7 @@ import { requireViewer } from "@/lib/viewer";
 import { eventContext, mayBookRestricted } from "@/lib/events/context";
 import { dayText, timeText } from "@/lib/events/series";
 import styles from "../calendar.module.css";
+import { Checkbox } from "@/components/Choices";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Find a room" };
@@ -46,10 +47,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
             <Field label="About how many people?" htmlFor="find-people" required>
               <input id="find-people" name="people" type="number" min={1} max={MAX_PEOPLE} defaultValue={q.people ?? "20"} required />
             </Field>
-            <label className={styles.check}>
-              <input type="checkbox" name="food" value="1" defaultChecked={q.food === "1"} />
-              Food will be served
-            </label>
+            <Checkbox name="food" value="1" defaultChecked={q.food === "1"}>Food will be served</Checkbox>
           </div>
           <div>
             <Button type="submit" variant="primary" icon="search">

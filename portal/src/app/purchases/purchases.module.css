@@ -68,9 +68,6 @@
   .lineFoot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-3); }
   .total { font-size: var(--t-base); }
   .total strong { font-size: 18px; margin-left: var(--s-2); font-variant-numeric: tabular-nums; }
-  .check { display: flex; gap: var(--s-2); align-items: flex-start; font-size: var(--t-md); }
-  .check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
-  .checks { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
   .fieldsets { display: grid; gap: var(--s-4); margin-top: var(--s-5); }
   /* Space between a page heading and what follows it. */
   .body { margin-top: var(--s-5); }

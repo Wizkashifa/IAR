@@ -12,8 +12,6 @@
   .chip[aria-current="page"] { background: var(--nav-on); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
   .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-3); align-items: end; }
   .filters[aria-busy="true"] { opacity: 0.7; }
-  .check { display: flex; align-items: center; gap: var(--s-2); min-height: var(--control-h); font-size: var(--t-md); color: var(--ink-2); }
-  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
   /* Week: seven days side by side on a wide screen, a list of days on a phone. */
   .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
@@ -80,8 +78,6 @@
 
   /* Find a room */
   .findForm { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-3); align-items: end; }
-  .findForm .wide { grid-column: span 2; }
-  @media (max-width: 640px) { .findForm .wide { grid-column: auto; } }
   .rooms { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
   .room { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-1) var(--s-4); align-items: center; padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
   .room:first-child { border-top: 0; }

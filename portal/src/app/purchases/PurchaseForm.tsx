@@ -14,7 +14,7 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
-import { Choice, Choices } from "@/components/Choices";
+import { Checkbox, Choice, Choices } from "@/components/Choices";
 
 type Line = LineInput & { key: number };
 
@@ -275,18 +275,12 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
               </div>
             )}
             {kind === "pay" && (
-              <div className={styles.checks}>
-                <label className={styles.check}>
-                  <input type="checkbox" checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)} />
-                  <span>
-                    This payment is for labor or services
-                    {laborLine && <small> (a line is charged to a labor sub-account)</small>}
-                  </span>
-                </label>
-                <label className={styles.check}>
-                  <input type="checkbox" checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)} />
-                  <span>The payee is a Shura or committee member, a relative of one, or a business one owns</span>
-                </label>
+              <div className="stack tight">
+                <Checkbox checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)}>
+                  This payment is for labor or services
+                  {laborLine && <small> (a line is charged to a labor sub-account)</small>}
+                </Checkbox>
+                <Checkbox checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)}>The payee is a Shura or committee member, a relative of one, or a business one owns</Checkbox>
               </div>
             )}
             {w9Needed && (
@@ -318,10 +312,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
               ? "One line per charge on the statement, each with its sub-account. Mark charges that will be refunded or repaid."
               : "Split the total across as many sub-accounts as it really covers."}
           </p>
-          <label className={styles.check}>
-            <input type="checkbox" checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)} />
-            <span>Show sub-accounts from every fund</span>
-          </label>
+          <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>
           <div className={styles.lines}>
             {lines.map((l, i) => (
               <div key={l.key} className={styles.line}>
@@ -373,10 +364,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                           <input value={l.repayBy} onChange={(e) => setLine(l.key, { repayBy: e.target.value })} maxLength={120} required aria-label={`Repaid by, line ${i + 1}`} />
                         </Field>
                       )}
-                      <label className={styles.check}>
-                        <input type="checkbox" checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })} />
-                        <span>No receipt</span>
-                      </label>
+                      <Checkbox checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })}>No receipt</Checkbox>
                     </>
                   )}
                 </div>
@@ -415,10 +403,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
 
       <Panel title="Sign">
         <div className="stack">
-          <label className={styles.check}>
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-            <span>I confirm this request is accurate and for IAR business.</span>
-          </label>
+          <Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required>I confirm this request is accurate and for IAR business.</Checkbox>
           <Field label="Type your full name" required className={styles.narrow}>
             <input value={attestationName} onChange={(e) => setAttestationName(e.target.value)} maxLength={120} required autoComplete="name" />
           </Field>

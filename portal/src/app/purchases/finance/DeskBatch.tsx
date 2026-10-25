@@ -8,6 +8,7 @@ import { ItemRow } from "@/components/ItemRow";
 import { Panel } from "@/components/Panel";
 import type { DeskTab } from "@/lib/purchases/finance-desk";
 import styles from "./finance.module.css";
+import { Checkbox } from "@/components/Choices";
 
 /** One row on the desk, prepared on the server (names, amounts and dates already in words). */
 export type DeskRow = {
@@ -56,10 +57,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
         title={title}
         right={
           rows.length > 0 ? (
-            <label className={styles.all}>
-              <input type="checkbox" checked={all} onChange={() => setPicked(all ? new Set() : new Set(rows.map((r) => r.key)))} />
-              Select all {rows.length}
-            </label>
+            <Checkbox checked={all} onChange={() => setPicked(all ? new Set() : new Set(rows.map((r) => r.key)))} quiet>Select all {rows.length}</Checkbox>
           ) : undefined
         }
         flush

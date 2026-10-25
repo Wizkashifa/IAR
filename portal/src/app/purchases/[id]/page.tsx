@@ -27,6 +27,7 @@ import { actOnPurchase, commentOnPurchase } from "../actions";
 import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
 import styles from "../purchases.module.css";
 import { todayLocal } from "@/lib/dates";
+import { Checkbox } from "@/components/Choices";
 
 export const dynamic = "force-dynamic";
 
@@ -342,9 +343,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               {returnTo}
             </div>
             {p.stage === "finance" && p.w9Required && (
-              <label className={styles.check}>
-                <input type="checkbox" name="w9Received" /> The W-9 is on file in the restricted W-9 drive
-              </label>
+              <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
             )}
             <div className={styles.actRow}>
               <Button type="submit" name="action" value="approve" variant="primary" icon="check">

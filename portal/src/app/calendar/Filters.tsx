@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Field } from "@/components/Field";
 import styles from "./calendar.module.css";
+import { Checkbox } from "@/components/Choices";
 
 /**
  * The room and committee filters, and whether to show prayers and school
@@ -45,10 +46,7 @@ export function Filters({ rooms, committees }: { rooms: { id: string; name: stri
           ))}
         </select>
       </Field>
-      <label className={styles.check}>
-        <input type="checkbox" checked={shown.standing === "1"} onChange={(e) => set("standing", e.target.checked ? "1" : "")} />
-        Show prayers, school hours and other standing holds
-      </label>
+      <Checkbox checked={shown.standing === "1"} onChange={(e) => set("standing", e.target.checked ? "1" : "")}>Show prayers, school hours and other standing holds</Checkbox>
     </div>
   );
 }

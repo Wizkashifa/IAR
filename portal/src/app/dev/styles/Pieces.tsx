@@ -1,4 +1,4 @@
-import { Choice, Choices } from "@/components/Choices";
+import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { Panel } from "@/components/Panel";
 
 /** The pieces module pages are built from, beyond the basics above: one example of each. */
@@ -21,6 +21,10 @@ export function Pieces() {
             <Choice type="radio" name="plain" value="b" label="No" />
           </Choices>
           <Choice type="checkbox" label={<strong>A single choice on its own</strong>} hint="Quiet overnight, on notification settings." />
+          <Checkbox defaultChecked>
+            I confirm this request is accurate and for IAR business. <small>(Checkbox: a plain tick box)</small>
+          </Checkbox>
+          <Checkbox quiet>Select all 4 (quiet, for a panel header)</Checkbox>
         </div>
       </Panel>
     </>

@@ -42,6 +42,7 @@ import { roomDay } from "../calendar";
 import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
+import { Checkbox } from "@/components/Choices";
 
 export const dynamic = "force-dynamic";
 
@@ -450,13 +451,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             <Field label="How did it go? What would you change next time?">
               <textarea name="notes" rows={3} maxLength={2000} placeholder="e.g. Good turnout. Order less pizza next time." />
             </Field>
-            <label className={styles.agree}>
-              <input type="checkbox" name="costsConfirmed" required={own} /> These are all the costs for this event{own ? "" : " (the requester confirmed them)"}
-            </label>
+            <Checkbox name="costsConfirmed" required={own}>These are all the costs for this event{own ? "" : " (the requester confirmed them)"}</Checkbox>
             {office && (
-              <label className={styles.agree}>
-                <input type="checkbox" name="depositRefund" /> A deposit should be refunded (MPH community events). The finance office is told.
-              </label>
+              <Checkbox name="depositRefund">A deposit should be refunded (MPH community events). The finance office is told.</Checkbox>
             )}
             <FormActions>
               <Button variant="primary" type="submit">{own ? "Close out the event" : "Close it out for them"}</Button>

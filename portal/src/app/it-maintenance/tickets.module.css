@@ -51,8 +51,6 @@
   .linkBtn { border: 0; background: none; padding: 4px 2px; min-height: 24px; font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
   .linkBtn:hover { text-decoration: underline; }
   .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
-  .check { display: inline-flex; gap: var(--s-2); align-items: center; font-size: var(--t-md); }
-  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
   @media (max-width: 640px) {
     .tabs { gap: var(--s-1) var(--s-3); }
