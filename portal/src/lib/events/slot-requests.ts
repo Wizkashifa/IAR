@@ -134,7 +134,7 @@ export function datesText(dates: string[]): string {
 }
 
 /** Who the ask goes to: the card's owner and their committee's chairs, the calendar entry's maker, or the office. */
-export function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[] {
+function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[] {
   const out = new Set<string>();
   if (hold.cardId && hold.ownerEmail) {
     out.add(lc(hold.ownerEmail));

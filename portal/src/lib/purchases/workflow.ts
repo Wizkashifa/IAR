@@ -119,7 +119,7 @@ export function canViewDetail(card: PurchaseCard, viewer: Actor & { seeAll?: boo
 type Route = { stage: PurchaseStage; approverEmail?: string; note?: string };
 
 /** Where a newly submitted (or resubmitted) request goes first. */
-export function firstRoute(p: PurchaseDetails, ownerEmail: string, s: RoutingSettings): Route {
+function firstRoute(p: PurchaseDetails, ownerEmail: string, s: RoutingSettings): Route {
   if (p.kind === "card") return { stage: "finance", note: "Card receipts go to finance review." };
   const { chairs = [], backups = [], directors = [] } = s.approversFor(p.fund);
   const ownerChairs = chairs.some((c) => same(c, ownerEmail));

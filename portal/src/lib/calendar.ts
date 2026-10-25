@@ -50,7 +50,6 @@ export interface RoomCalendar {
 }
 
 const subject = () => process.env.PORTAL_CALENDAR_SUBJECT || process.env.PORTAL_MAIL_FROM || "";
-export const calendarEnabled = () => isDevAuth() || Boolean(subject());
 
 // ---- Times --------------------------------------------------------------
 

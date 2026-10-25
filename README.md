@@ -16,6 +16,7 @@ Beta modules: **My Requests**, **Purchase Requests** (payments, reimbursements, 
 - **[ops/go-live/](ops/go-live/)** — the setup command and the blank members template (`members-template.xlsx`, no people in it).
 - **[docs/beta-launch.md](docs/beta-launch.md)** — the beta runbook: what to collect, running go-live, the Shared Drives and Portal Settings to set, the smoke test, and what to do during the beta.
 - **[docs/setup.md](docs/setup.md)** — every setup step by hand, as a reference and fallback.
+- **[app/index.html](app/index.html)** — the original clickable Purchase Requests prototype (sample data only, nothing saved), now superseded by the module in `portal/`. Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
 
 ## Picking this up in a new chat
 

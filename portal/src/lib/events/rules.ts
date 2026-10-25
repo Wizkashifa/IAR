@@ -211,8 +211,6 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
   return { checks: out, clashes, blocked: out.some((c) => c.block) };
 }
 
-/** The worst result, for a summary pill. */
-export const worst = (checks: Check[]): "ok" | "warn" | "bad" => (checks.some((c) => c.sev === "bad") ? "bad" : checks.some((c) => c.sev === "warn") ? "warn" : "ok");
 
 /** Shown next to times in lists: "6:00–9:00 PM" style isn't needed; keep both ends explicit. */
 export const windowText = (e: Pick<EventInput, "start" | "end" | "setup" | "teardown">) =>

@@ -142,8 +142,6 @@ export interface CardStore {
   deleteVendor(id: string): Promise<void>;
 }
 
-export { vendorSlug as vendorId } from "./purchases/vendors";
-
 /** Purchase cards worth listing in queues: open, or done with money still owed back. */
 function isOpenPurchase(c: Card): boolean {
   if (c.type !== "purchase") return false;

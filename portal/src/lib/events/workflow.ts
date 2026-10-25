@@ -49,7 +49,7 @@ export const STAGE_LABEL: Record<EventStage, string> = {
 export const reviewersFor = (ownerEmail: string, directors: string[]) => directors.filter((d) => !same(d, ownerEmail));
 
 /** Where a submitted (or resubmitted) request goes first. */
-export function firstStage(ownerEmail: string, directors: string[], o: { waitingOnAsk?: string; releasedFor?: string } = {}): EventStage {
+function firstStage(ownerEmail: string, directors: string[], o: { waitingOnAsk?: string; releasedFor?: string } = {}): EventStage {
   if (o.waitingOnAsk) return "slot";
   const reviewers = reviewersFor(ownerEmail, directors);
   if (o.releasedFor) return reviewers.length ? "director" : "approved";

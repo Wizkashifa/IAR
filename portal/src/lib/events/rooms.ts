@@ -50,4 +50,3 @@ export function roomsToCheck(ids: string[], rooms: Room[]): Room[] {
 }
 
 export const roomById = (rooms: Room[], id: string) => rooms.find((r) => r.id === id);
-export const roomLabel = (r: Room) => (r.capacity ? `${r.name} (${r.capacity})` : r.name);

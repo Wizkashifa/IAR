@@ -522,7 +522,7 @@ export function autoClose(card: TicketCard, now: Date): TicketCard {
 }
 
 /** Hours since the ticket landed with the team without anyone starting it, or null once work started. */
-export function hoursUntouched(t: TicketDetails, now: Date): number | null {
+function hoursUntouched(t: TicketDetails, now: Date): number | null {
   if (t.status !== "new" && t.status !== "assigned" && t.status !== "reopened") return null;
   return (now.getTime() - Date.parse(t.statusSince)) / 36e5;
 }

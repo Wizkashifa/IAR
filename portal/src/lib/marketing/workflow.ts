@@ -22,7 +22,7 @@ import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, addDays, daysBetween, isDate, neededBy, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
-import { type HistoryEntry, type MarketingDetails, type MarketingFile, type MarketingStage, STAGE_LABEL } from "./types";
+import { type HistoryEntry, type MarketingDetails, type MarketingFile, type MarketingStage } from "./types";
 
 export type { Actor };
 
@@ -67,7 +67,6 @@ export function statusForStage(stage: MarketingStage): CardStatus {
 
 /** Open stages: still waiting on someone. */
 export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled", "doing"];
-export const isOpen = (c: MarketingCard) => OPEN_STAGES.includes(c.marketing.stage);
 
 /** What the card is waiting on, in words, for My Requests and the lists. */
 export function waitingOnFor(card: MarketingCard): string | undefined {
@@ -113,8 +112,6 @@ export function isTight(card: MarketingCard, today: string): boolean {
 
 export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel" | "files";
 
-/** The actions the marketing team takes; the others are the requester's. */
-export const TEAM_ACTIONS: Action[] = ["schedule", "ask", "decline", "start", "finish", "reschedule"];
 /** Review decisions, which nobody makes on their own request. */
 const REVIEW_ACTIONS: Action[] = ["schedule", "ask", "decline"];
 
@@ -163,11 +160,6 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
 function must(card: MarketingCard, actor: Actor, action: Action) {
   const r = permission(card, actor, action);
   if (!r.ok) throw new WorkflowError(r.reason);
-}
-
-/** The team actions `actor` can take on this request now. */
-export function teamActionsFor(card: MarketingCard, actor: Actor): Action[] {
-  return TEAM_ACTIONS.filter((a) => permission(card, actor, a).ok);
 }
 
 /** Requests waiting for the weekly review that `actor` can review (not their own). */
@@ -379,4 +371,3 @@ export function suggestedDoneBy(card: MarketingCard, today: string): string {
   return due && due >= today ? due : addDays(today, LEAD_DAYS);
 }
 
-export { STAGE_LABEL };
