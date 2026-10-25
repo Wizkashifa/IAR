@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
 import { directory } from "@/lib/groups";
 import { ORG } from "@/lib/org";
 import { portalSettings } from "@/lib/portal-settings";
@@ -6,12 +12,15 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, saveRoom, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, saveMarketingSettings, savePoliciesDrive, saveRoom, saveTeamFund } from "./actions";
+import { libraryReader, policiesLibrary } from "@/lib/library";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
+import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Portal Settings" };
 
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
 const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W purchase requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
@@ -27,7 +36,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { ok, error } = await searchParams;
   const viewer = await requireViewer();
   if (!viewer.actingRoles.includes("admins")) redirect("/");
-  const [dir, settings, google] = await Promise.all([directory(), portalSettings(), googleRooms()]);
+  const [dir, settings, google, library, reader] = await Promise.all([directory(), portalSettings(), googleRooms(), policiesLibrary(), libraryReader()]);
+  // Policy files the room policy can be picked from (current ones, not the archive).
+  const policyFiles = library.state === "ok" ? library.library.files.filter((f) => f.folder !== "Archive").sort((a, b) => a.name.localeCompare(b.name)) : [];
   const rooms = mergeRooms(google, settings.rooms ?? {});
   const funds = effectiveTeamFunds(dir, settings.teamFunds, FUNDS);
   const teams = [...dir.teams].sort((a, b) => a.name.localeCompare(b.name));
@@ -37,14 +48,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <h1>Portal Settings</h1>
-      <p className="lead">
+      <ModuleHead
+        title="Portal Settings"
+        actions={<Button href="/admin/measures" icon="pie">Beta measures</Button>}
+        lead={
+          <>
         Who is on each committee or team, who chairs it and who directs it all come from Google Groups. Change people in{" "}
         <a href={GOOGLE_GROUPS} target="_blank" rel="noopener noreferrer">Google Admin → Groups</a>; the portal picks it up within 15 minutes. Here you set
         which fund each team charges and IAR&apos;s cards.
-      </p>
-      {ok && <div className="flash" role="status">{ok}</div>}
-      {error && <div className="callout bad" role="alert">{error}</div>}
+          </>
+        }
+      />
+      {ok && <Note tone="ok">{ok}</Note>}
+      {error && <Note tone="bad">{error}</Note>}
 
       <h2>Committees and teams ({teams.length})</h2>
       <p className="note">
@@ -52,7 +68,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         approver), and Members are members. {gaps ? `${gaps} need a chair or a fund.` : "Every team has a chair and a fund."}
       </p>
       {teams.length === 0 ? (
-        <div className="panel empty">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</div>
+        <Panel>
+          <EmptyState icon="info">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -74,16 +92,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 const queue = (QUEUE_ROLES[groupSlug(t.email)] ?? []).map((r) => QUEUE_LABEL[r]).join(", ");
                 return (
                   <tr key={t.email}>
-                    <td>
+                    <td data-label="Team">
                       <strong>{t.name}</strong>
                       <div className="sub">{t.email}</div>
                       {queue && <div className="sub">Also gives: {queue}</div>}
                     </td>
-                    <td>{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
-                    <td>{p.vices.join(", ") || <span className="sub">None</span>}</td>
-                    <td>{p.directors.join(", ") || <span className="sub">None</span>}</td>
-                    <td className="num">{p.memberCount}</td>
-                    <td>
+                    <td data-label="Chair">{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
+                    <td data-label="Vice chair">{p.vices.join(", ") || <span className="sub">None</span>}</td>
+                    <td data-label="Director">{p.directors.join(", ") || <span className="sub">None</span>}</td>
+                    <td data-label="People" className="num">{p.memberCount}</td>
+                    <td data-label="Fund">
                       <form action={saveTeamFund} className="row">
                         <input type="hidden" name="group" value={t.email} />
                         <select name="fund" defaultValue={saved ?? ""} aria-label={`Fund for ${t.name}`}>
@@ -112,7 +130,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         oversee. A director sees those committees&apos; requests and can approve them alongside the chair, except Social &amp; Welfare.
       </p>
       {pillarsOf(dir).length === 0 ? (
-        <div className="panel empty">No portal-pillar groups found yet.</div>
+        <Panel>
+          <EmptyState icon="info">No portal-pillar groups found yet.</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -126,12 +146,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {pillarsOf(dir).map((p) => (
                 <tr key={p.group}>
-                  <td>
+                  <td data-label="Pillar">
                     <strong>{p.name}</strong>
                     <div className="sub">{p.group}</div>
                   </td>
-                  <td>{p.directors.join(", ") || <span className="pill changes_requested">No director</span>}</td>
-                  <td>{p.teams.map(nameOf).join(", ")}</td>
+                  <td data-label="Director">{p.directors.join(", ") || <span className="pill changes_requested">No director</span>}</td>
+                  <td data-label="Committees">{p.teams.map(nameOf).join(", ")}</td>
                 </tr>
               ))}
             </tbody>
@@ -166,7 +186,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         can be booked through the portal and set what Google doesn&apos;t know: food, rooms that share a space (the full gym and its halves), and who may book.
       </p>
       {rooms.length === 0 ? (
-        <div className="panel empty">No room resources found in Google yet.</div>
+        <Panel>
+          <EmptyState icon="info">No room resources found in Google yet.</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -179,12 +201,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {rooms.map((r) => (
                 <tr key={r.id}>
-                  <td>
+                  <td data-label="Room">
                     <strong>{r.name}</strong>
                     <div className="sub">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
                     <div className="sub">{r.calendarId}</div>
                   </td>
-                  <td>
+                  <td data-label="Settings">
                     <form action={saveRoom} className="stack">
                       <input type="hidden" name="room" value={r.id} />
                       <div className="row">
@@ -221,7 +243,56 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <input type="checkbox" name={rule.id} defaultChecked={ruleOn(settings.eventRules ?? {}, rule.id)} /> {rule.name} <span className="sub">· {rule.policy}</span>
           </label>
         ))}
+        <label className="field">
+          <span>Link to the room reservation policy (optional)</span>
+          <input type="url" name="roomPolicyUrl" defaultValue={settings.roomPolicyUrl ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
+          <small>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</small>
+        </label>
+        {policyFiles.length > 0 && (
+          <label className="field">
+            <span>Or pick it from the Library</span>
+            <select name="roomPolicyFile" defaultValue={policyFiles.find((f) => f.url === settings.roomPolicyUrl)?.url ?? ""}>
+              <option value="">Use the link above</option>
+              {policyFiles.map((f) => (
+                <option key={f.id} value={f.url}>
+                  {f.name}{f.folder ? ` (${f.folder})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div><button className="button secondary" type="submit">Save rules</button></div>
+      </form>
+
+      <h2>Marketing files</h2>
+      <p className="note">Files people add to marketing requests (logos, photos, wording) go to this Shared Drive folder, one folder per year and per request. Until it&apos;s set, people share Google Drive links instead.</p>
+      <form action={saveMarketingSettings} className="panel stack">
+        <label className="field">
+          <span>Marketing Shared Drive folder</span>
+          <input name="marketingDriveFolder" defaultValue={settings.marketingDriveFolder ? `https://drive.google.com/drive/folders/${settings.marketingDriveFolder}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={500} />
+          <small>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</small>
+        </label>
+        <div><button className="button secondary" type="submit">Save folder</button></div>
+      </form>
+
+      <h2 id="library">Library: the Policies drive</h2>
+      <p className="note">
+        The Library lists IAR&apos;s Policies Shared Drive for everyone at IAR, read-only; files open in Google Drive. To connect it, add{" "}
+        {reader ? <code>{reader}</code> : "the portal's service account"} to the drive as a <strong>Viewer</strong> (Drive → the drive&apos;s name → Manage members), then paste the drive&apos;s address here.
+      </p>
+      <form action={savePoliciesDrive} className="panel stack">
+        <label className="field">
+          <span>Policies drive (its address from the browser, or its ID)</span>
+          <input name="policiesDrive" defaultValue={settings.policiesDrive ? `https://drive.google.com/drive/folders/${settings.policiesDrive}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={300} />
+          <small>
+            {library.state === "ok"
+              ? `Connected: ${library.library.files.length} files in ${library.library.folders.length} folders.`
+              : library.state === "error"
+                ? "Set, but the portal can't read it. Check the service account is a Viewer on the drive."
+                : "Not connected. Leave empty to keep the Library off."}
+          </small>
+        </label>
+        <div><button className="button secondary" type="submit">Save</button></div>
       </form>
 
       <h2>Google Chat spaces</h2>
@@ -259,9 +330,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <tbody>
               {settings.cards.map((c) => (
                 <tr key={c.last4}>
-                  <td>···{c.last4}</td>
-                  <td>{c.holderName}<div className="sub">{c.holderEmail}</div></td>
-                  <td>{shortFund(c.fund)}</td>
+                  <td data-label="Card">···{c.last4}</td>
+                  <td data-label="Cardholder">{c.holderName}<div className="sub">{c.holderEmail}</div></td>
+                  <td data-label="Fund">{shortFund(c.fund)}</td>
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />
@@ -274,7 +345,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </table>
         </div>
       )}
-      <form action={addCard} className="panel grid2" style={{ marginTop: 12 }}>
+      <form action={addCard} className={`panel grid2 ${styles.addcard}`}>
         <label className="field">
           <span>Last four digits</span>
           <input name="last4" inputMode="numeric" maxLength={4} pattern="\d{4}" required />

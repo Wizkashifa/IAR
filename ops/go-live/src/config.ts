@@ -52,11 +52,18 @@ export const ADMIN_SCOPES = [
 export const DELEGATION = [
   { scope: `${S}admin.directory.group.readonly`, as: "directory", why: "read who is in each group" },
   { scope: `${S}admin.directory.resource.calendar.readonly`, as: "directory", why: "read the room list" },
+  { scope: `${S}admin.directory.user.readonly`, as: "directory", why: "show people's names instead of email addresses" },
   { scope: `${S}gmail.send`, as: "mailbox", why: "send alert emails" },
   { scope: `${S}calendar.events`, as: "mailbox", why: "put room holds on the room calendars" },
 ] as const;
 
 export const delegationScopes = () => DELEGATION.map((d) => d.scope).join(",");
+
+/** "five scopes", for the delegation steps and messages. */
+export const scopeCount = () => {
+  const n: number = DELEGATION.length;
+  return `${["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"][n] ?? n} scope${n === 1 ? "" : "s"}`;
+};
 
 /** One Chat space per role or queue team. `roles` are the Portal Settings keys it serves. */
 export type SpaceDef = { key: string; title: string; roles: string[]; group: (domain: string) => string };

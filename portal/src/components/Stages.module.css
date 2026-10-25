@@ -1,0 +1,24 @@
+@layer components {
+  .wrap { min-width: 0; }
+  .stages { display: flex; gap: 0; margin: 0; padding: 0 0 2px; list-style: none; overflow-x: auto; scrollbar-width: thin; }
+  /* relative: keeps the screen-reader-only labels inside the scrolling bar. */
+  .stage { position: relative; flex: 1 0 84px; display: flex; flex-direction: column; gap: 6px; font-size: var(--t-xs); color: var(--ink-3); min-width: 0; }
+  .bar { display: block; height: 4px; margin-right: 3px; border-radius: 2px; background: var(--line); }
+  .label { padding-right: var(--s-2); }
+  .done { color: var(--ink-2); }
+  .done .bar { background: var(--accent); }
+  .now { color: var(--ink); font-weight: 600; }
+  .now .bar { background: var(--gold); }
+  .skip { opacity: 0.45; }
+  .flag { margin-top: var(--s-2); }
+  .summary { display: none; margin: var(--s-2) 0 0; font-size: var(--t-sm); color: var(--ink-2); }
+  .summary strong { color: var(--ink); }
+
+  /* Phones: all the bars on one line, labels only for screen readers, and the summary line instead. */
+  @media (max-width: 640px) {
+    .stages { overflow: visible; }
+    .stage { flex: 1 1 0; }
+    .label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    .summary { display: block; }
+  }
+}

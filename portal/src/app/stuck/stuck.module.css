@@ -1,0 +1,26 @@
+/* What's stuck (page.tsx): filter chips, the age bands and the reminder button, matching the shared list's look. */
+@layer pages {
+  .filters { display: flex; flex-direction: column; gap: var(--s-2); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: var(--t-sm); white-space: nowrap; text-decoration: none;
+    transition: border-color var(--speed), background-color var(--speed);
+  }
+  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
+  .chip:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .chip span { color: var(--ink-3); font-weight: 700; }
+  .on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+  .on span { color: var(--accent-text); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  /* Age bands, like the shared list's "Needs you" bands. */
+  .band {
+    display: flex; align-items: center; gap: 6px; margin: 0; padding: 10px 16px 6px;
+    font-family: var(--font); font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-3); background: var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .band span { font-weight: 500; }
+  section:first-child > .band { border-top: 0; }
+  .remind { display: flex; }
+  .sent { font-size: var(--t-xs); color: var(--ink-3); white-space: nowrap; }
+}

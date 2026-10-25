@@ -209,7 +209,8 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
   }
   await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
   revalidatePath("/events");
-  redirect(`/events/${card.id}?ok=${card0 ? "resubmitted" : created ? "asked" : "submitted"}`);
+  // The request page says "Sent." with what happens next (RequestPage `sent`).
+  redirect(`/events/${card.id}?sent=1`);
 }
 
 /** Approve, send back, deny or cancel. */

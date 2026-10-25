@@ -13,6 +13,8 @@ import { canViewMarketing } from "./access";
 import { marketingCommentNotices, marketingNotices } from "./notices";
 import { isMonday, planDaily } from "./reminders";
 import * as wf from "./workflow";
+import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf } from "./files";
+import { checkDriveFolder } from "../settings-rules";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const mk: wf.Actor = { email: "mk@x.org", name: "Mark Eting", roles: ["member", "marketing"] };
@@ -428,4 +430,59 @@ test("daily: done-by reminders for tomorrow, today or past, once per date", () =
   // Rescheduled to a new date that comes due: a new reminder.
   const moved = wf.reschedule(p.reminded[0], mk, T(0), "2026-10-24");
   assert.equal(planDaily([moved], "2026-10-23").notices.length, 1);
+});
+
+// ---- Files -----------------------------------------------------------------
+
+const MB = 1024 * 1024;
+
+test("files: the types that start from the requester's material ask for them", () => {
+  assert.deepEqual([...FILE_KINDS].sort(), ["badge", "custom", "graphic", "highlight", "signage", "webpage"]);
+  assert.equal(asksForFiles("graphic"), true);
+  assert.equal(asksForFiles("redirect"), false);
+  assert.equal(asksForFiles("announce"), false);
+});
+
+test("files: images, artwork and documents up to 10 MB each, a few at a time, 20 per request", () => {
+  assert.deepEqual(checkFiles([{ name: "logo.ai", size: 2 * MB }, { name: "photo.HEIC", size: 3 * MB }, { name: "wording.docx", size: 20_000 }]), []);
+  assert.match(checkFiles([{ name: "setup.exe", size: 100 }])[0], /setup\.exe: use an image/);
+  assert.match(checkFiles([{ name: "big.png", size: 11 * MB }])[0], /over 10 MB/);
+  const many = Array.from({ length: MAX_PER_UPLOAD + 1 }, (_, i) => ({ name: `p${i}.jpg`, size: 1000 }));
+  assert.match(checkFiles(many)[0], /at most 8 files at a time/);
+  assert.match(checkFiles([{ name: "one.jpg", size: 1000 }], MAX_PER_REQUEST)[0], /up to 20 files/);
+  const heavy = Array.from({ length: 3 }, (_, i) => ({ name: `p${i}.png`, size: 9 * MB }));
+  assert.match(checkFiles(heavy).join(" "), /over 25 MB together/);
+});
+
+test("files: the requester and the marketing team add files; nobody adds to a closed request", () => {
+  const c = submitted();
+  assert.equal(wf.permission(c, volunteer, "files").ok, true);
+  assert.equal(wf.permission(c, mk, "files").ok, true);
+  assert.equal(wf.permission(c, chair, "files").ok, false);
+  assert.equal(wf.permission(c, admin, "files").ok, false);
+
+  const withFiles = wf.addFiles(c, volunteer, T(1), [{ name: "logo.png", size: 1000 }, { name: "photo.jpg", size: 2000, driveFileId: "abc", url: "https://drive.google.com/file/d/abc" }]);
+  assert.equal(filesOf(withFiles.marketing).length, 2);
+  assert.equal(withFiles.marketing.files?.[0].by, "vol@x.org");
+  assert.equal(withFiles.marketing.stage, "review", "adding files doesn't move the request");
+  assert.equal(withFiles.marketing.history.at(-1)?.action, "Added 2 files");
+  assert.equal(withFiles.marketing.history.at(-1)?.note, "logo.png, photo.jpg");
+
+  // Done work can still get a file; declined and cancelled requests can't.
+  const done = wf.finish(wf.schedule(withFiles, mk2, T(1), "2026-11-10"), mk2, T(2));
+  assert.equal(wf.addFiles(done, mk, T(3), [{ name: "final.pdf", size: 10 }]).marketing.files?.length, 3);
+  assert.throws(() => wf.addFiles(wf.cancel(c, volunteer, T(1)), volunteer, T(2), [{ name: "x.png", size: 1 }]), /closed/);
+  assert.throws(() => wf.addFiles(c, volunteer, T(1), []), /Choose a file/);
+  const full = wf.addFiles(c, volunteer, T(1), Array.from({ length: MAX_PER_REQUEST }, (_, i) => ({ name: `f${i}.png`, size: 1 })));
+  assert.throws(() => wf.addFiles(full, mk, T(2), [{ name: "one-more.png", size: 1 }]), /up to 20 files/);
+});
+
+test("files: the marketing folder setting takes a Drive folder link or ID", () => {
+  assert.deepEqual(checkDriveFolder("https://drive.google.com/drive/folders/1AbC_def-GHIjklMNOP"), { ok: true, id: "1AbC_def-GHIjklMNOP" });
+  assert.deepEqual(checkDriveFolder("https://drive.google.com/drive/u/0/folders/1AbC_def-GHIjklMNOP?usp=sharing"), { ok: true, id: "1AbC_def-GHIjklMNOP" });
+  assert.deepEqual(checkDriveFolder(" 1AbC_def-GHIjklMNOP "), { ok: true, id: "1AbC_def-GHIjklMNOP" });
+  assert.deepEqual(checkDriveFolder(""), { ok: true, id: "" });
+  assert.equal(checkDriveFolder("https://example.com/folders/1AbC_def-GHIjklMNOP").ok, false);
+  assert.equal(checkDriveFolder("https://drive.google.com/file/d/1AbC_def-GHIjklMNOP/view").ok, false);
+  assert.equal(checkDriveFolder("my folder").ok, false);
 });

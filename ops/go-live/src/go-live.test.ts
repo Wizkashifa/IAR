@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { SETTINGS_DOC, SPACES } from "./config";
+import { DELEGATION, SETTINGS_DOC, SPACES, scopeCount } from "./config";
 import { dnsEmail } from "./email";
 import { fieldPath, fromFields, toFields } from "./firestore-values";
 import { FakeGoogle } from "./google-fake";
@@ -154,7 +154,7 @@ test("apply from nothing creates everything, then a second run plans no changes"
   const run_ = `portal-runtime@${P}.iam.gserviceaccount.com`;
   assert.ok(fake.saBindings.get(run_)?.has(`serviceAccount:${run_}|roles/iam.serviceAccountTokenCreator`));
   assert.ok(!fake.saBindings.get(run_)?.has(`user:admin@x.org|roles/iam.serviceAccountTokenCreator`), "the admin's test grant is removed");
-  assert.equal(state.delegationVerified?.split("|")[1].split(",").length, 4);
+  assert.equal(state.delegationVerified?.split("|")[1].split(",").length, 5);
 
   // Workspace
   assert.ok(fake.users.get("portal@x.org")?.license);
@@ -204,6 +204,11 @@ test("apply from nothing creates everything, then a second run plans no changes"
   assert.equal(fake.buckets.get(`${P}-firestore-backups`)?.deleteAfterDays, 30);
   assert.equal(fake.uptime.length, 1);
   assert.equal(fake.alerts[0].channelEmails[0], "portal-role-admin@x.org");
+  assert.deepEqual(fake.logMetrics.map((m) => m.name), ["iar_portal_server_errors", "iar_portal_health"]);
+  assert.match(fake.logMetrics[0].filter, /service_name="iar-portal" AND httpRequest\.status>=500/);
+  assert.match(fake.logMetrics[1].filter, /jsonPayload\.portalHealth:\*/);
+  for (const name of ["IAR Portal server errors", "IAR Portal can't reach Google"])
+    assert.deepEqual(fake.alerts.find((a) => a.displayName === name)?.channelEmails, ["portal-role-admin@x.org"], name);
   assert.equal(fake.budgets[0].amountUsd, 25);
   assert.equal(fake.cleanupKeep, 10);
 
@@ -433,4 +438,12 @@ test("the DNS email has the plan's wording and the exact records", () => {
   assert.match(e.text, /pki\.goog and letsencrypt\.org/);
   assert.match(e.text, /JazakAllahu khairan\.\n\nPortal Admin$/);
   assert.match(e.html, /<td[^>]*>ghs\.googlehosted\.com\.<\/td>/);
+});
+
+test("delegation: names come from the public directory, read-only, as the directory user", () => {
+  const names = DELEGATION.find((d) => d.scope.endsWith("/admin.directory.user.readonly"));
+  assert.ok(names);
+  assert.equal(names.as, "directory");
+  assert.ok(DELEGATION.every((d) => !/\/admin\.directory\.user$/.test(d.scope)), "never the full user scope");
+  assert.equal(scopeCount(), "five scopes");
 });

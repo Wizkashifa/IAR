@@ -1,0 +1,12 @@
+@layer pages {
+  .list { list-style: none; margin: 0; padding: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: var(--t-sm); text-decoration: none;
+  }
+  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
+  .chip span { color: var(--ink-3); font-weight: 700; }
+  .on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+  .done summary { cursor: pointer; font-family: var(--font-head); font-weight: 600; margin-bottom: var(--s-2); }
+}

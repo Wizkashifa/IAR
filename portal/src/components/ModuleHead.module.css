@@ -1,0 +1,6 @@
+@layer components {
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+  .text { min-width: 0; flex: 1 1 320px; }
+  .text :global(.lead) { margin-bottom: 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+}

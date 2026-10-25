@@ -1,20 +1,26 @@
 import "server-only";
 import { daily as events } from "./events/daily";
 import { daily as marketing } from "./marketing/daily";
+import { sendDigests, sendHeldAlerts } from "./notifications";
 import { daily as purchases } from "./purchases/daily";
 import { daily as tickets } from "./tickets/daily";
 
 /**
- * The daily job: Cloud Scheduler calls /api/daily every morning (set up by
- * go-live). Each module does its part: reminders, the morning digest,
- * escalations, preventive maintenance tickets. One module failing doesn't
+ * The daily job: Cloud Scheduler calls /api/daily every morning at 7:00
+ * Raleigh time (set up by go-live). Each module does its part: reminders,
+ * the morning digest, escalations, preventive maintenance tickets. Then the
+ * messages held overnight for people with quiet hours go out, and each
+ * person who chose the morning digest gets theirs. One part failing doesn't
  * stop the others.
  */
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const JOBS: { name: string; run: (now: Date) => Promise<string> }[] = [
+  { name: "Messages held overnight", run: async (now) => `${plural(await sendHeldAlerts(now), "message", "messages")} sent.` },
   { name: "Purchase Requests", run: purchases },
   { name: "Events & Rooms", run: events },
   { name: "Marketing Requests", run: marketing },
   { name: "IT & Maintenance", run: tickets },
+  { name: "Update digests", run: async (now) => `${plural(await sendDigests(now), "digest", "digests")} sent.` },
 ];
 
 export type DailyResult = { job: string; ok: boolean; summary: string };

@@ -1,17 +1,32 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { EmptyState } from "@/components/EmptyState";
+import { ItemList, rowsFor } from "@/components/ItemList";
+import { ItemRow } from "@/components/ItemRow";
+import { HelpBox } from "@/components/HelpBox";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
+import { Pill, type Tone } from "@/components/Pill";
 import { cardStore, type Card } from "@/lib/cards";
-import { requireViewer } from "@/lib/viewer";
+import { emailsIn } from "@/lib/card-row";
 import { eventContext } from "@/lib/events/context";
-import { lockedCount, marketingQueue, nearTerm, queueItems, queueTeamsFor, recentlyDone } from "@/lib/events/queues";
+import { lockedCount, marketingQueue, nearTerm, queueItems, queueTeamsFor, recentlyDone, type QueueItem } from "@/lib/events/queues";
 import { roomById } from "@/lib/events/rooms";
 import { addDays, dayText, timeText } from "@/lib/events/series";
-import { TEAM_NAME } from "@/lib/events/tasks";
-import type { TaskTeam } from "@/lib/events/types";
+import { TASK_STATUS_LABEL, TEAM_NAME } from "@/lib/events/tasks";
+import type { EventTask, TaskTeam } from "@/lib/events/types";
 import { isEventCard } from "@/lib/events/workflow";
-import { Flash, fmtDay } from "../ui";
-import { TaskButtons, TaskPill } from "../events/ops-ui";
+import { nameResolver } from "@/lib/names";
+import { actorFor } from "@/lib/people";
+import { requireViewer } from "@/lib/viewer";
+import { needsContext } from "@/lib/waiting";
+import { fmtDay } from "../ui";
+import { TaskButtons } from "../events/ops-ui";
+import styles from "./queues.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Team Queues" };
 
 const MESSAGES: Record<string, string> = {
   "task-taken": "It's yours. It shows your name on the event.",
@@ -20,26 +35,33 @@ const MESSAGES: Record<string, string> = {
   "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
 };
 
-const MK_STAGE: Record<string, string> = { scheduled: "Scheduled", doing: "In progress" };
+const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
 
 export default async function QueuesPage({ searchParams }: { searchParams: Promise<{ team?: string; all?: string; ok?: string; error?: string }> }) {
   const sp = await searchParams;
   const viewer = await requireViewer();
   const teams = queueTeamsFor(viewer.actingRoles, viewer.roles.includes("admins"));
+  const head = <ModuleHead title="Team Queues" lead="Your team's open tasks across every approved event, soonest due first. Tasks unlock when an event is approved." />;
   if (!teams.length) {
     return (
-      <>
-        <h1>Team Queues</h1>
-        <div className="panel empty">You&apos;re not on a team that gets event tasks (Marketing, IT Services, Facility Maintenance or Safety &amp; Security). The IAR office sees every queue.</div>
-      </>
+      <div className="stack">
+        {head}
+        <Panel>
+          <EmptyState icon="tasks">
+            You&apos;re not on a team that gets event tasks (Marketing, IT Services, Facility Maintenance or Safety &amp; Security). The IAR office sees every queue.
+          </EmptyState>
+        </Panel>
+      </div>
     );
   }
   const team: TaskTeam = teams.includes(sp.team as TaskTeam) ? (sp.team as TaskTeam) : teams[0];
   const store = await cardStore();
   const ctx = await eventContext();
-  const [events, marketing] = await Promise.all([
+  const [events, marketing, actor, needs] = await Promise.all([
     store.listByType("event", ["submitted", "in_review", "approved", "close_out"]),
     team === "marketing" ? store.listByType("marketing", ["approved"]) : Promise.resolve([] as Card[]),
+    actorFor(viewer),
+    needsContext(),
   ]);
   const cards = events.filter(isEventCard);
   const allOpen = queueItems(cards, team, ctx.today);
@@ -52,107 +74,89 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
   const mk = marketingQueue(marketing);
   const back = `/queues?team=${team}`;
   const roomNames = (ids: string[]) => ids.map((r) => roomById(ctx.rooms, r)?.name ?? r).join(", ") || "Off-site";
+  const tasks = [...open, ...done];
+  const names = await nameResolver([...emailsIn([...tasks.map((t) => t.card), ...mk]), ...tasks.flatMap((t) => (t.task.assignee ? [t.task.assignee] : []))]);
+
+  const row = ({ card, task, overdue }: QueueItem, withButtons: boolean) => (
+    <ItemRow
+      key={`${card.id}-${task.id}`}
+      title={<Link href={`/events/${card.id}#tasks`}>{task.title}</Link>}
+      id={card.id}
+      sub={
+        <>
+          {card.title} · {card.event.committeeName} · {roomNames(card.event.rooms)} · {task.date ? dayText(task.date) : dayText(card.event.dates[0] ?? card.event.date)}
+          {card.event.dates.length > 1 && !task.date ? ` (series, ${card.event.dates.length} dates)` : ""}, {timeText(card.event.start)}–{timeText(card.event.end)} · from {names(card.ownerEmail)}
+        </>
+      }
+      who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `${task.team === "marketing" ? "Start marketing" : "Due"} ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}
+      state={task.status === "done" ? "done" : overdue ? "bad" : task.assignee?.toLowerCase() === viewer.email.toLowerCase() || !task.assignee ? "act" : "wait"}
+      right={
+        <>
+          <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} dot>
+            {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
+          </Pill>
+          {withButtons && <TaskButtons card={card} task={task} roles={viewer.actingRoles} email={viewer.email} back={back} />}
+        </>
+      }
+    />
+  );
 
   return (
-    <>
-      <div className="pagehead">
-        <div>
-          <h1>Team Queues</h1>
-          <p className="lead">Your team&apos;s open tasks across every approved event, soonest due first. Tasks unlock when an event is approved.</p>
-        </div>
-      </div>
-      <Flash ok={sp.ok} error={sp.error} messages={MESSAGES} />
+    <div className="stack">
+      {head}
+      <HelpBox module="teams" />
+      {sp.error &&<Note tone="bad">{sp.error}</Note>}
+      {sp.ok && MESSAGES[sp.ok] && <Note tone="ok">{MESSAGES[sp.ok]}</Note>}
 
       {teams.length > 1 && (
-        <div className="filters">
+        <nav className={styles.chips} aria-label="Team">
           {teams.map((t) => (
-            <Link key={t} href={`/queues?team=${t}`} className={`filter${t === team ? " on" : ""}`}>
-              {TEAM_NAME[t]}<span>{queueItems(cards, t, ctx.today).length}</span>
+            <Link key={t} href={`/queues?team=${t}`} className={t === team ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={t === team ? "page" : undefined}>
+              {TEAM_NAME[t]} <span>{queueItems(cards, t, ctx.today).length}</span>
             </Link>
           ))}
-        </div>
+        </nav>
       )}
 
-      <h2>{TEAM_NAME[team]}: open tasks ({allOpen.length})</h2>
-      {allOpen.length === 0 ? (
-        <div className="panel empty">Nothing open for {TEAM_NAME[team]}. New tasks show up here when an event is approved.</div>
-      ) : (
-        <ul className="queue">
-          {open.map(({ card, task, overdue }) => (
-            <li key={`${card.id}-${task.id}`} className="qitem">
-              <div className="qmain">
-                <div><strong>{task.title}</strong></div>
-                <div className="sub">
-                  <Link href={`/events/${card.id}#tasks`}>{card.title}</Link> · {card.id} · {card.event.committeeName} · {roomNames(card.event.rooms)}
-                </div>
-                <div className="sub">
-                  Event {task.date ? dayText(task.date) : dayText(card.event.dates[0] ?? card.event.date)}{card.event.dates.length > 1 && !task.date ? ` (series, ${card.event.dates.length} dates)` : ""}, {timeText(card.event.start)}–{timeText(card.event.end)}
-                  {" · "}
-                  <span className={overdue ? "late" : ""}>{task.team === "marketing" ? "start marketing" : "due"} {fmtDay(task.dueDate)}</span>
-                  {task.assignee ? ` · ${task.assignee}` : " · nobody yet"}
-                  {" · "}requester {card.ownerEmail}
-                </div>
-              </div>
-              <div className="taskside">
-                <TaskPill task={task} overdue={overdue} />
-                <TaskButtons card={card} task={task} roles={viewer.actingRoles} email={viewer.email} back={back} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Panel title={`${TEAM_NAME[team]}: open tasks`} right={<span>{allOpen.length} open</span>} flush>
+        {allOpen.length === 0 ? (
+          <EmptyState icon="tasks">Nothing open for {TEAM_NAME[team]}. New tasks show up here when an event is approved.</EmptyState>
+        ) : (
+          <ul className={styles.list}>{open.map((q) => row(q, true))}</ul>
+        )}
+      </Panel>
 
       {later > 0 && (
         <p className="note">
           {later} more for later dates of a series. <Link href={`/queues?team=${team}&all=1`}>Show all</Link>
         </p>
       )}
-      {locked > 0 &&<p className="note">{locked} more {TEAM_NAME[team]} task{locked === 1 ? " is" : "s are"} waiting on events still in review, and will show up here once they&apos;re approved.</p>}
+      {locked > 0 && (
+        <p className="note">
+          {locked} more {TEAM_NAME[team]} task{locked === 1 ? " is" : "s are"} waiting on events still in review, and will show up here once they&apos;re approved.
+        </p>
+      )}
 
       {team === "marketing" && (
-        <>
-          <h2>Marketing requests ({mk.length})</h2>
-          <p className="note">Scheduled and in-progress requests that aren&apos;t tied to an event. New ones wait for the weekly review in <Link href="/marketing">Marketing Requests</Link>.</p>
-          {mk.length === 0 ? (
-            <div className="panel empty">No marketing requests scheduled right now.</div>
-          ) : (
-            <ul className="queue">
-              {mk.map((c) => (
-                <li key={c.id} className="qitem">
-                  <div className="qmain">
-                    <div><Link href={`/marketing/${c.id}`}><strong>{c.title}</strong></Link></div>
-                    <div className="sub">
-                      {c.id} · {c.committee}
-                      {c.marketing?.doneBy ? <> · <span className={c.marketing.doneBy < ctx.today ? "late" : ""}>done by {fmtDay(c.marketing.doneBy)}</span></> : ""}
-                      {c.marketing?.assignee ? ` · ${c.marketing.assignee}` : ""}
-                    </div>
-                  </div>
-                  <div className="taskside">
-                    <span className={`pill ${c.marketing?.stage === "doing" ? "task-doing" : "task-todo"}`}>{MK_STAGE[c.marketing?.stage ?? ""] ?? ""}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <ItemList
+          title="Marketing requests"
+          rows={rowsFor(mk, actor, { names, today: ctx.today, ctx: needs })}
+          empty={
+            <>
+              No marketing requests scheduled right now. New ones wait for the weekly review in <Link href="/marketing">Marketing Requests</Link>.
+            </>
+          }
+        />
       )}
 
       {done.length > 0 && (
-        <details style={{ marginTop: 24 }}>
-          <summary><strong>Recently done ({done.length})</strong></summary>
-          <ul className="queue">
-            {done.map(({ card, task }) => (
-              <li key={`${card.id}-${task.id}`} className="qitem">
-                <div className="qmain">
-                  <div>{task.title}</div>
-                  <div className="sub"><Link href={`/events/${card.id}#tasks`}>{card.title}</Link> · {card.id}{task.assignee ? ` · ${task.assignee}` : ""}{task.note ? ` · “${task.note}”` : ""}</div>
-                </div>
-                <div className="taskside"><TaskPill task={task} /></div>
-              </li>
-            ))}
-          </ul>
+        <details className={styles.done}>
+          <summary>Recently done ({done.length})</summary>
+          <Panel flush>
+            <ul className={styles.list}>{done.map((q) => row(q, false))}</ul>
+          </Panel>
         </details>
       )}
-    </>
+    </div>
   );
 }

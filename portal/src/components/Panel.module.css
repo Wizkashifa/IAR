@@ -1,0 +1,11 @@
+@layer components {
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); min-width: 0; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+  .head > :is(h2, h3) { margin: 0; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
+  .right { display: flex; align-items: center; gap: var(--s-2); color: var(--ink-2); font-size: var(--t-sm); }
+  /* A link in the header row ("See all"): a 24px tap target without changing how it looks. */
+  .right a { display: inline-block; padding-block: 4px; }
+  .body { padding: var(--s-4); }
+  /* Lists and tables run edge to edge. */
+  .flush { padding: 0; }
+}

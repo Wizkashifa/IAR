@@ -1,14 +1,22 @@
-import { statusText } from "@/lib/status-text";
-import Link from "next/link";
-import { cardStore, TYPE_LABEL, type Card } from "@/lib/cards";
-import { actorFor } from "@/lib/people";
+import type { Metadata } from "next";
+import { Button } from "@/components/Button";
+import { ItemList, rowsFor } from "@/components/ItemList";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Panel } from "@/components/Panel";
+import { searchPolicies } from "@/lib/library";
 import { canOpenCard } from "@/lib/access";
-import { hrefOf } from "@/lib/card-links";
+import { todayLocal } from "@/lib/away";
+import { emailsIn } from "@/lib/card-row";
+import { cardStore, type Card } from "@/lib/cards";
+import { nameResolver } from "@/lib/names";
+import { actorFor } from "@/lib/people";
 import { matchCards, requestNumber } from "@/lib/search";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDate, fmtMoney } from "../purchases/ui";
+import { needsContext } from "@/lib/waiting";
+import styles from "./search.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Search" };
 
 /** How far back search looks (most recently updated cards). */
 const RECENT = 500;
@@ -28,53 +36,44 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     const canSee = (c: Card) => canOpenCard(c, { ...actor, seeAll: viewer.roles.includes("admins") });
     results = matchCards([...(exact ? [exact] : []), ...recent], q).filter(canSee).slice(0, 50);
   }
+  const [names, ctx, policies] = await Promise.all([nameResolver(emailsIn(results)), needsContext(), q && !requestNumber(q) ? searchPolicies(q) : Promise.resolve(null)]);
+  // Someone else's request says whose it is.
+  const rows = rowsFor(results, actor, { names, today: todayLocal(), ctx }).map((r, i) =>
+    results[i].ownerEmail.toLowerCase() === actor.email ? r : { ...r, sub: `${r.sub} · from ${names(results[i].ownerEmail)}` },
+  );
 
   return (
-    <>
-      <h1>Search</h1>
-      <form action="/search" className="searchform">
-        <input type="search" name="q" defaultValue={q} placeholder="Request number (PO-12001, EV-1101) or words from the title, payee or committee" aria-label="Search requests" autoFocus />
-        <button className="button" type="submit">Search</button>
+    <div className="stack">
+      <ModuleHead title="Search" lead="Find any request you can open, by its number or by words from its title, payee or committee." />
+      <form action="/search" className={styles.form} role="search">
+        <input type="search" name="q" defaultValue={q} placeholder="PO-12001, EV-1101, or words like “halaqa snacks”" aria-label="Search requests" autoFocus />
+        <Button type="submit" variant="primary" icon="search">
+          Search
+        </Button>
       </form>
-      {q && results.length === 0 && (
-        <div className="panel empty">
-          Nothing matches “{q}” among requests you can open. Search covers the {RECENT} most recently updated requests; for an older one, search its number.
-        </div>
+      {q && (
+        <ItemList
+          title={`Results for “${q}”`}
+          right={<span>{results.length === 50 ? "First 50" : results.length}</span>}
+          rows={rows}
+          empty={`Nothing matches “${q}” among requests you can open. Search looks through the ${RECENT} most recently updated requests; for an older one, search its number.`}
+        />
       )}
-      {results.length > 0 && (
-        <div className="tablewrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Request</th>
-                <th>Status</th>
-                <th>Waiting on</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((c) => {
-                const href = hrefOf(c);
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      {href ? <Link href={href}><strong>{c.title}</strong></Link> : <strong>{c.title}</strong>}
-                      <div className="sub">
-                        {TYPE_LABEL[c.type]} {c.id} · {c.committee}
-                        {c.amount !== undefined && ` · ${fmtMoney(c.amount)}`}
-                        {c.ownerEmail.toLowerCase() !== actor.email && ` · ${c.ownerEmail}`}
-                      </div>
-                    </td>
-                    <td><span className={`pill ${c.status}`}>{statusText(c)}</span></td>
-                    <td>{c.waitingOn ?? <span className="sub">Nothing</span>}</td>
-                    <td className="sub nowrap">{fmtDate(c.updatedAt)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      {policies && policies.length > 0 && (
+        <Panel title="Policies" right={<a href={`/library?q=${encodeURIComponent(q)}`}>See all in the Library</a>} flush>
+          <ul className={styles.policies}>
+            {policies.slice(0, 5).map((f) => (
+              <li key={f.id}>
+                <a href={f.url} target="_blank" rel="noopener noreferrer">
+                  {f.name}
+                  <span className="sr-only"> (opens in Google Drive)</span>
+                </a>
+                <span className={styles.policySub}>{[f.kind.label, f.folder].filter(Boolean).join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }

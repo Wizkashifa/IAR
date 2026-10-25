@@ -2,15 +2,21 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { Button } from "@/components/Button";
+import { FileDrop } from "@/components/FileDrop";
+import { FormActions } from "@/components/Field";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
+import styles from "../tickets.module.css";
 import { STATUS_LABEL, TEAM_LABEL, URGENCY, type TicketStatus, type TicketTeam } from "@/lib/tickets/types";
 import type { ImportState } from "../actions";
 
-function Submit({ label, busy, secondary }: { label: string; busy: string; secondary?: boolean }) {
+function Submit({ label, busy }: { label: string; busy: string }) {
   const { pending } = useFormStatus();
   return (
-    <button className={`button${secondary ? " secondary" : ""}`} type="submit" disabled={pending}>
+    <Button variant="primary" type="submit" disabled={pending}>
       {pending ? busy : label}
-    </button>
+    </Button>
   );
 }
 
@@ -21,11 +27,11 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
     const n = state.created?.length ?? 0;
     return (
       <>
-        <div className="flash" role="status">
+        <Note tone="ok">
           {n === 0 ? "Nothing new was imported." : `Imported ${n} ticket${n === 1 ? "" : "s"} from Jira.`}
           {state.alreadyThere ? ` ${state.alreadyThere} had already been imported by someone else and were skipped.` : ""}
-        </div>
-        {state.failed ? <div className="error">{state.failed} couldn&apos;t be saved. Import the same file again to retry them; nothing is imported twice.</div> : null}
+        </Note>
+        {state.failed ? <Note tone="bad">{state.failed} couldn&apos;t be saved. Import the same file again to retry them; nothing is imported twice.</Note> : null}
         {n > 0 && (
           <div className="tablewrap">
             <table className="table">
@@ -51,15 +57,15 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
             </table>
           </div>
         )}
-        <p className="row spaced">
-          <Link href="/it-maintenance" className="button">
+        <FormActions sticky={false}>
+          <Button variant="primary" href="/it-maintenance?view=team">
             Go to the board
-          </Link>
+          </Button>
           {/* A full reload starts the form over. */}
-          <a href="/it-maintenance/import" className="button secondary">
+          <a href="/it-maintenance/import" className={styles.linkBtn}>
             Import another file
           </a>
-        </p>
+        </FormActions>
       </>
     );
   }
@@ -70,8 +76,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
     const teams = Object.entries(p.counts.team) as [TicketTeam, number][];
     return (
       <>
-        <h2>What would happen</h2>
-        <div className="panel">
+        <Panel title="What would happen">
           <p>
             <strong>{p.ready.length}</strong> ticket{p.ready.length === 1 ? "" : "s"} will be created
             {teams.length > 0 && <> ({teams.map(([t, n]) => `${n} ${TEAM_LABEL[t]}`).join(", ")})</>}.
@@ -87,7 +92,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           )}
           {p.alreadyImported.length > 0 && <p className="sub">{p.alreadyImported.length} already imported earlier: skipped ({p.alreadyImported.map((x) => x.key).join(", ")}).</p>}
           {p.skippedDone.length > 0 && <p className="sub">{p.skippedDone.length} already done in Jira: skipped{state.includeDone ? "" : " (tick “Also bring over done issues” to keep them as closed tickets)"}.</p>}
-        </div>
+        </Panel>
 
         {p.problems.length > 0 && (
           <>
@@ -117,9 +122,9 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
         )}
 
         {p.unmatchedPeople.length > 0 && (
-          <div className="callout info">
+          <Note tone="info">
             Jira gave names, not email addresses, for: {p.unmatchedPeople.join(", ")}. Their tickets come over unassigned, with the name in the history; pick who has each one on the board. Where they reported it, you become the reporter of record.
-          </div>
+          </Note>
         )}
 
         {p.ready.length > 0 && (
@@ -155,45 +160,45 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           </>
         )}
 
-        <form action={formAction} className="row spaced">
+        <form action={formAction}>
           <input type="hidden" name="step" value="import" />
           <input type="hidden" name="includeDone" value={state.includeDone ? "1" : ""} />
           <textarea name="csv" defaultValue={state.csv} hidden readOnly />
-          {p.ready.length > 0 && <Submit label={`Import ${p.ready.length} ticket${p.ready.length === 1 ? "" : "s"}`} busy="Importing…" />}
-          <a href="/it-maintenance/import" className="button secondary">
-            Start over
-          </a>
+          <FormActions sticky={false}>
+            {p.ready.length > 0 && <Submit label={`Import ${p.ready.length} ticket${p.ready.length === 1 ? "" : "s"}`} busy="Importing…" />}
+            <a href="/it-maintenance/import" className={styles.linkBtn}>
+              Start over
+            </a>
+          </FormActions>
         </form>
       </>
     );
   }
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="stack">
       {state.error && (
-        <div className="error" role="alert">
-          {state.error}
+        <div role="alert">
+          <Note tone="bad">{state.error}</Note>
         </div>
       )}
-      <fieldset className="section">
-        <legend>Jira export</legend>
-        <ol className="steps">
+      <Panel title="Jira export">
+        <div className="stack">
+        <ol className={styles.steps}>
           <li>In Jira, open the facilities project&apos;s issues (a filter of the open ones is enough).</li>
           <li>Choose Export → Export CSV (all fields).</li>
           <li>Upload the file here. You&apos;ll see what would happen before anything is saved.</li>
         </ol>
-        <label className="field">
-          <span>CSV file</span>
-          <input type="file" name="file" accept=".csv,text/csv" required />
-        </label>
-        <label className="inline spaced">
+        <FileDrop name="file" label="CSV file" accept={["text/csv", ".csv"]} multiple={false} maxSizeMb={5} required />
+        <label className={styles.check}>
           <input type="checkbox" name="includeDone" /> Also bring over done issues, as closed tickets (for the record)
         </label>
-      </fieldset>
+        </div>
+      </Panel>
       <input type="hidden" name="step" value="preview" />
-      <div>
+      <FormActions sticky={false}>
         <Submit label="Preview" busy="Reading the file…" />
-      </div>
+      </FormActions>
     </form>
   );
 }

@@ -1,12 +1,23 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { cardStore, type CardStatus } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
+import { todayLocal } from "@/lib/away";
+import { nameResolver } from "@/lib/names";
+import { emailsIn, type RowData } from "@/lib/card-row";
+import { groupForViewer } from "@/lib/needs-you";
 import { isMarketingCard, reviewableBy, type MarketingCard } from "@/lib/marketing/workflow";
-import { Flash } from "../ui";
-import { MarketingTable, OK_MESSAGES } from "./ui";
+import { Button } from "@/components/Button";
+import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
+import { HelpBox } from "@/components/HelpBox";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { ToastOnLoad } from "@/components/toast";
+import Link from "next/link";
+import { OK_MESSAGES } from "./ui";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Marketing Requests" };
 
 const OPEN: CardStatus[] = ["submitted", "changes_requested", "approved"];
 const FINISHED: CardStatus[] = ["closed", "denied"];
@@ -27,60 +38,69 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   const all = open.filter(isMarketingCard);
   const oldestFirst = (a: MarketingCard, b: MarketingCard) => a.marketing.stageSince.localeCompare(b.marketing.stageSince);
   const review = all.filter((c) => c.marketing.stage === "review").sort(oldestFirst);
-  const canReview = new Set(reviewableBy(review, actor).map((c) => c.id));
+  const reviewable = reviewableBy(review, actor).length;
   const asked = all.filter((c) => c.marketing.stage === "question").sort(oldestFirst);
   const byDoneBy = (a: MarketingCard, b: MarketingCard) => (a.marketing.doneBy ?? "9").localeCompare(b.marketing.doneBy ?? "9");
   const working = all.filter((c) => c.marketing.stage === "scheduled" || c.marketing.stage === "doing").sort(byDoneBy);
   const done = finished.filter(isMarketingCard).slice(0, 10);
   const onTeam = actor.roles.includes("marketing");
 
+  const names = await nameResolver(emailsIn([...own, ...all, ...done]));
+  const o = { names, today: todayLocal() };
+  // On the team's lists, say who asked.
+  const withRequester = (cards: MarketingCard[]): RowData[] =>
+    rowsFor(cards, actor, o).map((r, i) => ({ ...r, sub: `${r.sub} · from ${names(cards[i].ownerEmail)}` }));
+
   return (
-    <>
-      <div className="pagehead">
-        <div>
-          <h1>Marketing Requests</h1>
-          <p className="lead">Graphics, signs, announcements, highlights, webpages, short links and staff badges.</p>
-        </div>
-        <div className="row">
-          <Link href="/marketing/new" className="button">
+    <div className="stack loose">
+      <ModuleHead
+        title="Marketing Requests"
+        lead="Graphics, signs, announcements, highlights, webpages, short links and staff badges."
+        actions={
+          <Button href="/marketing/new" variant="primary" icon="plus">
             New marketing request
-          </Link>
-        </div>
-      </div>
-      <Flash ok={ok} error={error} messages={OK_MESSAGES} />
-      <div className="callout info">Marketing an event? Ask for it on the event request: marketing and A/V are part of the same form.</div>
+          </Button>
+        }
+      />
+      <HelpBox module="marketing" />
+      <ToastOnLoad message={ok ? OK_MESSAGES[ok] : undefined} />
+      {error && <Note tone="bad">{error}</Note>}
+      <Note>
+        Marketing an event? Ask for it on the <Link href="/events/new">event request</Link>: marketing and A/V are part of the same form.
+      </Note>
 
       {team && (
-        <>
-          <h2>Weekly review ({review.length})</h2>
-          <p className="note">
-            New requests, oldest first. {onTeam ? "Schedule each one with a done-by date, ask the requester a question, or decline it." : "The marketing team reviews these each week."}
-            {onTeam && review.length > canReview.size ? " Your own requests are reviewed by someone else on the team." : ""}
-          </p>
-          <MarketingTable cards={review} showOwner empty="No new requests to review this week." />
-
-          <h2>Scheduled and in progress ({working.length})</h2>
-          <MarketingTable cards={working} showOwner empty="Nothing scheduled." />
-
-          {asked.length > 0 && (
-            <>
-              <h2>Waiting on the requester ({asked.length})</h2>
-              <p className="note">Marketing asked a question. These come back to the weekly review when the requester answers.</p>
-              <MarketingTable cards={asked} showOwner empty="" />
-            </>
-          )}
-        </>
+        <ItemList
+          title="Weekly review"
+          right={`${review.length} new`}
+          rows={withRequester(review)}
+          empty={
+            onTeam
+              ? "No new requests to review this week."
+              : "No new requests. The marketing team reviews new ones each week."
+          }
+        />
+      )}
+      {team && onTeam && review.length > reviewable && (
+        <p className="sub">Your own requests are reviewed by someone else on the team.</p>
+      )}
+      {team && <ItemList title="Scheduled and in progress" right={`${working.length}`} rows={withRequester(working)} empty="Nothing scheduled." />}
+      {team && asked.length > 0 && (
+        <ItemList title="Waiting on the requester" right={`${asked.length}`} rows={withRequester(asked)} empty="" />
       )}
 
-      <h2>Your requests</h2>
-      <MarketingTable cards={own} empty="You haven't asked marketing for anything yet." />
+      <ItemList
+        title="Your requests"
+        sections={sectionsOf(groupedRows(groupForViewer(own, actor), actor, o))}
+        empty="You haven't asked marketing for anything yet."
+        emptyAction={
+          <Button href="/marketing/new" size="small">
+            New marketing request
+          </Button>
+        }
+      />
 
-      {team && (
-        <>
-          <h2>Recently done</h2>
-          <MarketingTable cards={done} showOwner empty="Nothing finished yet." />
-        </>
-      )}
-    </>
+      {team && <ItemList title="Recently done" right={done.length ? `Last ${done.length}` : ""} rows={withRequester(done)} empty="Nothing finished yet." />}
+    </div>
   );
 }

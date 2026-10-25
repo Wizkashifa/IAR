@@ -1,12 +1,22 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { Button } from "@/components/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ItemRow } from "@/components/ItemRow";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
+import { Pill } from "@/components/Pill";
 import { FEEDBACK_KIND_LABEL, feedbackStore } from "@/lib/feedback";
 import { internalPath } from "@/lib/links";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDateTime } from "../purchases/ui";
+import { fmtDateTime } from "../ui";
 import { FeedbackForm } from "./FeedbackForm";
 import { setFeedbackStatus } from "./actions";
+import styles from "./feedback.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Send feedback" };
 
 export default async function FeedbackPage({ searchParams }: { searchParams: Promise<{ from?: string; ok?: string }> }) {
   const { from = "/", ok } = await searchParams;
@@ -17,60 +27,52 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
   const open = items.filter((f) => f.status === "new");
 
   return (
-    <>
-      <h1>Send feedback</h1>
-      <p className="lead">The portal is in beta. Tell us about anything broken, confusing or missing. It goes straight to the portal admins.</p>
+    <div className="stack">
+      <ModuleHead title="Send feedback" lead="The portal is in beta. Tell us about anything broken, confusing or missing. It goes straight to the portal admins." />
       {ok ? (
-        <div className="flash" role="status">
+        <Note tone="ok">
           Thank you, it&apos;s been sent. <Link href={page}>Back to where you were</Link>
-        </div>
+        </Note>
       ) : (
-        <FeedbackForm page={page} />
+        <Panel>
+          <FeedbackForm page={page} />
+        </Panel>
       )}
 
       {admin && (
-        <>
-          <h2>Feedback received ({open.length} open)</h2>
+        <Panel title="Feedback received" right={<span>{open.length} open</span>} flush>
           {items.length === 0 ? (
-            <div className="panel empty">Nothing yet.</div>
+            <EmptyState icon="message">Nothing yet.</EmptyState>
           ) : (
-            <div className="tablewrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Feedback</th>
-                    <th>From</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((f) => (
-                    <tr key={f.id}>
-                      <td>
-                        <span className={`tag ${f.kind === "problem" ? "warn" : "info"}`}>{FEEDBACK_KIND_LABEL[f.kind]}</span>
-                        <div className="pre" style={{ marginTop: 4 }}>{f.message}</div>
-                        <div className="sub">
-                          On {internalPath(f.page) ? <Link href={f.page}>{f.page}</Link> : f.page} · {fmtDateTime(f.at)}
-                          {f.userAgent && <> · {f.userAgent}</>}
-                        </div>
-                      </td>
-                      <td>{f.name}<div className="sub">{f.by}</div></td>
-                      <td>
-                        <form action={setFeedbackStatus}>
-                          <input type="hidden" name="id" value={f.id} />
-                          <input type="hidden" name="status" value={f.status === "new" ? "done" : "new"} />
-                          <span className={`pill ${f.status === "done" ? "closed" : "in_review"}`}>{f.status === "done" ? "Done" : "Open"}</span>{" "}
-                          <button className="linkbtn" type="submit">{f.status === "new" ? "Mark done" : "Reopen"}</button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className={styles.list}>
+              {items.map((f) => (
+                <ItemRow
+                  key={f.id}
+                  title={<span className={styles.message}>{f.message}</span>}
+                  sub={
+                    <>
+                      {FEEDBACK_KIND_LABEL[f.kind]} · {f.name} · on {internalPath(f.page) ? <Link href={f.page}>{f.page}</Link> : f.page} · {fmtDateTime(f.at)}
+                    </>
+                  }
+                  state={f.status === "done" ? "done" : f.kind === "problem" ? "bad" : "act"}
+                  right={
+                    <form action={setFeedbackStatus} className={styles.status}>
+                      <input type="hidden" name="id" value={f.id} />
+                      <input type="hidden" name="status" value={f.status === "new" ? "done" : "new"} />
+                      <Pill tone={f.status === "done" ? "ok" : "warn"} dot>
+                        {f.status === "done" ? "Done" : "Open"}
+                      </Pill>
+                      <Button type="submit" size="small" variant="quiet">
+                        {f.status === "new" ? "Mark done" : "Reopen"}
+                      </Button>
+                    </form>
+                  }
+                />
+              ))}
+            </ul>
           )}
-        </>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }

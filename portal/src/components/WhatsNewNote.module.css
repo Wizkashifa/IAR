@@ -1,0 +1,21 @@
+/* "What's new" on the home page (WhatsNewNote.tsx): the teal note tone, with a gold edge so it reads as news. */
+@layer components {
+  .note {
+    margin: 0; padding: var(--s-3) var(--s-4);
+    background: var(--info-soft); color: var(--info); border-radius: var(--r); box-shadow: inset 3px 0 0 var(--gold);
+  }
+  .head { display: flex; align-items: center; gap: var(--s-2); }
+  .title { margin: 0; flex: 1; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); color: inherit; }
+  .close {
+    display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -4px -8px -4px 0;
+    border: 0; border-radius: var(--r-sm); background: none; color: inherit; cursor: pointer; opacity: 0.8;
+  }
+  .close:hover { opacity: 1; background: var(--surface); }
+  .close:focus-visible { outline: none; box-shadow: var(--ring); }
+  .list { margin: var(--s-2) 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: var(--t-md); line-height: 1.45; max-width: 80ch; }
+  .list a, .foot a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .foot a { display: inline-block; padding-block: 4px; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); font-size: var(--t-md); }
+  .got { border: 0; background: none; padding: 4px 0; font: inherit; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .got:focus-visible, .foot a:focus-visible, .list a:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 4px; }
+}

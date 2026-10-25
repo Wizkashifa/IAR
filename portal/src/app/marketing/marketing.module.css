@@ -1,0 +1,51 @@
+/* Marketing pages: the type picker, the request form and the activity lists. Values come from tokens.css. */
+
+/* Type picker: one card per kind of request. */
+.types { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s-3); }
+.type {
+  display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-4);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
+  color: var(--ink); text-decoration: none; transition: border-color var(--speed), background-color var(--speed);
+}
+.type:hover { border-color: var(--gold); text-decoration: none; }
+.type:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+.typeIcon {
+  display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent-text);
+}
+.type h2 { margin: 0 0 var(--s-1); font-size: var(--t-base); }
+.type p { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+
+/* The form */
+.form :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea), .actFields :is(input, select, textarea) { width: 100%; }
+.example { background: var(--surface-2); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--t-sm); color: var(--ink-2); }
+.choices { display: flex; flex-direction: column; gap: var(--s-2); }
+.choice { display: flex; gap: var(--s-2); align-items: center; font-weight: 400; color: var(--ink); min-height: 28px; }
+.form .choice input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.groupLabel { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); padding: 0; margin-bottom: var(--s-1); }
+.group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.errors ul { margin: var(--s-1) 0 0; padding-left: 20px; }
+
+/* Actions on a request page */
+.actFields { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: var(--s-3); align-items: start; max-width: 720px; }
+@media (max-width: 600px) { .actFields { grid-template-columns: 1fr; } }
+.answerBox { max-width: 720px; }
+.push { margin-left: auto; }
+
+/* Comments and history */
+.acts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+.act { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t-md); }
+.ab { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.av {
+  display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent-text); font-size: 10px; font-weight: 700;
+}
+.when { color: var(--ink-3); font-size: var(--t-sm); }
+.hnote { color: var(--ink-2); margin-top: 2px; }
+.quiet { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+.sideNote { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
+
+/* Files on a request page. */
+.files { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
+.files li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); min-width: 0; }
+.files a, .files li > span:first-of-type { overflow-wrap: anywhere; }

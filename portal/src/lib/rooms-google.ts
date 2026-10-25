@@ -1,6 +1,7 @@
 import "server-only";
 import { isDevAuth } from "./dev";
 import { delegatedToken } from "./google";
+import { reportFailure, reportOk } from "./health";
 import type { GoogleRoom, RoomSetting } from "./events/rooms";
 
 /**
@@ -49,9 +50,11 @@ export async function googleRooms(): Promise<GoogleRoom[]> {
       .filter((r) => r.resourceCategory !== "OTHER" || r.capacity)
       .map((r) => ({ id: r.resourceId, name: r.resourceName?.trim() || r.resourceEmail, building: (r.buildingId && bName.get(r.buildingId)) || "", capacity: r.capacity ?? 0, calendarId: r.resourceEmail, description: r.userVisibleDescription }));
     cache.__iarRooms = { at: Date.now(), rooms };
+    reportOk("rooms");
     return rooms;
   } catch (err) {
     console.error("room lookup failed", err);
+    reportFailure("rooms", err);
     const rooms = c?.rooms ?? [];
     cache.__iarRooms = { at: Date.now() - REFRESH_MS + 60_000, rooms };
     return rooms;

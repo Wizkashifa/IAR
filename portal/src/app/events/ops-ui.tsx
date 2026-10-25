@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Button, buttonClass } from "@/components/Button";
+import { Pill, type Tone } from "@/components/Pill";
+import { type NameOf, fallbackName } from "@/lib/next-step";
 import type { Role } from "@/lib/org";
 import { WHEN_LABEL, mayCheckRooms } from "@/lib/events/roomchecks";
 import { dayText } from "@/lib/events/series";
@@ -6,11 +9,18 @@ import { TASK_STATUS_LABEL, TEAM_NAME, worksTeam } from "@/lib/events/tasks";
 import type { EventTask, RoomCheck } from "@/lib/events/types";
 import type { EventCard } from "@/lib/events/workflow";
 import { saveRoomCheck, workOnTask } from "./ops-actions";
+import styles from "./events.module.css";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
+const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
+
 export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean }) {
-  return <span className={`pill task-${task.status}${overdue ? " late" : ""}`}>{overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}</span>;
+  return (
+    <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} dot={task.status !== "locked"}>
+      {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
+    </Pill>
+  );
 }
 
 /** The buttons for one task, for someone on its team (or the office). */
@@ -31,19 +41,19 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
         <form action={workOnTask}>
           {base}
           <input type="hidden" name="step" value="take" />
-          <button className="button secondary small" type="submit">Take it</button>
+          <Button size="small" type="submit">Take it</Button>
         </form>
       )}
       {task.status === "todo" && (
         <form action={workOnTask}>
           {base}
           <input type="hidden" name="step" value="start" />
-          <button className="button secondary small" type="submit">Start</button>
+          <Button size="small" type="submit">Start</Button>
         </form>
       )}
       {task.status !== "done" && (
         <details className="taskmore">
-          <summary className="button small">Mark done</summary>
+          <summary className={buttonClass({ variant: "primary", size: "small" })}>Mark done</summary>
           <form action={workOnTask} className="stack">
             {base}
             <input type="hidden" name="step" value="done" />
@@ -51,12 +61,12 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
               <span>Note for the requester (optional)</span>
               <input name="note" maxLength={1000} placeholder={task.team === "marketing" ? "e.g. Flyer posted; link to the listing" : "e.g. Set up and tested"} />
             </label>
-            <div><button className="button small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</button></div>
+            <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
         </details>
       )}
       <details className="taskmore">
-        <summary className="linkbtn">Ask the requester</summary>
+        <summary className={buttonClass({ variant: "quiet", size: "small" })}>Ask the requester</summary>
         <form action={workOnTask} className="stack">
           {base}
           <input type="hidden" name="step" value="ask" />
@@ -64,27 +74,28 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
             <span>Your question (added as a comment on the event; the requester gets an alert)</span>
             <textarea name="note" rows={2} maxLength={1000} required />
           </label>
-          <div><button className="button secondary small" type="submit">Send question</button></div>
+          <div><Button size="small" type="submit">Send question</Button></div>
         </form>
       </details>
     </div>
   );
 }
 
-/** One task, as a line on the event page. */
-export function TaskLine({ card, task, roles, email, back, today }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string; today: string }) {
+/** One task, as a line on the event page. `names` shows who has it by name. */
+export function TaskLine({ card, task, roles, email, back, today, names }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string; today: string; names?: NameOf }) {
   const overdue = (task.status === "todo" || task.status === "doing") && task.dueDate < today;
+  const who = task.assignee ? (names ? names(task.assignee) : task.assignee) : "";
   return (
-    <li className="task">
+    <li className={styles.line}>
       <div>
-        <div>{task.title}</div>
-        <div className="sub">
+        <div className={styles.lineTitle}>{task.title}</div>
+        <div className={styles.lineSub}>
           {TEAM_NAME[task.team]} · due {dayText(task.dueDate)}
-          {task.assignee ? ` · ${task.assignee}` : ""}
+          {who ? ` · ${who}` : ""}
           {task.note ? ` · “${task.note}”` : ""}
         </div>
       </div>
-      <div className="taskside">
+      <div className={styles.lineSide}>
         <TaskPill task={task} overdue={overdue} />
         <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
       </div>
@@ -95,10 +106,10 @@ export function TaskLine({ card, task, roles, email, back, today }: { card: Even
 export function CheckResult({ check }: { check?: RoomCheck }) {
   if (!check) return <span className="sub">Not recorded</span>;
   return (
-    <span className={`check ${check.ok ? "ok" : "bad"}`}>
-      {check.ok ? "OK" : "Problem"}
-      {check.note ? `: ${check.note}` : ""}
-      <span className="sub"> · {check.by}</span>
+    <span>
+      <Pill tone={check.ok ? "ok" : "bad"}>{check.ok ? "OK" : "Problem"}</Pill>
+      {check.note ? ` ${check.note}` : ""}
+      <span className="sub"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
     </span>
   );
 }
@@ -111,7 +122,7 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
       <div><strong>{WHEN_LABEL[when]}:</strong> <CheckResult check={check} /></div>
       {can && (
         <details className="taskmore noprint">
-          <summary className="linkbtn">{check ? "Change" : "Record"}</summary>
+          <summary className={buttonClass({ variant: "quiet", size: "small" })}>{check ? "Change" : "Record"}</summary>
           <form action={saveRoomCheck} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="date" value={date} />
@@ -125,7 +136,7 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
               <span>Note (say what&apos;s wrong if there&apos;s a problem)</span>
               <input name="note" maxLength={1000} defaultValue={check?.note ?? ""} placeholder="e.g. Chairs left out, spill by the door" />
             </label>
-            <div><button className="button small" type="submit">Save check</button></div>
+            <div><Button size="small" type="submit">Save check</Button></div>
           </form>
         </details>
       )}

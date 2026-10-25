@@ -37,6 +37,8 @@ export type SchedulerJob = { name: string; schedule: string; timeZone: string; u
 export type Bucket = { name: string; location: string; deleteAfterDays?: number };
 export type UptimeCheck = { id: string; displayName: string; host: string; path: string };
 export type AlertPolicy = { id: string; displayName: string; channelEmails: string[] };
+/** A log-based metric: counts the log lines that match a filter. */
+export type LogMetric = { name: string; description: string; filter: string };
 export type Budget = { id: string; displayName: string; amountUsd: number; projects: string[] };
 
 export type DeployRequest = {
@@ -171,6 +173,10 @@ export interface Google {
   createUptimeCheck(project: string, c: Omit<UptimeCheck, "id">): Promise<string>;
   listAlertPolicies(project: string): Promise<AlertPolicy[]>;
   createAlertPolicy(project: string, p: { displayName: string; uptimeCheckId: string; email: string }): Promise<void>;
+  listLogMetrics(project: string): Promise<LogMetric[]>;
+  createLogMetric(project: string, m: LogMetric): Promise<void>;
+  /** Email when a log-based metric counts more than `above` in five minutes. */
+  createLogAlertPolicy(project: string, p: { displayName: string; metric: string; above: number; email: string; doc: string }): Promise<void>;
   listBudgets(project: string, billingAccount: string): Promise<Budget[]>;
   createBudget(project: string, billingAccount: string, b: Omit<Budget, "id"> & { email: string }): Promise<void>;
   /** The number of images the cleanup policy keeps, or null when there's none (or no repository yet). */

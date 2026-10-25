@@ -1,0 +1,4 @@
+@layer pages {
+  .intro { margin: 0 0 var(--s-2); }
+  .features { margin: 0; padding-left: 20px; display: grid; gap: var(--s-1); color: var(--ink-2); }
+}

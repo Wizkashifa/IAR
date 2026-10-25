@@ -1,9 +1,10 @@
 "use client";
+import { Button } from "@/components/Button";
 
 export function PrintButton() {
   return (
-    <button className="button" type="button" onClick={() => window.print()}>
+    <Button variant="primary" icon="book" onClick={() => window.print()}>
       Print
-    </button>
+    </Button>
   );
 }

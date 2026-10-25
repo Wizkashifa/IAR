@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { requireViewer } from "@/lib/viewer";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Panel } from "@/components/Panel";
+import { Pill } from "@/components/Pill";
 import { findModule } from "@/lib/modules";
+import { requireViewer } from "@/lib/viewer";
+import styles from "./module.module.css";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ module: string }> }): Promise<Metadata> {
+  const { module: id } = await params;
+  return { title: findModule(id)?.name ?? "Not available" };
+}
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
   const { module: id } = await params;
@@ -13,18 +23,16 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
   if (mod.status === "live" && mod.href !== `/m/${id}`) redirect(mod.href);
 
   return (
-    <>
-      <h1>{mod.name}</h1>
-      <p className="lead">{mod.summary}</p>
-      <div className="panel">
-        <span className={`pill ${mod.status}`}>{mod.status === "building" ? "In development" : `Planned for phase ${mod.phase}`}</span>
-        <p>This module isn&apos;t open yet. What it will do:</p>
-        <ul>
+    <div className="stack">
+      <ModuleHead title={mod.name} lead={mod.summary} />
+      <Panel title="Not open yet" right={<Pill tone="info">{mod.status === "building" ? "Being built" : "Planned"}</Pill>}>
+        <p className={styles.intro}>This part of the portal isn&apos;t open yet. What it will do:</p>
+        <ul className={styles.features}>
           {mod.plannedFeatures.map((f) => (
             <li key={f}>{f}</li>
           ))}
         </ul>
-      </div>
-    </>
+      </Panel>
+    </div>
   );
 }

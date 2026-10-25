@@ -1,0 +1,41 @@
+/* The finance desk (page.tsx, DeskBatch.tsx, DeskFilters.tsx). */
+@layer pages {
+  .body { margin-top: var(--s-5); }
+  .tabs { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .tab {
+    display: inline-flex; align-items: center; gap: 6px; min-height: var(--control-h); padding: 0 var(--s-3);
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2);
+    font-weight: 600; font-size: var(--t-md); text-decoration: none;
+  }
+  .tab:hover { border-color: var(--ink-3); color: var(--ink); text-decoration: none; }
+  .tab span { font-weight: 400; color: var(--ink-3); }
+  .on { background: var(--nav-on); border-color: var(--accent); color: var(--accent-text); }
+  .on span { color: var(--accent-text); }
+
+  .filterRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); }
+  .filters { display: grid; grid-template-columns: repeat(3, minmax(160px, 220px)); gap: var(--s-3); }
+  .clear { font-size: var(--t-sm); padding-bottom: 10px; }
+
+  .list { list-style: none; margin: 0; padding: 0; }
+  .all { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-sm); color: var(--ink-2); cursor: pointer; }
+  .amount { font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .payGrid { display: grid; grid-template-columns: minmax(160px, 220px) minmax(200px, 1fr); gap: var(--s-3); }
+  .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+  .refs li { display: grid; grid-template-columns: minmax(0, 1fr) 140px 200px; gap: var(--s-2); align-items: center; padding-top: var(--s-2); border-top: 1px solid var(--line); }
+  .refName { min-width: 0; font-size: var(--t-md); overflow-wrap: anywhere; }
+  .hint { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
+
+  .noteHead { margin: 0 0 var(--s-1); font-weight: 700; }
+  .failed { margin: 0; padding-left: var(--s-4); }
+
+  @media (max-width: 640px) {
+    .filters { grid-template-columns: 1fr; width: 100%; }
+    .payGrid { grid-template-columns: 1fr; }
+    .refs li { grid-template-columns: 1fr 1fr; }
+    .refName { grid-column: 1 / -1; }
+  }
+
+  /* The row's tick box: a 32px hit area around the 20px box, so it's easy to tap on a phone. */
+  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; margin: -6px; cursor: pointer; }
+}

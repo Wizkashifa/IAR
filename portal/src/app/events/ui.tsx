@@ -1,20 +1,25 @@
 import type { Check } from "@/lib/events/types";
 import { timeText } from "@/lib/events/series";
+import { Icon, type IconName } from "@/components/Icon";
+import styles from "./events.module.css";
 
 /** Pieces the event pages share. Plain components that work on the server and in the form. */
 
-const ICON: Record<Check["sev"], string> = { ok: "✓", warn: "!", bad: "×", info: "i" };
+const ICON: Record<Check["sev"], IconName> = { ok: "check", warn: "alert", bad: "x", info: "info" };
 
-export function ChecksList({ checks }: { checks: Check[] }) {
-  if (!checks.length) return <p className="note">Pick a date, times and a room to see the checks.</p>;
+/** The room and policy checks. `empty` is what to say when there are none. */
+export function ChecksList({ checks, empty = "Pick a date, times and a room to see the checks." }: { checks: Check[]; empty?: string }) {
+  if (!checks.length) return <p className="note">{empty}</p>;
   return (
-    <ul className="evchecks">
+    <ul className={styles.checks}>
       {checks.map((c, i) => (
-        <li key={i} className={`evcheck ${c.sev}`}>
-          <span className="ic" aria-hidden="true">{ICON[c.sev]}</span>
+        <li key={i} className={styles.check}>
+          <span className={`${styles.ic} ${styles[c.sev]}`} aria-hidden="true">
+            <Icon name={ICON[c.sev]} size="sm" />
+          </span>
           <div>
             {c.text}
-            {c.rule && <div className="rule">{c.rule}</div>}
+            {c.rule && <div className={styles.rule}>{c.rule}</div>}
           </div>
         </li>
       ))}
@@ -22,14 +27,29 @@ export function ChecksList({ checks }: { checks: Check[] }) {
   );
 }
 
+/** "All clear", "Flags to review" or "Conflict", for the checks panel's header. */
+export function checksSummary(checks: Check[]): { tone: "ok" | "warn" | "bad"; label: string } | null {
+  if (checks.some((c) => c.sev === "bad")) return { tone: "bad", label: "Conflict" };
+  if (checks.some((c) => c.sev === "warn")) return { tone: "warn", label: "Flags to review" };
+  return checks.length ? { tone: "ok", label: "All clear" } : null;
+}
+
 const DAY_START = 7 * 60;
 const DAY_END = 23 * 60;
+const LANE = 30;
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-const pos = (t: string) => ((Math.max(DAY_START, Math.min(DAY_END, toMin(t))) - DAY_START) / (DAY_END - DAY_START)) * 100;
+/** Where a time sits across the day, as a percentage of the width. */
+const pct = (t: string) => ((Math.max(DAY_START, Math.min(DAY_END, toMin(t))) - DAY_START) / (DAY_END - DAY_START)) * 100;
 
-/** One room's day, 7 AM to 11 PM: what's booked, and the request with its setup and cleanup. */
-export function Timeline({ items, request, caption }: { items: { start: string; end: string; label: string; kind: string }[]; request?: { start: string; end: string }; caption?: string }) {
-  const all = [...items.map((x) => ({ ...x, cls: x.kind })), ...(request ? [{ ...request, label: "Your request", kind: "req", cls: "req" }] : [])].sort((a, b) => toMin(a.start) - toMin(b.start));
+export type TimelineItem = { start: string; end: string; label: string; kind: string };
+
+/**
+ * One room's day, 7 AM to 11 PM: what's booked, and the request with its setup
+ * and cleanup. Drawn as SVG with percentage positions, so each booking's place
+ * comes from its times without inline styles.
+ */
+export function Timeline({ items, request, caption }: { items: TimelineItem[]; request?: { start: string; end: string }; caption?: string }) {
+  const all = [...items, ...(request ? [{ ...request, label: "Your request", kind: "req" }] : [])].sort((a, b) => toMin(a.start) - toMin(b.start));
   // Overlapping entries go on separate rows so each label stays readable.
   const ends: number[] = [];
   const placed = all.map((x) => {
@@ -39,28 +59,38 @@ export function Timeline({ items, request, caption }: { items: { start: string; 
     return { ...x, lane };
   });
   const rows = Math.max(1, ...placed.map((x) => x.lane + 1));
+  const h = rows * LANE + 6;
+  const kind = (k: string) => (k === "req" ? styles.req : k === "standing" ? styles.standing : k === "pending" ? styles.pending : styles.booking);
   return (
-    <div>
-      {caption && <div className="sub">{caption}</div>}
-      <div className="tl" style={{ height: rows * 30 + 4 }}>
-        {placed.map((x, i) => (
-          <div key={i} className={`blk ${x.cls}`} style={{ left: `${pos(x.start)}%`, width: `${Math.max(1, pos(x.end) - pos(x.start))}%`, top: 4 + x.lane * 30 }} title={`${x.label} ${timeText(x.start)}–${timeText(x.end)}`}>
-            {x.label}
-          </div>
-        ))}
-      </div>
-      <div className="tl-axis">
+    <div className={styles.timeline}>
+      {caption && <div className={styles.caption}>{caption}</div>}
+      <svg className={styles.tl} width="100%" height={h} role="img" aria-label={caption ? `What's booked: ${caption}` : "What's booked that day"}>
+        {placed.map((x, i) => {
+          const x0 = pct(x.start);
+          const w = Math.max(0.8, pct(x.end) - x0);
+          return (
+            <g key={i} className={kind(x.kind)}>
+              <title>{`${x.label} ${timeText(x.start)}–${timeText(x.end)}`}</title>
+              <rect x={`${x0}%`} y={4 + x.lane * LANE} width={`${w}%`} height={LANE - 4} rx={6} />
+              <foreignObject x={`${x0}%`} y={4 + x.lane * LANE} width={`${w}%`} height={LANE - 4}>
+                <span className={styles.lbl}>{x.label}</span>
+              </foreignObject>
+            </g>
+          );
+        })}
+      </svg>
+      <div className={styles.axis} aria-hidden="true">
         <span>7 AM</span>
         <span>11 AM</span>
         <span>3 PM</span>
         <span>7 PM</span>
         <span>11 PM</span>
       </div>
-      <div className="legend">
-        <span><i className="standing" />Standing hold (policy)</span>
-        <span><i className="booking" />Booked or pending</span>
-        {request && <span><i className="req" />Your request, with setup and cleanup</span>}
-      </div>
+      <ul className={styles.legend}>
+        <li><i className={styles.kStanding} />Standing hold (policy)</li>
+        <li><i className={styles.kBooking} />Booked or pending</li>
+        {request && <li><i className={styles.kReq} />Your request, with setup and cleanup</li>}
+      </ul>
     </div>
   );
 }

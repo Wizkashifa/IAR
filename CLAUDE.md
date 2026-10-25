@@ -16,8 +16,16 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 
 ## Working in the code
 
-- App: `portal/` (Next.js 15, TypeScript). `npm run dev` runs it with sample users (switch at `/dev`) and no Google setup. `npm test`, `npm run typecheck` and `npm run build` must pass before pushing.
+- App: `portal/` (Next.js 16, TypeScript; Mantine for a few form widgets, used only through `src/components/`). `npm run dev` runs it with sample users (switch at `/dev`) and no Google setup. `npm test`, `npm run typecheck` and `npm run build` must pass before pushing.
 - Business rules are plain functions with tests (`portal/src/lib/purchases/workflow.ts`, `notices.ts`, `lib/away.ts`, `lib/search.ts`). Pages and server actions call them and never change a request's stage themselves.
 - Each store has an in-memory version for dev and a Firestore version for production (`lib/cards.ts`, `lib/notifications.ts`, `lib/people.ts`, `lib/feedback.ts`); Google Calendar has a sample calendar in dev (`lib/calendar.ts`).
 - `ops/go-live`: `npm test` and `npm run typecheck` must pass too. It never runs against real Google from a cloud session.
 - Write UI text in plain language for volunteers, not technical staff.
+
+## Styling
+
+- The demo (`demo/index.html`) is the reference for layout and look. If a screen needs to look different, change the demo first. Colours, fonts and logos follow IAR's brand guide (`docs/brand.md`); how the pieces fit is in `docs/design-system.md`.
+- Every colour, size, corner and shadow is a token in `portal/src/styles/tokens.css` (light and dark). No raw colours and no `style={{ }}` anywhere else: use the components in `portal/src/components/` and a co-located `.module.css`. `src/styles/guard.test.ts` fails the build on either.
+- Mantine is used only inside the wrappers in `src/components/` (DateField, RoomPicker, FileDrop, …). Pages never import `@mantine/*`.
+- `/dev/styles` (dev mode) shows every token and component in light and dark: check it after a change there.
+- Before pushing a UI change, with `npm run dev` running: `npm run a11y` (titles, headings, labels, tap targets, contrast) and `npm run shots` (each screen next to the demo, in `portal/.shots/report.html`).
