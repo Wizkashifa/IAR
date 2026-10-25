@@ -7,15 +7,15 @@ This brings the three plans into one sequence:
 
 It says what has to come first, what can be built at the same time by separate agents, and which planned steps would undo earlier ones if done in the wrong order. The goal hasn't changed: the demo's look and ease of use, working for real.
 
-## Decisions needed before work starts
+## Decisions (made Oct 25, 2026)
 
-| # | Decision | Recommendation | Why it matters |
-|---|---|---|---|
-| D1 | Use Mantine for the hard widgets? | **Yes, for a short list only** (below) | Sets wave 0 and every form |
-| D2 | Bring back the desktop sidebar? It reverses the "drawer on every screen" change in commit 2794184. | **Yes from about 1000px wide**; keep the drawer on phones | Sets the app shell in wave 1 |
-| D3 | Rename "AV/IT/Maintenance request"? | Ask the facilities team | Wave 2, IT & Maintenance |
-| D4 | Add the read-only Workspace user scope (`admin.directory.user.readonly`) for names | **Yes.** An IAR super admin approves it in go-live | Names in wave 0, Who's who in wave 3 |
-| D5 | What must land before the beta starts | **Waves 0–2 and wave 4's beta fixes**; wave 3 during and after the beta | Sets the beta date |
+| # | Decision | Answer |
+|---|---|---|
+| D1 | Use Mantine for the hard widgets | **Yes**, for the short list below, through our own wrappers |
+| D2 | Bring back the desktop sidebar (reverses the "drawer on every screen" change in commit 2794184) | **Yes** from about 1000px wide; the drawer stays on phones |
+| D3 | The IT & Maintenance button | Keep the wording but drop "request": **"AV/IT/Maintenance"** |
+| D4 | Add the read-only Workspace user scope (`admin.directory.user.readonly`) for names | **Yes.** An IAR super admin approves it in go-live |
+| D5 | What must land before the beta | **All of it: waves 0–4** |
 
 ## The component kit: Mantine, used narrowly; not Magic UI
 
@@ -38,6 +38,7 @@ Everything else stays ours, built from the demo: panels, list rows, pills, the s
 - **One colour-scheme switch.** Use Mantine's colour-scheme attribute as the only light/dark switch, and write our dark tokens against it. Two switches (ours and Mantine's) would fight. This replaces the separate `data-theme` idea in `design-system.md`.
 - **No Mantine layout or style props in pages** (`Stack`, `Group`, `mt="md"`). Pages use our layout classes, so pages don't depend on Mantine.
 - **Mantine 9 needs React 19.2 or later.** The portal is on 19.1, so the upgrade comes first in wave 0.
+- **Next.js 16 is out.** The portal is on 15.5. Plan the move to 16 in wave 4, after everything else lands, so the framework under the beta is a supported one.
 
 **Magic UI is not a fit.** It's a set of animated components for marketing landing pages (marquees, particle backgrounds, animated text). It's built on Tailwind CSS and the Motion animation library and copied in through the shadcn tool. That would bring in a second styling system next to ours and add motion that doesn't belong on approval and receipt screens. The portal's polish should come from calm, consistent detail, as in the demo. If something deserves a small flourish, such as a count ticking up on a dashboard later, a few lines of CSS do it.
 
@@ -68,7 +69,7 @@ Each wave starts when the one before it has merged. Inside a wave, each agent ow
 |---|---|---|
 | **0A Design foundation** | `styles/`, `app/globals.css`, `app/fonts.ts`, `app/layout.tsx` (provider only), `components/` (base), `app/dev/styles/` | React 19.2 upgrade; `tokens.css` from the demo; `@layer` order; `next/font` (Source Sans 3, Outfit, Fraunces); Mantine core with the layer stylesheet, `theme.ts` from tokens, one colour-scheme switch; `Icon` (the demo's 44); `Button`, `Pill`, `Panel`, `Note`, `KeyValue`, `EmptyState`, `Field`; the wrappers `DateField`, `RoomPicker`, `FileDrop`, `confirm`, `toast`; `/dev/styles`; guard tests in warning mode |
 | **0B Request logic** | `lib/next-step.ts`, `lib/needs-you.ts`, tests | `stepsFor`, `nextStepText(card, viewer, names)` (fixes the "You:" bug), `needsViewer(card, viewer)`, tested against every sample user |
-| **0C Names** | `lib/names.ts`, `ops/go-live` | Workspace name lookup with a 15-minute cache and a fallback; the go-live scope and tests (needs D4) |
+| **0C Names** | `lib/names.ts`, `ops/go-live` | Workspace name lookup with a 15-minute cache and a fallback; the go-live scope and tests (D4) |
 | **0D Calendar queries** | `lib/agenda.ts`, tests | Bookings between two times across rooms; free rooms for a date, time, size and food. Uses the existing calendar code |
 | **0E Health** | `lib/groups.ts`, `lib/calendar.ts` error paths, `ops/go-live` alerts | Admin alert when directory, calendar, Chat or Drive calls fail; log-based alert on server errors |
 
@@ -90,10 +91,10 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 | **2A Events** | `app/events/`, `app/run-sheet/` | Event form on `DateField`, `RoomPicker` and a committee default; drafts; room calendar that updates as you change it, opening on today and a busy room (and the date check); correct "no saved checks" text; linked room policy; close-out on the request page |
 | **2B Purchases** | `app/purchases/` | `FileDrop` for receipts and W-9s; your requests above committee lists; line items as cards on phones; labelled attachments |
 | **2C Marketing** | `app/marketing/` | Request page and lists; the type picker stays |
-| **2D IT & Maintenance** | `app/it-maintenance/` | Requester view first, team board on its own tab; actions by state with "More"; ready-made replies; `FileDrop` with the phone camera; button name per D3 |
+| **2D IT & Maintenance** | `app/it-maintenance/` | Requester view first, team board on its own tab; actions by state with "More"; ready-made replies; `FileDrop` with the phone camera; button reads "AV/IT/Maintenance" (D3) |
 | **2E Everyone's pages** | `app/page.tsx`, `app/requests/`, `app/search/`, `app/notifications/`, `app/away/`, `app/queues/` | Home: quick buttons, Waiting on you from `needsViewer`, Today at IAR from `lib/agenda.ts`, no "Ready" badges. My Requests: type chips and colour key. Search through Spotlight and the results page. Out of office on `DateField` and a people picker |
 
-### Wave 3: new pages (parallel, during and after the beta)
+### Wave 3: new pages (parallel, before the beta)
 
 | Agent | Delivers | Needs |
 |---|---|---|
@@ -104,7 +105,9 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 | **3E Finance batch work** | Select several, mark paid or entered, filters, QuickBooks CSV | 1A's checkbox slot |
 | **3F Beta measures** | Requests per module, time per step, forms started but not sent | 2A's drafts |
 | **3G Notification choices** | Right away, digest or portal only; quiet overnight | — |
-| Later, after decisions | Library (policies first, needs the Drive scope); facilities leaving Jira (after listing what they use with them); request again and event templates | — |
+| **3H Library: policies** | The Policies Shared Drive, searchable and linked from the forms that cite it | Drive scope in sign-in and go-live; the office names the drive |
+| **3I Request again** | "Request this again" on past events and purchases | Wave 2 |
+| **3J Facilities and Jira** | The gaps the facilities team names in Jira, "My work today" on phones | A session with the facilities team first |
 
 ### Wave 4: finish and keep it that way (1–2 agents)
 
@@ -115,6 +118,7 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 - The "Styling" section in `CLAUDE.md`.
 - Dependabot with grouped monthly updates.
 - Dark mode reviewed on every screen.
+- Next.js 15 to 16, with the full test, typecheck and build run and the screenshot review repeated.
 
 ## A last check: effective, pretty, easy to use
 
