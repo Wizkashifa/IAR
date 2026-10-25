@@ -325,3 +325,15 @@ test("fallbackName: a readable name from an address", () => {
   assert.equal(fallbackName("fatima.ahmed@islam1.org"), "Fatima Ahmed");
   assert.equal(fallbackName("youth_chair@islam1.org"), "Youth Chair");
 });
+
+test("purchase next step: the finance office and executives read 'You' at their own step", () => {
+  const c = purchase();
+  const atFinance = pw.approve(c, chair, settings, T(1));
+  const finViewer = { ...fin, actingRoles: ["finance"] };
+  assert.equal(nextStepText(atFinance, finViewer, names), "You check the receipts and accounts, then it's paid.");
+  assert.equal(nextStepText(atFinance, vol, names), "The finance office checks the receipts and accounts, then it's paid. You'll get a notification when it's done.");
+  const atExec = { ...atFinance, purchase: { ...atFinance.purchase, stage: "executive" as const } };
+  assert.equal(nextStepText(atExec, { email: "exec@dev.local", actingRoles: ["executive"] }, names), "You approve it as an executive, then the finance office pays it.");
+  // Never "You" on your own request, whatever groups you're in.
+  assert.equal(nextStepText(atExec, { ...vol, actingRoles: ["executive"] }, names), "An executive approves it, then the finance office pays it. You'll get a notification when it's done.");
+});

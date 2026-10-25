@@ -37,7 +37,8 @@ export type StepOptions = {
 };
 
 /** Who is looking at the request. */
-export type Viewer = { email: string };
+/** The person looking. `actingRoles` (their own groups, as in lib/viewer.ts) lets the text say "You" to the finance office or an executive at their step. */
+export type Viewer = { email: string; actingRoles?: readonly string[] };
 /** A person's name from their address. */
 export type NameOf = (email: string) => string;
 
@@ -196,6 +197,9 @@ function purchaseNext(card: PurchaseCard, viewer: Viewer, names: NameOf): string
   const s = speaker(viewer, names);
   const mine = same(card.ownerEmail, viewer.email);
   const notified = mine ? ` ${NOTIFIED}` : "";
+  // Nobody acts on their own request, so "You" only for someone else's.
+  const acts = (role: string) => !mine && (viewer.actingRoles ?? []).includes(role);
+  const finance = acts("finance") ? "You" : "The finance office";
   if (card.status === "changes_requested") return `${s.does(card.ownerEmail, "make", "makes")} the changes asked for${quoted(p.returnNote)} and ${mine ? "send" : "sends"} it again.`;
   if (card.status === "denied" || card.status === "cancelled") return "";
   switch (p.stage) {
@@ -203,14 +207,14 @@ function purchaseNext(card: PurchaseCard, viewer: Viewer, names: NameOf): string
       return `${p.approverEmail ? s.does(p.approverEmail, "approve", "approves") : "The committee's chair approves"} it for ${card.committee || p.fund}, then the finance office reviews it.${notified}`;
     case "finance":
       return p.kind === "card"
-        ? `The finance office checks the charges and receipts, then enters them in QuickBooks.${notified}`
-        : `The finance office checks the receipts and accounts, then it's paid.${notified}`;
+        ? `${finance} ${acts("finance") ? "check" : "checks"} the charges and receipts, then ${acts("finance") ? "enter" : "enters"} them in QuickBooks.${notified}`
+        : `${finance} ${acts("finance") ? "check" : "checks"} the receipts and accounts, then it's paid.${notified}`;
     case "executive":
-      return `An executive approves it, then the finance office pays it.${notified}`;
+      return acts("executive") ? "You approve it as an executive, then the finance office pays it." : `An executive approves it, then the finance office pays it.${notified}`;
     case "payment":
-      return `The finance office pays ${p.payee || "it"}.${mine ? " You'll get a notification when it's paid." : ""}`;
+      return `${finance} ${acts("finance") ? "pay" : "pays"} ${p.payee || "it"}.${mine ? " You'll get a notification when it's paid." : ""}`;
     case "books":
-      return "The finance office enters it in QuickBooks.";
+      return `${finance} ${acts("finance") ? "enter" : "enters"} it in QuickBooks.`;
     case "done": {
       const open = openExpectedReturns(p).length;
       return open ? `The finance office records the ${open} refund${open === 1 ? "" : "s"} or repayment${open === 1 ? "" : "s"} still owed.` : "";
@@ -241,7 +245,9 @@ function eventNext(card: EventCard, viewer: Viewer, names: NameOf, o: StepOption
         : `${reviewer} ${one ? "review" : "reviews"} it against IAR's mission, then an executive gives final approval.${notified}`;
     }
     case "mission":
-      return `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`;
+      return !mine && (viewer.actingRoles ?? []).includes("executive")
+        ? "You give final approval as an executive. Then the room is confirmed on the IAR calendar and the teams get their tasks."
+        : `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`;
     case "approved": {
       const open = (e.tasks ?? []).filter((t) => t.status !== "done").map((t) => TASK_TEAM_NAME[t.team]);
       const teams = open.length ? `${open.length > 1 ? `${open.slice(0, -1).join(", ")} and ${open[open.length - 1]} get` : `${open[0]} gets`} it ready. ` : "";
