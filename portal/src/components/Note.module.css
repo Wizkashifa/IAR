@@ -1,0 +1,9 @@
+@layer components {
+  .note { display: flex; gap: var(--s-2); align-items: flex-start; border-radius: 6px; padding: 10px 12px; font-size: var(--t-md); line-height: 1.45; }
+  .note > svg { margin-top: 2px; }
+  .note a { color: inherit; text-decoration: underline; font-weight: 600; }
+  .info { background: var(--info-soft); color: var(--info); }
+  .warn { background: var(--warn-soft); color: var(--warn); }
+  .ok { background: var(--ok-soft); color: var(--ok); }
+  .bad { background: var(--bad-soft); color: var(--bad); }
+}

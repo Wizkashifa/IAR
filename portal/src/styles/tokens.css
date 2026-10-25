@@ -1,0 +1,113 @@
+/*
+ * Every colour, font, size, corner and shadow the portal uses, by name. Taken
+ * from the demo (demo/index.html). Components and pages use these names and
+ * never a raw colour; a guard test keeps it that way.
+ *
+ * Light and dark: Mantine's colour-scheme script sets
+ * data-mantine-color-scheme="light" or "dark" on <html> before the page paints
+ * (following the system setting until someone picks a theme), so this one
+ * attribute is the only switch.
+ */
+@layer tokens {
+  :root {
+    /* IAR brand: green #0B2E12, gold #D4AF37, light gold #F7DC86, cream #F6EEDB, dark gold #6E4C06 */
+    --brand-green: #0b2e12;
+    --brand-green-2: #123a1a;
+    --gold: #d4af37;
+    --gold-light: #f7dc86;
+    --gold-dark: #6e4c06;
+    --cream: #f6eedb;
+
+    --bg: #faf6ea;
+    --surface: #ffffff;
+    --surface-2: #f3ecd6;
+    --ink: #16221a;
+    --ink-2: #545f52;
+    --ink-3: #656c5e;
+    --line: #e6dcc0;
+    --accent: #0b2e12;
+    --accent-ink: #f6eedb;
+    --accent-text: #0b2e12;
+    --accent-soft: #e3ecdd;
+    --nav-on: #e3ecdd;
+    --ok: #1c7347;
+    --ok-soft: #dcf0e3;
+    --warn: #6e4c06;
+    --warn-soft: #f7ecc6;
+    --bad: #a1302a;
+    --bad-soft: #f7e0dd;
+    --info: #2c5a94;
+    --info-soft: #e1eaf6;
+    --hold-standing: #c9d2ce;
+    --hold-booking: #9fb8ad;
+    --hold-request: #0b2e12;
+    --scrim: rgba(0, 0, 0, 0.45);
+    /* Gold lines and fills on the green header and menu */
+    --gold-line: rgba(212, 175, 55, 0.5);
+    --gold-wash: rgba(212, 175, 55, 0.12);
+    --cream-wash: rgba(246, 238, 219, 0.1);
+    --cream-dim: rgba(246, 238, 219, 0.6);
+
+    /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
+    --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-head: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+    --font-display: var(--font-display-face), Georgia, "Times New Roman", serif;
+
+    /* Text sizes */
+    --t-xs: 11.5px;
+    --t-sm: 12.5px;
+    --t-md: 13.5px;
+    --t-base: 15px;
+    --t-h2: 15px;
+    --t-h1: 24px;
+    --t-greet: 32px;
+
+    /* Spacing, corners and depth */
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 12px;
+    --s-4: 16px;
+    --s-5: 24px;
+    --s-6: 32px;
+    --r: 10px;
+    --r-sm: 8px;
+    --shadow-1: 0 1px 2px rgba(22, 34, 26, 0.06), 0 1px 1px rgba(22, 34, 26, 0.03);
+    --shadow-2: 0 12px 32px rgba(11, 46, 18, 0.16), 0 2px 6px rgba(11, 46, 18, 0.08);
+    --ring: 0 0 0 3px rgba(212, 175, 55, 0.35);
+    --control-h: 36px;
+    --control-h-sm: 30px;
+    --speed: 0.12s;
+
+    color-scheme: light;
+  }
+
+  /* Dark: warm charcoal surfaces; the brand green stays on the header, gold is the accent. */
+  :root[data-mantine-color-scheme="dark"] {
+    --bg: #111412;
+    --surface: #181c19;
+    --surface-2: #20251f;
+    --ink: #ece6d6;
+    --ink-2: #a7ab9c;
+    --ink-3: #8a8f80;
+    --line: #2c322d;
+    --accent: #d4af37;
+    --accent-ink: #0b2e12;
+    --accent-text: #e6cd78;
+    --accent-soft: #2a2a1d;
+    --nav-on: #262619;
+    --ok: #74d29d;
+    --ok-soft: #1c3326;
+    --warn: #e8c76a;
+    --warn-soft: #3a2f12;
+    --bad: #f19a92;
+    --bad-soft: #3d2321;
+    --info: #8fb6ea;
+    --info-soft: #1d2a3b;
+    --hold-standing: #353b36;
+    --hold-booking: #4a5f55;
+    --hold-request: #d4af37;
+    --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
+  }
+}

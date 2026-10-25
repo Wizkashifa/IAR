@@ -1,0 +1,5 @@
+@layer components {
+  .empty { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: 28px var(--s-4); text-align: center; color: var(--ink-2); }
+  .empty > svg { color: var(--ink-3); }
+  .empty p { margin: 0; max-width: 46ch; }
+}
