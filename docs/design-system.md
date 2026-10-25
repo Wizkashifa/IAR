@@ -18,10 +18,12 @@ Every colour, size, corner and shadow is a CSS custom property on `:root` (demo 
 | Space | `--s-1`…`--s-6` (4, 8, 12, 16, 24, 32px) | Every gap is on one scale, so spacing looks deliberate |
 | Shape | `--r` (10px), `--r-sm` (8px), `--shadow-1`, `--shadow-2`, `--ring` | Cards get a barely-there shadow; menus and dialogs get a deeper one; focus is a soft gold ring |
 
-### 2. Three typefaces, each with one job
-- **Source Sans 3** for body text and forms: highly readable at 13–15px.
-- **Outfit** for headings and panel titles (`h1` 24px/600, `h2` 15px/600): upright and compact.
-- **Fraunces italic** only for the brand and the home greeting ("Assalamu alaikum…"). Used once, it feels warm. Used on every page title, it gets heavy.
+### 2. Two typefaces, each with a clear job
+IAR's 2026 brand guide sets the fonts (`brand.md`):
+- **Lato** for body text and forms: highly readable at 13–15px.
+- **Montserrat** for headings: Bold for page titles (24px), Semibold for section and panel titles (15px), and Black only for the home greeting ("Assalamu alaikum…").
+
+The demo first used Source Sans 3, Outfit and Fraunces. The brand guide replaced them.
 
 ### 3. A few repeated building blocks
 - **Panel:** a white card with a header row (`.panel-h`: title on the left, count or action on the right) and a body. Section titles sit inside the card, not floating above it.
@@ -49,8 +51,8 @@ Dark mode uses warm charcoal surfaces. The brand green stays on the header, and 
 | Area | Demo | Portal today | Effect |
 |---|---|---|---|
 | Tokens | ~45 tokens, including spacing, shadows and four meaning tones | ~20 tokens. No `--info`, `--ok`, `--surface-2`, `--ink-3`, spacing scale or shadows. Blue and grey values are typed as raw colours further down the file (`#e3ecf6`, `#24507a`, `#9cc3ea` …) | Colours drift, and a change to one shade misses half its uses |
-| Body font | Source Sans 3 | Outfit (a heading face) for all text | Long text and forms read wider and less evenly |
-| Page titles | Outfit, upright, 24px | Fraunces italic, 30px, on every page | Heavy. Titles wrap to 2–3 lines on phones |
+| Body font | Lato (brand guide) | Outfit, a heading face, for all text | Long text and forms read wider and less evenly |
+| Page titles | Montserrat Bold, 24px (brand guide) | Fraunces italic, 30px, on every page | Heavy. Titles wrap to 2–3 lines on phones |
 | Buttons | Neutral border; only the primary is gold-edged | Every button has a gold border (`.button`, with a contradictory `!important` then `border: 0`) | Every button shouts. There's no clear main action |
 | Cards | Header row inside the card | `h2` floats above a plain card | Looser, less organised pages |
 | Lists | Rows with a coloured edge and pills with dots | Tables | Heavy on phones; who-has-it isn't visible at a glance |
@@ -95,7 +97,7 @@ portal/src/
     tokens.css        colours (light and dark), type, spacing, radius, shadow, ring
     base.css          reset, body, headings, links, focus, layout classes (stack, row, grid)
   app/
-    fonts.ts          next/font: Source Sans 3, Outfit, Fraunces
+    fonts.ts          next/font: Lato, Montserrat (brand.md)
     globals.css       @layer order, then @imports the two files above; nothing else
     dev/styles/       the living style page
   components/
@@ -117,7 +119,7 @@ This comes **before** `ux-plan.md` stage 1, because the request page and the gro
 1. **Tokens and fonts:**
    - Add `tokens.css` from the demo, wire `next/font`, and set the `@layer` order.
    - Move raw colours in `globals.css` onto tokens.
-   - Switch the body font to Source Sans 3 and page titles to upright Outfit, with Fraunces kept for the brand and greeting.
+   - Use the brand guide's fonts: Lato for body text, Montserrat for headings (done; see `brand.md`).
    - This alone changes the whole portal's look.
 2. **Base components:** `Button` (neutral by default, one primary), `Pill` (four tones with a dot), `Panel` with a header row, `Note`, `KeyValue`, `EmptyState`, `Icon`, focus ring, and the `/dev/styles` page.
 3. **List and request pieces:** `ItemRow` and `ItemList`, `Stages`, `RequestPage`. Then continue with `ux-plan.md` stage 1.

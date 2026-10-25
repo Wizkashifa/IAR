@@ -10,48 +10,55 @@
  */
 @layer tokens {
   :root {
-    /* IAR brand: green #0B2E12, gold #D4AF37, light gold #F7DC86, cream #F6EEDB, dark gold #6E4C06 */
-    --brand-green: #0b2e12;
-    --brand-green-2: #123a1a;
-    --gold: #d4af37;
-    --gold-light: #f7dc86;
-    --gold-dark: #6e4c06;
+    /*
+     * IAR brand guide (2026): brand green #008040, dark green #0B3A24, gold
+     * #C7A154; complementary taupe #A38C71, orange #F37621, yellow #FFD23E,
+     * mauve #A78B8C, rust #AA5125, teal #004D4E. Gold and the light colours
+     * fail contrast as text on light backgrounds, so they're for lines, edges
+     * and fills there; text uses the deeper shades below (all 4.5:1 or more).
+     * See docs/brand.md.
+     */
+    --brand-green: #0b3a24;
+    --brand-green-2: #124a30;
+    --gold: #c7a154;
+    --gold-light: #e6cf9c;
+    --gold-dark: #8a6a2c;
     --cream: #f6eedb;
 
     --bg: #faf6ea;
     --surface: #ffffff;
     --surface-2: #f3ecd6;
-    --ink: #16221a;
-    --ink-2: #545f52;
-    --ink-3: #656c5e;
-    --line: #e6dcc0;
-    --accent: #0b2e12;
-    --accent-ink: #f6eedb;
-    --accent-text: #0b2e12;
-    --accent-soft: #e3ecdd;
-    --nav-on: #e3ecdd;
-    --ok: #1c7347;
-    --ok-soft: #dcf0e3;
-    --warn: #6e4c06;
-    --warn-soft: #f7ecc6;
+    --ink: #13241b;
+    --ink-2: #4f5b53;
+    --ink-3: #636b63;
+    --line: #e4dcc6;
+    --accent: #008040;
+    --accent-ink: #ffffff;
+    --accent-text: #007038;
+    --accent-soft: #e1f0e7;
+    --nav-on: #e1f0e7;
+    --ok: #007038;
+    --ok-soft: #e3f2e8;
+    --warn: #9a4820;
+    --warn-soft: #fae9de;
     --bad: #a1302a;
     --bad-soft: #f7e0dd;
-    --info: #2c5a94;
-    --info-soft: #e1eaf6;
-    --hold-standing: #c9d2ce;
-    --hold-booking: #9fb8ad;
-    --hold-request: #0b2e12;
+    --info: #004d4e;
+    --info-soft: #dceeee;
+    --hold-standing: #d9d2c4;
+    --hold-booking: #a38c71;
+    --hold-request: #0b3a24;
     --scrim: rgba(0, 0, 0, 0.45);
     /* Gold lines and fills on the green header and menu */
-    --gold-line: rgba(212, 175, 55, 0.5);
-    --gold-wash: rgba(212, 175, 55, 0.12);
+    --gold-line: rgba(199, 161, 84, 0.55);
+    --gold-wash: rgba(199, 161, 84, 0.14);
     --cream-wash: rgba(246, 238, 219, 0.1);
     --cream-dim: rgba(246, 238, 219, 0.6);
 
     /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
     --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-head: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
-    --font-display: var(--font-display-face), Georgia, "Times New Roman", serif;
+    --font-display: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
 
     /* Text sizes */
     --t-xs: 11.5px;
@@ -60,7 +67,7 @@
     --t-base: 15px;
     --t-h2: 15px;
     --t-h1: 24px;
-    --t-greet: 32px;
+    --t-greet: 30px;
 
     /* Spacing, corners and depth */
     --s-1: 4px;
@@ -71,9 +78,9 @@
     --s-6: 32px;
     --r: 10px;
     --r-sm: 8px;
-    --shadow-1: 0 1px 2px rgba(22, 34, 26, 0.06), 0 1px 1px rgba(22, 34, 26, 0.03);
-    --shadow-2: 0 12px 32px rgba(11, 46, 18, 0.16), 0 2px 6px rgba(11, 46, 18, 0.08);
-    --ring: 0 0 0 3px rgba(212, 175, 55, 0.35);
+    --shadow-1: 0 1px 2px rgba(19, 36, 27, 0.06), 0 1px 1px rgba(19, 36, 27, 0.03);
+    --shadow-2: 0 12px 32px rgba(11, 58, 36, 0.16), 0 2px 6px rgba(11, 58, 36, 0.08);
+    --ring: 0 0 0 3px rgba(199, 161, 84, 0.45);
     --control-h: 36px;
     --control-h-sm: 30px;
     --speed: 0.12s;
@@ -81,31 +88,31 @@
     color-scheme: light;
   }
 
-  /* Dark: warm charcoal surfaces; the brand green stays on the header, gold is the accent. */
+  /* Dark: warm charcoal surfaces; the dark brand green stays on the header, gold is the accent. */
   :root[data-mantine-color-scheme="dark"] {
-    --bg: #111412;
-    --surface: #181c19;
-    --surface-2: #20251f;
+    --bg: #111513;
+    --surface: #181d1a;
+    --surface-2: #1f2621;
     --ink: #ece6d6;
     --ink-2: #a7ab9c;
     --ink-3: #8a8f80;
-    --line: #2c322d;
-    --accent: #d4af37;
-    --accent-ink: #0b2e12;
-    --accent-text: #e6cd78;
-    --accent-soft: #2a2a1d;
+    --line: #2c342f;
+    --accent: #c7a154;
+    --accent-ink: #0b3a24;
+    --accent-text: #e2c98f;
+    --accent-soft: #29271c;
     --nav-on: #262619;
-    --ok: #74d29d;
-    --ok-soft: #1c3326;
-    --warn: #e8c76a;
-    --warn-soft: #3a2f12;
+    --ok: #5fcb8e;
+    --ok-soft: #17301f;
+    --warn: #f0a070;
+    --warn-soft: #3a2416;
     --bad: #f19a92;
     --bad-soft: #3d2321;
-    --info: #8fb6ea;
-    --info-soft: #1d2a3b;
+    --info: #6fc6c2;
+    --info-soft: #12302f;
     --hold-standing: #353b36;
-    --hold-booking: #4a5f55;
-    --hold-request: #d4af37;
+    --hold-booking: #6b5d4c;
+    --hold-request: #c7a154;
     --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
     color-scheme: dark;

@@ -60,9 +60,9 @@ export default function StylesPage() {
       <Panel title="Type">
         <div className="stack">
           <p className="greet">Assalamu alaikum, Sample</p>
-          <h1>Page title (Outfit 24)</h1>
-          <h2>Section title (Outfit 15)</h2>
-          <p>Body text in Source Sans 3 at 15px. Requests, forms and lists use this size so they read easily on a phone.</p>
+          <h1>Page title (Montserrat Bold 24)</h1>
+          <h2>Section title (Montserrat Semibold 15)</h2>
+          <p>Body text in Lato at 15px. Requests, forms and lists use this size so they read easily on a phone.</p>
           <p className="lead">A lead line: one sentence under a page title saying what the page is for.</p>
           <p className="muted small">Small supporting text, for dates, IDs and hints.</p>
         </div>
