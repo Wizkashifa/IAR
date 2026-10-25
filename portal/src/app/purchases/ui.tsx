@@ -1,109 +1,66 @@
-import Link from "next/link";
-import { STATUS_LABEL } from "@/lib/cards";
-import { shortFund } from "@/lib/purchases/accounts";
-import { KIND_LABEL, STAGE_LABEL, purchaseTotal } from "@/lib/purchases/types";
+import { ItemRow } from "@/components/ItemRow";
+import { Note } from "@/components/Note";
+import { Pill } from "@/components/Pill";
+import type { RowData } from "@/lib/card-row";
+import { STAGE_LABEL } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, REMINDER_DAYS, daysWaiting, type PurchaseCard } from "@/lib/purchases/workflow";
 
 export { fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
-import { fmtMoney, fmtMonth } from "../ui";
 
-export function StatusPill({ card }: { card: PurchaseCard }) {
-  return <span className={`pill ${card.status}`}>{STATUS_LABEL[card.status]}</span>;
+/** A purchase's status in words, by its step: "Chair approval", "To pay", "Sent back". */
+export function purchaseStatus(card: PurchaseCard): string {
+  const p = card.purchase;
+  if (card.status === "changes_requested") return "Sent back";
+  if (card.status === "denied") return "Declined";
+  if (card.status === "cancelled") return "Cancelled";
+  if (card.status === "closed" || p.stage === "done") return "Complete";
+  if (card.status === "paid") return "Paid";
+  if (p.stage === "payment") return "Approved, to pay";
+  return STAGE_LABEL[p.stage];
 }
 
-/** Stage plus how long it has sat there, highlighted once a reminder or escalation is due. */
-export function StageCell({ card }: { card: PurchaseCard }) {
+/** How long a request has sat at its step, coloured once a reminder (warn) or escalation (bad) is due. */
+export function WaitingPill({ card }: { card: PurchaseCard }) {
   const open = card.status === "in_review" || card.status === "approved" || card.status === "paid";
+  if (!open) return null;
   const days = daysWaiting(card);
-  const cls = !open ? "" : days >= ESCALATE_DAYS ? "late" : days >= REMINDER_DAYS ? "due" : "";
+  if (days === 0) return null;
+  const tone = days >= ESCALATE_DAYS ? "bad" : days >= REMINDER_DAYS ? "warn" : "neutral";
   return (
-    <>
-      {card.status === "changes_requested" ? "Back with requester" : STAGE_LABEL[card.purchase.stage]}
-      {open && <div className={`sub ${cls}`}>{days === 0 ? "today" : `${days} day${days === 1 ? "" : "s"}`}</div>}
-    </>
+    <Pill tone={tone} title="Days waiting at this step">
+      {`${days} day${days === 1 ? "" : "s"} waiting`}
+    </Pill>
   );
 }
 
 /**
- * One row in a purchase table. `redact` hides payee and description for
- * Social & Welfare requests the viewer can't open.
+ * A purchase in a list. `redacted` hides the title and payee of a Social &
+ * Welfare request the person can't open, and leaves the row unlinked.
  */
-export function PurchaseRow({ card, redact, showOwner }: { card: PurchaseCard; redact?: boolean; showOwner?: boolean }) {
-  const p = card.purchase;
-  return (
-    <tr>
-      <td>
-        {redact ? (
-          <>
-            <strong>Social &amp; Welfare request</strong>
-            <div className="sub">{card.id} · details restricted to S&amp;W and finance</div>
-          </>
-        ) : (
-          <>
-            <Link href={`/purchases/${card.id}`}>
-              <strong>{card.title}</strong>
-            </Link>
-            <div className="sub">
-              {card.id} · {KIND_LABEL[p.kind]}
-              {p.payee && p.kind === "pay" ? ` · ${p.payee}` : ""}
-              {p.card ? ` · card ···${p.card.last4}, ${fmtMonth(p.card.statementMonth)}` : ""}
-              {showOwner ? ` · ${card.ownerEmail}` : ""}
-            </div>
-          </>
-        )}
-      </td>
-      <td>{shortFund(p.fund)}</td>
-      <td className="num">{fmtMoney(purchaseTotal(p))}</td>
-      <td>
-        <StatusPill card={card} />
-      </td>
-      <td>
-        <StageCell card={card} />
-      </td>
-    </tr>
-  );
+export function PurchaseRow({ row, card, redacted, days }: { row: RowData; card: PurchaseCard; redacted?: boolean; days?: boolean }) {
+  if (redacted) {
+    return <ItemRow title="Social & Welfare request" id={row.id} sub="Details are for Social & Welfare and the finance office" status={row.status} state={row.state} />;
+  }
+  return <ItemRow title={row.title} id={row.id} href={row.href} sub={row.sub} who={row.who} status={row.status} state={row.state} right={days ? <WaitingPill card={card} /> : undefined} />;
 }
 
-export function PurchaseTable({ cards, redact, showOwner, empty }: { cards: PurchaseCard[]; redact?: (c: PurchaseCard) => boolean; showOwner?: boolean; empty: string }) {
-  if (cards.length === 0) return <div className="panel empty">{empty}</div>;
-  return (
-    <div className="tablewrap">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Request</th>
-            <th>Fund</th>
-            <th className="num">Total</th>
-            <th>Status</th>
-            <th>Stage</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cards.map((c) => (
-            <PurchaseRow key={c.id} card={c} redact={redact?.(c)} showOwner={showOwner} />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+const OK_TEXT: Record<string, string> = {
+  resubmitted: "Changes saved and the request is back in review.",
+  approve: "Approved.",
+  return: "Sent back with your note.",
+  saved: "Vendor saved.",
+  merged: "Vendors merged.",
+  reject: "Declined.",
+  pay: "Payment recorded.",
+  books: "Marked as entered in QuickBooks.",
+  resolve: "Recorded.",
+  cancel: "Request cancelled.",
+  commented: "Comment added. The people on this request can see it.",
+};
 
+/** A confirmation from `?ok=` or a problem from `?error=`. */
 export function Flash({ ok, error }: { ok?: string; error?: string }) {
-  const okText: Record<string, string> = {
-    submitted: "Request submitted. You can follow it here and in My Requests.",
-    resubmitted: "Changes saved and the request is back in review.",
-    approve: "Approved.",
-    return: "Sent back with your note.",
-    saved: "Vendor saved.",
-    merged: "Vendors merged.",
-    reject: "Rejected.",
-    pay: "Payment recorded.",
-    books: "Marked as entered in QuickBooks.",
-    resolve: "Recorded.",
-    cancel: "Request cancelled.",
-    commented: "Comment added. The people on this request can see it.",
-  };
-  if (error) return <div className="error" role="alert">{error}</div>;
-  if (ok && okText[ok]) return <div className="flash" role="status">{okText[ok]}</div>;
+  if (error) return <Note tone="bad">{error}</Note>;
+  if (ok && OK_TEXT[ok]) return <Note tone="ok">{OK_TEXT[ok]}</Note>;
   return null;
 }

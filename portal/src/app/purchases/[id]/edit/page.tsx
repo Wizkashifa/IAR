@@ -8,8 +8,13 @@ import { fundsFor, resubmitPurchase } from "../../actions";
 import PurchaseForm from "../../PurchaseForm";
 import { vendorFormProps } from "../../formData";
 import { linkableEventsFor } from "@/lib/events/context";
+import type { Metadata } from "next";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import styles from "../../purchases.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Make changes · Purchase request" };
 
 export default async function EditPurchase({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,11 +27,17 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   const ctx = await purchaseContext();
   return (
     <>
-      <p className="crumb">
-        <Link href={`/purchases/${id}`}>{id}</Link>
-      </p>
-      <h1>Edit and resubmit</h1>
-      {p.returnNote && <div className="attention note-box"><strong>What was asked:</strong> {p.returnNote}</div>}
+      <nav className="crumb" aria-label="Breadcrumb">
+        <Link href="/purchases">Purchase Requests</Link> / <Link href={`/purchases/${id}`}>{id}</Link> / Make changes
+      </nav>
+      <ModuleHead title="Make the changes and send it again" lead={card.title} />
+      {p.returnNote && (
+        <div className={styles.body}>
+          <Note tone="warn">
+            <strong>What was asked:</strong> {p.returnNote}
+          </Note>
+        </div>
+      )}
       <PurchaseForm
         action={resubmitPurchase.bind(null, id)}
         requesterName={viewer.name}
@@ -36,7 +47,8 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
         events={await linkableEventsFor(viewer)}
         existingFiles={p.attachments.map((a) => a.name)}
         existingW9={p.w9Uploaded?.name}
-        submitLabel="Resubmit"
+        submitLabel="Send it again"
+        cancelHref={`/purchases/${id}`}
         initial={{
           kind: p.kind,
           fund: p.fund,

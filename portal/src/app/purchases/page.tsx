@@ -1,14 +1,26 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { Button } from "@/components/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Panel } from "@/components/Panel";
+import { Pill } from "@/components/Pill";
 import { cardStore } from "@/lib/cards";
+import { emailsIn, type RowData } from "@/lib/card-row";
+import { nameResolver, type NameResolver } from "@/lib/names";
+import { groupForViewer, type NeedsViewer } from "@/lib/needs-you";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
 import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
-import { Flash, PurchaseTable, fmtMoney, fmtMonth } from "./ui";
+import { Flash, PurchaseRow, fmtMoney, fmtMonth, purchaseStatus } from "./ui";
+import styles from "./purchases.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Purchase Requests" };
 
 const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }[] = [
   { id: "all", label: "All open", test: (c) => c.status !== "closed" },
@@ -17,10 +29,15 @@ const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }
     label: STAGE_LABEL[stage],
     test: (c: PurchaseCard) => c.purchase.stage === stage && (c.status === "in_review" || c.status === "approved" || c.status === "paid"),
   })),
-  { id: "returned", label: "Back with requester", test: (c) => c.status === "changes_requested" },
+  { id: "returned", label: "Sent back", test: (c) => c.status === "changes_requested" },
   { id: "late", label: `Waiting ${ESCALATE_DAYS}+ days`, test: (c) => c.status !== "changes_requested" && c.status !== "closed" && daysWaiting(c) >= ESCALATE_DAYS },
   { id: "returns", label: "Refunds & repayments due", test: (c) => openExpectedReturns(c.purchase).length > 0 },
 ];
+
+/** List rows for purchases, with each one's step as its status. */
+function rows(cards: PurchaseCard[], viewer: NeedsViewer, names: NameResolver): RowData[] {
+  return rowsFor(cards, viewer, { names }).map((r, i) => ({ ...r, status: purchaseStatus(cards[i]) }));
+}
 
 export default async function PurchasesPage({ searchParams }: { searchParams: Promise<{ view?: string; ok?: string; error?: string }> }) {
   const { view = "all", ok, error } = await searchParams;
@@ -45,70 +62,109 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const finance = viewer.roles.includes("finance");
   const inQueue = new Set(queue.map((c) => c.id));
   const committeeOpen = openPurchases
-    .filter((c) => actor.oversees?.includes(c.purchase.fund) && !inQueue.has(c.id) && !c.purchase.restricted && c.status !== "closed")
+    .filter((c) => actor.oversees?.includes(c.purchase.fund) && !inQueue.has(c.id) && !c.purchase.restricted && c.status !== "closed" && c.ownerEmail.toLowerCase() !== viewer.email.toLowerCase())
     .sort((a, b) => daysWaiting(b) - daysWaiting(a));
+
+  const names = await nameResolver(emailsIn([...myPurchases, ...queue, ...committeeOpen, ...(overseer ? filtered : [])]));
+  const mineGrouped = groupForViewer(myPurchases, actor);
+  const mineRows = { needsYou: rows(mineGrouped.needsYou, actor, names), waiting: rows(mineGrouped.waiting, actor, names), done: rows(mineGrouped.done, actor, names) };
+  const chips = FILTERS.map((f) => ({ label: `${f.label} · ${openPurchases.filter(f.test).length}`, href: `/purchases?view=${f.id}`, on: f.id === filter.id }));
 
   return (
     <>
-      <div className="pagehead">
-        <div>
-          <h1>Purchase Requests</h1>
-          <p className="lead">Pay a vendor, get reimbursed, or submit IAR credit card receipts.</p>
-        </div>
-        <div className="row">
-          <Link href="/purchases/vendors" className="button secondary">
-            Saved vendors
-          </Link>
-          <Link href="/purchases/new" className="button">
-            New request
-          </Link>
-        </div>
-      </div>
-      <Flash ok={ok} error={error} />
+      <ModuleHead
+        title="Purchase Requests"
+        lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
+        actions={
+          <>
+            <Button href="/purchases/vendors">Saved vendors</Button>
+            <Button href="/purchases/new" variant="primary" icon="plus">
+              New purchase request
+            </Button>
+          </>
+        }
+      />
+      <div className={`stack ${styles.body}`}>
+        <Flash ok={ok} error={error} />
 
-      {queue.length > 0 && (
-        <>
-          <h2>Waiting on you ({queue.length})</h2>
-          <PurchaseTable cards={queue} redact={redact} showOwner empty="" />
-        </>
-      )}
+        {queue.length > 0 && (
+          <PurchaseList
+            title={finance ? "Waiting on the finance office" : "Waiting for your approval"}
+            right={<Pill tone="warn">{queue.length}</Pill>}
+            cards={queue}
+            rows={rows(queue, actor, names)}
+            redact={redact}
+          />
+        )}
 
-      {!overseer && committeeOpen.length > 0 && (
-        <>
-          <h2>Your committees ({committeeOpen.length} open)</h2>
-          <p className="note">Open requests for {actor.oversees?.map(shortFund).join(", ")}. You can see them because you chair, vice-chair or direct these committees. Co-chairs and directors can also approve them at the chair step.</p>
-          <PurchaseTable cards={committeeOpen} redact={redact} showOwner empty="" />
-        </>
-      )}
+        {(myPurchases.length > 0 || !overseer) && <ItemList
+          title="Your requests"
+          sections={sectionsOf(mineRows)}
+          empty="You haven't sent a purchase request yet."
+          emptyAction={
+            <Button href="/purchases/new" variant="primary" size="small">
+              New purchase request
+            </Button>
+          }
+        />}
 
-      {overseer && (
-        <>
-          <h2>All requests</h2>
-          <div className="filters" role="tablist">
-            {FILTERS.map((f) => {
-              const n = openPurchases.filter(f.test).length;
-              return (
-                <Link key={f.id} href={`/purchases?view=${f.id}`} className={`filter${f.id === filter.id ? " on" : ""}`} aria-current={f.id === filter.id}>
-                  {f.label} <span>{n}</span>
+        {!overseer && actor.oversees && actor.oversees.length > 0 && (
+          <PurchaseList
+            title="Your committees"
+            right={actor.oversees.map(shortFund).join(", ")}
+            cards={committeeOpen}
+            rows={rows(committeeOpen, actor, names)}
+            redact={redact}
+            empty="No other open requests from your committees."
+            note="Open requests for the committees you chair, vice-chair or direct. Vice chairs and directors can also approve at the chair step."
+          />
+        )}
+
+        {overseer && (
+          <section className="stack" aria-label="All requests">
+            <nav className={styles.chips} aria-label="Show">
+              {chips.map((c) => (
+                <Link key={c.href} href={c.href} className={c.on ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={c.on ? "page" : undefined}>
+                  {c.label}
                 </Link>
-              );
-            })}
-          </div>
-          <PurchaseTable cards={filtered} redact={redact} showOwner empty="Nothing here." />
-          {filter.id === "returns" && filtered.length > 0 && (
-            <p className="sub">
-              Outstanding:{" "}
-              {fmtMoney(filtered.flatMap((c) => openExpectedReturns(c.purchase)).reduce((s, l) => s + l.amount, 0))}
-            </p>
-          )}
-        </>
-      )}
+              ))}
+            </nav>
+            <PurchaseList
+              title={filter.id === "all" ? "All open requests" : filter.label}
+              right={
+                filter.id === "returns" && filtered.length
+                  ? `Outstanding ${fmtMoney(filtered.flatMap((c) => openExpectedReturns(c.purchase)).reduce((s, l) => s + l.amount, 0))}`
+                  : `${filtered.length}`
+              }
+              cards={filtered}
+              rows={rows(filtered, actor, names)}
+              redact={redact}
+              empty="Nothing here."
+            />
+          </section>
+        )}
 
-      {finance && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
-
-      <h2>Your requests</h2>
-      <PurchaseTable cards={myPurchases} empty="You haven't submitted a purchase request yet." />
+        {finance && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
+      </div>
     </>
+  );
+}
+
+/** Requests with how long each has waited at its step, most overdue first. */
+function PurchaseList({ title, right, cards, rows, redact, empty, note }: { title: string; right?: React.ReactNode; cards: PurchaseCard[]; rows: RowData[]; redact: (c: PurchaseCard) => boolean; empty?: string; note?: string }) {
+  return (
+    <Panel title={title} right={right} flush>
+      {note && <p className={styles.panelNote}>{note}</p>}
+      {cards.length === 0 ? (
+        <EmptyState>{empty ?? "Nothing here."}</EmptyState>
+      ) : (
+        <ul className={styles.list}>
+          {cards.map((c, i) => (
+            <PurchaseRow key={c.id} card={c} row={rows[i]} redacted={redact(c)} days />
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
 
@@ -120,33 +176,38 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
   d.setUTCMonth(d.getUTCMonth() - 1);
   const month = d.toISOString().slice(0, 7);
   return (
-    <>
-      <h2>Card receipts for {fmtMonth(month)}</h2>
-      <div className="tablewrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Card</th>
-              <th>Cardholder</th>
-              <th>Fund</th>
-              <th>Receipts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((c) => {
-              const sub = cards.find((x) => x.purchase.card?.last4 === c.last4 && x.purchase.card.statementMonth === month && x.status !== "cancelled");
-              return (
-                <tr key={c.last4}>
-                  <td>···{c.last4}</td>
-                  <td>{c.holderName}</td>
-                  <td>{shortFund(c.fund)}</td>
-                  <td>{sub ? <Link href={`/purchases/${sub.id}`}>{sub.id}</Link> : <span className="pill changes_requested">Not submitted</span>}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </>
+    <Panel title={`Card receipts for ${fmtMonth(month)}`} right={`${list.length} card${list.length === 1 ? "" : "s"}`} flush>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Cardholder</th>
+            <th>Fund</th>
+            <th>Receipts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((c) => {
+            const sub = cards.find((x) => x.purchase.card?.last4 === c.last4 && x.purchase.card.statementMonth === month && x.status !== "cancelled");
+            return (
+              <tr key={c.last4}>
+                <td data-label="Card">···{c.last4}</td>
+                <td data-label="Cardholder">{c.holderName}</td>
+                <td data-label="Fund">{shortFund(c.fund)}</td>
+                <td data-label="Receipts">
+                  {sub ? (
+                    <>
+                      <Link href={`/purchases/${sub.id}`}>{sub.id}</Link> <Pill tone="ok">Sent</Pill>
+                    </>
+                  ) : (
+                    <Pill tone="warn">Not sent yet</Pill>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </Panel>
   );
 }

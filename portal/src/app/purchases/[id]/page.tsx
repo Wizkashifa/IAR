@@ -1,36 +1,63 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/Button";
+import { ConfirmButton } from "@/components/Confirm";
+import { Field } from "@/components/Field";
+import { KeyValue } from "@/components/KeyValue";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
+import { Pill } from "@/components/Pill";
+import { RequestPage } from "@/components/RequestPage";
 import { cardStore } from "@/lib/cards";
+import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
+import { COMMENT_MAX } from "@/lib/comments";
+import { nameResolver } from "@/lib/names";
+import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor, peopleStore } from "@/lib/people";
 import { isActive, todayLocal } from "@/lib/away";
-import { accountLabel, findAccount } from "@/lib/purchases/accounts";
-import { KIND_LABEL, STAGE_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
-import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard, permission, returnTargets, type Action } from "@/lib/purchases/workflow";
-import { actOnPurchase, actOnPurchaseWith, commentOnPurchase } from "../actions";
-import { COMMENT_MAX } from "@/lib/comments";
-import { Flash, StatusPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
+import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
+import { purchaseContext } from "@/lib/purchases/settings";
+import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
+import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, isPurchaseCard, permission, returnTargets, type Action, type PurchaseCard } from "@/lib/purchases/workflow";
+import { actOnPurchase, commentOnPurchase } from "../actions";
+import { Flash, WaitingPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
+import styles from "../purchases.module.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function PurchaseDetail({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string }>;
-}) {
-  const [{ id }, { ok, error }] = await Promise.all([params, searchParams]);
+type Params = { params: Promise<{ id: string }> };
+
+/** The request's title, for someone who may open it; anyone else sees the same as a missing page. */
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
   const viewer = await requireViewer();
   const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
+  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) return { title: "Purchase request" };
+  return { title: `${card.title} · ${card.id}` };
+}
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+
+export default async function PurchaseDetail({ params, searchParams }: Params & { searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
+  const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
+  const viewer = await requireViewer();
+  const [card, actor, ctx] = await Promise.all([(await cardStore()).get(id), actorFor(viewer), purchaseContext()]);
   // A request someone can't open looks the same as one that doesn't exist.
   if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) notFound();
 
-  const pc = card;
+  const pc: PurchaseCard = card;
   const p = card.purchase;
   const can = (a: Action) => permission(pc, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
-  const card_ = p.kind === "card";
+  const isCard = p.kind === "card";
   const total = purchaseTotal(p);
   const owed = openExpectedReturns(p);
   const live = card.status === "in_review" || card.status === "approved" || card.status === "paid";
@@ -39,6 +66,18 @@ export default async function PurchaseDetail({
   const awayNow = approverAway && isActive(approverAway, todayLocal()) ? approverAway : null;
   const linkedEvent = p.eventCardId ? await (await cardStore()).get(p.eventCardId) : null;
   const finance = actor.roles.includes("finance");
+  const names = await nameResolver([
+    card.ownerEmail,
+    ...(p.approverEmail ? [p.approverEmail] : []),
+    ...p.history.map((h) => h.by),
+    ...(card.comments ?? []).map((c) => c.by),
+    ...(awayNow ? [awayNow.delegate] : []),
+  ]);
+  const opts = { executiveThreshold: ctx.routing.executiveThreshold };
+  const steps = stepsFor(card, opts);
+  const next = nextStepText(card, viewer, names, opts);
+  const waiting = own ? card.waitingOn : whoText(card, viewer, names);
+  const receipts = p.lines.filter((l) => l.hasReceipt).length;
   const hidden = (name: string, value: string) => <input type="hidden" name={name} value={value} />;
   const base = (
     <>
@@ -47,180 +86,265 @@ export default async function PurchaseDetail({
     </>
   );
 
-  return (
+  const notes = (
     <>
-      <p className="crumb">
-        <Link href="/purchases">Purchase Requests</Link>
-      </p>
-      <div className="pagehead">
-        <div>
-          <h1>{card.title}</h1>
-          <p className="lead">
-            {card.id} · {KIND_LABEL[p.kind]} · {fmtMoney(total)}
-          </p>
-        </div>
-        <div className="pills">
-          <StatusPill card={card} />
-          {p.restricted && <span className="pill restricted">Restricted</span>}
-        </div>
-      </div>
       <Flash ok={ok} error={error} />
-
-      {p.relatedParty && (
-        <div className="callout warn">The requester says the payee is a Shura or committee member, a relative of one, or a business one owns. Review it with that in mind.</div>
-      )}
+      {p.relatedParty && <Note tone="warn">The requester says the payee is a Shura or committee member, a relative of one, or a business one owns. Review it with that in mind.</Note>}
       {p.w9Required && (
-        <div className="callout warn">
-          W-9 needed before payment: this is labor or services.{" "}
+        <Note tone="warn">
+          A W-9 is needed before payment, because this is labor or services.{" "}
           {p.w9Uploaded ? (
             <>
-              The requester uploaded it to the restricted W-9 drive ({finance && p.w9Uploaded.driveFileId ? <a href={`https://drive.google.com/file/d/${p.w9Uploaded.driveFileId}/view`} target="_blank" rel="noreferrer">{p.w9Uploaded.name}</a> : p.w9Uploaded.name}). Finance checks it before approving.
+              The requester uploaded it to the restricted W-9 drive (
+              {finance && p.w9Uploaded.driveFileId ? (
+                <a href={`https://drive.google.com/file/d/${p.w9Uploaded.driveFileId}/view`} target="_blank" rel="noreferrer">
+                  {p.w9Uploaded.name}
+                </a>
+              ) : (
+                p.w9Uploaded.name
+              )}
+              ). The finance office checks it before approving.
             </>
           ) : (
             "None was uploaded with this request."
           )}
-        </div>
+        </Note>
       )}
-      {live && p.returnNote && <div className="callout warn"><strong>Sent back:</strong> {p.returnNote}</div>}
+      {live && p.returnNote && (
+        <Note tone="warn">
+          <strong>Sent back:</strong> {p.returnNote}
+        </Note>
+      )}
       {card.status === "changes_requested" && p.returnNote && (
-        <div className="callout warn">
-          <strong>Returned for changes:</strong> {p.returnNote}
+        <Note tone="warn">
+          <strong>Sent back for changes:</strong> {p.returnNote}
           {own && can("resubmit") && (
             <>
               {" "}
-              <Link href={`/purchases/${card.id}/edit`}>Edit and resubmit</Link>
+              <Link href={`/purchases/${card.id}/edit`}>Make the changes and send it again</Link>
             </>
           )}
-        </div>
+        </Note>
       )}
-      {approvingAsDirector(pc, actor) && live && <div className="callout info">This is waiting on {p.approverEmail}. As the committee&apos;s director you can approve, return or reject it too; it&apos;s recorded as your decision as director.</div>}
-      {coveringFor && live && <div className="callout info">You&apos;re covering approvals for {coveringFor} while they&apos;re away. Your approval is recorded as on their behalf.</div>}
+      {approvingAsDirector(pc, actor) && live && (
+        <Note>
+          This is waiting on {p.approverEmail ? names(p.approverEmail) : "the chair"}. As the committee&apos;s director you can approve, send back or decline it too; it&apos;s recorded as your decision as director.
+        </Note>
+      )}
+      {coveringFor && live && <Note>You&apos;re covering approvals for {names(coveringFor)} while they&apos;re away. Your approval is recorded as on their behalf.</Note>}
       {!coveringFor && awayNow && (
-        <div className="callout info">
-          {awayNow.name} is away until {fmtDate(`${awayNow.until}T12:00:00Z`)}. {awayNow.delegate} is covering their approvals.
-        </div>
+        <Note>
+          {awayNow.name} is away until {fmtDate(`${awayNow.until}T12:00:00Z`)}. {names(awayNow.delegate)} is covering their approvals.
+        </Note>
       )}
-      {card.status === "denied" && p.returnNote && <div className="callout bad"><strong>Rejected:</strong> {p.returnNote}</div>}
-
-      <div className="detail">
-        <section>
-          <dl className="facts">
-            <div><dt>Requester</dt><dd>{p.attestation.name} <span className="sub">{card.ownerEmail}</span></dd></div>
-            <div><dt>Fund</dt><dd>{p.fund}</dd></div>
-            {p.eventCardId && <div><dt>Event</dt><dd><Link href={`/events/${p.eventCardId}`}>{linkedEvent?.title ?? p.eventCardId}</Link><div className="sub">{p.eventCardId}{linkedEvent?.eventDate ? ` · ${fmtDate(`${linkedEvent.eventDate}T12:00:00Z`)}` : ""}</div></dd></div>}
-            {p.card && <div><dt>Card</dt><dd>···{p.card.last4} · {fmtMonth(p.card.statementMonth)} statement</dd></div>}
-            {p.payee && <div><dt>Payee</dt><dd>{p.payee}</dd></div>}
-            {p.invoiceNumber && <div><dt>Invoice</dt><dd>{p.invoiceNumber}</dd></div>}
-            {p.delivery && <div><dt>Payment</dt><dd>{paymentLabel(p.delivery)}{p.mailingAddress && <div className="sub pre">{p.mailingAddress}</div>}</dd></div>}
-            <div><dt>Submitted</dt><dd>{fmtDate(card.createdAt ?? p.attestation.at)}</dd></div>
-            <div>
-              <dt>Now</dt>
-              <dd>
-                {card.status === "changes_requested" ? "Back with the requester" : STAGE_LABEL[p.stage]}
-                {card.waitingOn && <div className="sub">{card.waitingOn}{live ? ` · ${daysWaiting(card)} day${daysWaiting(card) === 1 ? "" : "s"}` : ""}</div>}
-              </dd>
-            </div>
-            {p.payment && <div><dt>Paid</dt><dd>{p.payment.method} {p.payment.reference} <span className="sub">{fmtDate(p.payment.at)}</span></dd></div>}
-          </dl>
-
-          <h2>{card_ ? "Charges" : "Line items"}</h2>
-          <div className="tablewrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  {card_ && <th>Date</th>}
-                  <th>{card_ ? "Merchant / sub-account" : "Sub-account"}</th>
-                  <th className="num">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {p.lines.map((l) => (
-                  <tr key={l.id}>
-                    {card_ && <td className="sub nowrap">{l.date && fmtDate(`${l.date}T12:00:00Z`)}</td>}
-                    <td>
-                      {card_ && <strong>{l.merchant}</strong>}
-                      <div className={card_ ? "sub" : ""}>{accountLabel(findAccount(l.accountId))}{findAccount(l.accountId)?.fund !== p.fund && ` (${findAccount(l.accountId)?.fund})`}</div>
-                      {l.note && <div className="sub">{l.note}</div>}
-                      <div className="tags">
-                        {!l.hasReceipt && <span className="tag warn">No receipt</span>}
-                        {l.flag === "refund" && <span className={`tag ${l.resolvedAt ? "ok" : "info"}`}>{l.resolvedAt ? "Refund received" : "Refund pending"}</span>}
-                        {l.flag === "repay" && <span className={`tag ${l.resolvedAt ? "ok" : "info"}`}>{l.resolvedAt ? `Repaid by ${l.repayBy}` : `To be repaid by ${l.repayBy}`}</span>}
-                        {l.flag && !l.resolvedAt && can("resolve") && (
-                          <form action={actOnPurchase} className="inlineform">
-                            {base}
-                            {hidden("action", "resolve")}
-                            {hidden("line", l.id)}
-                            <button className="linkbtn" type="submit">Mark received</button>
-                          </form>
-                        )}
-                      </div>
-                    </td>
-                    <td className="num">{fmtMoney(l.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  {card_ && <td />}
-                  <td><strong>Total</strong>{owed.length > 0 && <div className="sub">{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</div>}</td>
-                  <td className="num"><strong>{fmtMoney(total)}</strong></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <h2>Files</h2>
-          {p.attachments.length === 0 ? (
-            <p className="sub">No files attached.</p>
-          ) : (
-            <ul className="files">
-              {p.attachments.map((a, i) => (
-                <li key={`${a.name}-${i}`}>{a.url ? <a href={a.url} target="_blank" rel="noreferrer">{a.name}</a> : a.name} <span className="sub">{Math.ceil(a.size / 1024)} KB</span></li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <aside>
-          <Actions />
-          <h2 id="comments">Comments</h2>
-          {(card.comments ?? []).length === 0 ? (
-            <p className="note">No comments yet. Ask a question or add context; everyone who can open this request sees it.</p>
-          ) : (
-            <ol className="history">
-              {(card.comments ?? []).map((c) => (
-                <li key={c.id}>
-                  <div><strong>{c.name}</strong> <span className="sub">{fmtDateTime(c.at)}</span></div>
-                  <div className="hnote pre">{c.text}</div>
-                </li>
-              ))}
-            </ol>
-          )}
-          <form action={commentOnPurchase} className="stack">
-            {hidden("id", card.id)}
-            <label className="field">
-              <span>Add a comment</span>
-              <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
-            </label>
-            <div>
-              <button className="button secondary" type="submit">Comment</button>
-            </div>
-          </form>
-          <h2>History</h2>
-          <ol className="history">
-            {[...p.history].reverse().map((h, i) => (
-              <li key={i}>
-                <div><strong>{h.action}</strong></div>
-                <div className="sub">{h.by} · {fmtDateTime(h.at)}</div>
-                {h.note && <div className="hnote">{h.note}</div>}
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </div>
+      {card.status === "denied" && p.returnNote && (
+        <Note tone="bad">
+          <strong>Declined:</strong> {p.returnNote}
+        </Note>
+      )}
     </>
   );
 
+  const main = (
+    <>
+      <Panel title={isCard ? "Charges" : "Line items"} right={<strong>{fmtMoney(total)}</strong>} flush>
+        <table className={`${styles.table} ${styles.compact}`}>
+          <thead>
+            <tr>
+              {isCard && <th>Date</th>}
+              <th>{isCard ? "Merchant and sub-account" : "Sub-account"}</th>
+              <th className={styles.num}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.lines.map((l) => {
+              const acct = findAccount(l.accountId);
+              return (
+                <tr key={l.id}>
+                  {isCard && (
+                    <td data-label="Date" className={`${styles.nowrap} ${styles.date}`}>
+                      {l.date && fmtDate(`${l.date}T12:00:00Z`)}
+                    </td>
+                  )}
+                  <td data-label={isCard ? "Charge" : "Sub-account"}>
+                    {isCard && <strong>{l.merchant}</strong>}
+                    <span className={isCard ? styles.sub : undefined}>
+                      {accountLabel(acct)}
+                      {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
+                    </span>
+                    {l.note && <span className={styles.sub}>{l.note}</span>}
+                    {(!l.hasReceipt || l.flag) && (
+                      <span className={styles.tags}>
+                        {!l.hasReceipt && <Pill tone="warn">No receipt</Pill>}
+                        {l.flag === "refund" && <Pill tone={l.resolvedAt ? "ok" : "info"}>{l.resolvedAt ? "Refund received" : "Refund pending"}</Pill>}
+                        {l.flag === "repay" && <Pill tone={l.resolvedAt ? "ok" : "info"}>{l.resolvedAt ? `Repaid by ${l.repayBy}` : `To be repaid by ${l.repayBy}`}</Pill>}
+                        {l.flag && !l.resolvedAt && can("resolve") && (
+                          <form action={actOnPurchase}>
+                            {base}
+                            {hidden("action", "resolve")}
+                            {hidden("line", l.id)}
+                            <Button type="submit" size="small">
+                              Mark received
+                            </Button>
+                          </form>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                  <td data-label="Amount" className={styles.num}>
+                    {fmtMoney(l.amount)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              {isCard && <td />}
+              <td>
+                Total
+                {owed.length > 0 && <span className={styles.sub}>{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</span>}
+              </td>
+              <td className={styles.num}>{fmtMoney(total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </Panel>
+
+      <Panel title="Receipts and files" right={`${p.attachments.length}`}>
+        {p.attachments.length === 0 ? (
+          <p className={styles.why}>No files attached.</p>
+        ) : (
+          <ul className={styles.files}>
+            {p.attachments.map((a, i) => (
+              <li key={`${a.name}-${i}`}>
+                {a.url ? (
+                  <a href={a.url} target="_blank" rel="noreferrer">
+                    {a.name}
+                  </a>
+                ) : (
+                  a.name
+                )}
+                <span className={styles.when}>{Math.ceil(a.size / 1024)} KB</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel title="Comments" right={`${(card.comments ?? []).length}`} id="comments">
+        {(card.comments ?? []).length === 0 ? (
+          <p className={styles.why}>No comments yet. Ask a question or add context; everyone who can open this request sees it.</p>
+        ) : (
+          <ol className={styles.feed}>
+            {(card.comments ?? []).map((c) => (
+              <li key={c.id}>
+                <span className={styles.av} aria-hidden="true">
+                  {initials(c.name)}
+                </span>
+                <div>
+                  <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
+                  <div className={styles.said}>{c.text}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+        <form action={commentOnPurchase} className={styles.commentForm}>
+          {hidden("id", card.id)}
+          <Field label="Add a comment">
+            <textarea name="text" rows={3} maxLength={COMMENT_MAX} required placeholder="Ask a question or add context." />
+          </Field>
+          <div>
+            <Button type="submit">Comment</Button>
+          </div>
+        </form>
+      </Panel>
+
+      <Panel title="History">
+        <ol className={styles.feed}>
+          {[...p.history].reverse().map((h, i) => (
+            <li key={i}>
+              <span className={styles.av} aria-hidden="true">
+                {initials(names(h.by))}
+              </span>
+              <div>
+                <strong>{names(h.by)}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
+                {h.note && <div className={styles.said}>{h.note}</div>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Panel>
+    </>
+  );
+
+  const side = (
+    <Panel title="Details">
+      <KeyValue
+        items={[
+          { label: "Requested by", value: names(card.ownerEmail) },
+          { label: "Fund", value: p.fund },
+          { label: "Waiting on", value: live || card.status === "changes_requested" ? waiting || "Nothing" : "Nothing" },
+          { label: "Card", value: p.card && `···${p.card.last4} · ${fmtMonth(p.card.statementMonth)} statement` },
+          { label: "Pay to", value: !isCard && p.payee },
+          { label: "Invoice", value: p.invoiceNumber },
+          {
+            label: "Payment",
+            value: p.delivery && (
+              <>
+                {paymentLabel(p.delivery)}
+                {p.mailingAddress && <span className={`${styles.sub} ${styles.said}`}>{p.mailingAddress}</span>}
+              </>
+            ),
+          },
+          { label: "W-9", value: p.w9Required && <Pill tone={p.w9Uploaded ? "info" : "warn"}>{p.w9Uploaded ? "Uploaded · finance checks it" : "Needed"}</Pill> },
+          {
+            label: "Event",
+            value: p.eventCardId && (
+              <>
+                <Link href={`/events/${p.eventCardId}`}>{linkedEvent?.title ?? p.eventCardId}</Link>
+                <span className={styles.sub}>
+                  {p.eventCardId}
+                  {linkedEvent?.eventDate ? ` · ${fmtDate(`${linkedEvent.eventDate}T12:00:00Z`)}` : ""}
+                </span>
+              </>
+            ),
+          },
+          { label: "Receipts", value: !isCard && <Pill tone={receipts === p.lines.length && p.attachments.length > 0 ? "ok" : "warn"}>{p.attachments.length} file{p.attachments.length === 1 ? "" : "s"} attached</Pill> },
+          { label: "Sent", value: fmtDate(card.createdAt ?? p.attestation.at) },
+          { label: "Paid", value: p.payment && `${p.payment.method} ${p.payment.reference} · ${fmtDate(p.payment.at)}` },
+        ]}
+      />
+    </Panel>
+  );
+
+  return (
+    <RequestPage
+      crumb={{ href: "/purchases", label: "Purchase Requests" }}
+      id={card.id}
+      title={card.title}
+      pills={
+        <>
+          <Pill tone={ROW_TONE[rowState(card, actor)]} dot>
+            {purchaseStatus(card)}
+          </Pill>
+          {p.restricted && <Pill tone="bad">Restricted</Pill>}
+          <WaitingPill card={card} />
+        </>
+      }
+      lead={[KIND_LABEL[p.kind], shortFund(p.fund), `from ${names(card.ownerEmail)}`, fmtMoney(total)]}
+      steps={steps}
+      next={next}
+      sent={sent === "1"}
+      notes={notes}
+      actions={<Actions />}
+      main={main}
+      side={side}
+    />
+  );
+
+  /** What the person looking can do now, in one panel: the main action first, then sending back, then cancelling. */
   function Actions() {
     const approve = can("approve");
     const pay = can("pay");
@@ -228,9 +352,8 @@ export default async function PurchaseDetail({
     const cancel = can("cancel");
     const sendBack = can("return");
     const targets = returnTargets(pc);
-    const returnTo = (
-      <label className="field">
-        <span>Send back to</span>
+    const returnTo = targets.length > 1 && (
+      <Field label="Send back to">
         <select name="returnTo" defaultValue="requester">
           {targets.map((t) => (
             <option key={t} value={t}>
@@ -238,93 +361,107 @@ export default async function PurchaseDetail({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
     );
     if (!approve && !pay && !books && !cancel && !sendBack) {
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
-      return why && !why.ok ? <div className="panel sub">{why.reason}</div> : null;
+      return why && !why.ok ? <p className={styles.why}>{why.reason}</p> : null;
     }
-    function SendBack() {
-      return (
-        <>
-          <h3>Something wrong?</h3>
-          <form action={actOnPurchase} className="stack">
-            {base}
-            {hidden("action", "return")}
-            {returnTo}
-            <label className="field">
-              <span>What needs fixing?</span>
-              <textarea name="note" rows={2} maxLength={1000} required />
-            </label>
-            <button className="button secondary" type="submit">Send back</button>
-          </form>
-        </>
-      );
-    }
+    const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
     return (
-      <div className="panel actions">
+      <div className={styles.actForm}>
         {approve && (
-          <>
-            <h3>{STAGE_LABEL[p.stage]}</h3>
-            <form action={actOnPurchase} className="stack">
-              {base}
-              <label className="field">
-                <span>Note (required to send back or reject)</span>
+          <form action={actOnPurchase} className={styles.actForm}>
+            {base}
+            <div className={styles.actGrid}>
+              <Field label="Note" hint="Needed to send it back or decline it. Everyone on the request sees it.">
                 <textarea name="note" rows={2} maxLength={1000} />
+              </Field>
+              {returnTo}
+            </div>
+            {p.stage === "finance" && p.w9Required && (
+              <label className={styles.check}>
+                <input type="checkbox" name="w9Received" /> The W-9 is on file in the restricted W-9 drive
               </label>
-              {p.stage === "finance" && p.w9Required && (
-                <label className="inline">
-                  <input type="checkbox" name="w9Received" /> W-9 is on file in the restricted W-9 drive
-                </label>
-              )}
-              {targets.length > 1 && returnTo}
-              <div className="row">
-                <button className="button" formAction={actOnPurchaseWith.bind(null, "approve")} type="submit">Approve</button>
-                <button className="button secondary" formAction={actOnPurchaseWith.bind(null, "return")} type="submit">Send back</button>
-                <button className="button secondary danger" formAction={actOnPurchaseWith.bind(null, "reject")} type="submit">Reject</button>
-              </div>
-            </form>
-          </>
+            )}
+            <div className={styles.actRow}>
+              <Button type="submit" name="action" value="approve" variant="primary" icon="check">
+                {approveLabel}
+              </Button>
+              <Button type="submit" name="action" value="return">
+                Send back
+              </Button>
+              <ConfirmButton variant="danger" danger name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
+                Decline
+              </ConfirmButton>
+            </div>
+          </form>
         )}
+
         {pay && (
-          <>
-            <h3>Record payment</h3>
-            <form action={actOnPurchase} className="stack">
-              {base}
-              {hidden("action", "pay")}
-              <label className="field">
-                <span>Method</span>
+          <form action={actOnPurchase} className={styles.actForm}>
+            {base}
+            <h2 className={styles.actHead}>Record the payment</h2>
+            {p.payment && (
+              <Note tone="warn">
+                It was already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.
+              </Note>
+            )}
+            <div className={styles.actGrid}>
+              <Field label="How it was paid">
                 <select name="method" defaultValue={p.delivery === "ach" ? "ACH" : "Check"}>
                   <option>Check</option>
                   <option>ACH</option>
                   <option>Bill pay</option>
                 </select>
-              </label>
-              <label className="field">
-                <span>Check number or ACH reference</span>
+              </Field>
+              <Field label="Check number or ACH reference" required>
                 <input name="reference" required maxLength={60} />
-              </label>
-              {p.payment && <p className="note">Already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.</p>}
-              <button className="button" type="submit">Mark paid</button>
-            </form>
-          </>
+              </Field>
+            </div>
+            <div className={styles.actRow}>
+              <ConfirmButton variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
+                Record payment
+              </ConfirmButton>
+            </div>
+          </form>
         )}
-        {sendBack && !approve && <SendBack />}
-        {books && (
-          <>
-            <h3>QuickBooks</h3>
-            <form action={actOnPurchase}>
+
+        {sendBack && !approve && (
+          <details className={styles.more} open={!pay && !books}>
+            <summary>Something wrong? Send it back</summary>
+            <form action={actOnPurchase} className={styles.actForm}>
               {base}
-              {hidden("action", "books")}
-              <button className="button" type="submit">Mark entered in QuickBooks</button>
+              {hidden("action", "return")}
+              <div className={styles.actGrid}>
+                <Field label="What needs fixing" required>
+                  <textarea name="note" rows={2} maxLength={1000} required />
+                </Field>
+                {returnTo}
+              </div>
+              <div className={styles.actRow}>
+                <Button type="submit">Send back</Button>
+              </div>
             </form>
-          </>
+          </details>
         )}
-        {cancel && (
-          <form action={actOnPurchase} className="cancelform">
+
+        {books && (
+          <form action={actOnPurchase} className={styles.actRow}>
             {base}
-            {hidden("action", "cancel")}
-            <button className="linkbtn danger" type="submit">Cancel this request</button>
+            {hidden("action", "books")}
+            <Button type="submit" variant="primary" icon="check">
+              Mark entered in QuickBooks
+            </Button>
+          </form>
+        )}
+
+        {cancel && (
+          <form action={actOnPurchase} className={styles.actRow}>
+            {base}
+            <ConfirmButton variant="danger" name="action" value="cancel" danger title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
+              Cancel this request
+            </ConfirmButton>
           </form>
         )}
       </div>
