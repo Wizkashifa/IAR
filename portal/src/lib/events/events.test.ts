@@ -4,7 +4,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canViewEvent } from "./access";
+import { canOpenEvent, canViewEvent } from "./access";
 import { parseEventInput } from "./input";
 import { eventCommentNotices, eventNotices } from "./notices";
 import { type GoogleRoom, mergeRooms, roomsOverlap, roomsToCheck } from "./rooms";
@@ -234,6 +234,13 @@ test("access: approved events are open to everyone; pending ones to the people i
   assert.equal(canViewEvent(sub, { ...someone, leads: [`portal-team-youth@${D}`] }), true);
   assert.equal(canViewEvent(sub, { ...someone, roles: ["member", "office"] }), true);
   assert.equal(canViewEvent({ ...sub, status: "approved" }, someone), true);
+});
+
+test("access: whoever is asked for their time can open the asking event", () => {
+  const sub = wf.submit(newCard(), owner, [director.email], NOW);
+  const someone = { email: `vol@${D}`, name: "Vol", roles: ["member" as const] };
+  assert.equal(canOpenEvent(sub, someone, false), false);
+  assert.equal(canOpenEvent(sub, someone, true), true);
 });
 
 // ---- Renewal ------------------------------------------------------------

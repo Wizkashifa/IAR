@@ -7,7 +7,7 @@ import { deliver } from "@/lib/notifications";
 import { internalPath } from "@/lib/links";
 import type { Notice } from "@/lib/purchases/notices";
 import { requireViewer, type Viewer } from "@/lib/viewer";
-import { type EventContext, busyFor, committeesFor, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
+import { type EventContext, busyFor, committeesFor, eventAccess, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
 import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
@@ -377,7 +377,7 @@ export async function commentOnEvent(form: FormData): Promise<void> {
   if (check.ok) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const card = await store.get(id);
-      if (!wf.isEventCard(card)) redirect("/events");
+      if (!wf.isEventCard(card) || !(await eventAccess(card, viewer)).open) redirect("/events");
       const next = withComment(card, { at: nowIso(), by: actor.email, name: viewer.name, text: check.text });
       try {
         await store.save(next, card.updatedAt);

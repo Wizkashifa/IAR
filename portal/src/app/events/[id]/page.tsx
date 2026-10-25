@@ -18,16 +18,14 @@ import { canRequestAgain } from "@/lib/again";
 import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
-import { actorFor } from "@/lib/people";
 import { statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
-import { busyFor, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
+import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
 import { eventChecks, missionReasons, windowText } from "@/lib/events/rules";
 import { dayText, daysBetween, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
-import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
@@ -64,7 +62,8 @@ const MESSAGES: Record<string, string> = {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const card = await (await cardStore()).get(id);
-  return { title: isEventCard(card) ? card.title : "Event" };
+  if (!isEventCard(card) || !(await eventAccess(card, await requireViewer())).open) return { title: "Event" };
+  return { title: card.title };
 }
 
 const initials = (name: string) =>
@@ -81,13 +80,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const store = await cardStore();
   const card = await store.get(id);
   if (!isEventCard(card)) notFound();
-  const slots = await slotRequestStore();
-  const [actor, ctx, fromAsks, onAsks] = await Promise.all([actorFor(viewer), eventContext(), slots.listFromCard(id), slots.listForHold(`card:${id}`)]);
-  const ev = eventActor(viewer);
-  const asks: SlotRequest[] = [...onAsks, ...fromAsks.filter((a) => !onAsks.some((o) => o.id === a.id))];
-  const deciding = asks.some((a) => canDecide(a, ev));
-  // A request someone can't open looks the same as one that doesn't exist. Whoever is asked for their time can open the asking request.
-  if (!canOpenCard(card, { ...actor, seeAll: viewer.roles.includes("admins") }) && !deciding) notFound();
+  const [{ actor, ev, asks, open }, ctx] = await Promise.all([eventAccess(card, viewer), eventContext()]);
+  // A request someone can't open looks the same as one that doesn't exist.
+  if (!open) notFound();
 
   const ec = card;
   const e = card.event;

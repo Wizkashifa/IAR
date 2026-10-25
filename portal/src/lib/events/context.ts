@@ -1,7 +1,8 @@
 import "server-only";
 import { type RoomCalendar, roomCalendar, seedDevCalendar } from "../calendar";
-import { cardStore } from "../cards";
+import { type Card, cardStore } from "../cards";
 import { isDevAuth } from "../dev";
+import { actorFor } from "../people";
 import { directory } from "../groups";
 import { portalSettings } from "../portal-settings";
 import { googleRooms } from "../rooms-google";
@@ -11,7 +12,10 @@ import { type Room, mergeRooms, roomsToCheck } from "./rooms";
 import type { BusyItem } from "./rules";
 import { eventDates, todayInRaleigh } from "./series";
 import type { EventInput } from "./types";
+import { canOpenEvent } from "./access";
 import { type EventChoice, linkableEvents } from "./link";
+import { type SlotRequest, canDecide } from "./slot-requests";
+import { slotRequestStore } from "./slot-requests-store";
 import { type EventActor, isEventCard } from "./workflow";
 
 /**
@@ -74,3 +78,18 @@ export async function linkableEventsFor(viewer: Viewer): Promise<EventChoice[]> 
 }
 
 export const eventActor = (viewer: Viewer): EventActor => ({ email: viewer.email.toLowerCase(), name: viewer.name, roles: viewer.actingRoles });
+
+/**
+ * Who is looking at an event and whether they may open it: the page, its
+ * title and the comment action all check the same way. Asks for this event's
+ * time (or from it) are loaded once, since the page shows them too.
+ */
+export async function eventAccess(card: Card, viewer: Viewer) {
+  const slots = await slotRequestStore();
+  const [actor, fromAsks, onAsks] = await Promise.all([actorFor(viewer), slots.listFromCard(card.id), slots.listForHold(`card:${card.id}`)]);
+  const ev = eventActor(viewer);
+  const asks: SlotRequest[] = [...onAsks, ...fromAsks.filter((a) => !onAsks.some((o) => o.id === a.id))];
+  const deciding = asks.some((a) => canDecide(a, ev));
+  const open = canOpenEvent(card, { ...actor, seeAll: viewer.roles.includes("admins") }, deciding);
+  return { actor, ev, asks, open };
+}
