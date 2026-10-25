@@ -1,5 +1,7 @@
 # Beyond the demo: making the portal IAR's intranet
 
+> The order of work for this and the other plans is in `portal-roadmap.md`.
+
 `ux-plan.md` brings the live portal's screens up to the demo. This plan covers everything else that would make the portal the place staff and volunteers go first: fixes needed before the beta, new things the demo doesn't have yet, and what keeps it healthy once people rely on it.
 
 Everything here keeps the decisions in `CLAUDE.md`. It runs on IAR's Google Cloud. People, names and roles come from Google Groups and the Workspace directory, never the repo. Files stay in Shared Drives. Budget and the Shura dashboard stay planned.

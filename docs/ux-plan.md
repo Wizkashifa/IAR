@@ -1,5 +1,7 @@
 # Bringing the portal up to the demo
 
+> The order of work for this and the other plans is in `portal-roadmap.md`.
+
 The demo (`demo/index.html`) is the design. The live portal (`portal/`) follows the same rules, so a request takes the same route in both. But its screens give people less help: they show less about what happens next, who has a request and what to do. This plan brings the live portal up to the demo, in the order that helps volunteers most.
 
 ## Why the two drifted

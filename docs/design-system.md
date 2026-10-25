@@ -1,5 +1,7 @@
 # Design system: what makes the demo look right, and how the portal keeps it
 
+> The order of work for this and the other plans is in `portal-roadmap.md`.
+
 The demo (`demo/index.html`) looks professional because of a small set of disciplined choices, not decoration. The live portal (`portal/src/app/globals.css`) kept the brand colours but dropped most of those choices. This page lists them, shows where the portal departs, and sets out a way of styling the portal that uses only web standards, so it will still be easy to change in a year.
 
 ## What the demo gets right
@@ -64,17 +66,17 @@ The aim is something a volunteer developer can open in six months and change con
 
 ### Decisions
 
-1. **Plain CSS with custom properties. No CSS framework and no CSS-in-JS.**
+1. **Plain CSS with custom properties for our own pieces. No CSS framework and no CSS-in-JS.** Mantine is used only for a short list of hard widgets, wrapped in our own components (see `portal-roadmap.md`).
    - CSS custom properties, `@layer`, nesting, `:has()` and `:focus-visible` are browser standards. They don't get deprecated.
    - The demo is already written this way, so its styles move over almost one for one.
    - Tailwind, styled-components and similar tools each go through breaking major versions. They also make a future reader learn a tool on top of CSS.
-2. **Tokens in one file**, `portal/src/styles/tokens.css`, copied from the demo. Light and dark values live there and nowhere else. Use `light-dark()` where it's safe on the phones IAR's volunteers use (check Baseline "widely available"); otherwise keep the demo's two blocks. A theme switch only sets `color-scheme` on `<html>`.
+2. **Tokens in one file**, `portal/src/styles/tokens.css`, copied from the demo. Light and dark values live there and nowhere else. Use `light-dark()` where it's safe on the phones IAR's volunteers use (check Baseline "widely available"); otherwise keep the demo's two blocks. Light and dark follow Mantine's colour-scheme attribute, so there is only one switch (see `portal-roadmap.md`).
 3. **Cascade layers set the order explicitly:** `@layer reset, tokens, base, components, pages;`. A page rule can never accidentally beat a component rule, which fixes the "later rule wins" problem.
-4. **Shared pieces are React components with their own CSS Module.** These go in `portal/src/components/`: `Button`, `Pill`, `Panel`, `ItemRow`, `ItemList`, `Stages`, `KeyValue`, `Note`, `EmptyState`, `Field`, `Icon`, `Toast`. CSS Modules are built into Next.js and are plain CSS files with locally scoped class names. Each component is one `.tsx` file and one `.module.css` file next to it. These are the pieces `ux-plan.md` stage 1 needs.
+4. **Shared pieces are React components with their own CSS Module.** These go in `portal/src/components/`: `Button`, `Pill`, `Panel`, `ItemRow`, `ItemList`, `Stages`, `KeyValue`, `Note`, `EmptyState`, `Field`, `Icon`, plus thin wrappers around Mantine: `DateField`, `RoomPicker`, `FileDrop`, `confirm`, `toast`. CSS Modules are built into Next.js and are plain CSS files with locally scoped class names. Each component is one `.tsx` file and one `.module.css` file next to it. These are the pieces `ux-plan.md` stage 1 needs.
 5. **Pages compose components and use layout classes** (`stack`, `row`, `grid`, with gaps from the spacing tokens) instead of `style={{ … }}`. The 42 inline styles go away.
 6. **Icons are our own:** an `Icon` component holding the ~40 SVG paths the demo already uses, with no icon package. If a new icon is needed, copy its SVG from the Lucide site (ISC licence) into the same file.
 7. **Fonts via `next/font/google`** instead of the Google Fonts `<link>`. Next.js downloads the fonts at build time and serves them from the portal itself. The page makes no outside call when it loads, text doesn't jump as fonts arrive, and the font choice sits in one file (`app/fonts.ts`). Same three faces as the demo, same jobs.
-8. **Native elements for interactive parts:** `<dialog>` for confirmations, the `popover` attribute for menus, and `<details>` for folded sections. Keyboard and screen-reader behaviour comes from the browser. Reach for a library only if a native element truly can't do it. For a searchable room picker, try a native `<input list>` first.
+8. **Native elements where they're enough, Mantine where they aren't:** `<details>` for folded sections and the `popover` attribute for simple menus. Use Mantine, through our wrappers, for date and time pickers, the room and people pickers, file drop, confirm dialogs, toasts and the header search. Pages never import `@mantine/*` directly, so a Mantine major version touches only the wrappers.
 9. **A living style page at `/dev/styles`** (dev mode only, like `/dev`). It shows every token and every component in each state, in light and dark. This is the reference to check in six months, with nothing extra to install or upgrade (no Storybook).
 10. **Small guard tests** in `npm test`:
     - No raw colour values outside `tokens.css`.
@@ -82,7 +84,7 @@ The aim is something a volunteer developer can open in six months and change con
     - Every component on `/dev/styles` renders.
 
     These are cheap and keep the system from eroding.
-11. **Keep dependencies few and current.** The portal has seven runtime dependencies today; keep it that way. Add Dependabot with one grouped monthly update for `portal/` and `ops/go-live/`, so updates arrive small and often instead of as a painful jump later. CI (`.github/workflows/ci.yml`) already runs tests, typecheck and build on every pull request.
+11. **Keep dependencies few and current.** The portal has seven runtime dependencies today. Mantine adds its core and the few packages listed in `portal-roadmap.md`, and nothing else gets added without a reason written in the pull request. Add Dependabot with one grouped monthly update for `portal/` and `ops/go-live/`, so updates arrive small and often instead of as a painful jump later. CI (`.github/workflows/ci.yml`) already runs tests, typecheck and build on every pull request.
 12. **Write it down:** a short "Styling" section in `CLAUDE.md` that points here. Rules: use tokens, use components, no raw colours, and change the demo first if a screen needs to look different.
 
 ### File layout
@@ -102,7 +104,9 @@ portal/src/
     Panel.tsx         Panel.module.css
     ItemRow.tsx       ItemRow.module.css   (plus ItemList for the grouped sections)
     Stages.tsx        Stages.module.css
-    KeyValue.tsx, Note.tsx, EmptyState.tsx, Field.tsx, Icon.tsx, Toast.tsx
+    KeyValue.tsx, Note.tsx, EmptyState.tsx, Field.tsx, Icon.tsx
+    DateField.tsx, RoomPicker.tsx, FileDrop.tsx, confirm.ts, toast.ts   (Mantine wrappers)
+    theme.ts          Mantine theme, pointing at the CSS variables in tokens.css
     RequestPage.tsx   RequestPage.module.css   (ux-plan.md 1.1)
 ```
 
@@ -122,6 +126,6 @@ This comes **before** `ux-plan.md` stage 1, because the request page and the gro
    - Delete the old rules in `globals.css` as pages move onto components.
    - Add the guard tests and Dependabot.
    - Update `CLAUDE.md`.
-5. **Dark mode and theme switch:** use the demo's warm charcoal palette, and add a theme choice in the account menu.
+5. **Dark mode and theme switch:** use the demo's warm charcoal palette, written against Mantine's colour-scheme attribute, and add a theme choice in the account menu.
 
 Each step keeps `npm test`, `npm run typecheck` and `npm run build` passing, and each is visible on `/dev/styles` before pages move onto it.
