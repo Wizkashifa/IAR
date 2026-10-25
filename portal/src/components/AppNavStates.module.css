@@ -1,0 +1,16 @@
+@layer components {
+  .loading { display: flex; flex-direction: column; gap: var(--s-4); }
+  .bar { border-radius: 6px; background: var(--surface-2); animation: pulse 1.4s ease-in-out infinite; }
+  .title { height: 28px; width: 40%; }
+  .lead { height: 16px; width: 60%; margin-top: calc(-1 * var(--s-2)); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); }
+  .head { height: 16px; width: 30%; margin: var(--s-4); }
+  .row { display: flex; justify-content: space-between; gap: var(--s-4); padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
+  .line { height: 14px; width: 55%; }
+  .short { height: 14px; width: 80px; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  @media (prefers-reduced-motion: reduce) { .bar { animation: none; } }
+
+  .error { display: flex; flex-direction: column; gap: var(--s-4); }
+  .ref { display: block; margin-top: var(--s-2); font-size: var(--t-sm); color: var(--ink-3); }
+}
