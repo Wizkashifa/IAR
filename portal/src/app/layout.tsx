@@ -36,6 +36,7 @@ const MENU: Record<string, { group: "request" | "team" | "admin"; label: string;
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
   "run-sheet": { group: "team", label: "Daily Run Sheet", icon: "book" },
+  "finance-desk": { group: "team", label: "Finance desk", icon: "receipt" },
   admin: { group: "admin", label: "Portal Settings", icon: "sliders" },
 };
 

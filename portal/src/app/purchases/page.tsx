@@ -77,6 +77,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={
           <>
+            {finance && <Button href="/purchases/finance">Finance desk</Button>}
             <Button href="/purchases/vendors">Saved vendors</Button>
             <Button href="/purchases/new" variant="primary" icon="plus">
               New purchase request
