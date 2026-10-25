@@ -5,6 +5,7 @@ import { isDevAuth } from "./dev";
 import { type Alert, type Delivery, alertEmail, chatMessage, fallbackFor, routeAlerts } from "./alerts";
 import { ChatUnreachable, chatEnabled, postToSpace, sendDm } from "./chat";
 import { mailEnabled, sendMail } from "./mail";
+import { digestText, routeFyi, splitForQuietHours, type NotifyPrefs } from "./notify-prefs";
 import { roleMailbox, type Role } from "./org";
 import { peopleStore } from "./people";
 import { type PortalSettings, portalSettings } from "./portal-settings";
@@ -123,14 +124,17 @@ const emailFallback = () => mailEnabled() && process.env.PORTAL_EMAIL_FALLBACK !
  * Deliver notices: write them to the bell, and send an alert (Google Chat,
  * or email when Chat can't reach someone) for the ones marked for it.
  * Approvals waiting on someone who's away also go to the person covering.
- * Never throws, so a Chat, mail or database hiccup can't undo the action
- * that caused it; failures are logged.
+ * Updates that aren't waiting on someone go by Chat only if they chose
+ * "Right away in Chat" (lib/notify-prefs.ts); otherwise the bell and, if they
+ * chose it, the morning digest. Never throws, so a Chat, mail or database
+ * hiccup can't undo the action that caused it; failures are logged.
  */
 export async function deliver(notices: Notice[], by: string, now = new Date().toISOString()): Promise<void> {
   if (notices.length === 0) return;
   const actor = by.toLowerCase();
   const items: Omit<Notification, "id">[] = [];
   const alerts: Alert[] = [];
+  const updates: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
 
@@ -145,6 +149,7 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
       const to = n.to.email.toLowerCase();
       items.push({ ...base, to, text: n.text });
       if (n.alert) alerts.push({ to, text: n.text, href: n.href, cardId: n.cardId });
+      else if (to !== actor) updates.push({ to, text: n.text, href: n.href, cardId: n.cardId, fyi: true });
       if (n.delegable) {
         people ??= await peopleStore();
         const away = await people.getAway(to);
@@ -159,14 +164,47 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   } catch (err) {
     console.error("notification write failed", err);
   }
-  await sendAlerts(alerts);
+  await sendAlerts([...alerts, ...(await wantedUpdates(updates))], { now: new Date(now) });
 }
 
-/** Send alerts by Chat, falling back to email. Never throws. */
-export async function sendAlerts(alerts: Alert[]): Promise<void> {
+/** The updates whose person chose "Right away in Chat". A lookup failure sends none: they're still on the bell. */
+async function wantedUpdates(updates: Alert[]): Promise<Alert[]> {
+  if (updates.length === 0) return [];
+  try {
+    const prefs = await prefsFor(updates.map((u) => u.to));
+    return updates.filter((u) => routeFyi(prefs(u.to)) === "send");
+  } catch (err) {
+    console.error("notification settings lookup failed", err);
+    return [];
+  }
+}
+
+/** Each person's choices, looked up once each. */
+async function prefsFor(emails: string[]): Promise<(email: string) => NotifyPrefs> {
+  const people = await peopleStore();
+  const unique = [...new Set(emails.filter((e) => e.includes("@")).map((e) => e.toLowerCase()))];
+  const found = new Map((await Promise.all(unique.map((e) => people.getPrefs(e)))).map((p) => [p.email, p]));
+  return (email) => found.get(email.toLowerCase()) ?? { email, fyi: "portal", quiet: true };
+}
+
+export type SendOptions = {
+  /** The time to judge quiet hours by. */
+  now?: Date;
+  /** false: send even overnight (the morning flush and the digests). */
+  hold?: boolean;
+};
+
+/**
+ * Send alerts by Chat, falling back to email. A message to someone with
+ * quiet overnight on that would arrive between 9 PM and 7 AM is kept and
+ * sent by the 7 AM daily job instead. Never throws.
+ */
+export async function sendAlerts(alerts: Alert[], o: SendOptions = {}): Promise<void> {
   if (alerts.length === 0) return;
   const chat = chatEnabled();
   if (!chat && !mailEnabled()) return;
+  if (o.hold !== false) alerts = await holdOvernight(alerts, o.now ?? new Date());
+  if (alerts.length === 0) return;
   let spaces: PortalSettings["chatSpaces"] = {};
   if (chat) spaces = (await portalSettings()).chatSpaces ?? {};
   const deliveries = routeAlerts(alerts, { chat, spaces, groupMailbox });
@@ -186,6 +224,46 @@ export async function sendAlerts(alerts: Alert[]): Promise<void> {
       }
     }),
   );
+}
+
+/** Keep tonight's messages for people with quiet overnight on; return the rest. If the lookup fails, everything goes now. */
+async function holdOvernight(alerts: Alert[], now: Date): Promise<Alert[]> {
+  try {
+    const { send: sendNow, hold } = splitForQuietHours(alerts, now, await prefsFor(alerts.map((a) => a.to)));
+    if (hold.length) {
+      const people = await peopleStore();
+      for (const h of hold) await people.holdAlert({ alert: h.alert, sendAt: h.sendAt.toISOString(), heldAt: now.toISOString() });
+    }
+    return sendNow;
+  } catch (err) {
+    console.error("quiet hours check failed; sending now", err);
+    return alerts;
+  }
+}
+
+/** The daily job at 7 AM: send what was held overnight. */
+export async function sendHeldAlerts(now = new Date()): Promise<number> {
+  const due = await (await peopleStore()).takeDueAlerts(now.toISOString());
+  await sendAlerts(
+    due.map((h) => h.alert),
+    { now, hold: false },
+  );
+  return due.length;
+}
+
+/** The daily job: one Chat message for each person who chose the morning digest, listing their unread updates since yesterday. */
+export async function sendDigests(now = new Date()): Promise<number> {
+  const since = new Date(now.getTime() - 24 * 3600_000).toISOString();
+  const emails = await (await peopleStore()).listDigestPeople();
+  const s = await store();
+  const digests: Alert[] = [];
+  for (const email of emails) {
+    const recent = (await s.listFor([email], 50)).filter((n) => n.at >= since && n.by !== email && !n.readBy.includes(email));
+    const text = digestText(recent);
+    if (text) digests.push({ to: email, text, href: "/notifications", fyi: true });
+  }
+  await sendAlerts(digests, { now, hold: false });
+  return digests.length;
 }
 
 async function send(d: Delivery): Promise<void> {

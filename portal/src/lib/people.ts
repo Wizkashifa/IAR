@@ -2,13 +2,16 @@ import "server-only";
 import { type Away, coveringFor, todayLocal } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
+import type { Alert } from "./alerts";
+import { cleanPrefs, type NotifyPrefs } from "./notify-prefs";
 import { personFunds, purchaseContext } from "./purchases/settings";
 import type { Actor } from "./purchases/workflow";
 import type { Viewer } from "./viewer";
 
 /**
- * Per-person settings the portal keeps itself. Today: out-of-office handoffs,
- * at orgs/{orgId}/away/{email}.
+ * Per-person settings the portal keeps itself: out-of-office handoffs (at
+ * orgs/{orgId}/away/{email}), notification choices (notifyPrefs/{email}) and
+ * the alerts held overnight for people with quiet hours on (heldAlerts).
  */
 export interface PeopleStore {
   getAway(email: string): Promise<Away | null>;
@@ -16,10 +19,24 @@ export interface PeopleStore {
   clearAway(email: string): Promise<void>;
   /** Away records naming this person as the one covering (past ones included). */
   listAwayByDelegate(email: string): Promise<Away[]>;
+  /** Their notification choices; the defaults when they've never changed them. */
+  getPrefs(email: string): Promise<NotifyPrefs>;
+  setPrefs(p: NotifyPrefs): Promise<void>;
+  /** Everyone who chose the morning digest. */
+  listDigestPeople(): Promise<string[]>;
+  /** Keep an alert until `sendAt` (quiet overnight). */
+  holdAlert(h: HeldAlert): Promise<void>;
+  /** Held alerts due by `now`, removed as they're taken. */
+  takeDueAlerts(now: string): Promise<HeldAlert[]>;
 }
 
-const g = globalThis as unknown as { __iarAway?: Map<string, Away> };
+/** An alert waiting for the morning. */
+export type HeldAlert = { alert: Alert; sendAt: string; heldAt: string };
+
+const g = globalThis as unknown as { __iarAway?: Map<string, Away>; __iarPrefs?: Map<string, NotifyPrefs>; __iarHeld?: HeldAlert[] };
 const mem: Map<string, Away> = (g.__iarAway ??= new Map());
+const memPrefs: Map<string, NotifyPrefs> = (g.__iarPrefs ??= new Map());
+const memHeld: HeldAlert[] = (g.__iarHeld ??= []);
 
 const memoryStore: PeopleStore = {
   async getAway(email) {
@@ -34,6 +51,23 @@ const memoryStore: PeopleStore = {
   async listAwayByDelegate(email) {
     return [...mem.values()].filter((a) => a.delegate === email.toLowerCase()).map((a) => structuredClone(a));
   },
+  async getPrefs(email) {
+    return cleanPrefs(email, memPrefs.get(email.toLowerCase()));
+  },
+  async setPrefs(p) {
+    memPrefs.set(p.email, structuredClone(p));
+  },
+  async listDigestPeople() {
+    return [...memPrefs.values()].filter((p) => p.fyi === "digest").map((p) => p.email);
+  },
+  async holdAlert(h) {
+    memHeld.push(structuredClone(h));
+  },
+  async takeDueAlerts(now) {
+    const due = memHeld.filter((h) => h.sendAt <= now);
+    for (const h of due) memHeld.splice(memHeld.indexOf(h), 1);
+    return due;
+  },
 };
 
 let fsStore: PeopleStore | null = null;
@@ -41,6 +75,8 @@ async function getFirestoreStore(): Promise<PeopleStore> {
   if (fsStore) return fsStore;
   const { org } = await firestore();
   const away = org.collection("away");
+  const prefs = org.collection("notifyPrefs");
+  const held = org.collection("heldAlerts");
   fsStore = {
     async getAway(email) {
       const d = await away.doc(email.toLowerCase()).get();
@@ -55,6 +91,28 @@ async function getFirestoreStore(): Promise<PeopleStore> {
     async listAwayByDelegate(email) {
       const snap = await away.where("delegate", "==", email.toLowerCase()).limit(50).get();
       return snap.docs.map((d) => d.data() as Away);
+    },
+    async getPrefs(email) {
+      const d = await prefs.doc(email.toLowerCase()).get();
+      return cleanPrefs(email, d.exists ? (d.data() as Partial<NotifyPrefs>) : null);
+    },
+    async setPrefs(p) {
+      await prefs.doc(p.email).set(clean(p));
+    },
+    async listDigestPeople() {
+      const snap = await prefs.where("fyi", "==", "digest").limit(500).get();
+      return snap.docs.map((d) => (d.data() as NotifyPrefs).email);
+    },
+    async holdAlert(h) {
+      await held.add(clean(h));
+    },
+    async takeDueAlerts(now) {
+      const snap = await held.where("sendAt", "<=", now).limit(500).get();
+      if (snap.empty) return [];
+      const batch = held.firestore.batch();
+      for (const d of snap.docs) batch.delete(d.ref);
+      await batch.commit();
+      return snap.docs.map((d) => d.data() as HeldAlert);
     },
   };
   return fsStore;
