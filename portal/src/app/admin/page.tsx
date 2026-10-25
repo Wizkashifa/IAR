@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { EmptyState } from "@/components/EmptyState";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
 import { directory } from "@/lib/groups";
 import { ORG } from "@/lib/org";
 import { portalSettings } from "@/lib/portal-settings";
@@ -10,8 +15,10 @@ import { addCard, removeCard, saveEventRules, saveRoom, saveTeamFund } from "./a
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
+import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Portal Settings" };
 
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
 const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W purchase requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
@@ -37,14 +44,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <h1>Portal Settings</h1>
-      <p className="lead">
+      <ModuleHead
+        title="Portal Settings"
+        lead={
+          <>
         Who is on each committee or team, who chairs it and who directs it all come from Google Groups. Change people in{" "}
         <a href={GOOGLE_GROUPS} target="_blank" rel="noopener noreferrer">Google Admin → Groups</a>; the portal picks it up within 15 minutes. Here you set
         which fund each team charges and IAR&apos;s cards.
-      </p>
-      {ok && <div className="flash" role="status">{ok}</div>}
-      {error && <div className="callout bad" role="alert">{error}</div>}
+          </>
+        }
+      />
+      {ok && <Note tone="ok">{ok}</Note>}
+      {error && <Note tone="bad">{error}</Note>}
 
       <h2>Committees and teams ({teams.length})</h2>
       <p className="note">
@@ -52,7 +63,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         approver), and Members are members. {gaps ? `${gaps} need a chair or a fund.` : "Every team has a chair and a fund."}
       </p>
       {teams.length === 0 ? (
-        <div className="panel empty">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</div>
+        <Panel>
+          <EmptyState icon="info">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -112,7 +125,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         oversee. A director sees those committees&apos; requests and can approve them alongside the chair, except Social &amp; Welfare.
       </p>
       {pillarsOf(dir).length === 0 ? (
-        <div className="panel empty">No portal-pillar groups found yet.</div>
+        <Panel>
+          <EmptyState icon="info">No portal-pillar groups found yet.</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -166,7 +181,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         can be booked through the portal and set what Google doesn&apos;t know: food, rooms that share a space (the full gym and its halves), and who may book.
       </p>
       {rooms.length === 0 ? (
-        <div className="panel empty">No room resources found in Google yet.</div>
+        <Panel>
+          <EmptyState icon="info">No room resources found in Google yet.</EmptyState>
+        </Panel>
       ) : (
         <div className="tablewrap">
           <table className="table">
@@ -274,7 +291,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </table>
         </div>
       )}
-      <form action={addCard} className="panel grid2" style={{ marginTop: 12 }}>
+      <form action={addCard} className={`panel grid2 ${styles.addcard}`}>
         <label className="field">
           <span>Last four digits</span>
           <input name="last4" inputMode="numeric" maxLength={4} pattern="\d{4}" required />

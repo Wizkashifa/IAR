@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { signIn } from "next-auth/react";
+import { Button } from "@/components/Button";
 
 /**
  * Sends people straight to Google: anyone already signed in to their IAR
@@ -12,8 +13,8 @@ export function SignInButton({ auto }: { auto: boolean }) {
     if (auto) void signIn("google", { callbackUrl: "/" });
   }, [auto]);
   return (
-    <button className="button" onClick={() => signIn("google", { callbackUrl: "/" })}>
+    <Button variant="primary" onClick={() => signIn("google", { callbackUrl: "/" })}>
       {auto ? "Taking you to Google…" : "Sign in with Google"}
-    </button>
+    </Button>
   );
 }
