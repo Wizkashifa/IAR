@@ -1,9 +1,11 @@
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
+import { Disclosure } from "@/components/Disclosure";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { Button } from "@/components/Button";
+import { Field } from "@/components/Field";
 
 /** The pieces module pages are built from, beyond the basics above: one example of each. */
 export function Pieces() {
@@ -43,6 +45,36 @@ export function Pieces() {
             </tr>
           </tbody>
         </DataTable>
+      </Panel>
+
+      <Panel title="Folded away" right="components/Disclosure.tsx">
+        <div className="stack">
+          <div className="row">
+            <Button variant="primary">Approve</Button>
+          </div>
+          <Disclosure summary="Something wrong? Send it back" divided>
+            <p className="muted small">The form to send it back goes here.</p>
+          </Disclosure>
+          <div className="row">
+            <Disclosure summary="Mark done" button="primary">
+              <p className="muted small">A note for the requester, then Done.</p>
+            </Disclosure>
+            <Disclosure summary="Ask the requester" button="quiet">
+              <p className="muted small">A question, added as a comment.</p>
+            </Disclosure>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Layout classes" right="styles/base.css: stack, row, grid, grid two, grid split, grow, push">
+        <div className="grid split">
+          <Field label="Done by">
+            <input defaultValue="Tue, Nov 3" />
+          </Field>
+          <Field label="Note">
+            <input placeholder="grid split: a narrow field beside a wide one" />
+          </Field>
+        </div>
       </Panel>
 
       <Panel title="Choices" right="components/Choices.tsx">

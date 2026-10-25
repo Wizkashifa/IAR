@@ -132,7 +132,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
       <Panel title={s ? `Edit “${s.name}”` : "New schedule"}>
         <form action={saveSchedule} className="stack">
           {s && <input type="hidden" name="id" value={s.id} />}
-          <div className={styles.grid2}>
+          <div className="grid">
             <Field label="Job" required>
               <input name="name" defaultValue={s?.name} required maxLength={80} placeholder="HVAC filter check" />
             </Field>

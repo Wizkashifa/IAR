@@ -29,6 +29,7 @@ import styles from "../purchases.module.css";
 import { todayLocal } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 
@@ -320,7 +321,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </Field>
     );
     const again = canRequestAgain(pc, viewer, todayLocal()) && (
-      <div className={styles.actRow}>
+      <div className="row">
         <Button href={`/purchases/new?from=${pc.id}`} icon="repeat" variant="quiet">
           Request this again
         </Button>
@@ -333,11 +334,11 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
     }
     const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
     return (
-      <div className={styles.actForm}>
+      <div className="stack">
         {approve && (
-          <form action={actOnPurchase} className={styles.actForm}>
+          <form action={actOnPurchase} className="stack">
             {base}
-            <div className={styles.actGrid}>
+            <div className="grid">
               <Field label="Note" hint="Needed to send it back or decline it. Everyone on the request sees it.">
                 <textarea name="note" rows={2} maxLength={1000} />
               </Field>
@@ -346,7 +347,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             {p.stage === "finance" && p.w9Required && (
               <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
             )}
-            <div className={styles.actRow}>
+            <div className="row">
               <Button type="submit" name="action" value="approve" variant="primary" icon="check">
                 {approveLabel}
               </Button>
@@ -361,7 +362,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {pay && (
-          <form action={actOnPurchase} className={styles.actForm}>
+          <form action={actOnPurchase} className="stack">
             {base}
             <h2 className={styles.actHead}>Record the payment</h2>
             {p.payment && (
@@ -369,7 +370,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                 It was already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.
               </Note>
             )}
-            <div className={styles.actGrid}>
+            <div className="grid">
               <Field label="How it was paid">
                 <select name="method" defaultValue={p.delivery === "ach" ? "ACH" : "Check"}>
                   <option>Check</option>
@@ -381,7 +382,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                 <input name="reference" required maxLength={60} />
               </Field>
             </div>
-            <div className={styles.actRow}>
+            <div className="row">
               <ConfirmButton variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
                 Record payment
               </ConfirmButton>
@@ -390,26 +391,25 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {sendBack && !approve && (
-          <details className={styles.more} open={!pay && !books}>
-            <summary>Something wrong? Send it back</summary>
-            <form action={actOnPurchase} className={styles.actForm}>
+          <Disclosure summary="Something wrong? Send it back" open={!pay && !books}>
+            <form action={actOnPurchase} className="stack">
               {base}
               {hidden("action", "return")}
-              <div className={styles.actGrid}>
+              <div className="grid">
                 <Field label="What needs fixing" required>
                   <textarea name="note" rows={2} maxLength={1000} required />
                 </Field>
                 {returnTo}
               </div>
-              <div className={styles.actRow}>
+              <div className="row">
                 <Button type="submit">Send back</Button>
               </div>
             </form>
-          </details>
+          </Disclosure>
         )}
 
         {books && (
-          <form action={actOnPurchase} className={styles.actRow}>
+          <form action={actOnPurchase} className="row">
             {base}
             {hidden("action", "books")}
             <Button type="submit" variant="primary" icon="check">
@@ -419,7 +419,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {cancel && (
-          <form action={actOnPurchase} className={styles.actRow}>
+          <form action={actOnPurchase} className="row">
             {base}
             <ConfirmButton variant="danger" name="action" value="cancel" danger title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
               Cancel this request

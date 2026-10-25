@@ -16,6 +16,7 @@ import { OK_TEXT, fmtDate } from "../ui";
 import { mergeVendor, updateVendor } from "./actions";
 import styles from "../purchases.module.css";
 import { DataTable, cell } from "@/components/DataTable";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -49,7 +50,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
       />
       <div className={`stack ${styles.body}`}>
         <FlashNote ok={ok} error={error} messages={OK_TEXT} />
-        <form action="/purchases/vendors" className={`${styles.actRow} ${styles.search}`} role="search">
+        <form action="/purchases/vendors" className={`row ${styles.search}`} role="search">
           <input name="q" defaultValue={q} placeholder="Search by name or address" aria-label="Search vendors" />
           <Button type="submit" icon="search">
             Search
@@ -76,7 +77,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
           <Panel title="Merge duplicates">
             <form action={mergeVendor} className="stack">
               <p className={styles.why}>Same vendor typed two ways? Keep one record; its committees, payment count and W-9 are combined.</p>
-              <div className={styles.actGrid}>
+              <div className="grid">
                 <Field label="Keep">
                   <VendorSelect name="keep" shared={shared} restricted={restricted} />
                 </Field>
@@ -139,8 +140,7 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
               {v.address && <span className={`${cell.sub} ${styles.said}`}>{v.address}</span>}
               {finance && v.contact && <span className={cell.sub}>{v.contact}</span>}
               {finance && (
-                <details>
-                  <summary className={buttonClass({ variant: "quiet", size: "small" })}>Edit</summary>
+                <Disclosure summary="Edit" button="quiet">
                   <form action={updateVendor} className="stack">
                     <input type="hidden" name="id" value={v.id} />
                     <Field label="Name" required>
@@ -158,7 +158,7 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                       </Button>
                     </div>
                   </form>
-                </details>
+                </Disclosure>
               )}
             </td>
             <td data-label="Used by" className={styles.when}>

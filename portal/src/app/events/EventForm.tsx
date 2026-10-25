@@ -243,7 +243,7 @@ export default function EventForm(p: EventFormProps) {
             >
               <textarea rows={5} value={d.description} onChange={(e) => set("description", e.target.value)} placeholder="What will happen and who it's for. Include the schedule and any speakers or guests." maxLength={4000} required />
             </Field>
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="Sponsoring committee">
                 <select value={d.committeeGroup} onChange={(e) => update((x) => ({ ...x, committeeGroup: e.target.value, committeeName: p.committees.find((c) => c.group === e.target.value)?.name ?? "" }))}>
                   {p.committees.map((c) => <option key={c.group} value={c.group}>{c.name}</option>)}
@@ -260,7 +260,7 @@ export default function EventForm(p: EventFormProps) {
               </Field>
             </div>
             <p className={styles.hint}>You set up and clean up yourselves. That time is held on the calendar for you.</p>
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="Repeats">
                 <select value={d.recurFreq} onChange={(e) => update((x) => ({ ...x, recurFreq: e.target.value as Draft["recurFreq"], recurUntil: e.target.value === "none" ? "" : x.recurUntil }))}>
                   <option value="none">Does not repeat</option>
@@ -287,7 +287,7 @@ export default function EventForm(p: EventFormProps) {
               value={d.rooms}
               onChange={(ids) => set("rooms", ids)}
             />
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="Expected attendance">
                 <input type="number" min={1} value={d.attendance} onChange={(e) => set("attendance", Number(e.target.value))} />
               </Field>
@@ -336,7 +336,7 @@ export default function EventForm(p: EventFormProps) {
               <Field label="Payment info and instructions (if any)">
                 <textarea rows={2} value={d.brief.payment} onChange={(e) => setBrief("payment", e.target.value)} placeholder="Cost, how to pay, deadlines" maxLength={1000} />
               </Field>
-              <div className={styles.two}>
+              <div className="grid two">
                 <DateField label="Start marketing on" hint="At least 2 weeks before the event." value={d.brief.startOn || null} min={p.today} max={d.date} onChange={(v) => setBrief("startOn", v ?? "")} />
                 <Field label="Google Drive link to files (optional)" hint="Logos, photos, speaker bios. Share with everyone at IAR.">
                   <input type="url" value={d.brief.files} onChange={(e) => setBrief("files", e.target.value)} placeholder="https://drive.google.com/…" maxLength={500} />

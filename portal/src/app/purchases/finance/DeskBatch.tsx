@@ -91,7 +91,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
             <div className="stack">
               {tab === "pay" && (
                 <>
-                  <div className={styles.payGrid}>
+                  <div className="grid split">
                     <Field label="How they were paid" htmlFor="desk-method">
                       <select id="desk-method" name="method" defaultValue={on.every((r) => r.method === "ACH") ? "ACH" : "Check"}>
                         <option>Check</option>

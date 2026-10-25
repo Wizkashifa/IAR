@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, buttonClass } from "@/components/Button";
+import { Button } from "@/components/Button";
 import { Pill, type Tone } from "@/components/Pill";
 import { type NameOf, fallbackName } from "@/lib/steps";
 import type { Role } from "@/lib/org";
@@ -10,6 +10,7 @@ import type { EventTask, RoomCheck } from "@/lib/events/types";
 import type { EventCard } from "@/lib/events/workflow";
 import { saveRoomCheck, workOnTask } from "./ops-actions";
 import { ItemRow } from "@/components/ItemRow";
+import { Disclosure } from "@/components/Disclosure";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
@@ -52,8 +53,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
         </form>
       )}
       {task.status !== "done" && (
-        <details className="taskmore">
-          <summary className={buttonClass({ variant: "primary", size: "small" })}>Mark done</summary>
+        <Disclosure summary="Mark done" button="primary">
           <form action={workOnTask} className="stack">
             {base}
             <input type="hidden" name="step" value="done" />
@@ -63,10 +63,9 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
             </label>
             <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
-        </details>
+        </Disclosure>
       )}
-      <details className="taskmore">
-        <summary className={buttonClass({ variant: "quiet", size: "small" })}>Ask the requester</summary>
+      <Disclosure summary="Ask the requester" button="quiet">
         <form action={workOnTask} className="stack">
           {base}
           <input type="hidden" name="step" value="ask" />
@@ -76,7 +75,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
           </label>
           <div><Button size="small" type="submit">Send question</Button></div>
         </form>
-      </details>
+      </Disclosure>
     </div>
   );
 }
@@ -118,8 +117,7 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
     <div className="roomcheck">
       <div><strong>{WHEN_LABEL[when]}:</strong> <CheckResult check={check} /></div>
       {can && (
-        <details className="taskmore noprint">
-          <summary className={buttonClass({ variant: "quiet", size: "small" })}>{check ? "Change" : "Record"}</summary>
+        <Disclosure summary={check ? "Change" : "Record"} button="quiet" className="noprint">
           <form action={saveRoomCheck} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="date" value={date} />
@@ -135,7 +133,7 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
             </label>
             <div><Button size="small" type="submit">Save check</Button></div>
           </form>
-        </details>
+        </Disclosure>
       )}
     </div>
   );

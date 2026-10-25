@@ -20,6 +20,7 @@ import { actFromToday } from "../actions";
 import { FLASH, fmtDay } from "../ui";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "./today.module.css";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My work today" };
@@ -95,8 +96,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </form>
         )}
         {working && can("resolve") && (
-          <details className={styles.more} open>
-            <summary className={styles.summary}>{preventive ? "Mark done" : "Mark fixed"}</summary>
+          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} open divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("resolve")}
               <Field label="What did you do?" required hint={preventive ? undefined : "The person who reported it is asked to check."}>
@@ -107,11 +107,10 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
                 {preventive ? "Mark done" : "Mark fixed"}
               </Button>
             </form>
-          </details>
+          </Disclosure>
         )}
         {t.status !== "waiting_parts" && t.assigneeEmail && can("wait") && (
-          <details className={styles.more}>
-            <summary className={styles.summary}>Waiting on parts</summary>
+          <Disclosure summary="Waiting on parts" divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("wait")}
               <Field label="What's on order, and when is it due?">
@@ -121,7 +120,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
                 Waiting on parts
               </Button>
             </form>
-          </details>
+          </Disclosure>
         )}
       </div>
     </li>

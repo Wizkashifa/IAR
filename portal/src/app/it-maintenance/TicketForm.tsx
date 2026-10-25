@@ -9,7 +9,6 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/tickets/input";
 import { TEAM_CHOICE, URGENCIES, URGENCY, type TicketTeam, type Urgency } from "@/lib/tickets/types";
-import styles from "./tickets.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Choice, Choices } from "@/components/Choices";
 
@@ -59,7 +58,7 @@ export default function TicketForm({ action, locations }: { action: (prev: FormS
           <Field label="What do you need, in a few words?" required>
             <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX} required placeholder={team === "it" ? "Projector in Room 240 shows no picture" : "Faucet in the wudu area keeps dripping"} />
           </Field>
-          <div className={styles.grid2}>
+          <div className="grid">
             <Field label="Where is it?" required>
               <select name="room" value={room} onChange={(e) => setRoom(e.target.value)} required>
                 <option value="" disabled>

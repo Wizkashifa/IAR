@@ -25,6 +25,7 @@ import { fmtDay } from "@/lib/format";
 import { TaskButtons } from "../events/ops-ui";
 import styles from "./queues.module.css";
 import { addDays } from "@/lib/dates";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Team Queues" };
@@ -151,12 +152,11 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       )}
 
       {done.length > 0 && (
-        <details className={styles.done}>
-          <summary>Recently done ({done.length})</summary>
+        <Disclosure summary={`Recently done (${done.length})`}>
           <Panel flush>
             <ul className={styles.list}>{done.map((q) => row(q, false))}</ul>
           </Panel>
-        </details>
+        </Disclosure>
       )}
     </div>
   );

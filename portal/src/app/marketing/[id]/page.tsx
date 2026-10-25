@@ -242,7 +242,7 @@ export default async function MarketingDetail({
             </Button>
             <Button href={`/marketing/${mc.id}/edit`}>Edit the request too</Button>
             {can("cancel") && (
-              <span className={styles.push}>
+              <span className="push">
                 <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                   Cancel request
                 </ConfirmButton>
@@ -266,7 +266,7 @@ export default async function MarketingDetail({
             </Button>
             {declineButton}
           </div>
-          <div className={styles.actFields}>
+          <div className="grid split">
             <DateField name="doneBy" label="Done by (when scheduling)" defaultValue={suggestedDoneBy(mc, today)} min={today} />
             <Field label="Note, question or reason" hint="Optional when scheduling. Sent to the requester.">
               <input name="note" maxLength={2000} placeholder="e.g. Which size: banner or poster?" />
@@ -298,7 +298,7 @@ export default async function MarketingDetail({
             )}
             {declineButton}
           </div>
-          <div className={styles.actFields}>
+          <div className="grid split">
             {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
             <Field label={m.stage === "doing" ? "Link to the finished work, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
               <input name="note" maxLength={2000} />
@@ -328,7 +328,7 @@ export default async function MarketingDetail({
           {base}
           {can("edit") && <Button href={`/marketing/${mc.id}/edit`}>Edit the request</Button>}
           {can("cancel") && (
-            <span className={styles.push}>
+            <span className="push">
               <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                 Cancel request
               </ConfirmButton>

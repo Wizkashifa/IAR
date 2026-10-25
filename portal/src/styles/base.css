@@ -39,6 +39,14 @@
   .row.end { justify-content: flex-end; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-3); }
   .grid > .wide { grid-column: 1 / -1; }
+  /* Two equal columns, or a narrow one and a wide one (a date beside a note); one column on a phone. */
+  .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.split { grid-template-columns: minmax(160px, 240px) minmax(0, 1fr); }
+  @media (max-width: 600px) { .grid.two, .grid.split { grid-template-columns: minmax(0, 1fr); } }
+  /* A row whose fields grow and whose buttons line up with the bottom of the fields. */
+  .row.bottom { align-items: flex-end; gap: var(--s-2) var(--s-3); }
+  .grow { flex: 1 1 260px; min-width: 0; }
+  .push { margin-left: auto; }
   /* Mantine's inputs share the portal's focus look. */
   .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
   /* The room picker's typing field sits inside a box that already shows the ring: no second outline. */

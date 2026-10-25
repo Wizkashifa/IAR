@@ -19,7 +19,6 @@
   .list { list-style: none; margin: 0; padding: 0; }
   .amount { font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-  .payGrid { display: grid; grid-template-columns: minmax(160px, 220px) minmax(200px, 1fr); gap: var(--s-3); }
   .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .refs li { display: grid; grid-template-columns: minmax(0, 1fr) 140px 200px; gap: var(--s-2); align-items: center; padding-top: var(--s-2); border-top: 1px solid var(--line); }
   .refName { min-width: 0; font-size: var(--t-md); overflow-wrap: anywhere; }
@@ -30,7 +29,6 @@
 
   @media (max-width: 640px) {
     .filters { grid-template-columns: 1fr; width: 100%; }
-    .payGrid { grid-template-columns: 1fr; }
     .refs li { grid-template-columns: 1fr 1fr; }
     .refName { grid-column: 1 / -1; }
   }

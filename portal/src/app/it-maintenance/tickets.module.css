@@ -25,21 +25,12 @@
   .tags { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 
   /* The report form's team and urgency choices. */
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-3) var(--s-4); }
 
   /* Ticket page */
   .description { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
   .photo { display: flex; flex-direction: column; gap: 2px; padding: var(--s-2) 10px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: var(--t-sm); overflow-wrap: anywhere; }
-  .actionRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-3); }
-  .grow { flex: 1 1 260px; min-width: 0; }
   .picker { flex: 0 1 300px; min-width: 200px; }
-  .actionsWrap { display: flex; flex-direction: column; gap: var(--s-3); width: 100%; min-width: 0; }
-  .more { border-top: 1px solid var(--line); padding-top: var(--s-3); }
-  .more > summary, .moreAlone > summary { cursor: pointer; color: var(--accent-text); font-weight: 600; font-size: var(--t-md); list-style: none; display: inline-flex; align-items: center; gap: 6px; }
-  .more > summary::-webkit-details-marker, .moreAlone > summary::-webkit-details-marker { display: none; }
-  .more[open] > summary, .moreAlone[open] > summary { margin-bottom: var(--s-3); }
-  .moreGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-4); align-items: start; }
 
   .links { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); font-size: var(--t-md); }
   .links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s-2); }

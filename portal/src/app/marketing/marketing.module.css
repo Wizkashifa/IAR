@@ -17,14 +17,11 @@
   .type p { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
 
   /* The form */
-  .form :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea), .actFields :is(input, select, textarea) { width: 100%; }
+  .form :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea) { width: 100%; }
   .example { background: var(--surface-2); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--t-sm); color: var(--ink-2); }
 
   /* Actions on a request page */
-  .actFields { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: var(--s-3); align-items: start; max-width: 720px; }
-  @media (max-width: 600px) { .actFields { grid-template-columns: 1fr; } }
   .answerBox { max-width: 720px; }
-  .push { margin-left: auto; }
 
   .when { color: var(--ink-3); font-size: var(--t-sm); }
   .quiet { margin: 0; color: var(--ink-2); font-size: var(--t-md); }

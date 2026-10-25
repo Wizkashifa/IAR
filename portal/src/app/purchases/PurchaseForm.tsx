@@ -161,7 +161,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
 
       <Panel title={card ? "Card and statement" : "About the request"}>
         <div className="stack">
-          <div className={styles.grid2}>
+          <div className="grid">
             {card ? (
               <>
                 <Field label="Card">
@@ -216,7 +216,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
       {!card && (
         <Panel title={kind === "reimburse" ? "Paying you back" : "Who gets paid"}>
           <div className="stack">
-            <div className={styles.grid2}>
+            <div className="grid">
               {kind === "pay" ? (
                 <Field
                   label="Payee"
@@ -258,7 +258,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
             </Choices>
             {method === "ach" && <Note>The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</Note>}
             {method === "check" && (
-              <div className={styles.grid2}>
+              <div className="grid">
                 <Field label="Where should the check go?" required>
                   <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
                     <option value="">Choose…</option>

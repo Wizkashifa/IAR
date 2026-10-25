@@ -44,6 +44,7 @@ import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 
@@ -337,14 +338,14 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       return <p className={styles.muted}>{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
     }
     return (
-      <form action={actOnEvent} className={styles.actionForm}>
+      <form action={actOnEvent} className="stack">
         {base}
         {reviewing && (
           <Field label={`${STAGE_LABEL[e.stage]}: note`} hint="Required to send it back or decline it. The requester sees it.">
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
         )}
-        <div className={styles.actionRow}>
+        <div className="row">
           {reviewing && (
             <>
               <Button variant="primary" icon="check" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
@@ -355,7 +356,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {addPurchase && <Button href="/purchases/new" icon="receipt">Add a purchase request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
-          {(reviewing || resubmit || addPurchase || renew || again) && <span className={styles.grow} />}
+          {(reviewing || resubmit || addPurchase || renew || again) && <span className="grow" />}
           {reviewing && (
             <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
@@ -433,7 +434,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <form action={closeOutEvent} className={styles.closeout}>
             {base}
             <p className={styles.muted}>{own ? "The event is over. Tell us how it went and confirm the final costs. It takes a minute." : "You can close this out for the requester. Attendance and costs are optional for the office."}</p>
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="About how many people came?" hint={`You expected ${e.attendance}.`} required={own}>
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />
               </Field>
@@ -490,7 +491,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               <Field label={`Note for ${a.requesterName} (optional)`}>
                 <input name="note" maxLength={1000} placeholder="e.g. We can move to the following week" />
               </Field>
-              <div className={styles.actionRow}>
+              <div className="row">
                 {a.hold.cardId && <Button variant="primary" type="submit" formAction={decideAskWith.bind(null, "release_move")}>Give it up and move {a.hold.ownerEmail === viewer.email.toLowerCase() ? "my" : "the"} event</Button>}
                 <Button variant={a.hold.cardId ? "default" : "primary"} type="submit" formAction={decideAskWith.bind(null, "release_cancel")}>Give it up and cancel {a.dates.length > 1 ? "those dates" : "it"}</Button>
                 <Button type="submit" formAction={decideAskWith.bind(null, "keep")}>Keep it</Button>
@@ -504,8 +505,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               <Button variant="quiet" size="small" type="submit">Withdraw the ask</Button>
             </form>
           )}
-          <details>
-            <summary className="sub">History of this ask</summary>
+          <Disclosure summary="History of this ask">
             <ol className={styles.history}>
               {a.history.map((h, i) => (
                 <li key={i}>
@@ -514,7 +514,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 </li>
               ))}
             </ol>
-          </details>
+          </Disclosure>
         </div>
       </Panel>
     );
