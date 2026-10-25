@@ -9,6 +9,7 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RoomPicker } from "@/components/RoomPicker";
+import type { EventPrefill } from "@/lib/calendar-view";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText, SERIES_MAX_MONTHS } from "@/lib/events/series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "@/lib/events/types";
@@ -29,6 +30,8 @@ export type EventFormProps = {
   /** The room reservation policy, linked from the agreement (Portal Settings). */
   policyUrl?: string;
   initial?: EventInput;
+  /** A new request started from "Find a room" (Calendar): its date, times, room and size. */
+  prefill?: EventPrefill;
   /** Resubmitting this request: its own holds don't count as clashes. */
   editing?: string;
   /** Moved to give up its time: say so. */
@@ -47,6 +50,7 @@ const ANNOUNCE_EXAMPLE = "Join us for a family game night with dinner, board gam
 
 function initialDraft(p: EventFormProps): Draft {
   const i = p.initial;
+  const f = p.prefill;
   const plus = (n: number) => {
     const d = new Date(`${p.today}T12:00:00Z`);
     d.setUTCDate(d.getUTCDate() + n);
@@ -58,17 +62,17 @@ function initialDraft(p: EventFormProps): Draft {
     description: i?.description ?? "",
     committeeGroup: i?.committeeGroup ?? committee?.group ?? "",
     committeeName: i?.committeeName ?? committee?.name ?? "",
-    date: i?.date ?? plus(21),
-    start: i?.start ?? "18:30",
-    end: i?.end ?? "20:00",
+    date: i?.date ?? f?.date ?? plus(21),
+    start: i?.start ?? f?.start ?? "18:30",
+    end: i?.end ?? f?.end ?? "20:00",
     setup: i?.setup ?? 30,
     teardown: i?.teardown ?? 30,
     recurFreq: i?.recur?.freq ?? "none",
     recurUntil: i?.recur?.until ?? "",
-    rooms: i?.rooms ?? [],
-    attendance: i?.attendance ?? 20,
+    rooms: i?.rooms ?? f?.rooms ?? [],
+    attendance: i?.attendance ?? f?.attendance ?? 20,
     budget: i?.budget ?? 0,
-    food: i?.food ?? false,
+    food: i?.food ?? f?.food ?? false,
     isPublic: i?.isPublic ?? false,
     registration: i?.registration ?? false,
     av: i?.av ?? false,

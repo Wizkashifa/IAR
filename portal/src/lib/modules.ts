@@ -49,6 +49,17 @@ export const MODULES: PortalModule[] = [
     plannedFeatures: [],
   },
   {
+    id: "calendar",
+    nav: "Calendar",
+    name: "Calendar",
+    summary: "What's booked in every room, by week or month. Find a free room and request it in one step.",
+    visibleTo: ["member"],
+    phase: 1,
+    status: "live",
+    href: "/calendar",
+    plannedFeatures: [],
+  },
+  {
     id: "marketing-requests",
     nav: "Marketing",
     name: "Marketing Requests",
