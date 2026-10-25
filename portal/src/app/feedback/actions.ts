@@ -6,10 +6,10 @@ import { FEEDBACK_KIND_LABEL, feedbackStore, type FeedbackKind } from "@/lib/fee
 import { internalPath } from "@/lib/links";
 import { deliver } from "@/lib/notifications";
 import { requireViewer } from "@/lib/viewer";
+import type { FormState } from "@/components/FormErrors";
 
-export type FeedbackFormState = { errors: string[] };
 
-export async function sendFeedback(_prev: FeedbackFormState, form: FormData): Promise<FeedbackFormState> {
+export async function sendFeedback(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const kind = String(form.get("kind") ?? "") as FeedbackKind;
   const message = String(form.get("message") ?? "").trim();

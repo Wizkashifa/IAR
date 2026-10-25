@@ -15,9 +15,10 @@ import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
-export type FormState = { errors: string[]; values?: MarketingInput; n: number };
+export type MarketingFormState = FormState & { values?: MarketingInput; n: number };
 
 const nowIso = () => new Date().toISOString();
 
@@ -46,7 +47,7 @@ function inputFrom(form: FormData): MarketingInput {
   };
 }
 
-export async function createMarketing(prev: FormState, form: FormData): Promise<FormState> {
+export async function createMarketing(prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const raw = inputFrom(form);
@@ -121,7 +122,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
  * The requester's edit page: saves changes, and when marketing asked a
  * question, sends the answer with them (back to the weekly review).
  */
-export async function editMarketing(id: string, expected: string, prev: FormState, form: FormData): Promise<FormState> {
+export async function editMarketing(id: string, expected: string, prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const store = await cardStore();

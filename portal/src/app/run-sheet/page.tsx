@@ -11,7 +11,7 @@ import { campusesOf, runSheetRows } from "@/lib/runsheet";
 import { eventContext } from "@/lib/events/context";
 import { timeText } from "@/lib/events/series";
 import { type EventCard, isEventCard } from "@/lib/events/workflow";
-import { fmtDay } from "../ui";
+import { fmtDay } from "@/lib/format";
 import { RoomCheckCell } from "../events/ops-ui";
 import { RoomDay } from "../events/RoomDay";
 import styles from "../events/events.module.css";

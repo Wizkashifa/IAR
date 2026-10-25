@@ -14,14 +14,15 @@ import type { EventPrefill } from "@/lib/calendar-view";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText, SERIES_MAX_MONTHS } from "@/lib/events/series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "@/lib/events/types";
-import { type DraftCheck, type EventFormState, checkDraft } from "./actions";
+import { type DraftCheck, checkDraft } from "./actions";
 import { ChecksList, Timeline, checksSummary } from "./ui";
 import styles from "./events.module.css";
+import { FormErrors, type FormState } from "@/components/FormErrors";
 
 export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
 export type EventFormProps = {
-  action: (prev: EventFormState, form: FormData) => Promise<EventFormState>;
+  action: (prev: FormState, form: FormData) => Promise<FormState>;
   committees: { group: string; name: string }[];
   /** The committee to start on: one the person chairs, or the one they used last. */
   defaultCommittee?: string;
@@ -226,12 +227,7 @@ export default function EventForm(p: EventFormProps) {
         )}
         {p.renews && <Note>The next period of {p.renews.id}, which ends {longDate(p.renews.until)}. It goes through the same checks and approval as any new request.</Note>}
         {p.moved && <Note>You gave up this event&apos;s time to someone else&apos;s request. Pick a new time; only the director needs to approve it.</Note>}
-        {state.errors.length > 0 && (
-          <Note tone="bad">
-            Please fix:
-            <ul>{state.errors.map((e) => <li key={e}>{e}</li>)}</ul>
-          </Note>
-        )}
+        <FormErrors errors={state.errors} />
 
         <fieldset className={styles.section} id="evSect">
           <legend><span className={styles.sn}>{num("evSect")}</span>Event and room</legend>

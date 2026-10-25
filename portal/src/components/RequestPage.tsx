@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Steps } from "@/lib/steps";
+import { Crumb } from "./Crumb";
 import { Icon } from "./Icon";
 import { Note } from "./Note";
 import { Stages } from "./Stages";
@@ -44,11 +44,7 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
   const leadText = (lead ?? []).filter(Boolean).join(" · ");
   return (
     <div className={styles.page}>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link href={crumb.href}>{crumb.label}</Link>
-        <span aria-hidden="true"> / </span>
-        <span className={styles.id}>{id}</span>
-      </nav>
+      <Crumb trail={[crumb]} here={<span className={styles.id}>{id}</span>} />
 
       {sent && (
         <Note tone="ok">

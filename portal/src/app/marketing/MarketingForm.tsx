@@ -9,13 +9,13 @@ import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions } from "@/components/Field";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import type { FormState } from "./actions";
+import type { MarketingFormState } from "./actions";
 import styles from "./marketing.module.css";
+import { FormErrors } from "@/components/FormErrors";
 
 export type MarketingFormProps = {
-  action: (prev: FormState, form: FormData) => Promise<FormState>;
+  action: (prev: MarketingFormState, form: FormData) => Promise<MarketingFormState>;
   kind: MarketingKind;
   /** Committees and teams this person may request for. */
   committees: string[];
@@ -46,18 +46,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
     <form key={state.n} action={formAction} className={`stack loose ${styles.form}`}>
       <input type="hidden" name="kind" value={kind} />
       <FormStarted form="marketing" />
-      {state.errors.length > 0 && (
-        <div role="alert" className={styles.errors}>
-          <Note tone="bad">
-            <strong>Please fix:</strong>
-            <ul>
-              {state.errors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </Note>
-        </div>
-      )}
+      <FormErrors errors={state.errors} />
 
       {question !== undefined && (
         <Panel title="Marketing's question">

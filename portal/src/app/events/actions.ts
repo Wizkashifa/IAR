@@ -22,8 +22,8 @@ import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 import { lc } from "@/lib/text";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type EventFormState = { errors: string[] };
 
 /** A clash, as the form shows it: whether its holder can be asked, and if not, why. */
 export type ClashView = { key: string; label: string; roomName: string; start: string; end: string; dates: string[]; kind: Clash["kind"]; askable: boolean; why?: string };
@@ -117,7 +117,7 @@ function calendarTrouble(card: wf.EventCard, error: string | undefined): { card:
 }
 
 /** Create or resubmit an event request, optionally asking for a booked time. `editing`: the card being resubmitted. */
-export async function submitEvent(editing: string | null, _prev: EventFormState, form: FormData): Promise<EventFormState> {
+export async function submitEvent(editing: string | null, _prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
   let raw: EventFormInput & { ask?: { key?: string; reason?: string }; renews?: string };

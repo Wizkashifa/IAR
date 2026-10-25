@@ -9,8 +9,8 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/tickets/input";
 import { TEAM_CHOICE, URGENCIES, URGENCY, type TicketTeam, type Urgency } from "@/lib/tickets/types";
-import type { TicketFormState } from "./actions";
 import styles from "./tickets.module.css";
+import { FormErrors, type FormState } from "@/components/FormErrors";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"];
 
@@ -23,7 +23,7 @@ function Submit() {
   );
 }
 
-export default function TicketForm({ action, locations }: { action: (prev: TicketFormState, form: FormData) => Promise<TicketFormState>; locations: string[] }) {
+export default function TicketForm({ action, locations }: { action: (prev: FormState, form: FormData) => Promise<FormState>; locations: string[] }) {
   const [state, formAction] = useActionState(action, { errors: [] });
   const [team, setTeam] = useState<TicketTeam | "">("");
   const [room, setRoom] = useState("");
@@ -43,18 +43,7 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
   return (
     <form action={formAction} className="stack">
       <FormStarted form="ticket" />
-      {state.errors.length > 0 && (
-        <div role="alert">
-          <Note tone="bad">
-            Please fix these and send it again:
-            <ul>
-              {state.errors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </Note>
-        </div>
-      )}
+      <FormErrors errors={state.errors} />
 
       <Panel title="Which team?">
         <fieldset className={styles.section}>

@@ -20,8 +20,8 @@ import type { TicketStatus, TicketTeam, Urgency } from "@/lib/tickets/types";
 import * as wf from "@/lib/tickets/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type TicketFormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
 const back = (id: string, q: string) => `/it-maintenance/${id}?${q}`;
@@ -29,7 +29,7 @@ const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
 /** A new AV/IT/Maintenance request. Photos upload after the ticket has its number; if they fail, the ticket still stands. */
-export async function createTicket(_prev: TicketFormState, form: FormData): Promise<TicketFormState> {
+export async function createTicket(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
   const parsed = parseTicketInput(Object.fromEntries(["team", "title", "room", "roomOther", "equipment", "urgency", "description"].map((k) => [k, form.get(k)])));

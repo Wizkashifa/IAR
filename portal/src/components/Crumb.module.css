@@ -1,0 +1,4 @@
+@layer components {
+  .crumb { font-size: var(--t-sm); color: var(--ink-2); }
+  .crumb a { color: var(--accent-text); }
+}

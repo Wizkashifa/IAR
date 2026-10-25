@@ -8,11 +8,12 @@ import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
@@ -23,7 +24,7 @@ import { purchaseContext } from "@/lib/purchases/settings";
 import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
 import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, isPurchaseCard, permission, returnTargets, type Action, type PurchaseCard } from "@/lib/purchases/workflow";
 import { actOnPurchase, commentOnPurchase } from "../actions";
-import { Flash, WaitingPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
+import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
 import styles from "../purchases.module.css";
 import { todayLocal } from "@/lib/dates";
 
@@ -40,13 +41,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: `${card.title} · ${card.id}` };
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
 
 export default async function PurchaseDetail({ params, searchParams }: Params & { searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
@@ -90,7 +84,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
 
   const notes = (
     <>
-      <Flash ok={ok} error={error} />
+      <FlashNote ok={ok} error={error} messages={OK_TEXT} />
       {p.relatedParty && <Note tone="warn">The requester says the payee is a Shura or committee member, a relative of one, or a business one owns. Review it with that in mind.</Note>}
       {p.w9Required && (
         <Note tone="warn">
@@ -234,50 +228,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
       </Panel>
 
-      <Panel title="Comments" right={`${(card.comments ?? []).length}`} id="comments">
-        {(card.comments ?? []).length === 0 ? (
-          <p className={styles.why}>No comments yet. Ask a question or add context; everyone who can open this request sees it.</p>
-        ) : (
-          <ol className={styles.feed}>
-            {(card.comments ?? []).map((c) => (
-              <li key={c.id}>
-                <span className={styles.av} aria-hidden="true">
-                  {initials(c.name)}
-                </span>
-                <div>
-                  <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
-                  <div className={styles.said}>{c.text}</div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-        <form action={commentOnPurchase} className={styles.commentForm}>
-          {hidden("id", card.id)}
-          <Field label="Add a comment">
-            <textarea name="text" rows={3} maxLength={COMMENT_MAX} required placeholder="Ask a question or add context." />
-          </Field>
-          <div>
-            <Button type="submit">Comment</Button>
-          </div>
-        </form>
-      </Panel>
-
-      <Panel title="History">
-        <ol className={styles.feed}>
-          {[...p.history].reverse().map((h, i) => (
-            <li key={i}>
-              <span className={styles.av} aria-hidden="true">
-                {initials(names(h.by))}
-              </span>
-              <div>
-                <strong>{names(h.by)}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
-                {h.note && <div className={styles.said}>{h.note}</div>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Panel>
+      <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />
+      <HistoryPanel entries={p.history} names={names} />
     </>
   );
 

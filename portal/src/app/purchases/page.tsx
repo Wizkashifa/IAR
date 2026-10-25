@@ -17,8 +17,10 @@ import { shortFund } from "@/lib/purchases/accounts";
 import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
-import { Flash, PurchaseRow, fmtMoney, fmtMonth, purchaseStatus } from "./ui";
+import { FlashNote } from "@/components/FlashNote";
+import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth, purchaseStatus } from "./ui";
 import styles from "./purchases.module.css";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Purchase Requests" };
@@ -69,7 +71,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const names = await nameResolver(emailsIn([...myPurchases, ...queue, ...committeeOpen, ...(overseer ? filtered : [])]));
   const mineGrouped = groupForViewer(myPurchases, actor);
   const mineRows = { needsYou: rows(mineGrouped.needsYou, actor, names), waiting: rows(mineGrouped.waiting, actor, names), done: rows(mineGrouped.done, actor, names) };
-  const chips = FILTERS.map((f) => ({ label: `${f.label} · ${openPurchases.filter(f.test).length}`, href: `/purchases?view=${f.id}`, on: f.id === filter.id }));
+  const chips = FILTERS.map((f) => ({ label: f.label, href: `/purchases?view=${f.id}`, on: f.id === filter.id, count: openPurchases.filter(f.test).length }));
 
   return (
     <>
@@ -88,7 +90,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
       />
       <HelpBox module="purchases" />
       <div className={`stack ${styles.body}`}>
-        <Flash ok={ok} error={error} />
+        <FlashNote ok={ok} error={error} messages={OK_TEXT} />
 
         {queue.length > 0 && (
           <PurchaseList
@@ -125,13 +127,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
 
         {overseer && (
           <section className="stack" aria-label="All requests">
-            <nav className={styles.chips} aria-label="Show">
-              {chips.map((c) => (
-                <Link key={c.href} href={c.href} className={c.on ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={c.on ? "page" : undefined}>
-                  {c.label}
-                </Link>
-              ))}
-            </nav>
+            <Chips label="Show" chips={chips} />
             <PurchaseList
               title={filter.id === "all" ? "All open requests" : filter.label}
               right={

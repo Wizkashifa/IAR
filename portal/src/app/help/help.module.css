@@ -27,7 +27,6 @@
   .newsTitle { display: block; font-weight: 700; }
   .newsText { margin: 2px 0 0; color: var(--ink-2); max-width: 75ch; }
   .newsText a { color: var(--accent-text); font-weight: 600; }
-  .date { margin: 0 0 var(--s-2); font-size: var(--t-sm); color: var(--ink-3); }
   .more { margin: var(--s-3) 0 0; font-size: var(--t-md); }
   .more a { color: var(--accent-text); font-weight: 600; }
 }

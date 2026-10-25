@@ -3,11 +3,6 @@
   .list { margin: 0; padding: 0; }
   .panelNote { margin: 0; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: var(--t-sm); }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: var(--t-sm); white-space: nowrap; }
-  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
-  .chip:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
-  .on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
 
   /* Tables for staff data (line items, card checklist, vendors). Under 640px each row becomes a small card, labelled from data-label. */
   .table { width: 100%; border-collapse: collapse; font-size: var(--t-md); }
@@ -48,20 +43,13 @@
   .more[open] > summary { margin-bottom: var(--s-3); }
   .actGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-3); }
   .actRow { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
-  .actRow .push { margin-left: auto; }
   .search input { flex: 1 1 240px; width: auto; min-width: 0; }
   .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
   .why { margin: 0; color: var(--ink-2); }
 
   /* Comments and history. */
-  .feed { list-style: none; margin: 0; padding: 0; }
-  .feed li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
-  .feed li:first-child { border-top: 0; padding-top: 0; }
-  .av { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); font-size: 11px; font-weight: 700; }
   .when { color: var(--ink-3); font-size: var(--t-sm); }
   .said { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .commentForm { display: grid; gap: var(--s-2); margin-top: var(--s-4); }
-  .commentForm textarea { width: 100%; }
 
   /* The form's lines: a row of fields per line on wide screens, stacked on phones. */
   .lines { display: grid; gap: var(--s-3); }
@@ -97,5 +85,4 @@
   .hintOk { color: var(--ok); }
   .hintWarn { color: var(--warn); font-weight: 600; }
   .narrow { max-width: 360px; }
-  .errors { margin: var(--s-1) 0 0; padding-left: 18px; }
 }

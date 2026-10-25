@@ -2,16 +2,16 @@
 import { useActionState } from "react";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
-import { Note } from "@/components/Note";
 import { FEEDBACK_KIND_LABEL, type FeedbackKind } from "@/lib/feedback-kinds";
-import { sendFeedback, type FeedbackFormState } from "./actions";
+import { sendFeedback } from "./actions";
 import styles from "./feedback.module.css";
+import { FormErrors, type FormState } from "@/components/FormErrors";
 
 export function FeedbackForm({ page }: { page: string }) {
-  const [state, action, pending] = useActionState<FeedbackFormState, FormData>(sendFeedback, { errors: [] });
+  const [state, action, pending] = useActionState<FormState, FormData>(sendFeedback, { errors: [] });
   return (
     <form action={action} className="stack">
-      {state.errors.length > 0 && <Note tone="bad">{state.errors.join(" ")}</Note>}
+      <FormErrors errors={state.errors} />
       <input type="hidden" name="page" value={page} />
       <fieldset className={styles.kinds}>
         <legend>What kind of feedback?</legend>

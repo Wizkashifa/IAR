@@ -19,7 +19,8 @@ import { FREQUENCIES, FREQUENCY_LABEL, type TicketSchedule } from "@/lib/tickets
 import { TEAM_LABEL, TEAM_NAME, URGENCIES, URGENCY } from "@/lib/tickets/types";
 import { teamsOf } from "@/lib/tickets/workflow";
 import { pauseSchedule, saveSchedule } from "../actions";
-import { TicketFlash, fmtDay } from "../ui";
+import { FLASH, fmtDay } from "../ui";
+import { FlashNote } from "@/components/FlashNote";
 import styles from "../tickets.module.css";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
         }
       />
       <div className="stack">
-        <TicketFlash ok={sp.ok} error={sp.error} />
+        <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
 
         {(editing || sp.new) && <ScheduleForm s={editing} />}
 

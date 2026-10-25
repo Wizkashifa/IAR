@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Note } from "@/components/Note";
+import { todayLocal } from "@/lib/dates";
 import { Pill } from "@/components/Pill";
 import type { NameOf } from "@/lib/steps";
 import { TEAM_LABEL, URGENCY, type TicketStatus, type Urgency } from "@/lib/tickets/types";
 import { type TicketCard, lateText } from "@/lib/tickets/workflow";
 import styles from "./tickets.module.css";
 
-export { fmtDate, fmtDateTime, fmtDay } from "../ui";
+export { fmtDate, fmtDateTime, fmtDay } from "@/lib/format";
 
 export const FLASH: Record<string, string> = {
   reported: "Thank you. The team has been told, and you'll hear from the portal as it moves.",
@@ -30,20 +30,14 @@ export const FLASH: Record<string, string> = {
   resumed: "Schedule resumed.",
 };
 
-/** A success note from `?ok=` or an error from `?error=`. */
-export function TicketFlash({ ok, error }: { ok?: string; error?: string }) {
-  if (error) return <Note tone="bad">{error}</Note>;
-  if (ok && FLASH[ok]) return <Note tone="ok">{FLASH[ok]}</Note>;
-  return null;
-}
-
-export const todayRaleigh = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+/** Ready-made replies for the team, as in the demo. Tapping one fills the comment box; it can be edited before sending. */
+export const REPLIES = ["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."];
 
 /** Urgency (unless normal), late, reopened and preventive, as small pills. */
 export function TicketTags({ card, reopened }: { card: TicketCard; reopened?: boolean }) {
   const t = card.ticket;
   const u: Urgency = t.urgency;
-  const late = lateText(card, new Date(), todayRaleigh());
+  const late = lateText(card, new Date(), todayLocal());
   const tags = [
     u !== "normal" && (
       <Pill key="u" tone={u === "urgent" ? "bad" : u === "high" ? "warn" : "neutral"}>

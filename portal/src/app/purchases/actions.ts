@@ -17,8 +17,8 @@ import type { PurchaseDetails } from "@/lib/purchases/types";
 import * as wf from "@/lib/purchases/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type FormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
 const directorsFor = (ctx: PurchaseContext, c: wf.PurchaseCard) => {

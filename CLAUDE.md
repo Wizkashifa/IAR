@@ -18,6 +18,7 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 
 - App: `portal/` (Next.js 16, TypeScript; Mantine for a few form widgets, used only through `src/components/`). `npm run dev` runs it with sample users (switch at `/dev`) and no Google setup. `npm test`, `npm run typecheck` and `npm run build` must pass before pushing.
 - Business rules are plain functions with tests (`portal/src/lib/purchases/workflow.ts`, `notices.ts`, `lib/away.ts`, `lib/search.ts`). Pages and server actions call them and never change a request's stage themselves.
+- Modules share one template (README, "portal/"): each has a `lib/<module>/module.ts` listed in `lib/registry.ts` and a row in `lib/kinds.ts`; shared pages ask the registry and never check each kind. Server actions go through `lib/card-actions.ts`; request pages use `RequestPage`, `components/Activity.tsx` and `FlashNote`. Shared helpers live in `lib/text.ts`, `lib/dates.ts`, `lib/format.ts`, `lib/workflow-core.ts` and `lib/notices.ts`: use them rather than writing another copy.
 - Each store has an in-memory version for dev and a Firestore version for production (`lib/cards.ts`, `lib/notifications.ts`, `lib/people.ts`, `lib/feedback.ts`); Google Calendar has a sample calendar in dev (`lib/calendar.ts`).
 - `ops/go-live`: `npm test` and `npm run typecheck` must pass too. It never runs against real Google from a cloud session.
 - Write UI text in plain language for volunteers, not technical staff.

@@ -21,7 +21,7 @@ import { nameResolver } from "@/lib/names";
 import { actorFor } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
-import { fmtDay } from "../ui";
+import { fmtDay } from "@/lib/format";
 import { TaskButtons } from "../events/ops-ui";
 import styles from "./queues.module.css";
 import { addDays } from "@/lib/dates";

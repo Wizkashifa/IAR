@@ -9,6 +9,8 @@ import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
@@ -16,7 +18,6 @@ import { cardStore } from "@/lib/cards";
 import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { statusText } from "@/lib/status-text";
@@ -33,7 +34,7 @@ import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/e
 import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { tasksFor } from "@/lib/events/tasks";
 import { purchaseTotal } from "@/lib/purchases/types";
-import { fmtDateTime, fmtMoney } from "../../ui";
+import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
 import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
@@ -68,13 +69,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: card.title };
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 
 export default async function EventDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
@@ -129,8 +123,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   const notes = (
     <>
-      {ok && MESSAGES[ok] && <Note tone="ok">{MESSAGES[ok]}</Note>}
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={MESSAGES} />
       {card.status === "changes_requested" && (
         <Note tone="warn">
           <strong>{e.releasedFor ? "You gave up this time:" : "Sent back for changes:"}</strong> {e.returnNote}
@@ -273,48 +266,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </section>
           )}
 
-          <Panel title={`Comments ${(card.comments ?? []).length}`} id="comments">
-            <form action={commentOnEvent} className="stack">
-              <input type="hidden" name="id" value={card.id} />
-              <Field label="Add a comment" hint="Ask a question or add context. Everyone who can open this request sees it.">
-                <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
-              </Field>
-              <div className="row end">
-                <Button type="submit">Comment</Button>
-              </div>
-            </form>
-            {(card.comments ?? []).length === 0 ? (
-              <p className={styles.muted}>No comments yet.</p>
-            ) : (
-              <ol className={styles.comments}>
-                {(card.comments ?? []).map((c) => (
-                  <li key={c.id} className={styles.comment}>
-                    <div>
-                      <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
-                    </div>
-                    <div className="pre">{c.text}</div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
-
-          <Panel title="History">
-            <ol className={styles.history}>
-              {[...e.history].reverse().map((h, i) => {
-                const who = h.by.includes("@") ? names(h.by) : h.by === "portal" ? "Portal" : h.by;
-                return (
-                  <li key={i}>
-                    <span className={styles.av} aria-hidden="true">{initials(who)}</span>
-                    <div>
-                      <strong>{who}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
-                      {h.note && <div className={`pre ${styles.note}`}>{h.note}</div>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </Panel>
+          <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnEvent} />
+          <HistoryPanel entries={e.history} names={names} />
         </>
       }
       side={

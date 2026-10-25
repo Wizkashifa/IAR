@@ -92,6 +92,8 @@ portal/src/
     DateField.tsx, RoomPicker.tsx, PeoplePicker.tsx, FileDrop.tsx, Confirm.tsx, toast.tsx   (Mantine wrappers)
     theme.ts          Mantine theme, pointing at the CSS variables in tokens.css
     RequestPage.tsx   RequestPage.module.css   (one layout for every request page)
+    Activity.tsx      comments and history on every request page (CommentForm.tsx: the box, with ready-made replies)
+    Chips.tsx, Crumb.tsx, FlashNote.tsx, FormErrors.tsx   filter chips, breadcrumb, ?ok=/?error= messages, a form's errors
 ```
 
 ## Decided (Oct 25, 2026)

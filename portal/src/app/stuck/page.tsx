@@ -17,9 +17,10 @@ import { actorFor } from "@/lib/people";
 import { AGE_LABEL, ageGroup, canRemind, groupByAge, lastReminder, mayOpenStuck, reminderLabel, stuckItems, whoWaiting, type AgeGroup, type StuckItem } from "@/lib/stuck";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
-import { fmtDateTime } from "../ui";
+import { fmtDateTime } from "@/lib/format";
 import { sendReminder } from "./actions";
 import styles from "./stuck.module.css";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "What's stuck" };
@@ -122,27 +123,9 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
       {sp.sent && !sp.error && <Note tone="ok">Reminder sent for {sp.sent}. It&apos;s in the request&apos;s history.</Note>}
 
       <div className={styles.filters}>
-        <nav className={styles.chips} aria-label="Kind of request">
-          <Link href={href({ committee })} className={!kind ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={!kind ? "page" : undefined}>
-            All <span>{all.length}</span>
-          </Link>
-          {KINDS.map((k) => (
-            <Link key={k.type} href={href({ kind: k.type })} className={kind === k.type ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={kind === k.type ? "page" : undefined}>
-              {k.many} <span>{all.filter((i) => i.card.type === k.type).length}</span>
-            </Link>
-          ))}
-        </nav>
+        <Chips label="Kind of request" chips={[{ label: "All", href: href({ committee }), on: !kind, count: all.length }, ...KINDS.map((k) => ({ label: k.many, href: href({ kind: k.type }), on: kind === k.type, count: all.filter((i) => i.card.type === k.type).length }))]} />
         {committees.length > 1 && (
-          <nav className={styles.chips} aria-label="Committee">
-            <Link href={href({ kind })} className={!committee ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={!committee ? "page" : undefined}>
-              Every committee
-            </Link>
-            {committees.map((c) => (
-              <Link key={c} href={href({ kind, committee: c })} className={committee === c ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={committee === c ? "page" : undefined}>
-                {c}
-              </Link>
-            ))}
-          </nav>
+          <Chips label="Committee" chips={[{ label: "Every committee", href: href({ kind }), on: !committee }, ...committees.map((c) => ({ label: c, href: href({ kind, committee: c }), on: committee === c }))]} />
         )}
       </div>
 
