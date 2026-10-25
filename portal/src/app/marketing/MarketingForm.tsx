@@ -13,6 +13,7 @@ import { Panel } from "@/components/Panel";
 import type { MarketingFormState } from "./actions";
 import styles from "./marketing.module.css";
 import { FormErrors } from "@/components/FormErrors";
+import { Choice, Choices } from "@/components/Choices";
 
 export type MarketingFormProps = {
   action: (prev: MarketingFormState, form: FormData) => Promise<MarketingFormState>;
@@ -122,17 +123,11 @@ function Question({ f, value, today }: { f: MarketingField; value?: string; toda
   const wide = f.half || f.kind === "date" ? undefined : "wide";
   if (f.kind === "radio") {
     return (
-      <fieldset className={[styles.group, "wide"].join(" ")}>
-        <legend className={styles.groupLabel}>{legend}</legend>
-        <div className={styles.choices}>
-          {f.options?.map((o) => (
-            <label key={o.value} className={styles.choice}>
-              <input type="radio" name={name} value={o.value} defaultChecked={value === o.value} required={f.required} /> {o.label}
-            </label>
-          ))}
-        </div>
-        {f.hint && <p className="sub">{f.hint}</p>}
-      </fieldset>
+      <Choices legend={legend} plain hint={f.hint} className="wide">
+        {f.options?.map((o) => (
+          <Choice key={o.value} type="radio" name={name} value={o.value} defaultChecked={value === o.value} required={f.required} label={o.label} />
+        ))}
+      </Choices>
     );
   }
   if (f.kind === "date") {

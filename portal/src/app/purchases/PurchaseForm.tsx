@@ -14,6 +14,7 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
+import { Choice, Choices } from "@/components/Choices";
 
 type Line = LineInput & { key: number };
 
@@ -151,15 +152,11 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
       <FormErrors errors={state.errors} />
 
       <Panel title="What do you need?">
-        <div className={styles.choices} role="radiogroup" aria-label="What do you need?">
+        <Choices legend="What do you need?" legendHidden>
           {(Object.keys(KIND_LABEL) as PurchaseKind[]).map((k) => (
-            <label key={k} className={styles.choice}>
-              <input type="radio" name="kind" value={k} checked={kind === k} disabled={k === "card" && cards.length === 0} onChange={() => chooseKind(k)} />
-              <span>{KIND_LABEL[k]}</span>
-              {k === "card" && cards.length === 0 && <small>For people who hold an IAR card</small>}
-            </label>
+            <Choice key={k} type="radio" name="kind" value={k} checked={kind === k} disabled={k === "card" && cards.length === 0} onChange={() => chooseKind(k)} label={KIND_LABEL[k]} hint={k === "card" && cards.length === 0 ? "For people who hold an IAR card" : undefined} />
           ))}
-        </div>
+        </Choices>
       </Panel>
 
       <Panel title={card ? "Card and statement" : "About the request"}>
@@ -254,14 +251,11 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                 </Field>
               )}
             </div>
-            <div className={styles.choices} role="radiogroup" aria-label="How should it be paid?">
+            <Choices legend="How should it be paid?" legendHidden>
               {(["check", "ach"] as PaymentMethod[]).map((m) => (
-                <label key={m} className={styles.choice}>
-                  <input type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required />
-                  <span>{PAYMENT_METHOD_LABEL[m]}</span>
-                </label>
+                <Choice key={m} type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required label={PAYMENT_METHOD_LABEL[m]} />
               ))}
-            </div>
+            </Choices>
             {method === "ach" && <Note>The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</Note>}
             {method === "check" && (
               <div className={styles.grid2}>

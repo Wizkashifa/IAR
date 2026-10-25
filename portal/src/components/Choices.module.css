@@ -1,0 +1,25 @@
+@layer components {
+  /* Choice cards, as in the demo: the picked one turns soft green with a gold edge. */
+  .group { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: var(--s-2); }
+  .legend { font-size: var(--t-sm); font-weight: 700; color: var(--ink-2); padding: 0; margin-bottom: var(--s-1); }
+  .list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-2); }
+  .stacked .list { grid-template-columns: 1fr; }
+  .choice {
+    display: flex; gap: var(--s-2); align-items: flex-start; min-height: 44px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink);
+    font-size: var(--t-md); font-weight: 400; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
+  }
+  .choice:hover { border-color: var(--ink-3); }
+  .choice:has(input:checked) { border-color: var(--gold); background: var(--accent-soft); }
+  .choice:has(input:focus-visible) { box-shadow: var(--ring); }
+  .choice:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
+  .choice input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+  .text { display: grid; gap: 2px; min-width: 0; }
+  .text small { color: var(--ink-2); font-size: var(--t-sm); }
+  .hint { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
+
+  /* A plain list: just the buttons and their labels. */
+  .plain .list { display: flex; flex-direction: column; gap: var(--s-2); }
+  .plain .choice { min-height: 28px; padding: 0; border: 0; background: none; }
+  .plain .choice:has(input:checked) { background: none; }
+}

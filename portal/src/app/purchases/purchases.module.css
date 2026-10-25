@@ -75,12 +75,6 @@
   /* Space between a page heading and what follows it. */
   .body { margin-top: var(--s-5); }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-3); }
-  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-2); }
-  .choice { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; cursor: pointer; font-size: var(--t-md); background: var(--surface); }
-  .choice:has(input:checked) { border-color: var(--gold); background: var(--accent-soft); }
-  .choice:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
-  .choice input { width: 18px; height: 18px; }
-  .choice small { flex-basis: 100%; color: var(--ink-2); font-size: 12px; }
   .static { padding: 8px 0; }
   .hintOk { color: var(--ok); }
   .hintWarn { color: var(--warn); font-weight: 600; }

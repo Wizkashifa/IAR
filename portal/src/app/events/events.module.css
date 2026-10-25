@@ -52,14 +52,9 @@
   .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--brand-green); color: var(--cream); font-size: 12px; font-weight: 700; align-items: center; justify-content: center; flex: none; }
   .hint { font-size: var(--t-sm); color: var(--ink-2); margin: 0; }
   .hint.good { color: var(--ok); }
-  .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--s-2); }
-  .choice { display: flex; gap: var(--s-2); align-items: center; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); cursor: pointer; font-size: var(--t-md); background: var(--surface); }
-  .choice:has(input:checked) { border-color: var(--gold); background: var(--accent-soft); }
-  .choice input, .agree input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
+  .agree input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
   .agree { display: flex; gap: var(--s-3); align-items: flex-start; font-size: var(--t-md); min-height: 32px; }
   .agree a { font-weight: 700; }
-  .fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-2); min-width: 0; }
-  .fieldset > legend { font-size: var(--t-sm); font-weight: 700; color: var(--ink-2); padding: 0; margin-bottom: var(--s-2); }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .steps a { display: flex; align-items: center; gap: var(--s-2); min-height: 28px; color: var(--ink); text-decoration: none; font-size: var(--t-md); }
   .steps a:hover { color: var(--accent-text); }

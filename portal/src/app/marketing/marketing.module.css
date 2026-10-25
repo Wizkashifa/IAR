@@ -19,11 +19,6 @@
   /* The form */
   .form :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea), .actFields :is(input, select, textarea) { width: 100%; }
   .example { background: var(--surface-2); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--t-sm); color: var(--ink-2); }
-  .choices { display: flex; flex-direction: column; gap: var(--s-2); }
-  .choice { display: flex; gap: var(--s-2); align-items: center; font-weight: 400; color: var(--ink); min-height: 28px; }
-  .form .choice input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-  .groupLabel { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); padding: 0; margin-bottom: var(--s-1); }
-  .group { border: 0; margin: 0; padding: 0; min-width: 0; }
 
   /* Actions on a request page */
   .actFields { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: var(--s-3); align-items: start; max-width: 720px; }

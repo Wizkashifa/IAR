@@ -18,6 +18,7 @@ import { type DraftCheck, checkDraft } from "./actions";
 import { ChecksList, Timeline, checksSummary } from "./ui";
 import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
+import { Choice, Choices } from "@/components/Choices";
 
 export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
@@ -297,9 +298,7 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Your setup plan (optional)">
               <input value={d.setupNotes} onChange={(e) => set("setupNotes", e.target.value)} placeholder="Tables, chairs, stage" maxLength={300} />
             </Field>
-            <fieldset className={styles.fieldset}>
-              <legend>Details</legend>
-              <div className={styles.choices}>
+            <Choices legend="Details">
                 {([
                   ["food", "Food served"],
                   ["isPublic", "Open to the public (needs marketing)"],
@@ -309,12 +308,9 @@ export default function EventForm(p: EventFormProps) {
                   ["newProgram", "New program"],
                   ["fundraiser", "Fundraiser"],
                 ] as const).map(([k, l]) => (
-                  <label key={k} className={styles.choice}>
-                    <input type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} /> <span>{l}</span>
-                  </label>
+                  <Choice key={k} type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} label={l} />
                 ))}
-              </div>
-            </fieldset>
+            </Choices>
           </div>
         </fieldset>
 
@@ -355,26 +351,16 @@ export default function EventForm(p: EventFormProps) {
             <legend><span className={styles.sn}>{num("avSect")}</span>A/V</legend>
             <div className={styles.sectionBody}>
               <p className={styles.hint}>The A/V team will contact you about what they can support.</p>
-              <fieldset className={styles.fieldset}>
-                <legend>What A/V support do you need? Check all that apply.</legend>
-                <div className={styles.choices}>
-                  {Object.entries(AV_KINDS).map(([k, l]) => (
-                    <label key={k} className={styles.choice}>
-                      <input type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} /> <span>{l}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className={styles.fieldset}>
-                <legend>Will the event include any of these?</legend>
-                <div className={styles.choices}>
-                  {Object.entries(AV_INCLUDES).map(([k, l]) => (
-                    <label key={k} className={styles.choice}>
-                      <input type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} /> <span>{l}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <Choices legend="What A/V support do you need? Check all that apply.">
+                {Object.entries(AV_KINDS).map(([k, l]) => (
+                  <Choice key={k} type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} label={l} />
+                ))}
+              </Choices>
+              <Choices legend="Will the event include any of these?">
+                {Object.entries(AV_INCLUDES).map(([k, l]) => (
+                  <Choice key={k} type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} label={l} />
+                ))}
+              </Choices>
             </div>
           </fieldset>
         )}
