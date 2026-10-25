@@ -4,6 +4,7 @@
  * then it's renewed as a new request. Plain functions so they can be tested.
  */
 import type { RecurFreq, Recurrence } from "./types";
+import { addDays, daysBetween } from "../dates";
 
 export const SERIES_MAX_MONTHS = 3;
 
@@ -16,14 +17,8 @@ const parse = (s: string) => {
 };
 const fmt = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 
-export const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && fmt(parse(s)) === s;
 export const isTime = (s: unknown): s is string => typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 
-export function addDays(s: string, n: number): string {
-  const d = parse(s);
-  d.setUTCDate(d.getUTCDate() + n);
-  return fmt(d);
-}
 export function addMonths(s: string, n: number): string {
   const d = parse(s);
   const day = d.getUTCDate();
@@ -34,7 +29,6 @@ export function addMonths(s: string, n: number): string {
   return fmt(d);
 }
 export const dayOfWeek = (s: string) => parse(s).getUTCDay();
-export const daysBetween = (a: string, b: string) => Math.round((parse(b).getTime() - parse(a).getTime()) / 864e5);
 /** Which week of the month the date is in: 1 for the 1st–7th, and so on. */
 export const weekOfMonth = (s: string) => Math.ceil(parse(s).getUTCDate() / 7);
 
@@ -102,7 +96,3 @@ export function rrule(start: string, r: Recurrence): string {
   return `RRULE:FREQ=WEEKLY;INTERVAL=${r.freq === "biweekly" ? 2 : 1};BYDAY=${day};UNTIL=${until}`;
 }
 
-/** Today in Raleigh, "YYYY-MM-DD". */
-export function todayInRaleigh(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
-}

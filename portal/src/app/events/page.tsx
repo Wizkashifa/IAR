@@ -14,13 +14,14 @@ import { actorFor } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { eventActor, eventContext } from "@/lib/events/context";
 import { roomById } from "@/lib/events/rooms";
-import { dayText, isDate } from "@/lib/events/series";
+import { dayText } from "@/lib/events/series";
 import { datesText, SLOT_STATUS_LABEL } from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import { isEventCard, reviewableBy, upcoming } from "@/lib/events/workflow";
 import { busiestRoom, roomDay } from "./calendar";
 import { RoomDay } from "./RoomDay";
 import { Timeline } from "./ui";
+import { isDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Events & Rooms" };

@@ -14,7 +14,7 @@ import { shortFund } from "@/lib/purchases/accounts";
 import { DESK_TABS, PAY_TYPE_LABEL, deskCards, deskDate, deskOptions, filterDesk, isDeskTab, isPayType, lineKey, openReturns, payTypeOf, type DeskFilter, type DeskTab } from "@/lib/purchases/finance-desk";
 import { KIND_LABEL, purchaseTotal } from "@/lib/purchases/types";
 import { daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
-import { fmtMoney, fmtMonth } from "../ui";
+import { fmtMoney, fmtMonth } from "@/lib/format";
 import { deskAction } from "./actions";
 import { DeskBatch, type DeskRow } from "./DeskBatch";
 import { DeskFilters } from "./DeskFilters";

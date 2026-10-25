@@ -1,8 +1,9 @@
 import Link from "next/link";
-import styles from "./events.module.css";
+import type { ReactNode } from "react";
+import styles from "./Crumb.module.css";
 
-/** "Events & Rooms / EV-1101 / Edit": where this page sits, as on the request page. */
-export function Crumb({ trail, here }: { trail: { href: string; label: string }[]; here: string }) {
+/** "Events & Rooms / EV-1101 / Edit": where this page sits, above its title. */
+export function Crumb({ trail, here }: { trail: { href: string; label: string }[]; here: ReactNode }) {
   return (
     <nav className={styles.crumb} aria-label="Breadcrumb">
       {trail.map((t) => (

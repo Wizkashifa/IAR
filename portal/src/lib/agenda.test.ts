@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { type AgendaCard, agendaFrom, freeRoomsFrom, rangeText } from "./agenda-core";
 import { type GoogleRoom, mergeRooms } from "./events/rooms";
 import type { BusyItem } from "./events/rules";
-import { todayInRaleigh } from "./events/series";
+import { todayLocal } from "./dates";
 
 const dev = (id: string, name: string, capacity: number, building = "Main campus"): GoogleRoom => ({ id, name, building, capacity, calendarId: `${id}@resource.dev.local` });
 const rooms = mergeRooms(
@@ -148,9 +148,9 @@ test("find a room: one campus, a series, and a time that ends before it starts",
 
 test("today is Raleigh's date, not the server's: 11 PM in Raleigh is already tomorrow in UTC", () => {
   // Oct 25, 2026 03:03 UTC is Oct 24, 11:03 PM in Raleigh (daylight time until Nov 1).
-  assert.equal(todayInRaleigh(new Date("2026-10-25T03:03:00Z")), "2026-10-24");
-  assert.equal(todayInRaleigh(new Date("2026-10-25T04:00:00Z")), "2026-10-25");
+  assert.equal(todayLocal(new Date("2026-10-25T03:03:00Z")), "2026-10-24");
+  assert.equal(todayLocal(new Date("2026-10-25T04:00:00Z")), "2026-10-25");
   // After the clocks change, midnight in Raleigh is 05:00 UTC.
-  assert.equal(todayInRaleigh(new Date("2026-11-02T04:30:00Z")), "2026-11-01");
-  assert.equal(todayInRaleigh(new Date("2026-11-02T05:00:00Z")), "2026-11-02");
+  assert.equal(todayLocal(new Date("2026-11-02T04:30:00Z")), "2026-11-01");
+  assert.equal(todayLocal(new Date("2026-11-02T05:00:00Z")), "2026-11-02");
 });

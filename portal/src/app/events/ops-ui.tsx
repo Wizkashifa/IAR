@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button, buttonClass } from "@/components/Button";
 import { Pill, type Tone } from "@/components/Pill";
-import { type NameOf, fallbackName } from "@/lib/next-step";
+import { type NameOf, fallbackName } from "@/lib/steps";
 import type { Role } from "@/lib/org";
 import { WHEN_LABEL, mayCheckRooms } from "@/lib/events/roomchecks";
 import { dayText } from "@/lib/events/series";

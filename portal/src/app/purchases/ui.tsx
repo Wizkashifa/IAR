@@ -1,11 +1,10 @@
 import { ItemRow } from "@/components/ItemRow";
-import { Note } from "@/components/Note";
 import { Pill } from "@/components/Pill";
 import type { RowData } from "@/lib/card-row";
 import { STAGE_LABEL } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, REMINDER_DAYS, daysWaiting, type PurchaseCard } from "@/lib/purchases/workflow";
 
-export { fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "../ui";
+export { fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "@/lib/format";
 
 /** A purchase's status in words, by its step: "Chair approval", "To pay", "Sent back". */
 export function purchaseStatus(card: PurchaseCard): string {
@@ -44,7 +43,8 @@ export function PurchaseRow({ row, card, redacted, days }: { row: RowData; card:
   return <ItemRow title={row.title} id={row.id} href={row.href} sub={row.sub} who={row.who} status={row.status} state={row.state} right={days ? <WaitingPill card={card} /> : undefined} />;
 }
 
-const OK_TEXT: Record<string, string> = {
+/** What a `?ok=` from a server action says (components/FlashNote.tsx). */
+export const OK_TEXT: Record<string, string> = {
   resubmitted: "Changes saved and the request is back in review.",
   approve: "Approved.",
   return: "Sent back with your note.",
@@ -57,10 +57,3 @@ const OK_TEXT: Record<string, string> = {
   cancel: "Request cancelled.",
   commented: "Comment added. The people on this request can see it.",
 };
-
-/** A confirmation from `?ok=` or a problem from `?error=`. */
-export function Flash({ ok, error }: { ok?: string; error?: string }) {
-  if (error) return <Note tone="bad">{error}</Note>;
-  if (ok && OK_TEXT[ok]) return <Note tone="ok">{OK_TEXT[ok]}</Note>;
-  return null;
-}

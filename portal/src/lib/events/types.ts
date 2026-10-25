@@ -2,6 +2,7 @@
  * Events & Rooms: the fields an event card carries on top of the shared Card
  * (see lib/cards.ts). Design: docs/plan.md, "The event card".
  */
+import type { HistoryEntry } from "../workflow-core";
 
 export type RecurFreq = "weekly" | "biweekly" | "monthly";
 
@@ -46,7 +47,6 @@ export type CheckSeverity = "ok" | "info" | "warn" | "bad";
 /** One result of the automatic checks, shown on the form and kept for the reviewers. */
 export type Check = { sev: CheckSeverity; text: string; rule: string; block?: boolean };
 
-export type EventHistoryEntry = { at: string; by: string; action: string; note?: string };
 
 export type EventApproval = { stage: "director" | "mission"; by: string; at: string };
 
@@ -106,7 +106,7 @@ export type EventTask = {
   date?: string;
   /** Left by the team when they finished it. */
   note?: string;
-  history: EventHistoryEntry[];
+  history: HistoryEntry[];
 };
 
 /** Security's room check before or after the event, on one of its dates. */
@@ -139,7 +139,7 @@ export type EventDetails = EventInput & {
   /** The checks when it was last submitted, for the reviewers. */
   checks: Check[];
   holds: CalendarHold[];
-  history: EventHistoryEntry[];
+  history: HistoryEntry[];
   /** Note from whoever sent it back or denied it. */
   returnNote?: string;
   /** Open ask for a booked time (SR-…) this request is waiting on. */

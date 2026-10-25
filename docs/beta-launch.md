@@ -28,16 +28,16 @@ Social & Welfare aid goes through Purchase Requests, restricted to S&W and finan
 
 | What | Who | Notes |
 | --- | --- | --- |
-| An IAR **super admin** to run go-live on their computer (Node 20+, `gcloud` with its beta commands) | Kashif | Signed in with `gcloud auth login` as their @islam1.org account |
+| An IAR **super admin** to run go-live on their computer (Node 20+, `gcloud` with its beta commands) | Super admin | Signed in with `gcloud auth login` as their @islam1.org account |
 | IAR's **billing account** ID | Treasurer | go-live links it after asking |
-| Project ID and region | Kashif | Defaults: `iar-portal`, `us-east1` |
+| Project ID and region | Super admin | Defaults: `iar-portal`, `us-east1` |
 | The **members Sheet**, filled in | Office admins | `go-live --template --apply` makes it in your Drive, or upload `ops/go-live/members-template.xlsx`. Tabs: Groups, Pillars, Funds, Cards (last 4 only), Testers, Rooms. It's used once; after launch Google Groups is the record |
-| **Testers**: 5–10 people | Kashif | At least one chair, one director, one executive, one finance person, one marketing person, one facilities person and one regular requester |
+| **Testers**: 5–10 people | Super admin | At least one chair, one director, one executive, one finance person, one marketing person, one facilities person and one regular requester |
 | The **room list** checked against IAR's room resources, and interim answers on the room-policy gaps (committee room 240 or 280, lead times, which rooms can be booked) | Office | Go in the Sheet's Rooms tab |
-| The facilities lead's **Jira CSV export** of open issues, and a one-hour **session with the facilities team** using the questions in [facilities-move.md](facilities-move.md) | Facilities lead, Kashif | The export is imported after deploy; the session decides what else they need before Jira is retired |
+| The facilities lead's **Jira CSV export** of open issues, and a one-hour **session with the facilities team** using the questions in [facilities-move.md](facilities-move.md) | Facilities lead, super admin | The export is imported after deploy; the session decides what else they need before Jira is retired |
 | The **Policies Shared Drive**, with the room reservation policy in it | Office, Shura secretary | The Library lists it read-only. Put "Review by YYYY-MM-DD" in a file's Drive description to show its review date |
 | A **marketing folder** in a Shared Drive for files people add to marketing requests | Marketing lead | Can be a folder in an existing Shared Drive |
-| **Five volunteers** for a usability session in the first beta week, not all of them testers | Kashif | 30 minutes each; see "During the beta" |
+| **Five volunteers** for a usability session in the first beta week, not all of them testers | Super admin | 30 minutes each; see "During the beta" |
 
 ## Steps
 

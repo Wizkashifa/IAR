@@ -8,7 +8,7 @@ import { vendorFormProps } from "../formData";
 import { linkableEventsFor } from "@/lib/events/context";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { canRequestAgain, copiedNote, purchaseAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { isPurchaseCard } from "@/lib/purchases/workflow";

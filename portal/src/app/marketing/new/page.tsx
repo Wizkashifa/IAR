@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { canRequestAgain, copiedNote, marketingAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { isMarketingCard } from "@/lib/marketing/workflow";

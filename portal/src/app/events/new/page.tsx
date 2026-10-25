@@ -13,7 +13,7 @@ import { isEventCard } from "@/lib/events/workflow";
 import { submitEvent } from "../actions";
 import EventForm from "../EventForm";
 import { formProps } from "../form-props";
-import { Crumb } from "../Crumb";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New event request" };

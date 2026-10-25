@@ -6,10 +6,9 @@
  */
 import { dayText } from "./series";
 import type { EventCard } from "./workflow";
+import { lc } from "../text";
 
 export type EventChoice = { id: string; label: string };
-
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** The events this person may link a purchase to. `groups`: the team groups they're on. */
 export function linkableEvents(cards: EventCard[], who: { email: string; groups: string[] }, today: string): EventChoice[] {

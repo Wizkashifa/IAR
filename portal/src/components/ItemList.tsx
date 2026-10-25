@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Card } from "@/lib/cards";
 import { cardRow, type RowData, type RowOptions } from "@/lib/card-row";
@@ -9,6 +8,7 @@ import { Icon } from "./Icon";
 import { CardRow } from "./ItemRow";
 import { Panel } from "./Panel";
 import styles from "./ItemList.module.css";
+import { Chips, type Chip } from "./Chips";
 
 /** List rows for these requests, for the person looking (lib/card-row.ts). */
 export function rowsFor(cards: Card[], viewer: NeedsViewer, o: RowOptions = {}): RowData[] {
@@ -31,8 +31,6 @@ export function sectionsOf(g: { needsYou: RowData[]; waiting: RowData[]; done: R
   ];
 }
 
-/** Filter chips that are plain links (?kind=…), so the server does the filtering. */
-export type Chip = { label: string; href: string; on?: boolean };
 
 /**
  * A list of requests in a panel: a title and count, optional filter chips and
@@ -70,13 +68,7 @@ export function ItemList({
       {(chips?.length || legend) && (
         <div className={styles.bar}>
           {chips && chips.length > 0 && (
-            <nav className={styles.chips} aria-label="Show">
-              {chips.map((c) => (
-                <Link key={c.href} href={c.href} className={c.on ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={c.on ? "page" : undefined}>
-                  {c.label}
-                </Link>
-              ))}
-            </nav>
+            <Chips label="Show" chips={chips} />
           )}
           {legend && <Legend />}
         </div>

@@ -7,7 +7,7 @@ import { requireViewer } from "@/lib/viewer";
 import { eventActor, eventContext } from "@/lib/events/context";
 import { isEventCard, permission } from "@/lib/events/workflow";
 import { submitEvent } from "../../actions";
-import { Crumb } from "../../Crumb";
+import { Crumb } from "@/components/Crumb";
 import EventForm from "../../EventForm";
 import { formProps } from "../../form-props";
 

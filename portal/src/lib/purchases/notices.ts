@@ -7,31 +7,15 @@
  * rejected) is an in-portal notice only. A committee's director hears in the portal when one
  * of its requests reaches the chair step. Plain functions so they can be tested.
  */
-import { commenters, preview } from "../comments";
-import type { Role } from "../org";
 import { STAGE_LABEL, purchaseTotal } from "./types";
 import type { Actor, PurchaseCard } from "./workflow";
-
-/** One person, or everyone in a role's Google Group. */
-export type Recipient = { email: string } | { role: Role };
-
-/** Used for every portal notice, not only purchases (see lib/notifications.ts). */
-export type Notice = {
-  to: Recipient;
-  cardId?: string;
-  href: string;
-  text: string;
-  /** Also send an alert in Google Chat (only when the recipient has to act). See lib/alerts.ts. */
-  alert: boolean;
-  /** Pass to whoever covers for the recipient while they're away. */
-  delegable: boolean;
-};
+import { same } from "../text";
+import { type Notice, type Recipient, commentNotices } from "../notices";
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
 /** Social & Welfare details stay out of notices, which outlive the request's own access checks. */
-function label(c: PurchaseCard): string {
+export function purchaseLabel(c: PurchaseCard): string {
   return c.purchase.restricted ? `${c.id} (Social & Welfare request)` : `${c.id} “${c.title}” (${money(purchaseTotal(c.purchase))})`;
 }
 
@@ -62,7 +46,7 @@ const isOpen = (c: PurchaseCard) => c.status === "in_review" || c.status === "ap
 export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard, actor: Actor, opts: { directors?: string[]; chairs?: string[] } = {}): Notice[] {
   const out: Notice[] = [];
   const href = `/purchases/${after.id}`;
-  const what = label(after);
+  const what = purchaseLabel(after);
   const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
     if ("email" in to && same(to.email, actor.email)) return;
     out.push({ to, cardId: after.id, href, text, alert, delegable });
@@ -130,20 +114,6 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
  * nothing of anyone by itself.
  */
 export function purchaseCommentNotices(card: PurchaseCard, by: Actor, text: string): Notice[] {
-  const href = `/purchases/${card.id}#comments`;
-  const what = label(card);
-  const msg = card.purchase.restricted ? `${by.name} commented on ${what}` : `${by.name} commented on ${what}: “${preview(text)}”`;
-  const open = card.status === "in_review" || card.status === "approved" || card.status === "paid";
-  const to: Recipient[] = [{ email: card.ownerEmail }, ...commenters(card).map((email) => ({ email }))];
-  const next = open ? nextActor(card) : null;
-  if (next) to.push(next);
-  const seen = new Set<string>();
-  const out: Notice[] = [];
-  for (const r of to) {
-    const key = "email" in r ? r.email.toLowerCase() : `role:${r.role}`;
-    if (seen.has(key) || ("email" in r && same(r.email, by.email))) continue;
-    seen.add(key);
-    out.push({ to: r, cardId: card.id, href, text: msg, alert: false, delegable: false });
-  }
-  return out;
+  const next = isOpen(card) ? nextActor(card) : null;
+  return commentNotices(card, by, text, { href: `/purchases/${card.id}`, what: purchaseLabel(card), also: next ? [next] : [], quote: !card.purchase.restricted });
 }

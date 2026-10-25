@@ -12,11 +12,10 @@ import { MARKETING_TYPES, type MarketingInput } from "./marketing/forms";
 import type { MarketingDetails } from "./marketing/types";
 import type { PurchaseInput } from "./purchases/input";
 import type { PurchaseDetails } from "./purchases/types";
+import { addDays } from "./dates";
 
 const DAY = 86_400_000;
 const toDay = (ymd: string) => Date.parse(`${ymd}T12:00:00Z`);
-const fromDay = (t: number) => new Date(t).toISOString().slice(0, 10);
-const addDays = (ymd: string, n: number) => fromDay(toDay(ymd) + n * DAY);
 
 /** Requests that are over: done, paid, closed, declined or withdrawn. */
 const OVER = ["paid", "closed", "close_out", "denied", "cancelled"];

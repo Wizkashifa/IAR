@@ -6,16 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "./Icon";
 import { ThemeSwitch } from "./ThemeSwitch";
 import styles from "./AccountMenu.module.css";
+import { initials } from "@/lib/text";
 
 export type Account = { name: string; email: string; away: boolean; dev: boolean };
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("") || "?";
 
 /** "Send feedback", remembering the page it was sent from (the feedback form shows it). */
 function useFeedback() {

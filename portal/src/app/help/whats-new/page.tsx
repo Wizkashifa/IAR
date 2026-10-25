@@ -4,7 +4,7 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { requireViewer } from "@/lib/viewer";
 import { WHATS_NEW, type WhatsNew } from "@/lib/whats-new";
-import { fmtDay } from "../../ui";
+import { fmtDay } from "@/lib/format";
 import styles from "../help.module.css";
 
 export const dynamic = "force-dynamic";

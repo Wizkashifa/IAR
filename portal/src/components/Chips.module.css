@@ -1,0 +1,9 @@
+@layer components {
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: var(--t-sm); white-space: nowrap; transition: border-color var(--speed), background-color var(--speed); }
+  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
+  .chip:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .n { color: var(--ink-3); font-weight: 600; }
+  .on .n { color: inherit; }
+}

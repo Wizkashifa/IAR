@@ -1,6 +1,8 @@
 import "server-only";
 import { cardStore } from "../cards";
-import { deliver, sendAlerts } from "../notifications";
+import { saveThenTell } from "../daily-save";
+import { sendAlerts } from "../notifications";
+import { plural } from "../text";
 import { followUps, morningDigest } from "./reminders";
 import { purchaseContext } from "./settings";
 import { isPurchaseCard } from "./workflow";
@@ -18,18 +20,13 @@ export async function daily(now: Date): Promise<string> {
   let escalated = 0;
   for (const f of followUps(open, iso, (fund) => ctx.routing.approversFor(fund).directors ?? [])) {
     const before = open.find((c) => c.id === f.card.id)!;
-    try {
-      // Keep updatedAt: a reminder isn't a change anyone needs to reload for.
-      await store.save(f.card, before.updatedAt);
-    } catch {
-      continue;
-    }
-    await deliver(f.notices, "portal");
+    // Keep updatedAt: a reminder isn't a change anyone needs to reload for.
+    if (!(await saveThenTell(store, before.updatedAt, f.card, f.notices))) continue;
     if (f.kind === "remind") reminded++;
     else escalated++;
   }
   // The digest is a Chat message only: the bell already lists each request.
   const digest = morningDigest(open, iso);
   await sendAlerts(digest.map((n) => ({ to: "email" in n.to ? n.to.email : `role:${n.to.role}`, text: n.text, href: n.href })));
-  return `${reminded} reminder${reminded === 1 ? "" : "s"}, ${escalated} escalation${escalated === 1 ? "" : "s"}, ${digest.length} morning digest${digest.length === 1 ? "" : "s"}.`;
+  return `${plural(reminded, "reminder")}, ${plural(escalated, "escalation")}, ${plural(digest.length, "morning digest")}.`;
 }

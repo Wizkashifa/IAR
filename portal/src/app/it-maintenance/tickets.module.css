@@ -11,13 +11,6 @@
   .quiet { padding-bottom: 10px; font-size: var(--t-md); color: var(--accent-text); }
 
   .filterBar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-2) var(--s-4); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: var(--t-sm); white-space: nowrap; transition: border-color var(--speed), background-color var(--speed); }
-  .chip:hover { border-color: var(--ink-3); text-decoration: none; }
-  .chip:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
-  .chipOn { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
-  .n { color: var(--ink-3); font-weight: 600; }
-  .chipOn .n { color: inherit; }
 
   /* The team board: one column per status, scrolling sideways on narrow screens. */
   .board { display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: var(--s-1); }
@@ -33,7 +26,6 @@
 
   /* The report form's team and urgency choices. */
   .section { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
-  .legend { padding: 0; margin: 0 0 var(--s-1); font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
   .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--s-2); }
   .choice { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--s-2); align-items: start; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); cursor: pointer; transition: border-color var(--speed), background-color var(--speed); }
   .choice:hover { border-color: var(--ink-3); }
@@ -57,16 +49,6 @@
   .more > summary::-webkit-details-marker, .moreAlone > summary::-webkit-details-marker { display: none; }
   .more[open] > summary, .moreAlone[open] > summary { margin-bottom: var(--s-3); }
   .moreGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-4); align-items: start; }
-  .replies { display: flex; flex-wrap: wrap; gap: 6px; }
-  .reply { min-height: 28px; padding: 0 10px; border: 1px dashed var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--t-sm); cursor: pointer; text-align: left; }
-  .reply:hover { border-color: var(--ink-3); color: var(--ink); }
-  .reply:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
-  .comments { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-3); }
-  .comment { display: flex; flex-direction: column; gap: 2px; }
-  .commentText { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .history { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: var(--t-md); }
-  .history .sub { display: block; }
-  .textarea { width: 100%; }
 
   .links { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); font-size: var(--t-md); }
   .links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s-2); }

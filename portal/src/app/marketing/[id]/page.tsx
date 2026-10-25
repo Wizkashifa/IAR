@@ -5,7 +5,7 @@ import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
@@ -22,13 +22,13 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
-import { ToastOnLoad } from "@/components/toast";
-import { fmtDate, fmtDay } from "../../ui";
+import { fmtDate, fmtDay } from "@/lib/format";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf, sizeText } from "@/lib/marketing/files";
 import { marketingFolder } from "@/lib/marketing/drive";
 import { actOnMarketing, addMarketingFiles, commentOnMarketing } from "../actions";
-import { CommentsPanel, HistoryPanel } from "../Activity";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
 
@@ -72,7 +72,7 @@ export default async function MarketingDetail({
 
   const notes = (
     <>
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={OK_MESSAGES} />
       {m.stage === "question" && m.question && (
         <Note tone="warn">
           <strong>Marketing asked:</strong> <span className="pre">{m.question}</span>
@@ -147,7 +147,6 @@ export default async function MarketingDetail({
 
   return (
     <>
-      <ToastOnLoad message={ok ? OK_MESSAGES[ok] : undefined} />
       <RequestPage
         crumb={{ href: "/marketing", label: "Marketing Requests" }}
         id={mc.id}

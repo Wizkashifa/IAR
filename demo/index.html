@@ -833,14 +833,14 @@ function seed() {
       po({ id: "PO-10977", owner: "youthChair", type: "reimburse", committee: "Youth", payee: PEOPLE.youthChair.name, pay: "check", checkTo: "box", address: "100 Sample St, Raleigh, NC 27601", desc: "Pizza and water — food drive briefing", lines: [["Youth – Program", 212.4]], eventId: "EV-0998", status: "paid", created: now(3) }),
       po({ id: "PO-11039", owner: "youthChair", type: "vendor", committee: "Youth", payee: "Camp Cedar Ridge", pay: "check", checkTo: "mail", address: "500 Camp Rd, Sample Town, NC 27500", desc: "Youth retreat deposit", lines: [["Youth – Program", 1200]], status: "to_pay", w9: true, chairBy: "commDirector", created: now(4) }),
       po({ id: "PO-11053", owner: "maintStaff", type: "reimburse", committee: "Facility Maintenance", payee: PEOPLE.maintStaff.name, pay: "check", checkTo: "office", address: "200 Sample Ave, Cary, NC 27511", desc: "Replacement door closer, Red Brick side entrance", lines: [["Facility Maintenance – Program", 138.75, "Lowe's"]], status: "chair", created: now(2) }),
-      cardPO({ id: "PO-11051", owner: "swChair", last4: "3051", status: "finance", created: now(2), lines: [
+      cardPO({ id: "PO-11051", owner: "swChair", last4: "1004", status: "finance", created: now(2), lines: [
         { day: 3, merchant: "Food Lion — pantry restock", acct: "Social & Welfare – Program", amount: 286.4 },
         { day: 9, merchant: "Costco — pantry staples", acct: "Social & Welfare – Program", amount: 214.18 },
         { day: 12, merchant: "Canva (annual plan, charged twice)", acct: "Marketing – Program", amount: 129, flag: "refund" },
         { day: 18, merchant: "Amazon — Family Night table covers", acct: "Youth – Program", amount: 64.99, flag: "repay", repayBy: "Youth Committee" },
         { day: 24, merchant: "Staples", acct: "Social & Welfare – Program", amount: 23.5, noReceipt: true },
       ] }),
-      cardPO({ id: "PO-11037", owner: "youthChair", last4: "7720", status: "done", created: now(9), lines: [
+      cardPO({ id: "PO-11037", owner: "youthChair", last4: "1002", status: "done", created: now(9), lines: [
         { day: 6, merchant: "Costco", acct: "Youth – Program", amount: 188.42 },
         { day: 20, merchant: "Target (returned items)", acct: "Youth – Program", amount: 41.17, flag: "refund" },
       ] }),
@@ -1226,7 +1226,7 @@ function libSeed() {
     f("finance", "W-9s", "W-9 — Camp Cedar Ridge.pdf", "bookkeeper", 60, { link: ["PO-11039"] }),
     f("finance", "Receipts", "Costco receipt — Game Night snacks.pdf", "youthChair", 3, { link: ["PO-11045"] }),
     f("finance", "Receipts", "Carolina Air Systems — deposit receipt.pdf", "bookkeeper", 300),
-    f("finance", "Card statements", "Card 3051 — September statement.pdf", "bookkeeper", 12, { link: ["PO-11051"] }),
+    f("finance", "Card statements", "Card 1004 — September statement.pdf", "bookkeeper", 12, { link: ["PO-11051"] }),
     f("finance", "QuickBooks exports", "QuickBooks export — September.csv", "bookkeeper", 15),
   ] };
   S.lib.seq = q;
@@ -2257,10 +2257,10 @@ function seedVendors() {
 }
 /* IAR credit cards: each one is assigned to one person. Only the last four digits are ever stored. */
 const IAR_CARDS = [
-  { last4: "4417", holder: "officeAdmin", committee: "Administration", label: "Office card" },
-  { last4: "7720", holder: "youthChair", committee: "Youth", label: "Youth card" },
-  { last4: "8890", holder: "bookkeeper", committee: "Administration", label: "Finance card" },
-  { last4: "3051", holder: "swChair", committee: "Social & Welfare", label: "S&W card" },
+  { last4: "1001", holder: "officeAdmin", committee: "Administration", label: "Office card" },
+  { last4: "1002", holder: "youthChair", committee: "Youth", label: "Youth card" },
+  { last4: "1003", holder: "bookkeeper", committee: "Administration", label: "Finance card" },
+  { last4: "1004", holder: "swChair", committee: "Social & Welfare", label: "S&W card" },
 ];
 /* A chair's own request goes to another chair, then the vice chair (a Manager of the team's group), then the director. */
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -2881,7 +2881,7 @@ function qbSample() {
     { id: "q8", type: "in", date: d(1), desc: "Check – memo: \"for the new roof\"", acct: "4100 Donations:Restricted", cls: "", amt: 10000, hint: "Looks like Facility Maintenance or Cap Ex IAR" },
     { id: "q9", type: "in", date: d(0), desc: "Venmo – fundraiser dinner proceeds", acct: "4900 Other Income", cls: "", amt: 6300, hint: "Which committee ran the dinner? Possibly Marketing & Fundraising" },
     { id: "q10", type: "out", date: d(2), desc: "Costco – Game Night snacks, check #20431", acct: "Youth expenses", cls: "Youth", line: "IAR main", amt: 135.39, po },
-    { id: "q11", type: "out", date: d(1), desc: "Amazon – misc. supplies, card ending 4417", acct: "Administration expenses", cls: "Administration", line: "IAR main", amt: 212.77, po: "" },
+    { id: "q11", type: "out", date: d(1), desc: "Amazon – misc. supplies, card ending 1001", acct: "Administration expenses", cls: "Administration", line: "IAR main", amt: 212.77, po: "" },
   ];
   rows.forEach((r) => { if (r.type === "in") r.map = mapQB(r); });
   return { file: "qb-transactions-oct-16-to-" + String(parseD(TODAY).getDate()) + ".csv", rows, pick: {} };
@@ -4253,7 +4253,7 @@ function renderGuide() {
 function doStep(i) {
   const s = STEPS[i]; S.step = i; if (s.reset) s.reset();
   S.me = s.as; S.poDraft = null;
-  if (s.view === "newPO" && s.card) { const ym = lastMonthYm(); S.poDraft = { type: "card", card: "4417", month: ym, desc: `Card receipts — office card, ${fmtYm(ym)}`, lines: [
+  if (s.view === "newPO" && s.card) { const ym = lastMonthYm(); S.poDraft = { type: "card", card: "1001", month: ym, desc: `Card receipts — office card, ${fmtYm(ym)}`, lines: [
     { ...cardBlankLine(), date: `${ym}-04`, merchant: "Staples", acct: "Administration – Office supplies & postage", amount: 42.18, receipt: "staples-receipt.pdf" },
     { ...cardBlankLine(), date: `${ym}-11`, merchant: "Costco", acct: "Administration – Admin", amount: 156.3, receipt: "costco-receipt.pdf" },
     { ...cardBlankLine(), date: `${ym}-19`, merchant: "Party City — Game Night prizes", acct: "Youth – Program", amount: 38.99, flag: "repay", repayBy: "Youth Committee" },

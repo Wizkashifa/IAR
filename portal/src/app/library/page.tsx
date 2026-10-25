@@ -7,11 +7,11 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { policiesLibrary, searchPolicies } from "@/lib/library";
 import { reviewState, type LibraryFile } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDate } from "../ui";
+import { fmtDate } from "@/lib/format";
 import styles from "./library.module.css";
 
 export const dynamic = "force-dynamic";

@@ -1,7 +1,9 @@
 import "server-only";
-import { cardStore, ConflictError } from "../cards";
-import { todayLocal } from "../away";
+import { cardStore } from "../cards";
+import { saveThenTell } from "../daily-save";
+import { todayLocal } from "../dates";
 import { deliver } from "../notifications";
+import { plural } from "../text";
 import { planDaily } from "./reminders";
 import { OPEN_STAGES, isMarketingCard, statusForStage } from "./workflow";
 
@@ -18,18 +20,12 @@ export async function daily(now: Date): Promise<string> {
 
   // Mark each reminder as sent before sending it. If someone changed the
   // request at that moment, skip it today; tomorrow's run picks it up.
-  const skipped = new Set<string>();
+  let reminders = 0;
   for (const c of plan.reminded) {
-    try {
-      await store.save(c, c.updatedAt);
-    } catch (err) {
-      if (!(err instanceof ConflictError)) console.error("marketing reminder save failed", c.id, err);
-      skipped.add(c.id);
-    }
+    const notices = plan.notices.filter((n) => n.cardId === c.id);
+    if (await saveThenTell(store, c.updatedAt, c, notices)) reminders += notices.length;
   }
-  const notices = plan.notices.filter((n) => !n.cardId || !skipped.has(n.cardId));
-  await deliver(notices, "portal");
-  const reminders = notices.filter((n) => n.cardId).length;
-  const weekly = notices.length - reminders;
-  return `${weekly ? "Weekly review list sent. " : ""}${reminders} done-by reminder${reminders === 1 ? "" : "s"}.`;
+  const weekly = plan.notices.filter((n) => !n.cardId);
+  await deliver(weekly, "portal");
+  return `${weekly.length ? "Weekly review list sent. " : ""}${plural(reminders, "done-by reminder")}.`;
 }

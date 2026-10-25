@@ -7,17 +7,18 @@
  * close it for them. Plain functions so they can be tested.
  */
 import type { Card } from "../cards";
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { purchaseTotal } from "../purchases/types";
-import { daysBetween, dayText } from "./series";
-import type { CloseOut, EventHistoryEntry } from "./types";
-import { type EventActor, type EventCard, EventError, withStage } from "./workflow";
+import { dayText } from "./series";
+import type { CloseOut } from "./types";
+import { type EventActor, type EventCard, withStage } from "./workflow";
+import { lc } from "../text";
+import { daysBetween } from "../dates";
+import { historyEntry, WorkflowError } from "../workflow-core";
 
 /** Days in close-out before the requester is reminded. */
 export const NUDGE_DAYS = 7;
 
-const lc = (s: string) => s.trim().toLowerCase();
-const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 export const lastDate = (card: EventCard) => card.event.dates[card.event.dates.length - 1] ?? card.event.date;
@@ -27,7 +28,7 @@ export const dueForCloseOut = (card: EventCard, today: string) => card.status ==
 
 /** The event is over: it waits on the requester for attendance and final costs. */
 export function startCloseOut(card: EventCard, now: string, directors: string[] = []): EventCard {
-  const e = { ...card.event, closeOutSince: now, history: [...card.event.history, entry("portal", now, "The event is over. Waiting on the requester to close it out: attendance and final costs")] };
+  const e = { ...card.event, closeOutSince: now, history: [...card.event.history, historyEntry("portal", now, "The event is over. Waiting on the requester to close it out: attendance and final costs")] };
   return withStage(card, e, now, directors, "close_out");
 }
 
@@ -38,7 +39,7 @@ export function needsNudge(card: EventCard, today: string): boolean {
 }
 
 export function markNudged(card: EventCard, now: string): EventCard {
-  return { ...card, event: { ...card.event, closeOutNudged: now, history: [...card.event.history, entry("portal", now, "Reminded the requester to close out the event")] }, updatedAt: now };
+  return { ...card, event: { ...card.event, closeOutNudged: now, history: [...card.event.history, historyEntry("portal", now, "Reminded the requester to close out the event")] }, updatedAt: now };
 }
 
 // ---- Linked purchases --------------------------------------------------------
@@ -77,7 +78,7 @@ export function closeOutPermission(card: EventCard, actor: EventActor): { ok: tr
  */
 export function submitCloseOut(card: EventCard, actor: EventActor, now: string, input: CloseOutInput, spent: number, directors: string[] = []): EventCard {
   const p = closeOutPermission(card, actor);
-  if (!p.ok) throw new EventError(p.reason);
+  if (!p.ok) throw new WorkflowError(p.reason);
   const owner = lc(card.ownerEmail) === lc(actor.email);
   const errors: string[] = [];
   const raw = String(input.attendance ?? "").trim();
@@ -85,7 +86,7 @@ export function submitCloseOut(card: EventCard, actor: EventActor, now: string, 
   if (n !== undefined && (!Number.isInteger(n) || n < 0 || n > 100000)) errors.push("Enter the actual attendance as a whole number.");
   if (owner && n === undefined) errors.push("Enter about how many people came.");
   if (owner && !input.costsConfirmed) errors.push("Confirm the final costs: the purchase requests linked to this event. Link any missing ones first.");
-  if (errors.length) throw new EventError(errors.join(" "));
+  if (errors.length) throw new WorkflowError(errors.join(" "));
   const notes = String(input.notes ?? "").trim().slice(0, 2000);
   const byOffice = !owner;
   const closeOut: CloseOut = {
@@ -104,7 +105,7 @@ export function submitCloseOut(card: EventCard, actor: EventActor, now: string, 
     stage: "done" as const,
     stageSince: now,
     closeOut,
-    history: [...card.event.history, entry(actor.email, now, `${byOffice ? "Closed out by the IAR office" : "Closed out"}: ${summary}`, notes || undefined)],
+    history: [...card.event.history, historyEntry(actor.email, now, `${byOffice ? "Closed out by the IAR office" : "Closed out"}: ${summary}`, notes || undefined)],
   };
   return withStage(card, e, now, directors);
 }

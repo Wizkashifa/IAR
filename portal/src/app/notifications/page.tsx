@@ -9,7 +9,7 @@ import { chatEnabled } from "@/lib/chat";
 import { mailEnabled } from "@/lib/mail";
 import { listNotifications } from "@/lib/notifications";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDateTime } from "../ui";
+import { fmtDateTime } from "@/lib/format";
 import { markAllRead, openNotification } from "./actions";
 import styles from "./notifications.module.css";
 

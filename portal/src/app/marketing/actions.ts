@@ -6,18 +6,19 @@ import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { directory } from "@/lib/groups";
-import { todayLocal } from "@/lib/away";
-import { checkComment, withComment } from "@/lib/comments";
+import { todayLocal } from "@/lib/dates";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
-import { canViewMarketing } from "@/lib/marketing/access";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
 import * as wf from "@/lib/marketing/workflow";
 import { filesFrom } from "@/lib/drive";
 import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
+import { WorkflowError } from "@/lib/workflow-core";
+import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
-export type FormState = { errors: string[]; values?: MarketingInput; n: number };
+export type MarketingFormState = FormState & { values?: MarketingInput; n: number };
 
 const nowIso = () => new Date().toISOString();
 
@@ -46,7 +47,7 @@ function inputFrom(form: FormData): MarketingInput {
   };
 }
 
-export async function createMarketing(prev: FormState, form: FormData): Promise<FormState> {
+export async function createMarketing(prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const raw = inputFrom(form);
@@ -107,7 +108,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
       }
     }
   } catch (err) {
-    if (err instanceof wf.WorkflowError) error = err.message;
+    if (err instanceof WorkflowError) error = err.message;
     else {
       console.error("marketing file upload failed", err);
       error = "The files didn't upload. Try again, or share a Google Drive link.";
@@ -121,7 +122,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
  * The requester's edit page: saves changes, and when marketing asked a
  * question, sends the answer with them (back to the weekly review).
  */
-export async function editMarketing(id: string, expected: string, prev: FormState, form: FormData): Promise<FormState> {
+export async function editMarketing(id: string, expected: string, prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const store = await cardStore();
@@ -146,7 +147,7 @@ export async function editMarketing(id: string, expected: string, prev: FormStat
     await store.save(next, card.updatedAt);
     await deliver(marketingNotices(card, next, actor), actor.email);
   } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) return fail([err.message]);
+    if (err instanceof WorkflowError || err instanceof ConflictError) return fail([err.message]);
     console.error("marketing edit failed", err);
     return fail(["Something went wrong saving the request. Nothing was changed."]);
   }
@@ -154,94 +155,53 @@ export async function editMarketing(id: string, expected: string, prev: FormStat
   redirect(`/marketing/${id}?ok=${answering ? "answer" : "edit"}`);
 }
 
+const marketing = { path: "/marketing", is: wf.isMarketingCard };
+
 /** Schedule, ask, decline, start, change the date, finish, answer or cancel. */
 export async function actOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
-  const id = String(form.get("id") ?? "");
-  const action = String(form.get("action") ?? "") as wf.Action;
   const note = String(form.get("note") ?? "").slice(0, 2000);
   const doneBy = String(form.get("doneBy") ?? "");
-  const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isMarketingCard(card)) redirect("/marketing");
-  if (String(form.get("expected") ?? "") !== card.updatedAt) {
-    redirect(`/marketing/${id}?error=${encodeURIComponent("This request changed while you were looking at it. Check it again before acting.")}`);
-  }
-
-  const now = nowIso();
-  let error: string | null = null;
-  try {
-    let next: wf.MarketingCard;
-    switch (action) {
-      case "schedule":
-        next = wf.schedule(card, actor, now, doneBy, note);
-        break;
-      case "ask":
-        next = wf.ask(card, actor, now, note);
-        break;
-      case "decline":
-        next = wf.decline(card, actor, now, note);
-        break;
-      case "start":
-        next = wf.start(card, actor, now, note);
-        break;
-      case "reschedule":
-        next = wf.reschedule(card, actor, now, doneBy, note);
-        break;
-      case "finish":
-        next = wf.finish(card, actor, now, note);
-        break;
-      case "answer":
-        next = wf.answer(card, actor, now, note);
-        break;
-      case "cancel":
-        next = wf.cancel(card, actor, now);
-        break;
-      default:
-        throw new wf.WorkflowError("Unknown action.");
-    }
-    await store.save(next, card.updatedAt);
-    await deliver(marketingNotices(card, next, actor), actor.email);
-  } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) error = err.message;
-    else {
-      console.error("marketing action failed", err);
-      error = "Something went wrong. Nothing was changed.";
-    }
-  }
-  revalidatePath("/marketing");
-  revalidatePath(`/marketing/${id}`);
-  redirect(error ? `/marketing/${id}?error=${encodeURIComponent(error)}` : `/marketing/${id}?ok=${action}`);
+  await actOnCard(form, viewer, {
+    ...marketing,
+    async act(card, action, now) {
+      let next: wf.MarketingCard;
+      switch (action as wf.Action) {
+        case "schedule":
+          next = wf.schedule(card, actor, now, doneBy, note);
+          break;
+        case "ask":
+          next = wf.ask(card, actor, now, note);
+          break;
+        case "decline":
+          next = wf.decline(card, actor, now, note);
+          break;
+        case "start":
+          next = wf.start(card, actor, now, note);
+          break;
+        case "reschedule":
+          next = wf.reschedule(card, actor, now, doneBy, note);
+          break;
+        case "finish":
+          next = wf.finish(card, actor, now, note);
+          break;
+        case "answer":
+          next = wf.answer(card, actor, now, note);
+          break;
+        case "cancel":
+          next = wf.cancel(card, actor, now);
+          break;
+        default:
+          return unknownAction();
+      }
+      return { next, notices: marketingNotices(card, next, actor) };
+    },
+  });
 }
 
-/** A comment from anyone who can open the request. Never changes its stage. */
 export async function commentOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
-  const id = String(form.get("id") ?? "");
-  const store = await cardStore();
-  const check = checkComment(form.get("text"));
-  let error: string | null = check.ok ? null : check.error;
-  if (check.ok) {
-    // Retry once if someone else saved the request at the same moment: a comment never needs to wait.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const card = await store.get(id);
-      if (!wf.isMarketingCard(card) || !canViewMarketing(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/marketing");
-      const next = withComment(card, { at: nowIso(), by: actor.email, name: viewer.name, text: check.text });
-      try {
-        await store.save(next, card.updatedAt);
-        await deliver(marketingCommentNotices(next, actor, check.text), actor.email);
-        error = null;
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) {
-          if (!(err instanceof ConflictError)) console.error("comment failed", err);
-          error = "Your comment couldn't be saved. Try again.";
-        }
-      }
-    }
-  }
-  revalidatePath(`/marketing/${id}`);
-  redirect(error ? `/marketing/${id}?error=${encodeURIComponent(error)}#comments` : `/marketing/${id}?ok=commented#comments`);
+  await commentOnCard(form, viewer, { ...marketing, notices: (card, text) => marketingCommentNotices(card, actor, text) });
 }

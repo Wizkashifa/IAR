@@ -1,4 +1,5 @@
 import type { Role } from "./org";
+import { lc } from "./text";
 
 /**
  * Committees and teams, read from Google Groups. Nothing here names a person,
@@ -28,8 +29,6 @@ export const EMPTY_DIRECTORY: Directory = { teams: [], pillars: [] };
 
 export type TeamRole = "chair" | "vice" | "member";
 export type Membership = { name: string; group: string; role: TeamRole };
-
-const lc = (s: string) => s.trim().toLowerCase();
 
 /**
  * A slug from a name: lowercase, apostrophes, "&" and the word "Committee"

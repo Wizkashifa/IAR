@@ -9,7 +9,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { Stages } from "@/components/Stages";
 import { cardStore } from "@/lib/cards";
 import { emailsIn, ROW_TONE, rowState, whoText } from "@/lib/card-row";
-import { fmtDay } from "@/app/ui";
+import { fmtDay } from "@/lib/format";
 import { directory } from "@/lib/groups";
 import { nameResolver } from "@/lib/names";
 import { groupForViewer } from "@/lib/needs-you";

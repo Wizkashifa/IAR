@@ -1,13 +1,12 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { cardStore, ConflictError, type CardStatus } from "@/lib/cards";
-import { checkComment, withComment } from "@/lib/comments";
 import { filesFrom } from "@/lib/drive";
 import { deliver } from "@/lib/notifications";
 import { ORG } from "@/lib/org";
-import type { Notice } from "@/lib/purchases/notices";
+import type { Notice } from "@/lib/notices";
 import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
@@ -19,8 +18,10 @@ import { scheduleStore } from "@/lib/tickets/schedule-store";
 import { canManageSchedules, parseScheduleInput } from "@/lib/tickets/schedules";
 import type { TicketStatus, TicketTeam, Urgency } from "@/lib/tickets/types";
 import * as wf from "@/lib/tickets/workflow";
+import { WorkflowError } from "@/lib/workflow-core";
+import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type TicketFormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
 const back = (id: string, q: string) => `/it-maintenance/${id}?${q}`;
@@ -28,7 +29,7 @@ const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
 /** A new AV/IT/Maintenance request. Photos upload after the ticket has its number; if they fail, the ticket still stands. */
-export async function createTicket(_prev: TicketFormState, form: FormData): Promise<TicketFormState> {
+export async function createTicket(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
   const parsed = parseTicketInput(Object.fromEntries(["team", "title", "room", "roomOther", "equipment", "urgency", "description"].map((k) => [k, form.get(k)])));
@@ -55,62 +56,48 @@ export async function createTicket(_prev: TicketFormState, form: FormData): Prom
   redirect(back(created.id, "sent=1"));
 }
 
+const tickets = { path: "/it-maintenance", is: wf.isTicketCard, noun: "ticket" };
+
 /** Assign, start, wait on parts, resolve, set a target date, confirm, reopen or cancel. */
 export async function actOnTicket(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
-  const id = field(form, "id");
-  const action = field(form, "action") as wf.Action;
   const note = field(form, "note").slice(0, 2000);
-  const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
-  if (field(form, "expected") !== card.updatedAt) redirect(back(id, err("This ticket changed while you were looking at it. Check it again before acting.")));
-
-  const now = nowIso();
-  let error: string | null = null;
-  try {
-    let next: wf.TicketCard;
-    switch (action) {
-      case "assign":
-        next = wf.assign(card, actor, now, field(form, "assignee"), (await teamMembers())[card.ticket.team]);
-        break;
-      case "start":
-        next = wf.start(card, actor, now);
-        break;
-      case "wait":
-        next = wf.waitForParts(card, actor, now, note);
-        break;
-      case "resolve":
-        next = wf.resolve(card, actor, now, note);
-        break;
-      case "due":
-        next = wf.setDueDate(card, actor, now, field(form, "due"));
-        break;
-      case "confirm":
-        next = wf.confirm(card, actor, now);
-        break;
-      case "reopen":
-        next = wf.reopen(card, actor, now, note);
-        break;
-      case "cancel":
-        next = wf.cancel(card, actor, now);
-        break;
-      default:
-        throw new wf.WorkflowError("Unknown action.");
-    }
-    await store.save(next, card.updatedAt);
-    await deliver(ticketNotices(card, next, actor), actor.email);
-  } catch (e) {
-    if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
-    else {
-      console.error("ticket action failed", e);
-      error = "Something went wrong. Nothing was changed.";
-    }
-  }
-  revalidatePath("/it-maintenance");
-  revalidatePath(`/it-maintenance/${id}`);
-  redirect(back(id, error ? err(error) : `ok=${action}`));
+  await actOnCard(form, viewer, {
+    ...tickets,
+    async act(card, action, now) {
+      let next: wf.TicketCard;
+      switch (action as wf.Action) {
+        case "assign":
+          next = wf.assign(card, actor, now, field(form, "assignee"), (await teamMembers())[card.ticket.team]);
+          break;
+        case "start":
+          next = wf.start(card, actor, now);
+          break;
+        case "wait":
+          next = wf.waitForParts(card, actor, now, note);
+          break;
+        case "resolve":
+          next = wf.resolve(card, actor, now, note);
+          break;
+        case "due":
+          next = wf.setDueDate(card, actor, now, field(form, "due"));
+          break;
+        case "confirm":
+          next = wf.confirm(card, actor, now);
+          break;
+        case "reopen":
+          next = wf.reopen(card, actor, now, note);
+          break;
+        case "cancel":
+          next = wf.cancel(card, actor, now);
+          break;
+        default:
+          return unknownAction();
+      }
+      return { next, notices: ticketNotices(card, next, actor) };
+    },
+  });
 }
 
 // ---- My work today --------------------------------------------------------------
@@ -157,7 +144,7 @@ export async function actFromToday(form: FormData): Promise<void> {
         }
       }
     } catch (e) {
-      if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+      if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
       else {
         console.error("ticket action failed", e);
         error = "Something went wrong. Nothing was changed.";
@@ -185,7 +172,7 @@ export async function linkTicket(form: FormData): Promise<void> {
   if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
   let error: string | null = null;
   try {
-    if (!otherId) throw new wf.WorkflowError("Type the other ticket's number, like TK-1003.");
+    if (!otherId) throw new WorkflowError("Type the other ticket's number, like TK-1003.");
     const other = await store.get(otherId);
     // A ticket this person can't open looks the same as one that doesn't exist.
     const otherTicket = wf.isTicketCard(other) && canViewTicket(other, { ...actor, seeAll: viewer.roles.includes("admins") }) ? other : null;
@@ -195,14 +182,14 @@ export async function linkTicket(form: FormData): Promise<void> {
       await store.save(a, card.updatedAt);
       if (b && otherTicket) await store.save(b, otherTicket.updatedAt);
     } else {
-      if (!otherTicket) throw new wf.WorkflowError(`There's no ticket ${otherId}.`);
+      if (!otherTicket) throw new WorkflowError(`There's no ticket ${otherId}.`);
       const kind = field(form, "kind") as Parameters<typeof wf.linkTickets>[4];
       const [a, b] = wf.linkTickets(card, otherTicket, actor, now, kind);
       await store.save(a, card.updatedAt);
       await store.save(b, otherTicket.updatedAt);
     }
   } catch (e) {
-    if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+    if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
     else {
       console.error("ticket link failed", e);
       error = "Something went wrong. Nothing was changed.";
@@ -234,10 +221,10 @@ export async function addTicketPhotos(form: FormData): Promise<void> {
     try {
       const saved = await savePhotos(card.id, files, actor.email);
       const fresh = await store.get(id);
-      if (!wf.isTicketCard(fresh)) throw new wf.WorkflowError("That ticket no longer exists.");
+      if (!wf.isTicketCard(fresh)) throw new WorkflowError("That ticket no longer exists.");
       await store.save(wf.addPhotos(fresh, actor, nowIso(), saved), fresh.updatedAt);
     } catch (e) {
-      if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+      if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
       else {
         console.error("ticket photo upload failed", e);
         error = "The photos didn't upload. Try again.";
@@ -265,7 +252,7 @@ export async function watchTicket(form: FormData): Promise<void> {
       error = null;
       break;
     } catch (e) {
-      if (e instanceof wf.WorkflowError) {
+      if (e instanceof WorkflowError) {
         error = e.message;
         break;
       }
@@ -283,31 +270,11 @@ export async function watchTicket(form: FormData): Promise<void> {
 export async function commentOnTicket(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
-  const id = field(form, "id");
-  const store = await cardStore();
-  const check = checkComment(form.get("text"));
-  let error: string | null = check.ok ? null : check.error;
-  if (check.ok) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const card = await store.get(id);
-      if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
-      const now = nowIso();
-      const next = wf.afterComment(withComment(card, { at: now, by: actor.email, name: viewer.name, text: check.text }), actor, now);
-      try {
-        await store.save(next, card.updatedAt);
-        await deliver(ticketCommentNotices(next, actor, check.text), actor.email);
-        error = null;
-        break;
-      } catch (e) {
-        if (!(e instanceof ConflictError) || attempt === 1) {
-          if (!(e instanceof ConflictError)) console.error("comment failed", e);
-          error = "Your comment couldn't be saved. Try again.";
-        }
-      }
-    }
-  }
-  revalidatePath(`/it-maintenance/${id}`);
-  redirect(error ? `${back(id, err(error))}#comments` : `${back(id, "ok=commented")}#comments`);
+  await commentOnCard(form, viewer, {
+    ...tickets,
+    after: (card, now) => wf.afterComment(card, actor, now),
+    notices: (card, text) => ticketCommentNotices(card, actor, text),
+  });
 }
 
 // ---- Preventive schedules ------------------------------------------------------

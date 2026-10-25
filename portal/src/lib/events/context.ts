@@ -1,7 +1,8 @@
 import "server-only";
 import { type RoomCalendar, roomCalendar, seedDevCalendar } from "../calendar";
-import { cardStore } from "../cards";
+import { type Card, cardStore } from "../cards";
 import { isDevAuth } from "../dev";
+import { actorFor } from "../people";
 import { directory } from "../groups";
 import { portalSettings } from "../portal-settings";
 import { googleRooms } from "../rooms-google";
@@ -9,10 +10,14 @@ import { type Directory, teamPeople } from "../teams";
 import type { Viewer } from "../viewer";
 import { type Room, mergeRooms, roomsToCheck } from "./rooms";
 import type { BusyItem } from "./rules";
-import { eventDates, todayInRaleigh } from "./series";
+import { eventDates } from "./series";
 import type { EventInput } from "./types";
+import { canOpenEvent } from "./access";
 import { type EventChoice, linkableEvents } from "./link";
+import { type SlotRequest, canDecide } from "./slot-requests";
+import { slotRequestStore } from "./slot-requests-store";
 import { type EventActor, isEventCard } from "./workflow";
+import { todayLocal } from "../dates";
 
 /**
  * What every events page and action needs, put together from places nobody
@@ -33,7 +38,7 @@ export type EventContext = {
 export async function eventContext(): Promise<EventContext> {
   const [dir, settings, google] = await Promise.all([directory(), portalSettings(), googleRooms()]);
   const rooms = mergeRooms(google, settings.rooms ?? {});
-  const today = todayInRaleigh();
+  const today = todayLocal();
   if (isDevAuth()) seedDevCalendar(rooms, today);
   return {
     dir,
@@ -70,7 +75,22 @@ export const mayBookRestricted = (viewer: Viewer) => viewer.actingRoles.some((r)
 /** Events this person may link a purchase request to: their own approved ones (and ones in close-out), and their committees' upcoming approved events. */
 export async function linkableEventsFor(viewer: Viewer): Promise<EventChoice[]> {
   const cards = (await (await cardStore()).listByType("event", ["approved", "close_out"])).filter(isEventCard);
-  return linkableEvents(cards, { email: viewer.email, groups: viewer.teams.map((t) => t.group) }, todayInRaleigh());
+  return linkableEvents(cards, { email: viewer.email, groups: viewer.teams.map((t) => t.group) }, todayLocal());
 }
 
 export const eventActor = (viewer: Viewer): EventActor => ({ email: viewer.email.toLowerCase(), name: viewer.name, roles: viewer.actingRoles });
+
+/**
+ * Who is looking at an event and whether they may open it: the page, its
+ * title and the comment action all check the same way. Asks for this event's
+ * time (or from it) are loaded once, since the page shows them too.
+ */
+export async function eventAccess(card: Card, viewer: Viewer) {
+  const slots = await slotRequestStore();
+  const [actor, fromAsks, onAsks] = await Promise.all([actorFor(viewer), slots.listFromCard(card.id), slots.listForHold(`card:${card.id}`)]);
+  const ev = eventActor(viewer);
+  const asks: SlotRequest[] = [...onAsks, ...fromAsks.filter((a) => !onAsks.some((o) => o.id === a.id))];
+  const deciding = asks.some((a) => canDecide(a, ev));
+  const open = canOpenEvent(card, { ...actor, seeAll: viewer.roles.includes("admins") }, deciding);
+  return { actor, ev, asks, open };
+}

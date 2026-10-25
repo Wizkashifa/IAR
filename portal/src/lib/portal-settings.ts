@@ -30,7 +30,7 @@ const mem: { s: PortalSettings } = {
       },
       cards: [
         { last4: "2093", holderEmail: "volunteer@dev.local", holderName: "Sample Volunteer", fund: "Imam's Office Fund Expenses" },
-        { last4: "8890", holderEmail: "finance@dev.local", holderName: "Sample Finance", fund: "Cleaning Committee Expenses" },
+        { last4: "1003", holderEmail: "finance@dev.local", holderName: "Sample Finance", fund: "Cleaning Committee Expenses" },
         { last4: "4120", holderEmail: "chair@dev.local", holderName: "Sample Chair", fund: "Youth Expenses" },
       ],
       // Dev: as if go-live had made one Chat space per role. Nothing is posted; see /dev.

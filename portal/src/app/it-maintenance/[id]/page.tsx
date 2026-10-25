@@ -13,10 +13,11 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { PeoplePicker } from "@/components/PeoplePicker";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { ROW_TONE, rowState } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { actorFor } from "@/lib/people";
@@ -27,14 +28,12 @@ import { statusText } from "@/lib/status-text";
 import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY } from "@/lib/tickets/types";
 import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission } from "@/lib/tickets/workflow";
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
-import { CommentBox } from "../CommentBox";
-import { TicketFlash, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
+import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
 
 export const dynamic = "force-dynamic";
 
 /** "Reported to the team" reads on after a name; "IT Services…" keeps its capitals. */
-const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"];
 
@@ -245,7 +244,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const statusTone = ROW_TONE[rowState(card, needsActor)];
   const notes = (
     <>
-      <TicketFlash ok={sp.ok} error={sp.error} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
       {t.status === "resolved" && t.resolutionNote && (
         <Note tone="ok">
           <strong>Marked fixed:</strong> {t.resolutionNote}
@@ -313,37 +312,8 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         </div>
       </Panel>
 
-      <Panel title="Comments" right={<span>{(card.comments ?? []).length}</span>} id="comments">
-        <div className="stack">
-          {(card.comments ?? []).length === 0 ? (
-            <p className="note">No comments yet. Ask a question or add context; everyone who can open this ticket sees it.</p>
-          ) : (
-            <ol className={styles.comments}>
-              {(card.comments ?? []).map((c) => (
-                <li key={c.id} className={styles.comment}>
-                  <span>
-                    <strong>{c.name}</strong> <span className={styles.sub}>{fmtDateTime(c.at)}</span>
-                  </span>
-                  <p className={styles.commentText}>{c.text}</p>
-                </li>
-              ))}
-            </ol>
-          )}
-          <CommentBox id={card.id} max={COMMENT_MAX} action={commentOnTicket} replies={team} />
-        </div>
-      </Panel>
-
-      <Panel title="History">
-        <ol className={styles.history}>
-          {[...t.history].reverse().map((h, i) => (
-            <li key={i}>
-              <strong>{nameOf(h.by)}</strong> {lowerFirst(h.action)}
-              <span className={styles.sub}>{fmtDateTime(h.at)}</span>
-              {h.note && <span className={styles.commentText}>{h.note}</span>}
-            </li>
-          ))}
-        </ol>
-      </Panel>
+      <CommentsPanel id={card.id} comments={card.comments} names={nameOf} action={commentOnTicket} noun="ticket" replies={team ? REPLIES : undefined} />
+      <HistoryPanel entries={t.history} names={nameOf} />
     </>
   );
 

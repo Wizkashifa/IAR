@@ -7,7 +7,7 @@ import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { cardStore } from "@/lib/cards";
 import { eventContext } from "@/lib/events/context";
 import { requireViewer } from "@/lib/viewer";
@@ -17,7 +17,8 @@ import { workToday } from "@/lib/tickets/today";
 import { STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
 import { type TicketActor, type TicketCard, lateText, permission, teamsOf } from "@/lib/tickets/workflow";
 import { actFromToday } from "../actions";
-import { TicketFlash, fmtDay } from "../ui";
+import { FLASH, fmtDay } from "../ui";
+import { FlashNote } from "@/components/FlashNote";
 import styles from "./today.module.css";
 
 export const dynamic = "force-dynamic";
@@ -182,7 +183,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
           </Button>
         }
       />
-      <TicketFlash ok={sp.ok} error={sp.error} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
       {nothing && <p className="note">Nothing waiting. Quiet day, alhamdulillah.</p>}
       <Section title="Assigned to you" cards={work.mine} ctx={ctx} empty="Nothing assigned to you right now." />
       <Section title="Nobody has taken these yet" cards={work.untaken} ctx={ctx} empty="Every request has someone on it." />

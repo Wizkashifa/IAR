@@ -11,7 +11,8 @@ import { cardStore, type Vendor } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { shortFund } from "@/lib/purchases/accounts";
 import { visibleVendors, w9IsOld } from "@/lib/purchases/vendors";
-import { Flash, fmtDate } from "../ui";
+import { FlashNote } from "@/components/FlashNote";
+import { OK_TEXT, fmtDate } from "../ui";
 import { mergeVendor, updateVendor } from "./actions";
 import styles from "../purchases.module.css";
 
@@ -46,7 +47,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         }
       />
       <div className={`stack ${styles.body}`}>
-        <Flash ok={ok} error={error} />
+        <FlashNote ok={ok} error={error} messages={OK_TEXT} />
         <form action="/purchases/vendors" className={`${styles.actRow} ${styles.search}`} role="search">
           <input name="q" defaultValue={q} placeholder="Search by name or address" aria-label="Search vendors" />
           <Button type="submit" icon="search">

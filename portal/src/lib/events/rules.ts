@@ -6,8 +6,9 @@
  * policy rules off in Portal Settings. Plain functions so they can be tested.
  */
 import { type Room, roomById, roomsOverlap } from "./rooms";
-import { SERIES_MAX_MONTHS, dayText, daysBetween, eventDates, fromMinutes, longDate, seriesMaxEnd, timeText, toMinutes } from "./series";
+import { SERIES_MAX_MONTHS, dayText, eventDates, fromMinutes, longDate, seriesMaxEnd, timeText, toMinutes } from "./series";
 import type { Check, EventInput } from "./types";
+import { daysBetween } from "../dates";
 
 /** Policy rules an admin can turn off. The calendar check can't be turned off. */
 export const RULES = [
@@ -210,9 +211,6 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
 
   return { checks: out, clashes, blocked: out.some((c) => c.block) };
 }
-
-/** The worst result, for a summary pill. */
-export const worst = (checks: Check[]): "ok" | "warn" | "bad" => (checks.some((c) => c.sev === "bad") ? "bad" : checks.some((c) => c.sev === "warn") ? "warn" : "ok");
 
 /** Shown next to times in lists: "6:00–9:00 PM" style isn't needed; keep both ends explicit. */
 export const windowText = (e: Pick<EventInput, "start" | "end" | "setup" | "teardown">) =>

@@ -17,3 +17,12 @@ export function canViewEvent(card: Card, v: Viewing): boolean {
   const group = card.event?.committeeGroup?.toLowerCase();
   return Boolean(group && v.leads?.includes(group));
 }
+
+/**
+ * Whether this person may open the event: the view rule above, or they are
+ * being asked to give up their own time for it (they can open the asking
+ * request to decide). The page, its title and its comment box all use this.
+ */
+export function canOpenEvent(card: Card, v: Viewing, deciding: boolean): boolean {
+  return canViewEvent(card, v) || deciding;
+}

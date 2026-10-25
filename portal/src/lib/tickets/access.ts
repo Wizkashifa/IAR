@@ -7,8 +7,7 @@
 import type { Card } from "../cards";
 import type { Viewing } from "../access";
 import { isTicketCard, onTeam } from "./workflow";
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+import { same } from "../text";
 
 export function canViewTicket(card: Card, v: Viewing): boolean {
   if (same(card.ownerEmail, v.email) || v.seeAll) return true;

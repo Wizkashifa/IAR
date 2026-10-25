@@ -10,33 +10,22 @@
  * reaches the same people, through the same Chat or email path.
  */
 import type { Card } from "./cards";
-import { hrefOf } from "./card-links";
+import { historyOf, hrefOf, stepSinceOf, withHistory } from "./kinds";
 import type { Role } from "./org";
-import type { Notice, Recipient } from "./purchases/notices";
-import { waitingOn as purchaseWaitingOn } from "./purchases/reminders";
-import { STAGE_LABEL as PURCHASE_STEP } from "./purchases/types";
-import { STAGE_LABEL as MARKETING_STEP } from "./marketing/types";
-import { STATUS_LABEL as TICKET_STEP } from "./tickets/types";
-import { reviewersFor } from "./events/workflow";
-import { TEAM_ROLE } from "./tickets/workflow";
+import type { Notice, Recipient } from "./notices";
+import { moduleFor } from "./registry";
+import { lc } from "./text";
+import { historyEntry, type HistoryEntry } from "./workflow-core";
 
 const DAY = 864e5;
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** The history line a reminder from this page leaves on the request. */
 export const REMINDER_ACTION = "Reminder sent from What's stuck";
 /** One reminder from this page per request per day. */
 export const REMIND_EVERY_MS = DAY;
 
-type Entry = { at: string; by: string; action: string; note?: string };
-
-/** The request's own history, whatever kind it is. */
-function historyOf(card: Card): Entry[] {
-  return card.purchase?.history ?? card.event?.history ?? card.marketing?.history ?? card.ticket?.history ?? [];
-}
-
 /** Reminders (the daily job's and this page's) don't move a request on, so they don't restart its wait. */
-const isReminder = (e: Entry) => /^(reminder|overdue)/i.test(e.action) || e.action === REMINDER_ACTION;
+const isReminder = (e: HistoryEntry) => /^(reminder|overdue)/i.test(e.action) || e.action === REMINDER_ACTION;
 
 /**
  * When the request started waiting at its current step (an ISO time): the
@@ -44,7 +33,7 @@ const isReminder = (e: Entry) => /^(reminder|overdue)/i.test(e.action) || e.acti
  * requester or waiting on their close-out, the last thing that happened to it.
  */
 export function waitingSince(card: Card): string {
-  const step = card.purchase?.stageSince ?? card.event?.stageSince ?? card.marketing?.stageSince ?? card.ticket?.statusSince;
+  const step = stepSinceOf(card);
   if (card.status === "changes_requested" || card.status === "close_out") {
     const last = historyOf(card).filter((e) => !isReminder(e)).map((e) => e.at).sort().pop();
     if (last && (!step || last > step)) return last;
@@ -69,58 +58,10 @@ export type StuckContext = {
   directorsOf?: (committeeGroup: string) => string[];
 };
 
-const OWNER = (c: Card): Recipient => ({ email: c.ownerEmail });
-
 /** Who the request is waiting on and at which step. Null when it isn't waiting on anyone (done, approved, closed). */
 export function holderOf(card: Card, ctx: StuckContext = {}): Holder | null {
   if (["denied", "cancelled", "closed", "draft"].includes(card.status)) return null;
-  if (card.purchase) {
-    const p = card.purchase;
-    if (card.status === "changes_requested") return { to: [OWNER(card)], step: "Back with the requester" };
-    if (p.stage === "chair" && !p.approverEmail) return { to: [], step: PURCHASE_STEP.chair };
-    const who = purchaseWaitingOn(card as Parameters<typeof purchaseWaitingOn>[0]);
-    // QuickBooks entry is the finance office's batch work: not "stuck", same as the daily job.
-    return who ? { to: [who], step: PURCHASE_STEP[p.stage] } : null;
-  }
-  if (card.event) {
-    const e = card.event;
-    if (card.status === "changes_requested") return { to: [OWNER(card)], step: e.releasedFor ? "Picking a new time" : "Back with the requester" };
-    if (card.status === "close_out") return { to: [OWNER(card)], step: "Close-out" };
-    switch (e.stage) {
-      case "slot":
-        // The ask has its own reminders and escalation in the daily job.
-        return { to: [], step: "Waiting for a booked time" };
-      case "director": {
-        const who = reviewersFor(card.ownerEmail, ctx.directorsOf?.(e.committeeGroup) ?? []);
-        return { to: who.length ? who.map((email) => ({ email })) : [{ role: "executive" }], step: "Director review" };
-      }
-      case "mission":
-        return { to: [{ role: "executive" }], step: "Executive review" };
-      default:
-        return null;
-    }
-  }
-  if (card.marketing) {
-    const m = card.marketing;
-    switch (m.stage) {
-      case "review":
-      case "scheduled":
-        return { to: [{ role: "marketing" }], step: MARKETING_STEP[m.stage] };
-      case "doing":
-        return { to: [m.assignee ? { email: m.assignee } : { role: "marketing" }], step: MARKETING_STEP.doing };
-      case "question":
-        return { to: [OWNER(card)], step: MARKETING_STEP.question };
-      default:
-        return null;
-    }
-  }
-  if (card.ticket) {
-    const t = card.ticket;
-    if (["closed", "cancelled"].includes(t.status)) return null;
-    if (t.status === "resolved") return { to: [OWNER(card)], step: "Fixed: waiting for the reporter to confirm" };
-    return { to: [t.assigneeEmail ? { email: t.assigneeEmail } : { role: TEAM_ROLE[t.team] }], step: TICKET_STEP[t.status] };
-  }
-  return null;
+  return moduleFor(card)?.holder(card, ctx) ?? null;
 }
 
 export type StuckItem = { card: Card; since: string; days: number; holder: Holder };
@@ -215,12 +156,7 @@ export function reminderNotices(item: StuckItem, by: { email: string; name: stri
  * the request's place in everyone's lists.
  */
 export function withReminder(card: Card, by: string, now: string, who: string): Card {
-  const entry: Entry = { at: now, by: lc(by), action: REMINDER_ACTION, note: `To ${who}` };
-  if (card.purchase) return { ...card, purchase: { ...card.purchase, history: [...card.purchase.history, entry] } };
-  if (card.event) return { ...card, event: { ...card.event, history: [...card.event.history, entry] } };
-  if (card.marketing) return { ...card, marketing: { ...card.marketing, history: [...card.marketing.history, entry] } };
-  if (card.ticket) return { ...card, ticket: { ...card.ticket, history: [...card.ticket.history, entry] } };
-  return card;
+  return withHistory(card, historyEntry(by, now, REMINDER_ACTION, `To ${who}`));
 }
 
 /** The roles that can open What's stuck. */

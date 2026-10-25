@@ -5,7 +5,7 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import type { PersonOption } from "@/components/PeoplePicker";
-import { isActive, isCurrentOrUpcoming, MAX_AWAY_DAYS, todayLocal } from "@/lib/away";
+import { isActive, isCurrentOrUpcoming, MAX_AWAY_DAYS } from "@/lib/away";
 import { directory } from "@/lib/groups";
 import { namesFor } from "@/lib/names";
 import { peopleStore } from "@/lib/people";
@@ -14,6 +14,7 @@ import { requireViewer } from "@/lib/viewer";
 import { AwayForm } from "./AwayForm";
 import { clearAway } from "./actions";
 import styles from "./away.module.css";
+import { todayLocal } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Out of office" };

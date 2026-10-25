@@ -3,8 +3,7 @@
  * can be tested without a server. Pages and server actions call these; they
  * never change a purchase card's stage themselves.
  *
- * Controls built in (see "Checked against standard financial controls" in
- * docs/purchase-requests-plan.md):
+ * Controls built in:
  * - Nobody approves, pays or books their own request.
  * - A chair's own request goes to another chair, then a vice chair; it is never skipped.
  * - Requests at or above the executive threshold need executive approval.
@@ -23,15 +22,9 @@ import type { Card, CardStatus } from "../cards";
 import { ORG, type Role } from "../org";
 import { SOCIAL_WELFARE_FUND } from "./accounts";
 import type { ParseResult } from "./input";
-import {
-  type Attachment,
-  type HistoryEntry,
-  type PurchaseDetails,
-  type PurchaseStage,
-  STAGE_LABEL,
-  openExpectedReturns,
-  purchaseTotal,
-} from "./types";
+import { type Attachment, type PurchaseDetails, type PurchaseStage, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "./types";
+import { same } from "../text";
+import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 export type RoutingSettings = {
   /** From the team groups that charge this fund (see teams.ts): Owners, Managers, pillar Owners. */
@@ -63,9 +56,6 @@ export type Actor = {
 
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };
 
-export class WorkflowError extends Error {}
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
 /** Whether `actor` is taking this chair step as the fund's director rather than as the named approver. */
 export function approvingAsDirector(card: PurchaseCard, actor: Actor): boolean {
@@ -120,7 +110,7 @@ export function canViewDetail(card: PurchaseCard, viewer: Actor & { seeAll?: boo
 type Route = { stage: PurchaseStage; approverEmail?: string; note?: string };
 
 /** Where a newly submitted (or resubmitted) request goes first. */
-export function firstRoute(p: PurchaseDetails, ownerEmail: string, s: RoutingSettings): Route {
+function firstRoute(p: PurchaseDetails, ownerEmail: string, s: RoutingSettings): Route {
   if (p.kind === "card") return { stage: "finance", note: "Card receipts go to finance review." };
   const { chairs = [], backups = [], directors = [] } = s.approversFor(p.fund);
   const ownerChairs = chairs.some((c) => same(c, ownerEmail));
@@ -256,17 +246,12 @@ export function permission(card: PurchaseCard, actor: Actor, action: Action): { 
   return no("Unknown action.");
 }
 
-function must(card: PurchaseCard, actor: Actor, action: Action) {
-  const r = permission(card, actor, action);
-  if (!r.ok) throw new WorkflowError(r.reason);
+function mustDo(card: PurchaseCard, actor: Actor, action: Action) {
+  must(permission(card, actor, action));
 }
 
 // ---- Transitions ---------------------------------------------------------
 // Each returns a new card; the caller saves it.
-
-function entry(actor: Actor, now: string, action: string, note?: string): HistoryEntry {
-  return note ? { at: now, by: actor.email, action, note } : { at: now, by: actor.email, action };
-}
 
 /** " for chair@…" when someone is covering an away approver. */
 function behalf(card: PurchaseCard, actor: Actor): string {
@@ -320,27 +305,27 @@ export function submit(card: PurchaseCard, actor: Actor, s: RoutingSettings, now
     approverEmail: route.approverEmail,
     stageSince: now,
     approvals: [],
-    history: [...card.purchase.history, entry(actor, now, "Submitted", route.note)],
+    history: [...card.purchase.history, historyEntry(actor.email, now, "Submitted", route.note)],
   };
   return withStage(card, p, now);
 }
 
 export function approve(card: PurchaseCard, actor: Actor, s: RoutingSettings, now: string, opts: { note?: string; w9Received?: boolean } = {}): PurchaseCard {
-  must(card, actor, "approve");
+  mustDo(card, actor, "approve");
   const cur = card.purchase;
   let w9Required = cur.w9Required;
   const history = [...cur.history];
   if (cur.stage === "finance" && cur.w9Required) {
     if (!opts.w9Received) throw new WorkflowError("A W-9 is required for this payee. Confirm it's on file in the restricted W-9 drive before approving.");
     w9Required = false;
-    history.push(entry(actor, now, "Confirmed W-9 on file"));
+    history.push(historyEntry(actor.email, now, "Confirmed W-9 on file"));
   }
   const asDirector = !approvingAsCoChair(card, actor) && approvingAsDirector(card, actor);
   const onBehalfOf = asDirector || approvingAsCoChair(card, actor) ? undefined : coveringApprover(card, actor);
   const approval = { stage: cur.stage, by: actor.email, at: now, ...(onBehalfOf ? { onBehalfOf } : {}), ...(asDirector ? { asDirector } : {}) };
   const approved: PurchaseDetails = { ...cur, w9Required, approvals: [...cur.approvals, approval] };
   const stage = nextStage(approved, s);
-  history.push(entry(actor, now, `Approved (${STAGE_LABEL[cur.stage]})${behalf(card, actor)}`, opts.note));
+  history.push(historyEntry(actor.email, now, `Approved (${STAGE_LABEL[cur.stage]})${behalf(card, actor)}`, opts.note));
   const p: PurchaseDetails = { ...approved, stage, approverEmail: undefined, stageSince: now, history, returnNote: undefined };
   return withStage(card, p, now);
 }
@@ -376,7 +361,7 @@ export const RETURN_TARGET_LABEL: Record<ReturnTarget, string> = {
  * from that step on is cleared.
  */
 export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, note: string, to: ReturnTarget = "requester"): PurchaseCard {
-  must(card, actor, "return");
+  mustDo(card, actor, "return");
   if (!note.trim()) throw new WorkflowError("Say what needs to change.");
   if (!returnTargets(card).includes(to)) throw new WorkflowError("This request hasn't been through that step, so it can't go back to it.");
   const cur = card.purchase;
@@ -384,14 +369,14 @@ export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, 
   const paid = cur.payment ? `Already paid: ${cur.payment.method} ${cur.payment.reference}. Don't pay it again.` : undefined;
   const history = [...cur.history];
   if (to === "requester") {
-    history.push(entry(actor, now, `Returned for changes (${from})${behalf(card, actor)}`, note.trim()));
-    if (paid) history.push(entry(actor, now, "Payment already recorded", paid));
+    history.push(historyEntry(actor.email, now, `Returned for changes (${from})${behalf(card, actor)}`, note.trim()));
+    if (paid) history.push(historyEntry(actor.email, now, "Payment already recorded", paid));
     return withStage(card, { ...cur, returnNote: note.trim(), history }, now, "changes_requested");
   }
   const stage: PurchaseStage = to;
   const chairApproval = [...cur.approvals].reverse().find((a) => a.stage === "chair");
-  history.push(entry(actor, now, `Sent back to ${STAGE_LABEL[stage]} (from ${from})${behalf(card, actor)}`, note.trim()));
-  if (paid) history.push(entry(actor, now, "Payment already recorded", paid));
+  history.push(historyEntry(actor.email, now, `Sent back to ${STAGE_LABEL[stage]} (from ${from})${behalf(card, actor)}`, note.trim()));
+  if (paid) history.push(historyEntry(actor.email, now, "Payment already recorded", paid));
   const p: PurchaseDetails = {
     ...cur,
     stage,
@@ -405,24 +390,24 @@ export function returnForChanges(card: PurchaseCard, actor: Actor, now: string, 
 }
 
 export function reject(card: PurchaseCard, actor: Actor, now: string, note: string): PurchaseCard {
-  must(card, actor, "reject");
+  mustDo(card, actor, "reject");
   if (!note.trim()) throw new WorkflowError("Give a reason for rejecting it.");
   const p: PurchaseDetails = {
     ...card.purchase,
     returnNote: note.trim(),
-    history: [...card.purchase.history, entry(actor, now, `Rejected (${STAGE_LABEL[card.purchase.stage]})${behalf(card, actor)}`, note.trim())],
+    history: [...card.purchase.history, historyEntry(actor.email, now, `Rejected (${STAGE_LABEL[card.purchase.stage]})${behalf(card, actor)}`, note.trim())],
   };
   return withStage(card, p, now, "denied");
 }
 
 /** The requester sends back an edited request; approval starts over. */
 export function resubmit(card: PurchaseCard, edited: PurchaseDetails, actor: Actor, s: RoutingSettings, now: string): PurchaseCard {
-  must(card, actor, "resubmit");
+  mustDo(card, actor, "resubmit");
   const base: PurchaseCard = {
     ...card,
     title: edited.description,
     committee: edited.fund,
-    purchase: { ...edited, history: [...card.purchase.history, entry(actor, now, "Edited and resubmitted")] },
+    purchase: { ...edited, history: [...card.purchase.history, historyEntry(actor.email, now, "Edited and resubmitted")] },
   };
   const route = firstRoute(base.purchase, base.ownerEmail, s);
   const p: PurchaseDetails = {
@@ -433,45 +418,45 @@ export function resubmit(card: PurchaseCard, edited: PurchaseDetails, actor: Act
     stageSince: now,
     approvals: [],
     returnNote: undefined,
-    history: route.note ? [...base.purchase.history, entry(actor, now, "Routed", route.note)] : base.purchase.history,
+    history: route.note ? [...base.purchase.history, historyEntry(actor.email, now, "Routed", route.note)] : base.purchase.history,
   };
   return withStage(base, p, now);
 }
 
 export function cancel(card: PurchaseCard, actor: Actor, now: string): PurchaseCard {
-  must(card, actor, "cancel");
-  const p: PurchaseDetails = { ...card.purchase, history: [...card.purchase.history, entry(actor, now, "Cancelled by requester")] };
+  mustDo(card, actor, "cancel");
+  const p: PurchaseDetails = { ...card.purchase, history: [...card.purchase.history, historyEntry(actor.email, now, "Cancelled by requester")] };
   return withStage(card, p, now, "cancelled");
 }
 
 export function recordPayment(card: PurchaseCard, actor: Actor, now: string, method: string, reference: string): PurchaseCard {
-  must(card, actor, "pay");
+  mustDo(card, actor, "pay");
   if (!method.trim() || !reference.trim()) throw new WorkflowError("Enter the payment method and the check number or ACH reference.");
   const p: PurchaseDetails = {
     ...card.purchase,
     payment: { method: method.trim(), reference: reference.trim(), at: now, by: actor.email },
     stage: "books",
     stageSince: now,
-    history: [...card.purchase.history, entry(actor, now, "Paid", `${method.trim()} ${reference.trim()}`)],
+    history: [...card.purchase.history, historyEntry(actor.email, now, "Paid", `${method.trim()} ${reference.trim()}`)],
   };
   return withStage(card, p, now);
 }
 
 export function recordBooks(card: PurchaseCard, actor: Actor, now: string): PurchaseCard {
-  must(card, actor, "books");
+  mustDo(card, actor, "books");
   const p: PurchaseDetails = {
     ...card.purchase,
     books: { at: now, by: actor.email },
     stage: "done",
     stageSince: now,
-    history: [...card.purchase.history, entry(actor, now, "Entered in QuickBooks")],
+    history: [...card.purchase.history, historyEntry(actor.email, now, "Entered in QuickBooks")],
   };
   return withStage(card, p, now);
 }
 
 /** Finance records that a refund or repayment came back. */
 export function resolveLine(card: PurchaseCard, actor: Actor, now: string, lineId: string): PurchaseCard {
-  must(card, actor, "resolve");
+  mustDo(card, actor, "resolve");
   const line = card.purchase.lines.find((l) => l.id === lineId);
   if (!line || !line.flag) throw new WorkflowError("That line has no refund or repayment to record.");
   if (line.resolvedAt) throw new WorkflowError("Already recorded.");
@@ -480,7 +465,7 @@ export function resolveLine(card: PurchaseCard, actor: Actor, now: string, lineI
   const p: PurchaseDetails = {
     ...card.purchase,
     lines,
-    history: [...card.purchase.history, entry(actor, now, what, `$${line.amount.toFixed(2)}${line.merchant ? ` · ${line.merchant}` : ""}`)],
+    history: [...card.purchase.history, historyEntry(actor.email, now, what, `$${line.amount.toFixed(2)}${line.merchant ? ` · ${line.merchant}` : ""}`)],
   };
   return withStage(card, p, now, card.status);
 }

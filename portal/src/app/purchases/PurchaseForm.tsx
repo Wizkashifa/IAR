@@ -12,8 +12,8 @@ import { Field, FormActions } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import type { FormState } from "./actions";
 import styles from "./purchases.module.css";
+import { FormErrors, type FormState } from "@/components/FormErrors";
 
 type Line = LineInput & { key: number };
 
@@ -148,16 +148,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
       <FormStarted form="purchase" />
 
-      {state.errors.length > 0 && (
-        <Note tone="bad">
-          <strong>Please fix these, then send it again:</strong>
-          <ul className={styles.errors}>
-            {state.errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        </Note>
-      )}
+      <FormErrors errors={state.errors} />
 
       <Panel title="What do you need?">
         <div className={styles.choices} role="radiogroup" aria-label="What do you need?">

@@ -7,7 +7,7 @@ import { eventContext } from "@/lib/events/context";
 import { nextPeriod, renewalState } from "@/lib/events/renewal";
 import { isEventCard } from "@/lib/events/workflow";
 import { submitEvent } from "../../actions";
-import { Crumb } from "../../Crumb";
+import { Crumb } from "@/components/Crumb";
 import EventForm from "../../EventForm";
 import { formProps } from "../../form-props";
 

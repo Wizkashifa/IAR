@@ -9,38 +9,39 @@ import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
-import { cardStore, STATUS_LABEL } from "@/lib/cards";
+import { cardStore } from "@/lib/cards";
+import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
-import { actorFor } from "@/lib/people";
 import { statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
-import { busyFor, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
+import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
 import { eventChecks, missionReasons, windowText } from "@/lib/events/rules";
-import { dayText, daysBetween, longDate, recurText, timeText } from "@/lib/events/series";
+import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
-import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
 import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { tasksFor } from "@/lib/events/tasks";
 import { purchaseTotal } from "@/lib/purchases/types";
-import { fmtDateTime, fmtMoney } from "../../ui";
+import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
 import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
 import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
+import { daysBetween } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -64,16 +65,10 @@ const MESSAGES: Record<string, string> = {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const card = await (await cardStore()).get(id);
-  return { title: isEventCard(card) ? card.title : "Event" };
+  if (!isEventCard(card) || !(await eventAccess(card, await requireViewer())).open) return { title: "Event" };
+  return { title: card.title };
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 
 export default async function EventDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
@@ -81,13 +76,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const store = await cardStore();
   const card = await store.get(id);
   if (!isEventCard(card)) notFound();
-  const slots = await slotRequestStore();
-  const [actor, ctx, fromAsks, onAsks] = await Promise.all([actorFor(viewer), eventContext(), slots.listFromCard(id), slots.listForHold(`card:${id}`)]);
-  const ev = eventActor(viewer);
-  const asks: SlotRequest[] = [...onAsks, ...fromAsks.filter((a) => !onAsks.some((o) => o.id === a.id))];
-  const deciding = asks.some((a) => canDecide(a, ev));
-  // A request someone can't open looks the same as one that doesn't exist. Whoever is asked for their time can open the asking request.
-  if (!canOpenCard(card, { ...actor, seeAll: viewer.roles.includes("admins") }) && !deciding) notFound();
+  const [{ actor, ev, asks, open }, ctx] = await Promise.all([eventAccess(card, viewer), eventContext()]);
+  // A request someone can't open looks the same as one that doesn't exist.
+  if (!open) notFound();
 
   const ec = card;
   const e = card.event;
@@ -132,8 +123,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   const notes = (
     <>
-      {ok && MESSAGES[ok] && <Note tone="ok">{MESSAGES[ok]}</Note>}
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={MESSAGES} />
       {card.status === "changes_requested" && (
         <Note tone="warn">
           <strong>{e.releasedFor ? "You gave up this time:" : "Sent back for changes:"}</strong> {e.returnNote}
@@ -276,48 +266,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </section>
           )}
 
-          <Panel title={`Comments ${(card.comments ?? []).length}`} id="comments">
-            <form action={commentOnEvent} className="stack">
-              <input type="hidden" name="id" value={card.id} />
-              <Field label="Add a comment" hint="Ask a question or add context. Everyone who can open this request sees it.">
-                <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
-              </Field>
-              <div className="row end">
-                <Button type="submit">Comment</Button>
-              </div>
-            </form>
-            {(card.comments ?? []).length === 0 ? (
-              <p className={styles.muted}>No comments yet.</p>
-            ) : (
-              <ol className={styles.comments}>
-                {(card.comments ?? []).map((c) => (
-                  <li key={c.id} className={styles.comment}>
-                    <div>
-                      <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
-                    </div>
-                    <div className="pre">{c.text}</div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
-
-          <Panel title="History">
-            <ol className={styles.history}>
-              {[...e.history].reverse().map((h, i) => {
-                const who = h.by.includes("@") ? names(h.by) : h.by === "portal" ? "Portal" : h.by;
-                return (
-                  <li key={i}>
-                    <span className={styles.av} aria-hidden="true">{initials(who)}</span>
-                    <div>
-                      <strong>{who}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
-                      {h.note && <div className={`pre ${styles.note}`}>{h.note}</div>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </Panel>
+          <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnEvent} />
+          <HistoryPanel entries={e.history} names={names} />
         </>
       }
       side={

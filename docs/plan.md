@@ -1,11 +1,8 @@
 # IAR Internal Tools Portal — Project Plan
 
-Oct 19, 2026 · @Kashif
+Oct 19, 2026
 
-> **Start here.** This is the umbrella plan for the IAR portal. The live, editable copy is a [Claude doc](https://claude.ai/code/artifact/3c8494a5-1c2d-4c94-a234-fb35f36e1630); this file is a snapshot of it — re-export after editing the doc. Related:
-> - [purchase-requests-plan.md](purchase-requests-plan.md) — detailed design of the Purchase Requests module (PO data analysis, workflow, data model, card receipts, controls). Its platform section (Apps Script + Sheet) is superseded by the Architecture section below; everything else still stands.
-> - [letter.md](letter.md) — intro letter to the office/Shura for Purchase Requests.
-> - [../app/index.html](../app/index.html) — clickable Purchase Requests prototype (sample data).
+> **Start here.** This is the umbrella plan for the IAR portal. The live, editable copy is a [Claude doc](https://claude.ai/code/artifact/3c8494a5-1c2d-4c94-a234-fb35f36e1630); this file is a snapshot of it — re-export after editing the doc. What the old Requisition Form's data showed, which shaped Purchase Requests, is in the last section.
 
 ## Summary
 
@@ -32,7 +29,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 
 - **Program Request Form** (Microsoft Forms): requester name/email/mobile; program title and description; event start/end date and time; room (25 options with capacities, plus off-site); room reservation start/end including setup and teardown; registration required (yes/no); further pages (registration details, fire pit waiver) not yet reviewed. Approval = a confirmation email from the office.
 - **Marketing/Multimedia/AV Request Form** (Google Forms, IAR account): email; request type — program/event to market, non-event graphic, new webpage, event A/V support, announcement, highlight, minor web update, staff badge, custom. Branches by type; two more sections (custom redirect, physical signage) exist but no choice leads to them. Asks for 3 weeks' notice; reviewed weekly by the marketing team. How each question maps to the portal: see "Marketing questions" below.
-- **Requisition Form** (Google Forms + Form Approvals): see purchase-requests-plan.md.
+- **Requisition Form** (Google Forms + Form Approvals): see "Purchase Requests: what the old form showed" below.
 - **Gym reservation form**: external-facing; not yet reviewed.
 
 ## Principles and decisions
@@ -142,7 +139,7 @@ Exact drives and role levels are open (see questions below).
 
 **Setup in the Workspace admin console**
 - Add each group as a drive member with its role (Drive API: `permissions.create`, type `group`, `supportsAllDrives=true`). Nested groups work.
-- On restricted drives, allow access to members only and turn off sharing to non-members and link sharing. Give Manager to Kashif and one backup admin only, since Managers can change membership.
+- On restricted drives, allow access to members only and turn off sharing to non-members and link sharing. Give Manager to the IAR super admin and one backup admin only, since Managers can change membership.
 - Make restricted groups invite-only with hidden member lists so the groups themselves are not discoverable. Consider turning off download, print and copy for Viewers on Social & Welfare.
 - Group membership changes can take a few minutes to reach Drive.
 
@@ -228,7 +225,7 @@ The calendar stays the booking record. The database holds everything about the c
 | Task | Card, team, assignee, status, due date, locked-until rule |
 | Hold | Card, room, start/end with setup and teardown, Google Calendar event ID, tentative or confirmed, expiry |
 | Rule | Kind (block-out, flag, calculated, lock), parameters, policy section, active dates |
-| Line item, vendor, account | The purchase request data model, unchanged (see purchase-requests-plan.md) |
+| Line item, vendor, account | Line items split across sub-accounts, saved vendors with W-9 status (`portal/src/lib/purchases/types.ts`) |
 | Comment, attachment, audit log | Every change, who made it and when; files kept in the Shared Drive |
 
 **Groups** (see "Committees and teams" below, and `docs/setup.md` §6): one `portal-team-*` group per committee or team, one `portal-pillar-*` group per director, and the role groups `portal-role-office`, `-finance`, `-executive`, `-admin` and `-beta`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
@@ -280,7 +277,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
 - [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/beta-launch.md`)
-- [x] Purchase Requests module on the shell (design in purchase-requests-plan.md)
+- [x] Purchase Requests module on the shell
 - [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
 - [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
 - [x] Event cards with calendar holds and rule flags, and asking for a booked time
@@ -292,7 +289,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)
-- [ ] Add the Drive scope to sign-in and build the Library module (Phase 2)
+- [x] The Library module, starting with IAR's policies (the rest of the drives come later)
 
 ## Recurring reservations (proposed)
 
@@ -354,3 +351,21 @@ Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26
 | Staff badge (Q11–15) | Marketing request: Staff badge |
 | Custom request (Q6–7) | Marketing request: Something else |
 | File upload, Google Drive link (Q73–74) | Drive link on every marketing request and on the event's marketing brief |
+
+## Purchase Requests: what the old form showed
+
+From the PO response sheet, Oct 16, 2025 to Oct 16, 2026 (11,000 responses since Feb 2019). The current form handles about 1,250 requests and $3.5M a year, and approvals are usually fast; the trouble is the slow tail, an unused split feature, and an inconsistent chart of accounts.
+
+| Finding | Number | What it means for the design |
+| --- | --- | --- |
+| Volume | 1,257 requests, $3.46M; median $637 | Steady, modest load; the portal handles this easily |
+| Social & Welfare | 447 requests (36%), $1.67M (48%) | Mostly aid paid to individuals. Give it its own request type with visibility limited to S&W and finance, since payees are aid recipients |
+| Split across sub-accounts | 23 of 2,585 requests in 24 months used more than one line (0.9%) | The feature exists but is too awkward to use; one-line requests likely hide mixed spending |
+| Card receipts | 100 submissions, about 8 a month for ~12 cards | Not every card is reconciled monthly; the card checklist will show which |
+| Approval speed | Median 0.8 days end to end; 90% within 4.3 days; 6% over a week | The average is fine; the overdue flag and escalation target the slow 6% |
+| Open right now | 17 in progress from the last year, 12 of them waiting 7 to 44 days; 1 marked "more info requested" for 297 days; 14 from 2019–2022 never closed | Direct evidence of requests stuck without an owner |
+| Approval route | Chair (23 different approvers) → accounting → copy to PO; no amount-based step | 167 requests a year are over $2,500 and 93 over $5,000, which helps set an executive threshold if one is wanted |
+| Check delivery | 5 standard choices, plus about 50 typed variations of "leave it with security" | Add "Leave with the security office" as a standard choice |
+| Chart of accounts | 24 funds, 97 sub-accounts; 27 have no number; 56000 and 50300 each reused in 7 funds; a revenue account (04-4001) sits on the expense list | An account must be identified by fund plus account, not number alone. A ready agenda for the meeting with the bookkeeper |
+
+Files: receipts go to the PO records Shared Drive, one folder per fiscal year; W-9s only to the restricted W-9 drive, never the database or email. Keep 7 years after the fiscal year closes, with the office deleting the aged-out year by hand (IAR's accountant should confirm the period).

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { canOpenCard } from "@/lib/access";
-import { hrefOf } from "@/lib/card-links";
-import { cardStore, TYPE_LABEL, type Card } from "@/lib/cards";
+import { hrefOf, kindOf } from "@/lib/kinds";
+import { cardStore, type Card } from "@/lib/cards";
 import { searchPolicies } from "@/lib/library";
 import { actorFor } from "@/lib/people";
 import { matchCards, requestNumber } from "@/lib/search";
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     .filter(canSee)
     .flatMap((c) => {
       const href = hrefOf(c);
-      return href ? [{ id: c.id, title: c.title, sub: `${TYPE_LABEL[c.type]} ${c.id} · ${statusText(c)}`, href }] : [];
+      return href ? [{ id: c.id, title: c.title, sub: `${kindOf(c.type)?.one ?? ""} ${c.id} · ${statusText(c)}`, href }] : [];
     })
     .slice(0, SHOW);
   const policies: QuickPolicy[] = (found ?? []).slice(0, SHOW_POLICIES).map((f) => ({ id: f.id, title: f.name, sub: [f.kind.label, f.folder].filter(Boolean).join(" · "), url: f.url }));
