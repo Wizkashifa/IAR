@@ -40,6 +40,7 @@ const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admi
   "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
   "whos-who": { group: "iar", label: "Who's who", icon: "building" },
   library: { group: "files", label: "Library", icon: "folder" },
+  "finance-desk": { group: "team", label: "Finance desk", icon: "receipt" },
   admin: { group: "admin", label: "Portal Settings", icon: "sliders" },
 };
 
