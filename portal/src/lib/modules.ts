@@ -148,6 +148,17 @@ export const MODULES: PortalModule[] = [
     ],
   },
   {
+    id: "whos-who",
+    nav: "Who's who",
+    name: "Who's who",
+    summary: "Every committee and team, who leads it, and how to ask it for something.",
+    visibleTo: ["member"],
+    phase: 2,
+    status: "live",
+    href: "/teams",
+    plannedFeatures: [],
+  },
+  {
     id: "admin",
     name: "Portal Settings",
     summary: "Committees and teams from Google Groups, the fund each team charges, and IAR's cards.",
