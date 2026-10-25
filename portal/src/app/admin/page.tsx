@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
@@ -49,6 +50,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <ModuleHead
         title="Portal Settings"
+        actions={<Button href="/admin/measures" icon="pie">Beta measures</Button>}
         lead={
           <>
         Who is on each committee or team, who chairs it and who directs it all come from Google Groups. Change people in{" "}

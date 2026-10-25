@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { FormStarted } from "@/components/FormStarted";
 import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountLabel, accountsForFund, findAccount, isLaborAccount, shortFund } from "@/lib/purchases/accounts";
 import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, PAYMENT_METHOD_LABEL, type DeliveryMethod, type PaymentMethod, type PurchaseKind } from "@/lib/purchases/types";
 import type { VendorChoice } from "@/lib/purchases/vendors";
@@ -145,6 +146,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
   return (
     <form action={formAction} className={styles.fieldsets}>
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
+      <FormStarted form="purchase" />
 
       {state.errors.length > 0 && (
         <Note tone="bad">

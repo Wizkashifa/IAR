@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
+import { FormStarted } from "@/components/FormStarted";
 import { Button } from "@/components/Button";
 import { DateField, TimeField } from "@/components/DateField";
 import { Field, FormActions } from "@/components/Field";
@@ -191,6 +192,7 @@ export default function EventForm(p: EventFormProps) {
         }}
       >
         <input type="hidden" name="payload" value={JSON.stringify(payload)} />
+        <FormStarted form="event" />
         {saved && (
           <Note>
             <div className={styles.draft}>
