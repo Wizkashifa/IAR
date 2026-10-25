@@ -6,7 +6,13 @@ import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, PAYMENT_METHOD_LABEL, typ
 import type { VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { EventChoice } from "@/lib/events/link";
+import { Button } from "@/components/Button";
+import { Field, FormActions } from "@/components/Field";
+import { FileDrop } from "@/components/FileDrop";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
 import type { FormState } from "./actions";
+import styles from "./purchases.module.css";
 
 type Line = LineInput & { key: number };
 
@@ -30,6 +36,8 @@ export type FormProps = {
   /** Events this person can link the purchase to (their own and their committees'). */
   events?: EventChoice[];
   submitLabel: string;
+  /** Where Cancel goes. */
+  cancelHref: string;
 };
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -49,7 +57,24 @@ const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note:
 
 const fmtW9Date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
 
-export default function PurchaseForm({ action, initial, requesterName, cards, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, events = [], submitLabel }: FormProps) {
+const RECEIPT_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/heic",
+  "image/heif",
+  "image/webp",
+  "image/gif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  "text/plain",
+];
+const W9_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/heic", "image/heif", "image/webp"];
+
+export default function PurchaseForm({ action, initial, requesterName, cards, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, events = [], submitLabel, cancelHref }: FormProps) {
   const eventChoices = initial?.eventCardId && !events.some((e) => e.id === initial.eventCardId) ? [{ id: initial.eventCardId, label: initial.eventCardId }, ...events] : events;
   const [eventCardId, setEventCardId] = useState(initial?.eventCardId ?? "");
   const fundChoices = initial?.fund && !funds.includes(initial.fund) ? [initial.fund, ...funds] : funds;
@@ -118,281 +143,305 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
   };
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className={styles.fieldsets}>
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
 
       {state.errors.length > 0 && (
-        <div className="error" role="alert">
-          <strong>Please fix:</strong>
-          <ul>
+        <Note tone="bad">
+          <strong>Please fix these, then send it again:</strong>
+          <ul className={styles.errors}>
             {state.errors.map((e) => (
               <li key={e}>{e}</li>
             ))}
           </ul>
-        </div>
+        </Note>
       )}
 
-      <fieldset className="section">
-        <legend>What do you need?</legend>
-        <div className="choices">
+      <Panel title="What do you need?">
+        <div className={styles.choices} role="radiogroup" aria-label="What do you need?">
           {(Object.keys(KIND_LABEL) as PurchaseKind[]).map((k) => (
-            <label key={k} className={`choice${kind === k ? " on" : ""}${k === "card" && cards.length === 0 ? " disabled" : ""}`}>
+            <label key={k} className={styles.choice}>
               <input type="radio" name="kind" value={k} checked={kind === k} disabled={k === "card" && cards.length === 0} onChange={() => chooseKind(k)} />
               <span>{KIND_LABEL[k]}</span>
-              {k === "card" && cards.length === 0 && <small>You don&apos;t hold an IAR card</small>}
+              {k === "card" && cards.length === 0 && <small>For people who hold an IAR card</small>}
             </label>
           ))}
         </div>
-      </fieldset>
+      </Panel>
 
-      <fieldset className="section">
-        <legend>{card ? "Card and statement" : "About the request"}</legend>
-        <div className="grid2">
-          {card ? (
-            <>
-              <label className="field">
-                <span>Card</span>
-                <select value={cardLast4} onChange={(e) => setCardLast4(e.target.value)}>
-                  {cards.map((c) => (
-                    <option key={c.last4} value={c.last4}>
-                      ···{c.last4} · {shortFund(c.fund)}
+      <Panel title={card ? "Card and statement" : "About the request"}>
+        <div className="stack">
+          <div className={styles.grid2}>
+            {card ? (
+              <>
+                <Field label="Card">
+                  <select value={cardLast4} onChange={(e) => setCardLast4(e.target.value)}>
+                    {cards.map((c) => (
+                      <option key={c.last4} value={c.last4}>
+                        ···{c.last4} · {shortFund(c.fund)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Statement month" required>
+                  <input type="month" value={statementMonth} onChange={(e) => setStatementMonth(e.target.value)} required />
+                </Field>
+              </>
+            ) : (
+              <Field
+                label="Fund or committee"
+                required
+                hint={fundChoices.length === 0 ? "You can charge your own committees' and teams' funds. Ask a portal admin to add you to your committee in Google Groups." : undefined}
+              >
+                <select value={fund} onChange={(e) => setFund(e.target.value)} required>
+                  <option value="">{fundChoices.length ? "Choose…" : "You're not on a committee yet"}</option>
+                  {fundChoices.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="field">
-                <span>Statement month</span>
-                <input type="month" value={statementMonth} onChange={(e) => setStatementMonth(e.target.value)} required />
-              </label>
-            </>
-          ) : (
-            <label className="field">
-              <span>Fund / committee</span>
-              <select value={fund} onChange={(e) => setFund(e.target.value)} required>
-                <option value="">{fundChoices.length ? "Choose…" : "You're not on a committee yet"}</option>
-                {fundChoices.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
+              </Field>
+            )}
+            <Field label="What is it for?" required>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={card ? "Card statement receipts" : "e.g. Snacks and supplies for Youth Game Night"} maxLength={200} required />
+            </Field>
+          </div>
+          {(eventChoices.length > 0 || eventCardId) && (
+            <Field label="Which event is it for? (optional)" hint="Linking it adds this cost to the event, so its final costs add up when it's closed out.">
+              <select value={eventCardId} onChange={(e) => setEventCardId(e.target.value)}>
+                <option value="">Not for an event</option>
+                {eventChoices.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.label}
                   </option>
                 ))}
               </select>
-              {fundChoices.length === 0 && <small>You can charge your own committees&apos; and teams&apos; funds. Ask a portal admin to add you to your committee in Google Groups.</small>}
-            </label>
+            </Field>
           )}
-          <label className="field">
-            <span>What is it for?</span>
-            <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={card ? "Card statement receipts" : "e.g. Youth night supplies"} maxLength={200} required />
-          </label>
+          {chargeFund === SOCIAL_WELFARE_FUND && <Note>Social &amp; Welfare requests are visible only to Social &amp; Welfare and the finance office.</Note>}
         </div>
-        {(eventChoices.length > 0 || eventCardId) && (
-          <label className="field">
-            <span>Which event is this for? (optional)</span>
-            <select value={eventCardId} onChange={(e) => setEventCardId(e.target.value)}>
-              <option value="">Not for an event</option>
-              {eventChoices.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.label}
-                </option>
-              ))}
-            </select>
-            <small>Linking it adds this cost to the event, so its final costs add up when it&apos;s closed out.</small>
-          </label>
-        )}
-        {chargeFund === "Social & Welfare" && (
-          <p className="note">Social &amp; Welfare requests are visible only to S&amp;W and the finance office.</p>
-        )}
-      </fieldset>
+      </Panel>
 
       {!card && (
-        <fieldset className="section">
-          <legend>{kind === "reimburse" ? "Reimbursement" : "Who gets paid"}</legend>
-          <div className="grid2">
-            {kind === "pay" ? (
-              <label className="field">
-                <span>Payee</span>
-                <input list="vendors" value={payee} onChange={(e) => choosePayee(e.target.value)} placeholder="Business or person" maxLength={120} required />
-                <datalist id="vendors">
-                  {vendorList.map((v) => (
-                    <option key={v.name} value={v.name} />
-                  ))}
-                </datalist>
-                {payee.trim() && (
-                  <small className={w9Needed ? "warn" : "ok"}>
-                    {vendor
-                      ? `Saved vendor${vendor.funds.length ? ` · used by ${vendor.funds.map(shortFund).join(", ")}` : ""} · ${vendor.w9OnFile ? `W-9 on file${vendor.w9Date ? ` (${fmtW9Date(vendor.w9Date)})` : ""}` : `no W-9 on file${w9Needed ? ", needed because this is labor" : ""}`}`
-                      : `New payee${w9Needed ? " · W-9 required because this is labor" : ""}`}
-                  </small>
-                )}
-              </label>
-            ) : (
-              <div className="field">
-                <span>Payee</span>
-                <div className="static">{requesterName} (you)</div>
-                <small className="ok">Reimbursement · no W-9 needed</small>
+        <Panel title={kind === "reimburse" ? "Paying you back" : "Who gets paid"}>
+          <div className="stack">
+            <div className={styles.grid2}>
+              {kind === "pay" ? (
+                <Field
+                  label="Payee"
+                  required
+                  hint={
+                    payee.trim() ? (
+                      <span className={w9Needed ? styles.hintWarn : styles.hintOk}>
+                        {vendor
+                          ? `Saved vendor${vendor.funds.length ? ` · used by ${vendor.funds.map(shortFund).join(", ")}` : ""} · ${vendor.w9OnFile ? `W-9 on file${vendor.w9Date ? ` (${fmtW9Date(vendor.w9Date)})` : ""}` : `no W-9 on file${w9Needed ? ", needed because this is labor" : ""}`}`
+                          : `New payee${w9Needed ? " · a W-9 is needed because this is labor" : ""}`}
+                      </span>
+                    ) : (
+                      "Start typing to find a saved vendor."
+                    )
+                  }
+                >
+                  <input list="vendors" value={payee} onChange={(e) => choosePayee(e.target.value)} placeholder="Business or person" maxLength={120} required />
+                  <datalist id="vendors">
+                    {vendorList.map((v) => (
+                      <option key={v.name} value={v.name} />
+                    ))}
+                  </datalist>
+                </Field>
+              ) : (
+                <Field label="Pay to" hint="Reimbursement · no W-9 needed">
+                  <span className={styles.static}>{requesterName} (you)</span>
+                </Field>
+              )}
+              {kind === "pay" && (
+                <Field label="Invoice number (if any)">
+                  <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} maxLength={60} />
+                </Field>
+              )}
+            </div>
+            <div className={styles.choices} role="radiogroup" aria-label="How should it be paid?">
+              {(["check", "ach"] as PaymentMethod[]).map((m) => (
+                <label key={m} className={styles.choice}>
+                  <input type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required />
+                  <span>{PAYMENT_METHOD_LABEL[m]}</span>
+                </label>
+              ))}
+            </div>
+            {method === "ach" && <Note>The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</Note>}
+            {method === "check" && (
+              <div className={styles.grid2}>
+                <Field label="Where should the check go?" required>
+                  <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
+                    <option value="">Choose…</option>
+                    {CHECK_DELIVERIES.map((d) => (
+                      <option key={d} value={d}>
+                        {DELIVERY_LABEL[d]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person.">
+                  <textarea value={mailingAddress} onChange={(e) => setMailingAddress(e.target.value)} rows={2} maxLength={300} placeholder="Street, city, state, ZIP" required />
+                </Field>
               </div>
             )}
             {kind === "pay" && (
-              <label className="field">
-                <span>Invoice number (if any)</span>
-                <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} maxLength={60} />
-              </label>
+              <div className={styles.checks}>
+                <label className={styles.check}>
+                  <input type="checkbox" checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)} />
+                  <span>
+                    This payment is for labor or services
+                    {laborLine && <small> (a line is charged to a labor sub-account)</small>}
+                  </span>
+                </label>
+                <label className={styles.check}>
+                  <input type="checkbox" checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)} />
+                  <span>The payee is a Shura or committee member, a relative of one, or a business one owns</span>
+                </label>
+              </div>
+            )}
+            {w9Needed && (
+              <FileDrop
+                name="w9"
+                label={existingW9 ? "The payee's W-9 (already uploaded; add one only to replace it)" : "The payee's W-9"}
+                required={!existingW9}
+                multiple={false}
+                maxFiles={1}
+                accept={W9_TYPES}
+                hint="Labor needs a W-9 on file before IAR can pay. It goes only to the finance office's restricted W-9 drive; you won't be able to open it after you send the request."
+              />
             )}
           </div>
-          <div className="choices spaced" role="radiogroup" aria-label="Check or ACH">
-            {(["check", "ach"] as PaymentMethod[]).map((m) => (
-              <label key={m} className={`choice${method === m ? " on" : ""}`}>
-                <input type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required />
-                <span>{PAYMENT_METHOD_LABEL[m]}</span>
-              </label>
-            ))}
-          </div>
-          {method === "ach" && <p className="note">The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</p>}
-          {method === "check" && (
-            <div className="grid2">
-              <label className="field">
-                <span>Where should the check go?</span>
-                <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
-                  <option value="">Choose…</option>
-                  {CHECK_DELIVERIES.map((d) => (
-                    <option key={d} value={d}>
-                      {DELIVERY_LABEL[d]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>{kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"}</span>
-                <textarea value={mailingAddress} onChange={(e) => setMailingAddress(e.target.value)} rows={2} maxLength={300} placeholder="Street, city, state, ZIP" required />
-                <small>Needed for every check, even one picked up in person.</small>
-              </label>
-            </div>
-          )}
-          {kind === "pay" && (
-            <div className="checks">
-              <label>
-                <input type="checkbox" checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)} /> This payment is for labor or services
-                {laborLine && <small> (a line is charged to a labor sub-account)</small>}
-              </label>
-              <label>
-                <input type="checkbox" checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)} /> The payee is a Shura or committee member, a relative of one, or a business one owns
-              </label>
-            </div>
-          )}
-          {w9Needed && (
-            <label className="field">
-              <span>The payee&apos;s W-9{existingW9 ? " (already uploaded; add a new one only to replace it)" : ""}</span>
-              <input type="file" name="w9" accept=".pdf,.png,.jpg,.jpeg,.heic,.webp" required={!existingW9} />
-              <small>Labor needs a W-9 on file before IAR can pay. It goes only to the finance office&apos;s restricted W-9 drive; you won&apos;t be able to open it after you submit.</small>
-            </label>
-          )}
-        </fieldset>
+        </Panel>
       )}
 
-      <fieldset className="section">
-        <legend>{card ? "Charges" : "Line items"}</legend>
-        <p className="note">
-          {card
-            ? "One line per charge on the statement, each with its sub-account. Mark charges that will be refunded or repaid."
-            : "Split the total across as many sub-accounts as it really covers."}{" "}
-          <label className="inline">
-            <input type="checkbox" checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)} /> Show sub-accounts from every fund
-          </label>
-        </p>
-        <div className="lines">
-          {lines.map((l, i) => (
-            <div key={l.key} className="line">
-              <div className="lineno">{i + 1}</div>
-              {card && (
-                <>
-                  <label className="field">
-                    <span>Date</span>
-                    <input type="date" value={l.date} onChange={(e) => setLine(l.key, { date: e.target.value })} required />
-                  </label>
-                  <label className="field grow">
-                    <span>Merchant</span>
-                    <input value={l.merchant} onChange={(e) => setLine(l.key, { merchant: e.target.value })} maxLength={120} required />
-                  </label>
-                </>
-              )}
-              <label className="field grow2">
-                <span>Sub-account</span>
-                <select value={l.accountId} onChange={(e) => setLine(l.key, { accountId: e.target.value })} required>
-                  <option value="">{chargeFund || allFunds ? "Choose…" : "Choose a fund first"}</option>
-                  {accountChoices.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {allFunds ? `${shortFund(a.fund)} — ` : ""}
-                      {accountLabel(a)}
-                      {a.code ? "" : " (no number yet)"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field amt">
-                <span>Amount</span>
-                <input inputMode="decimal" value={l.amount} onChange={(e) => setLine(l.key, { amount: e.target.value })} placeholder="0.00" required />
-              </label>
-              {!card && (
-                <label className="field grow">
-                  <span>Note</span>
-                  <input value={l.note} onChange={(e) => setLine(l.key, { note: e.target.value })} maxLength={200} />
-                </label>
-              )}
-              {card && (
-                <>
-                  <label className="field">
-                    <span>Expected back</span>
-                    <select value={l.flag} onChange={(e) => setLine(l.key, { flag: e.target.value as Line["flag"] })}>
-                      <option value="">No</option>
-                      <option value="refund">Refund pending</option>
-                      <option value="repay">To be repaid by…</option>
-                    </select>
-                  </label>
-                  {l.flag === "repay" && (
-                    <label className="field">
-                      <span>Repaid by</span>
-                      <input value={l.repayBy} onChange={(e) => setLine(l.key, { repayBy: e.target.value })} maxLength={120} required />
-                    </label>
-                  )}
-                  <label className="inline nr">
-                    <input type="checkbox" checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })} /> No receipt
-                  </label>
-                </>
-              )}
-              <button type="button" className="linkbtn" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((x) => x.key !== l.key) : ls))} disabled={lines.length === 1} aria-label={`Remove line ${i + 1}`}>
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="linefoot">
-          <button type="button" className="button secondary" onClick={() => setLines((ls) => [...ls, blankLine()])}>
-            Add {card ? "a charge" : "a line"}
-          </button>
-          <div className="total">
+      <Panel
+        title={card ? "Charges" : "Line items"}
+        right={
+          <span className={styles.total}>
             Total <strong>{money(total)}</strong>
+          </span>
+        }
+      >
+        <div className="stack">
+          <p className={styles.why}>
+            {card
+              ? "One line per charge on the statement, each with its sub-account. Mark charges that will be refunded or repaid."
+              : "Split the total across as many sub-accounts as it really covers."}
+          </p>
+          <label className={styles.check}>
+            <input type="checkbox" checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)} />
+            <span>Show sub-accounts from every fund</span>
+          </label>
+          <div className={styles.lines}>
+            {lines.map((l, i) => (
+              <div key={l.key} className={styles.line}>
+                <div className={styles.lineNo} aria-hidden="true">
+                  {i + 1}
+                </div>
+                <div className={styles.lineFields}>
+                  {card && (
+                    <>
+                      <Field label="Date" required>
+                        <input type="date" value={l.date} onChange={(e) => setLine(l.key, { date: e.target.value })} required aria-label={`Date, line ${i + 1}`} />
+                      </Field>
+                      <Field label="Merchant" required>
+                        <input value={l.merchant} onChange={(e) => setLine(l.key, { merchant: e.target.value })} maxLength={120} required aria-label={`Merchant, line ${i + 1}`} />
+                      </Field>
+                    </>
+                  )}
+                  <Field label="Sub-account" required className={styles.wide}>
+                    <select value={l.accountId} onChange={(e) => setLine(l.key, { accountId: e.target.value })} required aria-label={`Sub-account, line ${i + 1}`}>
+                      <option value="">{chargeFund || allFunds ? "Choose…" : "Choose a fund first"}</option>
+                      {accountChoices.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {allFunds ? `${shortFund(a.fund)} — ` : ""}
+                          {accountLabel(a)}
+                          {a.code ? "" : " (no number yet)"}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Amount" required>
+                    <input inputMode="decimal" value={l.amount} onChange={(e) => setLine(l.key, { amount: e.target.value })} placeholder="0.00" required aria-label={`Amount, line ${i + 1}`} />
+                  </Field>
+                  {!card && (
+                    <Field label="Note">
+                      <input value={l.note} onChange={(e) => setLine(l.key, { note: e.target.value })} maxLength={200} placeholder="What's on the receipt" aria-label={`Note, line ${i + 1}`} />
+                    </Field>
+                  )}
+                  {card && (
+                    <>
+                      <Field label="Expected back">
+                        <select value={l.flag} onChange={(e) => setLine(l.key, { flag: e.target.value as Line["flag"] })} aria-label={`Expected back, line ${i + 1}`}>
+                          <option value="">No</option>
+                          <option value="refund">Refund pending</option>
+                          <option value="repay">To be repaid by…</option>
+                        </select>
+                      </Field>
+                      {l.flag === "repay" && (
+                        <Field label="Repaid by" required>
+                          <input value={l.repayBy} onChange={(e) => setLine(l.key, { repayBy: e.target.value })} maxLength={120} required aria-label={`Repaid by, line ${i + 1}`} />
+                        </Field>
+                      )}
+                      <label className={styles.check}>
+                        <input type="checkbox" checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })} />
+                        <span>No receipt</span>
+                      </label>
+                    </>
+                  )}
+                </div>
+                <div className={styles.lineRemove}>
+                  <Button variant="quiet" size="small" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((x) => x.key !== l.key) : ls))} disabled={lines.length === 1} aria-label={`Remove line ${i + 1}`}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className={styles.lineFoot}>
+            <Button icon="plus" onClick={() => setLines((ls) => [...ls, blankLine()])}>
+              Add {card ? "a charge" : "a line"}
+            </Button>
+            <span className={styles.total}>
+              Total <strong>{money(total)}</strong>
+            </span>
           </div>
         </div>
-      </fieldset>
+      </Panel>
 
-      <fieldset className="section">
-        <legend>Receipts and invoices</legend>
-        {existingFiles.length > 0 && <p className="note">Already attached: {existingFiles.join(", ")}</p>}
-        <input type="file" name="attachments" multiple accept=".pdf,.png,.jpg,.jpeg,.heic,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt" />
-        <p className="note">Up to 10 files, 10 MB each. Don&apos;t attach W-9s here; they have their own upload above, for labor.</p>
-      </fieldset>
+      <Panel title="Receipts and invoices">
+        <div className="stack">
+          {existingFiles.length > 0 && <Note>Already attached: {existingFiles.join(", ")}</Note>}
+          <FileDrop
+            name="attachments"
+            label="Add receipts and invoices"
+            camera
+            maxFiles={10}
+            accept={RECEIPT_TYPES}
+            hint="Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
+          />
+        </div>
+      </Panel>
 
-      <fieldset className="section">
-        <legend>Sign</legend>
-        <label className="inline">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required /> I confirm this request is accurate and for IAR business.
-        </label>
-        <label className="field narrow">
-          <span>Type your full name</span>
-          <input value={attestationName} onChange={(e) => setAttestationName(e.target.value)} maxLength={120} required />
-        </label>
-      </fieldset>
+      <Panel title="Sign">
+        <div className="stack">
+          <label className={styles.check}>
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
+            <span>I confirm this request is accurate and for IAR business.</span>
+          </label>
+          <Field label="Type your full name" required className={styles.narrow}>
+            <input value={attestationName} onChange={(e) => setAttestationName(e.target.value)} maxLength={120} required autoComplete="name" />
+          </Field>
+        </div>
+      </Panel>
 
-      <Submit label={submitLabel} />
+      <FormActions>
+        <Button href={cancelHref}>Cancel</Button>
+        <Submit label={submitLabel} />
+      </FormActions>
     </form>
   );
 }
@@ -400,8 +449,8 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button className="button" type="submit" disabled={pending}>
-      {pending ? "Submitting…" : label}
-    </button>
+    <Button type="submit" variant="primary" disabled={pending}>
+      {pending ? "Sending…" : label}
+    </Button>
   );
 }

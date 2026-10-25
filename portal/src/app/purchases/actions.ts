@@ -105,7 +105,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
     }
   }
   revalidatePath("/purchases");
-  redirect(`/purchases/${created.id}?ok=submitted`);
+  redirect(`/purchases/${created.id}?sent=1`);
 }
 
 export async function resubmitPurchase(id: string, _prev: FormState, form: FormData): Promise<FormState> {
@@ -145,7 +145,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
   revalidatePath("/purchases");
-  redirect(`/purchases/${id}?ok=resubmitted`);
+  redirect(`/purchases/${id}?sent=1`);
 }
 
 /** Approve, return, reject, pay, book, resolve a refund/repayment, or cancel. */
@@ -218,12 +218,6 @@ export async function actOnPurchase(form: FormData): Promise<void> {
   revalidatePath("/purchases");
   revalidatePath(`/purchases/${id}`);
   redirect(error ? `/purchases/${id}?error=${encodeURIComponent(error)}` : `/purchases/${id}?ok=${ok}`);
-}
-
-/** For forms with several submit buttons: each button binds its own action. */
-export async function actOnPurchaseWith(action: wf.Action, form: FormData): Promise<void> {
-  form.set("action", action);
-  return actOnPurchase(form);
 }
 
 /** A comment from anyone who can open the request. Never changes its stage. */
