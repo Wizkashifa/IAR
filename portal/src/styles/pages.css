@@ -1,27 +1,10 @@
 /* The existing page styles, kept working until each page moves onto the shared components (docs/portal-roadmap.md wave 2). Colours come from tokens.css. */
 @layer pages {
-
-
   .pill { display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 600; background: var(--line); color: var(--ink-2); }
   .pill.live, .pill.approved, .pill.paid, .pill.closed { background: var(--accent-soft); color: var(--accent-text); }
   .pill.changes_requested, .pill.close_out, .pill.draft { background: var(--warn-soft); color: var(--warn); }
   .pill.denied, .pill.cancelled { background: var(--bad-soft); color: var(--bad); }
 
-
-  .table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; font-size: 14px; }
-  .table th { text-align: left; background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-  .table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: top; }
-  .table .sub { color: var(--ink-2); font-size: 12px; }
-  .tablewrap { overflow-x: auto; }
-  /* Phones: each row becomes a card, each cell a line with its column name (data-label) above it. */
-  @media (max-width: 640px) {
-    .table:has(td[data-label]) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-    .table:has(td[data-label]), .table:has(td[data-label]) tbody, .table:has(td[data-label]) tr, .table:has(td[data-label]) td { display: block; width: 100%; }
-    .table:has(td[data-label]) tr { border-top: 1px solid var(--line); padding: var(--s-2) 0; }
-    .table:has(td[data-label]) tr:first-child { border-top: 0; }
-    .table:has(td[data-label]) td { border-top: 0; padding: 4px 12px; text-align: left; }
-    .table td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
-  }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; }
   .panel ul { margin: 8px 0 0; padding-left: 20px; }
@@ -48,8 +31,6 @@
   .crumb { margin: 0 0 8px; font-size: 13px; }
   .flash { background: var(--accent-soft); color: var(--accent-text); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 16px 0; }
   .error ul { margin: 6px 0 0; padding-left: 18px; }
-  .table .num, .table th.num { text-align: right; white-space: nowrap; }
-  .table tfoot td { border-top: 1px solid var(--line); }
   .nowrap { white-space: nowrap; }
   .sub.due { color: var(--warn); font-weight: 600; }
   .sub.late { color: var(--bad); font-weight: 600; }
@@ -149,7 +130,6 @@
   @media (max-width: 640px) { .qitem, .task { flex-direction: column; } .taskside { align-items: flex-start; max-width: none; } .taskacts { justify-content: flex-start; } }
   @media print {
     .noprint, footer, .flash, .error, details.taskmore { display: none !important; }
-    .tablewrap { overflow: visible; border: 0; }
     a { color: inherit; text-decoration: none; }
   }
 }

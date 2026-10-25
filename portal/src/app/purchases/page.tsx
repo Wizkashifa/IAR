@@ -21,6 +21,7 @@ import { FlashNote } from "@/components/FlashNote";
 import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth, purchaseStatus } from "./ui";
 import styles from "./purchases.module.css";
 import { Chips } from "@/components/Chips";
+import { DataTable } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Purchase Requests" };
@@ -176,7 +177,7 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
   const month = d.toISOString().slice(0, 7);
   return (
     <Panel title={`Card receipts for ${fmtMonth(month)}`} right={`${list.length} card${list.length === 1 ? "" : "s"}`} flush>
-      <table className={styles.table}>
+      <DataTable>
         <thead>
           <tr>
             <th>Card</th>
@@ -206,7 +207,7 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
             );
           })}
         </tbody>
-      </table>
+      </DataTable>
     </Panel>
   );
 }

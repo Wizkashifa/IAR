@@ -18,6 +18,7 @@ import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
 import styles from "./admin.module.css";
+import { DataTable, cell } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Portal Settings" };
@@ -72,15 +73,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Team</th>
                 <th>Chair</th>
                 <th>Vice chair</th>
                 <th>Director</th>
-                <th className="num">People</th>
+                <th className={cell.num}>People</th>
                 <th>Fund</th>
               </tr>
             </thead>
@@ -100,7 +100,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     <td data-label="Chair">{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
                     <td data-label="Vice chair">{p.vices.join(", ") || <span className="sub">None</span>}</td>
                     <td data-label="Director">{p.directors.join(", ") || <span className="sub">None</span>}</td>
-                    <td data-label="People" className="num">{p.memberCount}</td>
+                    <td data-label="People" className={cell.num}>{p.memberCount}</td>
                     <td data-label="Fund">
                       <form action={saveTeamFund} className="row">
                         <input type="hidden" name="group" value={t.email} />
@@ -120,8 +120,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 );
               })}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Directors</h2>
@@ -134,8 +133,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No portal-pillar groups found yet.</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Pillar</th>
@@ -155,14 +153,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Role groups</h2>
       <p className="note">Portal-wide jobs. Add people as members in Google Admin.</p>
-      <div className="tablewrap">
-        <table className="table">
+      <DataTable framed>
           <tbody>
             {Object.entries(ORG.roleGroups).map(([role, group]) => (
               <tr key={role}>
@@ -177,8 +173,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               </tr>
             )}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
 
       <h2>Rooms ({rooms.filter((r) => r.bookable).length} of {rooms.length} bookable)</h2>
       <p className="note">
@@ -190,8 +185,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No room resources found in Google yet.</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Room</th>
@@ -231,8 +225,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Event rules</h2>
@@ -297,8 +290,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       <h2>Google Chat spaces</h2>
       <p className="note">Alerts for a role or team are posted in its Chat space. go-live creates the spaces and fills these in.</p>
-      <div className="tablewrap">
-        <table className="table">
+      <DataTable framed>
           <tbody>
             {Object.entries(settings.chatSpaces ?? {}).length === 0 ? (
               <tr><td className="sub">No Chat spaces yet. Until go-live sets them up, role alerts go to the role&apos;s group by email.</td></tr>
@@ -311,14 +303,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               ))
             )}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
 
       <h2>IAR cards</h2>
       <p className="note">Only the last four digits are stored. The cardholder can submit receipts for the card each month.</p>
       {settings.cards.length > 0 && (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Card</th>
@@ -342,8 +332,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
       <form action={addCard} className={`panel grid2 ${styles.addcard}`}>
         <label className="field">

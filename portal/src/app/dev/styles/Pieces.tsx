@@ -1,4 +1,5 @@
 import { Checkbox, Choice, Choices } from "@/components/Choices";
+import { DataTable, cell } from "@/components/DataTable";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
@@ -15,6 +16,33 @@ export function Pieces() {
           <ItemRow state="done" title="MPH A" sub="Holds 75 · Main · Food allowed" right={<Button size="small">Request this room</Button>} />
           <ItemRow state="act" title="PO-12007 is waiting on you" sub="Oct 24, 10:00 AM" href="/dev/styles" />
         </Rows>
+      </Panel>
+
+      <Panel title="Data table" right="components/DataTable.tsx: rows become cards on a phone" flush>
+        <DataTable caption="Line items">
+          <thead>
+            <tr>
+              <th>Sub-account</th>
+              <th>Note</th>
+              <th className={cell.num}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Sub-account">56000 · Program Expenses</td>
+              <td data-label="Note">
+                Snacks
+                <span className={cell.sub}>Costco receipt</span>
+              </td>
+              <td data-label="Amount" className={cell.num}>$184.50</td>
+            </tr>
+            <tr>
+              <td data-label="Sub-account">50300 · Supplies</td>
+              <td data-label="Note"></td>
+              <td data-label="Amount" className={cell.num}>$32.00</td>
+            </tr>
+          </tbody>
+        </DataTable>
       </Panel>
 
       <Panel title="Choices" right="components/Choices.tsx">

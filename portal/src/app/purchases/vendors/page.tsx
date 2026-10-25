@@ -15,6 +15,7 @@ import { FlashNote } from "@/components/FlashNote";
 import { OK_TEXT, fmtDate } from "../ui";
 import { mergeVendor, updateVendor } from "./actions";
 import styles from "../purchases.module.css";
+import { DataTable, cell } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -120,14 +121,14 @@ function VendorSelect({ name, shared, restricted }: { name: string; shared: Vend
 function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
   if (list.length === 0) return <EmptyState icon="search">No saved vendors match.</EmptyState>;
   return (
-    <table className={styles.table}>
+    <DataTable>
       <thead>
         <tr>
           <th>Vendor</th>
           <th>Used by</th>
           <th>W-9</th>
           <th>Last paid</th>
-          <th className={styles.num}>Times paid</th>
+          <th className={cell.num}>Times paid</th>
         </tr>
       </thead>
       <tbody>
@@ -135,8 +136,8 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
           <tr key={v.id}>
             <td data-label="Vendor">
               <strong>{v.name}</strong>
-              {v.address && <span className={`${styles.sub} ${styles.said}`}>{v.address}</span>}
-              {finance && v.contact && <span className={styles.sub}>{v.contact}</span>}
+              {v.address && <span className={`${cell.sub} ${styles.said}`}>{v.address}</span>}
+              {finance && v.contact && <span className={cell.sub}>{v.contact}</span>}
               {finance && (
                 <details>
                   <summary className={buttonClass({ variant: "quiet", size: "small" })}>Edit</summary>
@@ -173,22 +174,22 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                 <Pill>None on file</Pill>
               )}
               {finance && v.w9FileId && (
-                <span className={styles.sub}>
+                <span className={cell.sub}>
                   <a href={`https://drive.google.com/file/d/${v.w9FileId}/view`} target="_blank" rel="noreferrer">
                     Open W-9
                   </a>
                 </span>
               )}
             </td>
-            <td data-label="Last paid" className={`${styles.when} ${styles.nowrap}`}>
+            <td data-label="Last paid" className={`${styles.when} ${cell.nowrap}`}>
               {v.lastPaidAt ? fmtDate(v.lastPaidAt) : "—"}
             </td>
-            <td data-label="Times paid" className={styles.num}>
+            <td data-label="Times paid" className={cell.num}>
               {v.timesPaid ?? 0}
             </td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </DataTable>
   );
 }

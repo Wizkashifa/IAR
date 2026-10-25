@@ -28,6 +28,7 @@ import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } fro
 import styles from "../purchases.module.css";
 import { todayLocal } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
+import { DataTable, cell } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 
@@ -145,12 +146,12 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const main = (
     <>
       <Panel title={isCard ? "Charges" : "Line items"} right={<strong>{fmtMoney(total)}</strong>} flush>
-        <table className={`${styles.table} ${styles.compact}`}>
+        <DataTable compact>
           <thead>
             <tr>
               {isCard && <th>Date</th>}
               <th>{isCard ? "Merchant and sub-account" : "Sub-account"}</th>
-              <th className={styles.num}>Amount</th>
+              <th className={cell.num}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -159,17 +160,17 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               return (
                 <tr key={l.id}>
                   {isCard && (
-                    <td data-label="Date" className={`${styles.nowrap} ${styles.date}`}>
+                    <td data-label="Date" className={`${cell.nowrap} ${cell.date}`}>
                       {l.date && fmtDate(`${l.date}T12:00:00Z`)}
                     </td>
                   )}
                   <td data-label={isCard ? "Charge" : "Sub-account"}>
                     {isCard && <strong>{l.merchant}</strong>}
-                    <span className={isCard ? styles.sub : undefined}>
+                    <span className={isCard ? cell.sub : undefined}>
                       {accountLabel(acct)}
                       {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
                     </span>
-                    {l.note && <span className={styles.sub}>{l.note}</span>}
+                    {l.note && <span className={cell.sub}>{l.note}</span>}
                     {(!l.hasReceipt || l.flag) && (
                       <span className={styles.tags}>
                         {!l.hasReceipt && <Pill tone="warn">No receipt</Pill>}
@@ -188,7 +189,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                       </span>
                     )}
                   </td>
-                  <td data-label="Amount" className={styles.num}>
+                  <td data-label="Amount" className={cell.num}>
                     {fmtMoney(l.amount)}
                   </td>
                 </tr>
@@ -200,12 +201,12 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               {isCard && <td />}
               <td>
                 Total
-                {owed.length > 0 && <span className={styles.sub}>{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</span>}
+                {owed.length > 0 && <span className={cell.sub}>{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</span>}
               </td>
-              <td className={styles.num}>{fmtMoney(total)}</td>
+              <td className={cell.num}>{fmtMoney(total)}</td>
             </tr>
           </tfoot>
-        </table>
+        </DataTable>
       </Panel>
 
       <Panel title="Receipts and files" right={`${p.attachments.length}`}>
@@ -249,7 +250,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             value: p.delivery && (
               <>
                 {paymentLabel(p.delivery)}
-                {p.mailingAddress && <span className={`${styles.sub} ${styles.said}`}>{p.mailingAddress}</span>}
+                {p.mailingAddress && <span className={`${cell.sub} ${styles.said}`}>{p.mailingAddress}</span>}
               </>
             ),
           },
@@ -259,7 +260,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             value: p.eventCardId && (
               <>
                 <Link href={`/events/${p.eventCardId}`}>{linkedEvent?.title ?? p.eventCardId}</Link>
-                <span className={styles.sub}>
+                <span className={cell.sub}>
                   {p.eventCardId}
                   {linkedEvent?.eventDate ? ` · ${fmtDate(`${linkedEvent.eventDate}T12:00:00Z`)}` : ""}
                 </span>
