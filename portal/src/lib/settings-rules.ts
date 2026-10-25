@@ -4,6 +4,7 @@
  */
 import type { RoomSetting } from "./events/rooms";
 import type { Role } from "./org";
+import type { TeamInfo } from "./whos-who";
 
 export type CreditCard = { last4: string; holderEmail: string; holderName: string; fund: string };
 export type PortalSettings = {
@@ -18,6 +19,8 @@ export type PortalSettings = {
   eventRules?: Record<string, boolean>;
   /** Link to the room reservation policy (a Shared Drive file), shown next to the agreement on the event form. */
   roomPolicyUrl?: string;
+  /** Team group → what it handles and its Google Chat space link, shown in Who's who. Set by the team's chair or an admin. */
+  teamInfo?: Record<string, TeamInfo>;
   updatedAt?: string;
   updatedBy?: string;
 };
