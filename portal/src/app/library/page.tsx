@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { Icon } from "@/components/Icon";
+import { Chips } from "@/components/Chips";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -68,16 +68,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         </Button>
       </form>
       {!q && folders.length > 0 && (
-        <nav className={styles.chips} aria-label="Folders">
-          <Link href="/library" className={`${styles.chip}${folder ? "" : ` ${styles.on}`}`} aria-current={folder ? undefined : "page"}>
-            All folders
-          </Link>
-          {folders.map((f) => (
-            <Link key={f.id} href={`/library?folder=${encodeURIComponent(f.id)}`} className={`${styles.chip}${f.id === folder ? ` ${styles.on}` : ""}`} aria-current={f.id === folder ? "page" : undefined}>
-              {f.name} <span className={styles.count}>{f.count}</span>
-            </Link>
-          ))}
-        </nav>
+        <Chips label="Folders" chips={[{ label: "All folders", href: "/library", on: !folder }, ...folders.map((f) => ({ label: f.name, href: `/library?folder=${encodeURIComponent(f.id)}`, on: f.id === folder, count: f.count }))]} />
       )}
       {admin && due > 0 && !q && !folder && (
         <Note tone="warn">
@@ -90,11 +81,11 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
             {q ? `No policy matches “${q}”.` : "This folder is empty."}
           </EmptyState>
         ) : (
-          <ul className={styles.list}>
+          <Rows>
             {shown.map((f) => (
               <FileRow key={f.id} file={f} today={today} showFolder={!folder || Boolean(q)} />
             ))}
-          </ul>
+          </Rows>
         )}
       </Panel>
       <p className={styles.foot}>
@@ -108,25 +99,20 @@ function FileRow({ file: f, today, showFolder }: { file: LibraryFile; today: str
   const review = f.reviewBy && f.folder !== "Archive" ? reviewState(f.reviewBy, today) : null;
   const sub = [f.kind.label, showFolder && f.folder, f.updated && `updated ${fmtDate(f.updated)}${f.updatedBy ? ` by ${f.updatedBy}` : ""}`].filter(Boolean).join(" · ");
   return (
-    <li className={styles.row}>
-      <a href={f.url} target="_blank" rel="noopener noreferrer" className={styles.link}>
-        <Icon name={f.kind.icon} className={styles.kind} />
-        <span className={styles.text}>
-          <span className={styles.name}>
-            {f.name}
-            <span className="sr-only"> (opens in Google Drive)</span>
-          </span>
-          <span className={styles.sub}>{sub}</span>
-        </span>
-        {review && (
-          <span className={styles.right}>
-            <Pill tone={review.tone} dot={review.tone !== "neutral"}>
-              {review.label}
-            </Pill>
-          </span>
-        )}
-        <Icon name="chevR" className={styles.chev} />
-      </a>
-    </li>
+    <ItemRow
+      state="plain"
+      icon={f.kind.icon}
+      title={f.name}
+      href={f.url}
+      external="Google Drive"
+      sub={sub}
+      right={
+        review && (
+          <Pill tone={review.tone} dot={review.tone !== "neutral"}>
+            {review.label}
+          </Pill>
+        )
+      }
+    />
   );
 }

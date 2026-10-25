@@ -10,6 +10,7 @@ import { portalSettings } from "@/lib/portal-settings";
 import { requireViewer } from "@/lib/viewer";
 import { byPillar, searchTeams, searchTopics, teamEntries } from "@/lib/whos-who";
 import { TeamRow } from "./ui";
+import { Rows } from "@/components/ItemRow";
 import styles from "./teams.module.css";
 
 export const dynamic = "force-dynamic";
@@ -51,11 +52,11 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
           ))}
           <Panel title={`Teams for “${query}”`} right={<a href="/teams">Show all teams</a>} flush>
             {hits.length ? (
-              <div className={styles.list}>
+              <Rows>
                 {hits.map((t) => (
                   <TeamRow key={t.group} team={t} names={names} mine={mine.has(t.group)} />
                 ))}
-              </div>
+              </Rows>
             ) : (
               <EmptyState icon="search">
                 No team matches that. Try another word, or ask the IAR office.
@@ -71,22 +72,22 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
         <div className="stack">
           {yours.length > 0 && (
             <Panel title="Your committees and teams" right={yours.length} flush>
-              <div className={styles.list}>
+              <Rows>
                 {yours.map((t) => (
                   <TeamRow key={t.group} team={t} names={names} mine />
                 ))}
-              </div>
+              </Rows>
             </Panel>
           )}
           {byPillar(teams).map((g) => {
             const directors = [...new Set(g.teams.flatMap((t) => t.directors))];
             return (
               <Panel key={g.name} title={g.name} right={directors.length ? `Director: ${directors.map(names).join(", ")}` : `${g.teams.length} teams`} flush>
-                <div className={styles.list}>
+                <Rows>
                   {g.teams.map((t) => (
                     <TeamRow key={t.group} team={t} names={names} mine={mine.has(t.group)} />
                   ))}
-                </div>
+                </Rows>
               </Panel>
             );
           })}

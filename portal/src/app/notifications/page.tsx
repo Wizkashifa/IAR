@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
@@ -11,7 +10,7 @@ import { listNotifications } from "@/lib/notifications";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "@/lib/format";
 import { markAllRead, openNotification } from "./actions";
-import styles from "./notifications.module.css";
+import { ItemRow, Rows } from "@/components/ItemRow";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Notifications" };
@@ -54,30 +53,22 @@ export default async function NotificationsPage() {
         {items.length === 0 ? (
           <EmptyState icon="bell">Nothing yet. You&apos;ll see requests here when they reach you or change.</EmptyState>
         ) : (
-          <ul className={styles.list}>
+          <Rows>
             {items.map((n) => (
-              <li key={n.id} className={n.unread ? styles.unread : undefined}>
-                <form action={openNotification}>
-                  <input type="hidden" name="id" value={n.id} />
-                  <input type="hidden" name="href" value={n.href} />
-                  <button type="submit" className={styles.item}>
-                    <span className={styles.dot} aria-hidden="true" />
-                    <span className={styles.text}>
-                      <span className={styles.t}>
-                        {n.unread && <span className="sr-only">Unread: </span>}
-                        {n.text}
-                      </span>
-                      <span className={styles.s}>
-                        {fmtDateTime(n.at)}
-                        {n.to.startsWith("role:") ? " · sent to your team" : ""}
-                      </span>
-                    </span>
-                    <Icon name="chevR" className={styles.chev} />
-                  </button>
-                </form>
-              </li>
+              <ItemRow
+                key={n.id}
+                state={n.unread ? "act" : "plain"}
+                submit={{ action: openNotification, fields: { id: n.id, href: n.href } }}
+                title={
+                  <>
+                    {n.unread && <span className="sr-only">Unread: </span>}
+                    {n.text}
+                  </>
+                }
+                sub={`${fmtDateTime(n.at)}${n.to.startsWith("role:") ? " · sent to your team" : ""}`}
+              />
             ))}
-          </ul>
+          </Rows>
         )}
       </Panel>
     </div>

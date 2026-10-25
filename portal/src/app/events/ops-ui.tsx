@@ -9,7 +9,7 @@ import { TASK_STATUS_LABEL, TEAM_NAME, worksTeam } from "@/lib/events/tasks";
 import type { EventTask, RoomCheck } from "@/lib/events/types";
 import type { EventCard } from "@/lib/events/workflow";
 import { saveRoomCheck, workOnTask } from "./ops-actions";
-import styles from "./events.module.css";
+import { ItemRow } from "@/components/ItemRow";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
@@ -86,20 +86,17 @@ export function TaskLine({ card, task, roles, email, back, today, names }: { car
   const overdue = (task.status === "todo" || task.status === "doing") && task.dueDate < today;
   const who = task.assignee ? (names ? names(task.assignee) : task.assignee) : "";
   return (
-    <li className={styles.line}>
-      <div>
-        <div className={styles.lineTitle}>{task.title}</div>
-        <div className={styles.lineSub}>
-          {TEAM_NAME[task.team]} · due {dayText(task.dueDate)}
-          {who ? ` · ${who}` : ""}
-          {task.note ? ` · “${task.note}”` : ""}
-        </div>
-      </div>
-      <div className={styles.lineSide}>
-        <TaskPill task={task} overdue={overdue} />
-        <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
-      </div>
-    </li>
+    <ItemRow
+      state="plain"
+      title={task.title}
+      sub={`${TEAM_NAME[task.team]} · due ${dayText(task.dueDate)}${who ? ` · ${who}` : ""}${task.note ? ` · “${task.note}”` : ""}`}
+      right={
+        <>
+          <TaskPill task={task} overdue={overdue} />
+          <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
+        </>
+      }
+    />
   );
 }
 

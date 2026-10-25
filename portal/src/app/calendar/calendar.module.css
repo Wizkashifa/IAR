@@ -78,20 +78,11 @@
 
   /* Find a room */
   .findForm { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-3); align-items: end; }
-  .rooms { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-  .room { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-1) var(--s-4); align-items: center; padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
-  .room:first-child { border-top: 0; }
-  .room.free { box-shadow: inset 3px 0 0 var(--accent); }
-  .room.taken { box-shadow: inset 3px 0 0 var(--line); }
   .takenSummary { padding: var(--s-3) var(--s-4); cursor: pointer; font-weight: 600; color: var(--ink-2); }
   .takenSummary:hover { color: var(--ink); }
   .takenSummary:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r); }
   details[open] > .takenSummary { border-bottom: 1px solid var(--line); }
-  .roomName { font-weight: 700; }
   .roomSub { font-size: var(--t-sm); color: var(--ink-2); }
   .reasons { margin: 4px 0 0; padding-left: 18px; font-size: var(--t-sm); color: var(--ink-2); }
   .roomNote { margin-top: 4px; font-size: var(--t-sm); color: var(--warn); }
-  @media (max-width: 520px) {
-    .room { grid-template-columns: 1fr; }
-  }
 }

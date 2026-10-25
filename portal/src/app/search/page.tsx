@@ -14,6 +14,7 @@ import { matchCards, requestNumber } from "@/lib/search";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
 import styles from "./search.module.css";
+import { ItemRow, Rows } from "@/components/ItemRow";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Search" };
@@ -61,17 +62,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       )}
       {policies && policies.length > 0 && (
         <Panel title="Policies" right={<a href={`/library?q=${encodeURIComponent(q)}`}>See all in the Library</a>} flush>
-          <ul className={styles.policies}>
+          <Rows>
             {policies.slice(0, 5).map((f) => (
-              <li key={f.id}>
-                <a href={f.url} target="_blank" rel="noopener noreferrer">
-                  {f.name}
-                  <span className="sr-only"> (opens in Google Drive)</span>
-                </a>
-                <span className={styles.policySub}>{[f.kind.label, f.folder].filter(Boolean).join(" · ")}</span>
-              </li>
+              <ItemRow key={f.id} state="plain" icon={f.kind.icon} title={f.name} href={f.url} external="Google Drive" sub={[f.kind.label, f.folder].filter(Boolean).join(" · ")} />
             ))}
-          </ul>
+          </Rows>
         </Panel>
       )}
     </div>

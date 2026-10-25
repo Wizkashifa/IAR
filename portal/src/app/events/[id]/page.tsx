@@ -11,6 +11,7 @@ import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
@@ -208,28 +209,32 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {tasks.length > 0 && (
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
-              <ul className={styles.lines}>
+              <Rows>
                 {tasks.map((t) => (
                   <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} />
                 ))}
-              </ul>
+              </Rows>
               {tasks.every((t) => t.status === "locked") && <div className={styles.foot}>Each team gets its task in Team Queues once the event is approved.</div>}
             </Panel>
           )}
 
           {checkDates.length > 0 && (
             <Panel title="Room checks" flush id="roomchecks">
-              <ul className={styles.lines}>
+              <Rows>
                 {checkDates.map((d) => (
-                  <li key={d} className={styles.line}>
-                    <div className={styles.lineTitle}>{dayText(d)}</div>
-                    <div className={styles.cells}>
-                      <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                      <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                    </div>
-                  </li>
+                  <ItemRow
+                    key={d}
+                    state="plain"
+                    title={dayText(d)}
+                    right={
+                      <div className={styles.cells}>
+                        <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
+                        <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
+                      </div>
+                    }
+                  />
                 ))}
-              </ul>
+              </Rows>
               <div className={styles.foot}>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</div>
             </Panel>
           )}
@@ -239,18 +244,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               {linked.length === 0 ? (
                 <EmptyState icon="receipt">None linked yet. When you send a purchase request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
-                <ul className={styles.lines}>
+                <Rows>
                   {linkedVisible.map((p) => (
-                    <li key={p.id} className={styles.line}>
-                      <div>
-                        <Link href={`/purchases/${p.id}`} className={styles.lineTitle}>{p.title}</Link>
-                        <div className={styles.lineSub}>{p.id} · {statusText(p)}</div>
-                      </div>
-                      <div className={styles.lineSide}>{fmtMoney(p.purchase ? purchaseTotal(p.purchase) : 0)}</div>
-                    </li>
+                    <ItemRow key={p.id} state="plain" href={`/purchases/${p.id}`} title={p.title} id={p.id} sub={statusText(p)} right={fmtMoney(p.purchase ? purchaseTotal(p.purchase) : 0)} />
                   ))}
-                  {linked.length > linkedVisible.length && <li className={`${styles.line} ${styles.lineSub}`}>{linked.length - linkedVisible.length} more you can&apos;t open (restricted)</li>}
-                </ul>
+                  {linked.length > linkedVisible.length && <ItemRow state="plain" title={`${linked.length - linkedVisible.length} more you can't open`} sub="Restricted" />}
+                </Rows>
               )}
               <div className={styles.foot}>
                 Spent so far: <strong>{spendText(spent, e.budget)}</strong>
