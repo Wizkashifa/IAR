@@ -21,3 +21,11 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 - Each store has an in-memory version for dev and a Firestore version for production (`lib/cards.ts`, `lib/notifications.ts`, `lib/people.ts`, `lib/feedback.ts`); Google Calendar has a sample calendar in dev (`lib/calendar.ts`).
 - `ops/go-live`: `npm test` and `npm run typecheck` must pass too. It never runs against real Google from a cloud session.
 - Write UI text in plain language for volunteers, not technical staff.
+
+## Styling
+
+- The demo (`demo/index.html`) is the reference for layout and look. If a screen needs to look different, change the demo first. Colours, fonts and logos follow IAR's brand guide (`docs/brand.md`); how the pieces fit is in `docs/design-system.md`.
+- Every colour, size, corner and shadow is a token in `portal/src/styles/tokens.css` (light and dark). No raw colours and no `style={{ }}` anywhere else: use the components in `portal/src/components/` and a co-located `.module.css`. `src/styles/guard.test.ts` fails the build on either.
+- Mantine is used only inside the wrappers in `src/components/` (DateField, RoomPicker, FileDrop, …). Pages never import `@mantine/*`.
+- `/dev/styles` (dev mode) shows every token and component in light and dark: check it after a change there.
+- Before pushing a UI change, with `npm run dev` running: `npm run a11y` (titles, headings, labels, tap targets, contrast) and `npm run shots` (each screen next to the demo, in `portal/.shots/report.html`).

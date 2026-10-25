@@ -1,8 +1,9 @@
 /**
- * Keeps the design system from eroding (docs/design-system.md):
- * colours only in tokens.css, Mantine only behind our wrappers in
- * src/components, and a count of one-off inline styles in pages.
- * Runs from the portal folder (npm test).
+ * Keeps the design system from eroding (docs/design-system.md): colours only
+ * in tokens.css, Mantine only behind our wrappers in src/components, and no
+ * one-off inline styles. Each rule has a short allowlist for the few places
+ * that genuinely need an exception; anything else fails. Runs from the portal
+ * folder (npm test).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -20,6 +21,16 @@ function files(dir: string, exts: string[]): string[] {
 }
 const rel = (p: string) => relative(SRC, p).split(sep).join("/");
 
+/**
+ * Raw colours allowed outside tokens.css. Browsers read these before any CSS
+ * loads, so they can't use var(--…): keep them equal to --brand-green and --bg.
+ */
+const COLOUR_ALLOWED = new Set(["app/layout.tsx", "app/manifest.ts"]);
+/** Inline styles allowed: the style page paints each token swatch from its own variable. */
+const INLINE_STYLE_ALLOWED = new Set(["app/dev/styles/page.tsx"]);
+/** Files that may import Mantine: the wrappers, and the root layout for the provider and its colour-scheme script. */
+const mantineAllowed = (p: string) => p.startsWith("components/") || p === "app/layout.tsx";
+
 /** Raw colour values: hex, rgb(a) and hsl(a) in CSS; quoted hex strings in TypeScript. */
 function rawColours(path: string): string[] {
   const text = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -27,29 +38,36 @@ function rawColours(path: string): string[] {
   return text.match(re) ?? [];
 }
 
-test("shared components and styles use colour tokens, never raw colours", () => {
-  const checked = [...files(join(SRC, "components"), [".css", ".ts", ".tsx"]), ...files(join(SRC, "styles"), [".css"])].filter((p) => !p.endsWith("tokens.css"));
-  const bad = checked.flatMap((p) => rawColours(p).map((c) => `${rel(p)}: ${c}`));
+test("colours come from tokens.css, never raw values", () => {
+  const bad = files(SRC, [".css", ".ts", ".tsx"])
+    .filter((p) => !p.endsWith("styles/tokens.css") && !COLOUR_ALLOWED.has(rel(p)))
+    .flatMap((p) => rawColours(p).map((c) => `${rel(p)}: ${c}`));
   assert.deepEqual(bad, [], "Add the colour to src/styles/tokens.css and use its var(--name).");
 });
 
-test("pages: raw colours (report only until wave 2 moves pages onto components)", () => {
-  const found = files(join(SRC, "app"), [".css", ".tsx", ".ts"]).flatMap((p) => rawColours(p).map((c) => `${rel(p)}: ${c}`));
-  if (found.length) console.log(`  ${found.length} raw colour(s) in src/app:\n    ${found.join("\n    ")}`);
+test("the allowed raw colours match the brand tokens", () => {
+  const tokens = readFileSync(join(SRC, "styles/tokens.css"), "utf8").toLowerCase();
+  for (const p of COLOUR_ALLOWED) {
+    for (const c of readFileSync(join(SRC, p), "utf8").match(/#[0-9a-fA-F]{6}\b/g) ?? []) {
+      assert.ok(tokens.includes(c.toLowerCase()), `${p}: ${c} isn't a token value in tokens.css; keep it in step with the brand.`);
+    }
+  }
 });
 
 test("only src/components and the root layout import Mantine", () => {
   const offenders = files(SRC, [".ts", ".tsx"])
-    .filter((p) => /from\s+["']@mantine\//.test(readFileSync(p, "utf8")) || /import\s+["']@mantine\//.test(readFileSync(p, "utf8")))
+    .filter((p) => /(?:from|import)\s+["']@mantine\//.test(readFileSync(p, "utf8")))
     .map(rel)
-    .filter((p) => !p.startsWith("components/") && p !== "app/layout.tsx");
+    .filter((p) => !mantineAllowed(p));
   assert.deepEqual(offenders, [], "Pages use the wrappers in src/components (DateField, RoomPicker, FileDrop, …), never @mantine/* directly.");
 });
 
-test("pages: inline styles (report only; use the layout classes in base.css)", () => {
-  const counts = files(join(SRC, "app"), [".tsx"])
-    .map((p) => [rel(p), (readFileSync(p, "utf8").match(/style=\{\{/g) ?? []).length] as const)
-    .filter(([, n]) => n > 0);
-  const total = counts.reduce((a, [, n]) => a + n, 0);
-  console.log(`  ${total} inline style(s) in src/app${total ? ":\n    " + counts.map(([p, n]) => `${p} ${n}`).join("\n    ") : ""}`);
+test("no inline styles: use the layout classes in base.css or a CSS module", () => {
+  const offenders = files(SRC, [".tsx"])
+    .filter((p) => !INLINE_STYLE_ALLOWED.has(rel(p)))
+    .flatMap((p) => {
+      const n = (readFileSync(p, "utf8").match(/\bstyle=\{/g) ?? []).length;
+      return n ? [`${rel(p)}: ${n}`] : [];
+    });
+  assert.deepEqual(offenders, [], "Move the style into the component's .module.css (or a layout class), using tokens.");
 });

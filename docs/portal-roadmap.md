@@ -94,30 +94,41 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 | **2D IT & Maintenance** | `app/it-maintenance/` | Requester view first, team board on its own tab; actions by state with "More"; ready-made replies; `FileDrop` with the phone camera; button reads "AV/IT/Maintenance" (D3) |
 | **2E Everyone's pages** | `app/page.tsx`, `app/requests/`, `app/search/`, `app/notifications/`, `app/away/`, `app/queues/` | Home: quick buttons, Waiting on you from `needsViewer`, Today at IAR from `lib/agenda.ts`, no "Ready" badges. My Requests: type chips and colour key. Search through Spotlight and the results page. Out of office on `DateField` and a people picker |
 
-### Wave 3: new pages (parallel, before the beta)
+### Wave 3: new pages (done: 11 agents in parallel)
 
-| Agent | Delivers | Needs |
-|---|---|---|
-| **3A Calendar and Find a room** | Week and month view, and "Find a room" filling in the event form | 0D, 2A's form |
-| **3B Who's who** | Committee and team pages and "who handles…" | 0C |
-| **3C Help** | "How this works" per module, "What's new" | Wave 2 |
-| **3D Office: what's stuck** | Open requests by waiting time, with reminders | 0B, 1A |
-| **3E Finance batch work** | Select several, mark paid or entered, filters, QuickBooks CSV | 1A's checkbox slot |
-| **3F Beta measures** | Requests per module, time per step, forms started but not sent | 2A's drafts |
-| **3G Notification choices** | Right away, digest or portal only; quiet overnight | — |
-| **3H Library: policies** | The Policies Shared Drive, searchable and linked from the forms that cite it | Drive scope in sign-in and go-live; the office names the drive |
-| **3I Request again** | "Request this again" on past events and purchases | Wave 2 |
-| **3J Facilities and Jira** | The gaps the facilities team names in Jira, "My work today" on phones | A session with the facilities team first |
+| Agent | Delivered |
+|---|---|
+| **3A Calendar and Find a room** | `/calendar` week and month view; `/calendar/find` lists the rooms that fit and are free, and "Request this room" fills in the event form |
+| **3B Who's who** | `/teams`: committees and teams by pillar, leaders, what they handle, "Request something from this team"; chairs edit their team's description and Chat link |
+| **3C Help** | "How this works" on each module, guides at `/help`, "What's new" on the home page |
+| **3D What's stuck** | `/stuck` for the office, executives and admins: open requests by waiting time, with a reminder button |
+| **3E Finance desk** | `/purchases/finance`: pay, enter in QuickBooks and record refunds several at a time; filters; a CSV for QuickBooks |
+| **3F Beta measures** | `/admin/measures`: requests per week, time at each step, sent back, forms started but not sent, feedback (counts only) |
+| **3G Notification choices** | `/notifications/settings`: updates right away, in the morning digest or only in the portal; quiet overnight |
+| **3H Library: policies** | `/library`: the Policies Shared Drive, read-only, searchable, with review dates; in the header search |
+| **3I Request again** | "Request this again" on finished events, purchases and marketing requests |
+| **3J Facilities: My work today** | `/it-maintenance/today` on phones, linked tickets, how late a ticket is; `docs/facilities-move.md` |
+| **3K Marketing uploads** | Files on marketing requests, saved to a marketing Shared Drive folder |
 
-### Wave 4: finish and keep it that way (1–2 agents)
+**Before the beta, an IAR admin sets up:**
+1. **Library:** add the portal's service account to the Policies Shared Drive as a **Viewer** (Portal Settings shows which account), then paste the drive's address in Portal Settings → "Library: the Policies drive".
+2. **Marketing files:** create a marketing folder in a Shared Drive, make the portal's service account a **Content manager**, give `portal-team-marketing@` at least Viewer access, then paste the folder link in Portal Settings → "Marketing files".
+3. **The daily job stays at 7:00 AM** Raleigh time: overnight alerts held by "quiet overnight" and the morning digests go out with it.
+4. **Facilities:** hold the session with the facilities team using the questions in `docs/facilities-move.md` before deciding what else to build for them and when to retire Jira.
 
-- A phone pass on every screen.
-- The demo-versus-portal screenshot script, and a review of every screen next to the demo.
-- The accessibility check script on every page, with any fixes.
-- Guard tests turned strict.
-- The "Styling" section in `CLAUDE.md`.
-- Dependabot with grouped monthly updates.
-- Dark mode reviewed on every screen.
+Neither the Library nor marketing uploads needs a new domain-wide delegation scope.
+
+### Wave 4: finish and keep it that way (in progress: 2 agents)
+
+| Item | Status |
+|---|---|
+| Guard tests turned strict (raw colours, inline styles, Mantine imports) | Done: `src/styles/guard.test.ts` fails the build, with a short allowlist |
+| The demo-versus-portal screenshot script | Done: `npm run shots` → `portal/.shots/report.html` |
+| The accessibility check script on every page | Done: `npm run a11y` (add `--strict` to fail on findings) |
+| The "Styling" section in `CLAUDE.md` | Done |
+| Dependabot with grouped monthly updates | Done: `.github/dependabot.yml` |
+| A phone pass, dark mode and accessibility fixes on every screen | Agent 4B |
+| A review of every screen next to the demo | After 4B, with `npm run shots` |
 
 ## A last check: effective, pretty, easy to use
 

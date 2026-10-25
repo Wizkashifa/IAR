@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "rm -rf .test-build && tsc -p tsconfig.test.json && node --test $(find .test-build -name '*.test.js' | sort)"
+    "test": "rm -rf .test-build && tsc -p tsconfig.test.json && node --test $(find .test-build -name '*.test.js' | sort)",
+    "shots": "node scripts/shots.cjs",
+    "a11y": "node scripts/a11y.cjs"
   },
   "dependencies": {
     "@google-cloud/firestore": "7.11.6",

@@ -80,13 +80,13 @@ The aim is something a volunteer developer can open in six months and change con
 7. **Fonts via `next/font/google`** instead of the Google Fonts `<link>`. Next.js downloads the fonts at build time and serves them from the portal itself. The page makes no outside call when it loads, text doesn't jump as fonts arrive, and the font choice sits in one file (`app/fonts.ts`). Same three faces as the demo, same jobs.
 8. **Native elements where they're enough, Mantine where they aren't:** `<details>` for folded sections and the `popover` attribute for simple menus. Use Mantine, through our wrappers, for date and time pickers, the room and people pickers, file drop, confirm dialogs, toasts and the header search. Pages never import `@mantine/*` directly, so a Mantine major version touches only the wrappers.
 9. **A living style page at `/dev/styles`** (dev mode only, like `/dev`). It shows every token and every component in each state, in light and dark. This is the reference to check in six months, with nothing extra to install or upgrade (no Storybook).
-10. **Small guard tests** in `npm test`:
-    - No raw colour values outside `tokens.css`.
-    - No `style={{` in `app/` beyond an agreed short list.
-    - Every component on `/dev/styles` renders.
+10. **Guard tests** in `npm test` (`src/styles/guard.test.ts`), strict since wave 4:
+    - No raw colour values outside `tokens.css`. The only exceptions are the theme colour in `app/layout.tsx` and the colours in `app/manifest.ts`, which browsers read before any CSS loads; a test keeps them equal to the brand tokens.
+    - No `@mantine/*` imports outside `src/components/` and the root layout.
+    - No inline styles, except the swatches on `/dev/styles`.
 
-    These are cheap and keep the system from eroding.
-11. **Keep dependencies few and current.** The portal has seven runtime dependencies today. Mantine adds its core and the few packages listed in `portal-roadmap.md`, and nothing else gets added without a reason written in the pull request. Add Dependabot with one grouped monthly update for `portal/` and `ops/go-live/`, so updates arrive small and often instead of as a painful jump later. CI (`.github/workflows/ci.yml`) already runs tests, typecheck and build on every pull request.
+    Two scripts check what tests can't, against a running dev server: `npm run a11y` (page titles, one h1, heading levels, labels, image alt text, link and button names, tap targets and sideways scroll on phones, text contrast in light and dark) and `npm run shots` (every screen next to its demo screen at desktop and phone width, light and dark, in `portal/.shots/report.html`). Both read the screen list in `portal/scripts/screens.cjs`.
+11. **Keep dependencies few and current.** The portal has seven runtime dependencies besides Mantine's packages (listed in `portal-roadmap.md`), and nothing else gets added without a reason written in the pull request. Dependabot (`.github/dependabot.yml`) opens one grouped pull request a month per folder for minor and patch updates, and a separate one per major version, so updates arrive small and often instead of as a painful jump later. CI (`.github/workflows/ci.yml`) already runs tests, typecheck and build on every pull request.
 12. **Write it down:** a short "Styling" section in `CLAUDE.md` that points here. Rules: use tokens, use components, no raw colours, and change the demo first if a screen needs to look different.
 
 ### File layout
@@ -131,3 +131,5 @@ This comes **before** `ux-plan.md` stage 1, because the request page and the gro
 5. **Dark mode and theme switch:** use the demo's warm charcoal palette, written against Mantine's colour-scheme attribute, and add a theme choice in the account menu.
 
 Each step keeps `npm test`, `npm run typecheck` and `npm run build` passing, and each is visible on `/dev/styles` before pages move onto it.
+
+**Status (Oct 25, 2026):** steps 1–5 are done, with IAR's 2026 brand (`brand.md`) in place of the demo's first colours and fonts. Inline styles are gone, the guards are strict, Dependabot is on, and `CLAUDE.md` has a "Styling" section.

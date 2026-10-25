@@ -8,3 +8,6 @@ next-env.d.ts
 
 # People data never goes in this public repo (see docs/beta-launch.md).
 roster*.json
+
+# npm run shots / npm run a11y output
+.shots/
