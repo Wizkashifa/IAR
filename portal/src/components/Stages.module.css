@@ -8,7 +8,7 @@
   .done { color: var(--ink-2); }
   .done .bar { background: var(--accent); }
   .now { color: var(--ink); font-weight: 600; }
-  .now .bar { background: var(--warn); }
+  .now .bar { background: var(--gold); }
   .skip { opacity: 0.45; }
   .flag { margin-top: var(--s-2); }
 }
