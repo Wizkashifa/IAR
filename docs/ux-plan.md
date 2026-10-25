@@ -25,7 +25,7 @@ Most of the fix is to build these pieces once in `portal/` and use them on every
 
 - **Plain functions, with tests** (`lib/next-step.ts`):
   - `stepsFor(card)` returns the step labels and which one the request is on. Use the module's own steps: purchases go Submitted → Chair approval → Finance review → To pay → Paid; events go Submitted → Director review → Executive review → Approved → Event day → Close-out → Closed; marketing and tickets use their own stages.
-  - `nextStepText(card, viewer, names)` returns one sentence, e.g. "Community Director approves it for Youth, then finance reviews it. You'll get a notification when it's done." Port the wording from the demo's `nextStep`.
+  - `nextStepText(card, viewer, names)` returns one sentence, written for the person looking. This also fixes a bug: today the saved waiting-on text says "You:" meaning the requester, so a chair or finance sees "You: the receipt is missing" on someone else's request. Example: "Community Director approves it for Youth, then finance reviews it. You'll get a notification when it's done." Port the wording from the demo's `nextStep`.
   - Both read from the existing workflow modules (`STAGE_LABEL`, `waitingOnFor`). They never change a request.
 - **`<RequestPage>`** in `app/ui.tsx`: breadcrumb, title with status pill next to it, a lead line, the step bar with "What happens next", an action row, then a main column (the request, comments, history) and a side column (details, checks, calendar). Same order as the demo's `reqPage`.
 - **Move the four request pages onto it:** `events/[id]`, `purchases/[id]`, `marketing/[id]`, `it-maintenance/[id]`.
