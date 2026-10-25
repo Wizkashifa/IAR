@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor } from "@/components/ItemList";
 import { ItemRow } from "@/components/ItemRow";
+import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -103,7 +104,8 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
   return (
     <div className="stack">
       {head}
-      {sp.error && <Note tone="bad">{sp.error}</Note>}
+      <HelpBox module="teams" />
+      {sp.error &&<Note tone="bad">{sp.error}</Note>}
       {sp.ok && MESSAGES[sp.ok] && <Note tone="ok">{MESSAGES[sp.ok]}</Note>}
 
       {teams.length > 1 && (
