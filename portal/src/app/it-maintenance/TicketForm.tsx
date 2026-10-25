@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { FormStarted } from "@/components/FormStarted";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
@@ -41,6 +42,7 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
 
   return (
     <form action={formAction} className="stack">
+      <FormStarted form="ticket" />
       {state.errors.length > 0 && (
         <div role="alert">
           <Note tone="bad">

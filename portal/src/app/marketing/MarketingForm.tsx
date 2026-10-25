@@ -1,6 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { FormStarted } from "@/components/FormStarted";
 import { MARKETING_TYPES, NOTES_MAX, type MarketingField, type MarketingInput } from "@/lib/marketing/forms";
 import type { MarketingKind } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
@@ -36,6 +37,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
     // Keyed on each answer from the server, so the fields keep what was typed when something needs fixing.
     <form key={state.n} action={formAction} className={`stack loose ${styles.form}`}>
       <input type="hidden" name="kind" value={kind} />
+      <FormStarted form="marketing" />
       {state.errors.length > 0 && (
         <div role="alert" className={styles.errors}>
           <Note tone="bad">
