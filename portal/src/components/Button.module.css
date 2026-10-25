@@ -1,0 +1,27 @@
+@layer components {
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: var(--control-h); padding: 0 14px;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface); color: var(--ink);
+    font: inherit; font-weight: 500; line-height: 1.2; white-space: nowrap; text-decoration: none;
+    box-shadow: var(--shadow-1); cursor: pointer;
+    transition: border-color var(--speed), background-color var(--speed), box-shadow var(--speed), filter var(--speed);
+  }
+  .btn:hover { border-color: var(--ink-3); text-decoration: none; }
+  .btn:active { filter: brightness(0.95); box-shadow: none; }
+  .btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+
+  /* The one main action on a screen: green with a gold edge (gold with green text in dark mode). */
+  .primary { background: var(--accent); border-color: var(--gold); color: var(--accent-ink); font-weight: 600; }
+  .primary:hover { border-color: var(--gold); filter: brightness(1.08); }
+  .danger { color: var(--bad); }
+  .danger:hover { border-color: var(--bad); }
+  /* No border or fill: for "More", "Cancel" and other quiet choices. */
+  .quiet { background: none; border-color: transparent; box-shadow: none; color: var(--accent-text); }
+  .quiet:hover { background: var(--surface-2); border-color: transparent; }
+
+  .small { min-height: var(--control-h-sm); padding: 0 10px; font-size: 13px; }
+  .full { width: 100%; }
+}

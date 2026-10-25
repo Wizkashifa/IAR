@@ -1,0 +1,9 @@
+@layer components {
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+  .dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+  .ok { background: var(--ok-soft); color: var(--ok); }
+  .warn { background: var(--warn-soft); color: var(--warn); }
+  .bad { background: var(--bad-soft); color: var(--bad); }
+  .info { background: var(--info-soft); color: var(--info); }
+  .accent { background: var(--accent-soft); color: var(--accent-text); }
+}

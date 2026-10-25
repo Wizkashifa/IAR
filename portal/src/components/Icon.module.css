@@ -1,0 +1,7 @@
+@layer components {
+  .icon { display: inline-block; flex: none; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sm { width: 13px; height: 13px; vertical-align: -2px; }
+  .md { width: 16px; height: 16px; }
+  .lg { width: 20px; height: 20px; }
+  .xl { width: 28px; height: 28px; stroke-width: 1.5; }
+}
