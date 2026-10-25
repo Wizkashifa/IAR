@@ -3,8 +3,7 @@
  * can be tested without a server. Pages and server actions call these; they
  * never change a purchase card's stage themselves.
  *
- * Controls built in (see "Checked against standard financial controls" in
- * docs/purchase-requests-plan.md):
+ * Controls built in:
  * - Nobody approves, pays or books their own request.
  * - A chair's own request goes to another chair, then a vice chair; it is never skipped.
  * - Requests at or above the executive threshold need executive approval.

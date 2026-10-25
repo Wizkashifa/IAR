@@ -1,7 +1,7 @@
 /**
  * Whether a request is waiting on the person looking, across every module,
- * and the "Needs you / Waiting on others / Done" grouping every list uses
- * (docs/ux-plan.md 1.2). Plain functions: each module's own permission rules
+ * and the "Needs you / Waiting on others / Done" grouping every list uses.
+ * Plain functions: each module's own permission rules
  * decide who can act, so this never disagrees with the buttons on the page.
  */
 import type { Card, CardStatus } from "./cards";

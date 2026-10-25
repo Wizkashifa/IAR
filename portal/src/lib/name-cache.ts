@@ -12,7 +12,7 @@ const lc = (s: string) => s.trim().toLowerCase();
 /**
  * A readable name from an address alone: "fatima.ahmed@x.org" → "Fatima Ahmed",
  * "portal-team-social-welfare@x.org" → "Social Welfare". Numbers in the
- * address are dropped ("kashif.412.osman" → "Kashif Osman").
+ * address are dropped ("amina.412.rahman" → "Amina Rahman").
  */
 export function prettifyEmail(email: string): string {
   const local = lc(email).split("@")[0].replace(TEAM_PREFIX, "").replace(PILLAR_PREFIX, "").replace(ROLE_PREFIX, "");

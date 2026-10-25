@@ -1,6 +1,6 @@
 /**
  * Purchase Requests: the fields a purchase card carries on top of the shared
- * Card (see lib/cards.ts). Design: docs/purchase-requests-plan.md.
+ * Card (see lib/cards.ts).
  */
 
 /** Pay a vendor or person, reimburse the requester, or IAR credit card receipts. */

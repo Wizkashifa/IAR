@@ -1,6 +1,6 @@
 /**
  * Where a request is and what happens next, for the step bar and the
- * "What happens next" line on every request page (docs/ux-plan.md 1.1).
+ * "What happens next" line on every request page.
  * Plain functions over a card: they read each module's own stages and never
  * change a request.
  *

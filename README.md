@@ -9,8 +9,6 @@ Beta modules: **My Requests**, **Purchase Requests** (payments, reimbursements, 
 ## Start here
 
 - **[docs/plan.md](docs/plan.md)** — the umbrella portal plan: problems, decisions, the event card lifecycle, modules, policy automation, architecture, roadmap, open questions. Live editable copy: [Claude doc](https://claude.ai/code/artifact/3c8494a5-1c2d-4c94-a234-fb35f36e1630).
-- **[docs/purchase-requests-plan.md](docs/purchase-requests-plan.md)** — detailed design of the Purchase Requests module, including analysis of the PO response sheet. Live copy: [Claude doc](https://claude.ai/code/artifact/09936270-93b7-4009-942f-5ee4893ad89f). Its platform section is superseded by the portal plan's Architecture section.
-- **[docs/letter.md](docs/letter.md)** — a short write-up for the office/Shura introducing Purchase Requests. Also a [Claude doc](https://claude.ai/code/artifact/58f2fcf1-9517-4166-9d92-ffd80ec23ddf).
 - **[demo/index.html](demo/index.html)** — clickable demo of the whole portal with a role switcher and a built-in walkthrough (sample data, nothing saved). Live at https://claude.ai/artifact/Scx6GtWsFGedmz2RQzKJZK.
 - **[portal/](portal/)** — the portal app (Next.js on Cloud Run, Firestore). Run it locally with `cd portal && npm install && npm run dev`, no Google setup needed; switch sample users at `/dev`, where the Chat messages the portal would send and a "run the daily job" button also are. `npm test` runs every module's rules.
   - Each module keeps its rules in `portal/src/lib/<module>/` and its pages in `portal/src/app/<module>/`: `purchases`, `events`, `marketing`, `tickets` (pages under `app/it-maintenance`). Every request is a card (`lib/cards.ts`) of type `purchase`, `event`, `marketing` or `ticket`, with its module's fields under `card.purchase`, `card.event` and so on.
@@ -18,7 +16,6 @@ Beta modules: **My Requests**, **Purchase Requests** (payments, reimbursements, 
 - **[ops/go-live/](ops/go-live/)** — the setup command and the blank members template (`members-template.xlsx`, no people in it).
 - **[docs/beta-launch.md](docs/beta-launch.md)** — the beta runbook: what to collect, running go-live, the Shared Drives and Portal Settings to set, the smoke test, and what to do during the beta.
 - **[docs/setup.md](docs/setup.md)** — every setup step by hand, as a reference and fallback.
-- **[app/index.html](app/index.html)** — the original clickable Purchase Requests prototype (sample data only, nothing saved), now superseded by the module in `portal/`. Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
 
 ## Picking this up in a new chat
 
