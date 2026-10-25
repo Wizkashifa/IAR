@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
+import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
@@ -84,6 +85,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           </>
         }
       />
+      <HelpBox module="purchases" />
       <div className={`stack ${styles.body}`}>
         <Flash ok={ok} error={error} />
 

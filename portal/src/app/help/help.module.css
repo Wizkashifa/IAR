@@ -1,0 +1,33 @@
+/* The help pages: /help, /help/[module] and /help/whats-new. */
+@layer pages {
+  .crumb { margin: 0 0 var(--s-2); font-size: var(--t-sm); color: var(--ink-2); }
+  .crumb a { color: var(--accent-text); }
+
+  .guides { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-3); margin: var(--s-4) 0 var(--s-5); padding: 0; list-style: none; }
+  .guide {
+    display: flex; gap: var(--s-3); align-items: flex-start; height: 100%; padding: var(--s-4);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
+    color: var(--ink); text-decoration: none; transition: border-color var(--speed);
+  }
+  .guide:hover { border-color: var(--gold); text-decoration: none; }
+  .guide:focus-visible { outline: none; box-shadow: var(--ring); }
+  .guideIcon { color: var(--accent-text); margin-top: 2px; }
+  .guideTitle { display: block; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); margin-bottom: 4px; }
+  .guideText { display: block; font-size: var(--t-md); color: var(--ink-2); }
+
+  .stack { display: grid; gap: var(--s-4); margin-top: var(--s-4); }
+  .steps { margin: 0; padding-left: 22px; display: grid; gap: var(--s-2); max-width: 75ch; }
+  .steps li::marker { color: var(--accent-text); font-weight: 700; }
+  .plain { margin: 0; padding-left: 20px; display: grid; gap: var(--s-2); max-width: 75ch; }
+
+  .news { margin: 0; padding: 0; list-style: none; display: grid; }
+  .newsItem { padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+  .newsItem:first-child { border-top: 0; padding-top: 0; }
+  .newsItem:last-child { padding-bottom: 0; }
+  .newsTitle { display: block; font-weight: 700; }
+  .newsText { margin: 2px 0 0; color: var(--ink-2); max-width: 75ch; }
+  .newsText a { color: var(--accent-text); font-weight: 600; }
+  .date { margin: 0 0 var(--s-2); font-size: var(--t-sm); color: var(--ink-3); }
+  .more { margin: var(--s-3) 0 0; font-size: var(--t-md); }
+  .more a { color: var(--accent-text); font-weight: 600; }
+}

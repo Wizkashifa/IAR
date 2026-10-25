@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
+import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -46,6 +47,7 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         title="Out of office"
         lead={`Going away? Hand your approvals to someone so requests don't wait for you. Up to ${MAX_AWAY_DAYS} days at a time; it switches off by itself after your last day.`}
       />
+      <HelpBox module="away" />
       {ok === "saved" && <Note tone="ok">Saved. The person covering has been told.</Note>}
       {ok === "cleared" && <Note tone="ok">Welcome back. Your approvals come to you again.</Note>}
 

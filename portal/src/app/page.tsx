@@ -19,6 +19,7 @@ import { STAGE_LABEL } from "@/lib/purchases/types";
 import { approvingAsDirector, canViewDetail, coveringApprover, daysWaiting, isPurchaseCard } from "@/lib/purchases/workflow";
 import { requireViewer } from "@/lib/viewer";
 import { waitingFor } from "@/lib/waiting";
+import { WhatsNewNote } from "@/components/WhatsNewNote";
 import styles from "./home.module.css";
 
 export const dynamic = "force-dynamic";
@@ -98,8 +99,9 @@ export default async function Home() {
           </div>
         )}
       </header>
+      <WhatsNewNote />
 
-      {myAway && isCurrentOrUpcoming(myAway, today) && (
+      {myAway &&isCurrentOrUpcoming(myAway, today) && (
         <Note>
           {isActive(myAway, today) ? "You're marked away" : `You'll be away from ${fmtDay(myAway.from)}`} until {fmtDay(myAway.until)}. {names(myAway.delegate)} is covering your approvals. <Link href="/away">Change</Link>
         </Note>

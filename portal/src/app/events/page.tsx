@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
+import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { agendaBetween } from "@/lib/agenda";
@@ -65,6 +66,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
         lead="Request a program or event and book its room. Rooms are checked against the IAR calendar as you fill in the request."
         actions={<Button href="/events/new" variant="primary" icon="plus">New event request</Button>}
       />
+      <HelpBox module="events" />
 
       {askRows.length > 0 && <ItemList title="Asks for your booked time" rows={askRows} right={<span>{askRows.length} waiting</span>} />}
 

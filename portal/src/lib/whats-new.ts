@@ -1,0 +1,59 @@
+/**
+ * What's new in the portal, newest first. The home page shows a note when
+ * there's an entry newer than the last one a person dismissed (remembered in
+ * their browser), and /help/whats-new lists them all. Add an entry at the top
+ * when something people will notice ships.
+ */
+
+export type WhatsNew = {
+  /** YYYY-MM-DD. Entries on the same day show together. */
+  date: string;
+  title: string;
+  text: string;
+  /** Where to try it. */
+  href?: string;
+};
+
+export const WHATS_NEW: WhatsNew[] = [
+  {
+    date: "2026-10-25",
+    title: "A new look in IAR's colours",
+    text: "The portal now uses IAR's new logo, colours and fonts, with a menu down the side on larger screens and a dark mode. Pick light, dark or match your device in your account menu.",
+  },
+  {
+    date: "2026-10-25",
+    title: "What happens next, on every request",
+    text: "Each request page shows its steps, who has it now and what happens next, with people's names instead of email addresses.",
+    href: "/requests",
+  },
+  {
+    date: "2026-10-25",
+    title: "Needs you comes first",
+    text: "Lists are grouped into Needs you, Waiting on others and Done, so what's waiting on you is always at the top. The number beside Home counts it.",
+    href: "/",
+  },
+  {
+    date: "2026-10-25",
+    title: "Photos and receipts from your phone",
+    text: "Drag in receipts, invoices and photos, or take a picture straight from the form on a phone.",
+    href: "/purchases/new",
+  },
+  {
+    date: "2026-10-25",
+    title: "Event drafts and a quicker room calendar",
+    text: "The event form keeps what you've typed if you leave, and the room calendar updates as soon as you change the room or the day.",
+    href: "/events",
+  },
+  {
+    date: "2026-10-25",
+    title: "Help on every page",
+    text: "A short How this works box at the top of each page, and step-by-step guides under Help in your account menu.",
+    href: "/help",
+  },
+];
+
+/** The newest entry's date, or "" when there are none. */
+export const latestWhatsNew = (): string => WHATS_NEW.reduce((d, e) => (e.date > d ? e.date : d), "");
+
+/** Entries newer than the date a person last saw ("" means never), newest first. */
+export const whatsNewSince = (seen: string): WhatsNew[] => WHATS_NEW.filter((e) => e.date > seen);

@@ -9,6 +9,7 @@ import { groupForViewer } from "@/lib/needs-you";
 import { isMarketingCard, reviewableBy, type MarketingCard } from "@/lib/marketing/workflow";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
+import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { ToastOnLoad } from "@/components/toast";
@@ -61,6 +62,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
           </Button>
         }
       />
+      <HelpBox module="marketing" />
       <ToastOnLoad message={ok ? OK_MESSAGES[ok] : undefined} />
       {error && <Note tone="bad">{error}</Note>}
       <Note>
