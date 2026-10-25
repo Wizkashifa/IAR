@@ -110,7 +110,7 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 | **3J Facilities: My work today** | `/it-maintenance/today` on phones, linked tickets, how late a ticket is; `docs/facilities-move.md` |
 | **3K Marketing uploads** | Files on marketing requests, saved to a marketing Shared Drive folder |
 
-**Before the beta, an IAR admin sets up:**
+**Before the beta, an IAR admin sets up** (all of these are now steps in [beta-launch.md](beta-launch.md), the launch runbook):
 1. **Library:** add the portal's service account to the Policies Shared Drive as a **Viewer** (Portal Settings shows which account), then paste the drive's address in Portal Settings → "Library: the Policies drive".
 2. **Marketing files:** create a marketing folder in a Shared Drive, make the portal's service account a **Content manager**, give `portal-team-marketing@` at least Viewer access, then paste the folder link in Portal Settings → "Marketing files".
 3. **The daily job stays at 7:00 AM** Raleigh time: overnight alerts held by "quiet overnight" and the morning digests go out with it.
@@ -118,7 +118,7 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 
 Neither the Library nor marketing uploads needs a new domain-wide delegation scope.
 
-### Wave 4: finish and keep it that way (in progress: 2 agents)
+### Wave 4: finish and keep it that way (done)
 
 | Item | Status |
 |---|---|
@@ -127,14 +127,14 @@ Neither the Library nor marketing uploads needs a new domain-wide delegation sco
 | The accessibility check script on every page | Done: `npm run a11y` (add `--strict` to fail on findings) |
 | The "Styling" section in `CLAUDE.md` | Done |
 | Dependabot with grouped monthly updates | Done: `.github/dependabot.yml` |
-| A phone pass, dark mode and accessibility fixes on every screen | Agent 4B |
-| A review of every screen next to the demo | After 4B, with `npm run shots` |
+| A phone pass, dark mode and accessibility fixes on every screen | Done: `npm run a11y -- --strict` passes on all 33 screens, light and dark, desktop and phone |
+| A review of every screen next to the demo | Done, with `npm run shots` |
 
 ## A last check: effective, pretty, easy to use
 
 Going through the plans once more against those three goals, these were missing and are now part of the waves above or below:
 
-- **Watch real people use it.** In the first beta week, sit with five volunteers. Give them five tasks: request an event, get reimbursed, report a broken light, approve as a chair, find a free room Saturday evening. Note where they hesitate. This tells us more than any review, and it feeds wave 3's priorities. (Add to `docs/beta-launch.md`.)
+- **Watch real people use it.** In the first beta week, sit with five volunteers. Give them five tasks: request an event, get reimbursed, report a broken light, approve as a chair, find a free room Saturday evening. Note where they hesitate. This tells us more than any review, and it feeds wave 3's priorities. (In [beta-launch.md](beta-launch.md), "During the beta".)
 - **One vocabulary.** Statuses differ between modules ("In review", "Director review", "Being worked on", "Waiting on parts"). Agree one short glossary of statuses and verbs (Send, Approve, Send back, Withdraw) and use it everywhere. It belongs with 0B, since `stepsFor` and `nextStepText` produce most of these words.
 - **What happens after Send.** After submitting, land on the request page with a note saying it was sent, the step bar, and "What happens next". Don't leave people on a bare list. This is part of 1A.
 - **Phone forms.** Keep the Send button visible at the bottom of long forms on phones, and keep error messages next to the field they belong to. Both go in the `Field` component (0A) and the form rebuilds in wave 2.
