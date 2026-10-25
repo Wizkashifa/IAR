@@ -266,7 +266,7 @@ test("notices: comments go to the reporter, assignee, followers and earlier comm
   c = wf.setWatching(c, office.email, true, T(2));
   c = withComment(c, { at: T(3), by: `earlier@${d}`, name: "Earlier", text: "Same in the men's side." });
   const n = ticketCommentNotices(c, reporter, "Any news?");
-  assert.deepEqual(n.map((x) => x.to), [{ email: fac.email }, { email: office.email }, { email: `earlier@${d}` }]);
+  assert.deepEqual(n.map((x) => x.to), [{ email: `earlier@${d}` }, { email: fac.email }, { email: office.email }]);
   assert.ok(n.every((x) => !x.alert && x.href.endsWith("#comments")));
   // Nobody has it yet: the team's queue hears.
   assert.deepEqual(ticketCommentNotices(reported(), reporter, "More detail").map((x) => x.to), [{ role: "facilities" }]);

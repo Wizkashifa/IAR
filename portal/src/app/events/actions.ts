@@ -5,7 +5,7 @@ import { cardStore, ConflictError } from "@/lib/cards";
 import { checkComment, withComment } from "@/lib/comments";
 import { deliver } from "@/lib/notifications";
 import { internalPath } from "@/lib/links";
-import type { Notice } from "@/lib/purchases/notices";
+import type { Notice } from "@/lib/notices";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { type EventContext, busyFor, committeesFor, eventAccess, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { syncHolds } from "@/lib/events/holds";

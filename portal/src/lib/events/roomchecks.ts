@@ -5,7 +5,7 @@
  * the IAR office; an OK room tells nobody. Recording the check also moves
  * that date's security task along. Plain functions so they can be tested.
  */
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { dayText } from "./series";
 import { TaskError, worksTeam } from "./tasks";
 import type { EventTask, RoomCheck } from "./types";

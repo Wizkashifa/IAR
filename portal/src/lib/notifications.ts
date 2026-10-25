@@ -9,7 +9,7 @@ import { digestText, routeFyi, splitForQuietHours, type NotifyPrefs } from "./no
 import { roleMailbox, type Role } from "./org";
 import { peopleStore } from "./people";
 import { type PortalSettings, portalSettings } from "./portal-settings";
-import type { Notice } from "./purchases/notices";
+import type { Notice } from "./notices";
 import type { Viewer } from "./viewer";
 import { todayLocal } from "./dates";
 

@@ -3,8 +3,7 @@
  * Same rule as purchases: an alert only for whoever has to act next (the
  * director, the executive, the requester on a send-back). Plain functions.
  */
-import { commenters, preview } from "../comments";
-import type { Notice, Recipient } from "../purchases/notices";
+import { type Notice, type Recipient, commentNotices } from "../notices";
 import { dayText } from "./series";
 import { type EventActor, type EventCard, reviewersFor } from "./workflow";
 import { same } from "../text";
@@ -54,18 +53,8 @@ export function eventNotices(before: EventCard | null, after: EventCard, actor: 
 
 /** A new comment: the requester, whoever it's waiting on, and earlier commenters, in the portal only. */
 export function eventCommentNotices(card: EventCard, by: EventActor, text: string, directors: string[]): Notice[] {
-  const href = `/events/${card.id}#comments`;
-  const msg = `${by.name} commented on ${card.id} “${card.title}”: “${preview(text)}”`;
-  const to: Recipient[] = [{ email: card.ownerEmail }, ...commenters(card).map((email) => ({ email }))];
-  if (card.status === "in_review" && card.event.stage === "director") to.push(...reviewersFor(card.ownerEmail, directors).map((email) => ({ email })));
-  if (card.status === "in_review" && card.event.stage === "mission") to.push({ role: "executive" });
-  const seen = new Set<string>();
-  const out: Notice[] = [];
-  for (const r of to) {
-    const key = "email" in r ? r.email.toLowerCase() : `role:${r.role}`;
-    if (seen.has(key) || ("email" in r && same(r.email, by.email))) continue;
-    seen.add(key);
-    out.push({ to: r, cardId: card.id, href, text: msg, alert: false, delegable: false });
-  }
-  return out;
+  const also: Recipient[] = [];
+  if (card.status === "in_review" && card.event.stage === "director") also.push(...reviewersFor(card.ownerEmail, directors).map((email) => ({ email })));
+  if (card.status === "in_review" && card.event.stage === "mission") also.push({ role: "executive" });
+  return commentNotices(card, by, text, { href: `/events/${card.id}`, what: `${card.id} “${card.title}”`, also });
 }

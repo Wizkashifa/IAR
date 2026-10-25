@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cardStore, ConflictError } from "@/lib/cards";
 import { internalPath } from "@/lib/links";
 import { deliver } from "@/lib/notifications";
-import type { Notice } from "@/lib/purchases/notices";
+import type { Notice } from "@/lib/notices";
 import { requireViewer } from "@/lib/viewer";
 import { closeOutNotices, linkedPurchases, spendOf, submitCloseOut } from "@/lib/events/closeout";
 import { eventActor, eventContext } from "@/lib/events/context";

@@ -22,7 +22,7 @@
  * - Every step is written to the request's history.
  */
 import { ORG, type Role } from "../org";
-import type { Notice, Recipient } from "../purchases/notices";
+import type { Notice, Recipient } from "../notices";
 import { type Directory, teamPeople } from "../teams";
 import { lc, same } from "../text";
 

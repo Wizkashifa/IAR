@@ -7,7 +7,7 @@ import { checkComment, withComment } from "@/lib/comments";
 import { filesFrom } from "@/lib/drive";
 import { deliver } from "@/lib/notifications";
 import { ORG } from "@/lib/org";
-import type { Notice } from "@/lib/purchases/notices";
+import type { Notice } from "@/lib/notices";
 import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";

@@ -6,8 +6,8 @@
  * requester when marketing asks a question or declines. Scheduled and done
  * are in-portal notices only. Plain functions so they can be tested.
  */
-import { commenters, preview } from "../comments";
-import type { Notice, Recipient } from "../purchases/notices";
+import { preview } from "../comments";
+import { type Notice, type Recipient, commentNotices } from "../notices";
 import { longDay, type Actor, type MarketingCard } from "./workflow";
 import { same } from "../text";
 
@@ -87,18 +87,6 @@ function nextActor(c: MarketingCard): Recipient | null {
  * of anyone by itself.
  */
 export function marketingCommentNotices(card: MarketingCard, by: Actor, text: string): Notice[] {
-  const href = `/marketing/${card.id}#comments`;
-  const msg = `${by.name} commented on ${label(card)}: “${preview(text)}”`;
-  const to: Recipient[] = [{ email: card.ownerEmail }, ...commenters(card).map((email) => ({ email }))];
   const next = nextActor(card);
-  if (next) to.push(next);
-  const seen = new Set<string>();
-  const out: Notice[] = [];
-  for (const r of to) {
-    const key = "email" in r ? r.email.toLowerCase() : `role:${r.role}`;
-    if (seen.has(key) || ("email" in r && same(r.email, by.email))) continue;
-    seen.add(key);
-    out.push({ to: r, cardId: card.id, href, text: msg, alert: false, delegable: false });
-  }
-  return out;
+  return commentNotices(card, by, text, { href: `/marketing/${card.id}`, what: label(card), also: next ? [next] : [] });
 }

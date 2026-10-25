@@ -7,7 +7,7 @@
  * close it for them. Plain functions so they can be tested.
  */
 import type { Card } from "../cards";
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { purchaseTotal } from "../purchases/types";
 import { dayText } from "./series";
 import type { CloseOut } from "./types";

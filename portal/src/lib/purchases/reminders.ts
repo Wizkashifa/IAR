@@ -12,12 +12,11 @@
  * Each reminder and escalation happens once per step; sending a request
  * back or moving it on starts the count again.
  */
-import type { Notice, Recipient } from "./notices";
-import { STAGE_LABEL, purchaseTotal } from "./types";
+import type { Notice, Recipient } from "../notices";
+import { purchaseLabel } from "./notices";
+import { STAGE_LABEL } from "./types";
 import { ESCALATE_DAYS, REMINDER_DAYS, type PurchaseCard, daysWaiting } from "./workflow";
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-const label = (c: PurchaseCard) => (c.purchase.restricted ? `${c.id} (Social & Welfare request)` : `${c.id} “${c.title}” (${money(purchaseTotal(c.purchase))})`);
 const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
 
 /** Who a request at its current step is waiting on. Null when nobody has to act. */
@@ -54,10 +53,10 @@ export function followUps(cards: PurchaseCard[], now: string, directorsOf: (fund
     if (p.stage === "chair" && age >= ESCALATE_DAYS && !f.escalatedAt) {
       const directors = p.restricted ? [] : directorsOf(p.fund).filter((d) => d.toLowerCase() !== c.ownerEmail.toLowerCase() && d.toLowerCase() !== p.approverEmail?.toLowerCase());
       const to: Recipient[] = directors.length ? directors.map((email) => ({ email })) : [{ role: "finance" }];
-      const text = `${label(c)} has waited ${days(age)} for ${step} from ${p.approverEmail ?? "the committee's chair"}. ${directors.length ? "As the committee's director you can approve it." : "Please follow up with the committee."}`;
+      const text = `${purchaseLabel(c)} has waited ${days(age)} for ${step} from ${p.approverEmail ?? "the committee's chair"}. ${directors.length ? "As the committee's director you can approve it." : "Please follow up with the committee."}`;
       out.push({ card: mark(c, { ...f, escalatedAt: now, remindedAt: f.remindedAt ?? now }, now, "Overdue: sent to the director"), kind: "escalate", notices: to.map((t) => ({ to: t, cardId: c.id, href, text, alert: true, delegable: false })) });
     } else if (age >= REMINDER_DAYS && !f.remindedAt) {
-      const text = `Reminder: ${label(c)} has waited ${days(age)} for your ${step}.`;
+      const text = `Reminder: ${purchaseLabel(c)} has waited ${days(age)} for your ${step}.`;
       out.push({ card: mark(c, { ...f, remindedAt: now }, now, "Reminder sent"), kind: "remind", notices: [{ to: who, cardId: c.id, href, text, alert: true, delegable: "email" in who }] });
     }
   }
@@ -85,7 +84,7 @@ export function morningDigest(cards: PurchaseCard[], now: string): Notice[] {
   const out: Notice[] = [];
   for (const { to, items } of byWho.values()) {
     const sorted = [...items].sort((a, b) => daysWaiting(b, nowMs) - daysWaiting(a, nowMs));
-    const list = sorted.slice(0, 8).map((c) => `${label(c)}, ${days(daysWaiting(c, nowMs))}`).join("; ");
+    const list = sorted.slice(0, 8).map((c) => `${purchaseLabel(c)}, ${days(daysWaiting(c, nowMs))}`).join("; ");
     const more = sorted.length > 8 ? `; and ${sorted.length - 8} more` : "";
     const whose = "email" in to ? "you" : to.role === "finance" ? "the finance office" : "the executive";
     out.push({ to, href: "/purchases", text: `Good morning. ${sorted.length} purchase request${sorted.length === 1 ? " is" : "s are"} waiting on ${whose}: ${list}${more}.`, alert: true, delegable: "email" in to });

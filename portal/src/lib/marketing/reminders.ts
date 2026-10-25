@@ -8,7 +8,7 @@
  *   done-by date is tomorrow, today or past. Once per done-by date: a new
  *   date (rescheduled) can get its own reminder.
  */
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { daysBetween } from "../dates";
 import { type MarketingCard, shortDay } from "./workflow";
 

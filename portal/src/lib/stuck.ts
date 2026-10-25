@@ -12,7 +12,7 @@
 import type { Card } from "./cards";
 import { hrefOf } from "./card-links";
 import type { Role } from "./org";
-import type { Notice, Recipient } from "./purchases/notices";
+import type { Notice, Recipient } from "./notices";
 import { waitingOn as purchaseWaitingOn } from "./purchases/reminders";
 import { STAGE_LABEL as PURCHASE_STEP } from "./purchases/types";
 import { STAGE_LABEL as MARKETING_STEP } from "./marketing/types";

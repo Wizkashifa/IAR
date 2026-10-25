@@ -13,7 +13,7 @@
  */
 import { withComment } from "../comments";
 import type { Role } from "../org";
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { AV_KINDS } from "./input";
 import { isAfterHours } from "./rules";
 import { dayText } from "./series";
