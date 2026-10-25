@@ -51,6 +51,8 @@ export function AppFrame({
 }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
+  // The one menu link for this page: the longest that matches, so /purchases/finance lights up Finance desk, not Purchase Requests too.
+  const current = groups.flatMap((g) => g.links.map((l) => l.href)).filter((h) => isCurrent(path, h)).sort((a, b) => b.length - a.length)[0];
   const menuBtn = useRef<HTMLButtonElement>(null);
   const rail = useRef<HTMLElement>(null);
   useEffect(() => setOpen(false), [path]);
@@ -125,7 +127,7 @@ export function AppFrame({
             <div key={g.label ?? i} className={styles.group}>
               {g.label && <div className={styles.groupLabel}>{g.label}</div>}
               {g.links.map((l) => {
-                const on = isCurrent(path, l.href);
+                const on = l.href === current;
                 return (
                   <Link key={l.href} href={l.href} className={`${styles.link}${on ? ` ${styles.on}` : ""}`} aria-current={on ? "page" : undefined}>
                     <Icon name={l.icon} />
