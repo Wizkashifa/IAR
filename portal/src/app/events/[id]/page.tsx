@@ -14,6 +14,7 @@ import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { cardStore, STATUS_LABEL } from "@/lib/cards";
 import { canOpenCard } from "@/lib/access";
+import { canRequestAgain } from "@/lib/again";
 import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
@@ -377,7 +378,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const resubmit = own && can("resubmit");
     const addPurchase = own && (ec.status === "approved" || ec.status === "close_out");
     const renew = renewing?.can && ec.status === "approved";
-    if (!reviewing && !cancel && !resubmit && !addPurchase && !renew) {
+    const again = canRequestAgain(ec, viewer, ctx.today);
+    if (!reviewing && !cancel && !resubmit && !addPurchase && !renew && !again) {
       if (ec.status !== "in_review" || own) return null;
       const why = permission(ec, ev, "approve", directors);
       if (why.ok) return null;
@@ -402,7 +404,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {resubmit && <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>}
           {addPurchase && <Button href="/purchases/new" icon="receipt">Add a purchase request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
-          {(reviewing || resubmit || addPurchase || renew) && <span className={styles.grow} />}
+          {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
+          {(reviewing || resubmit || addPurchase || renew || again) && <span className={styles.grow} />}
           {reviewing && (
             <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline

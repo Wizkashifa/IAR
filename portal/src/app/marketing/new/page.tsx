@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/away";
+import { canRequestAgain, copiedNote, marketingAgain } from "@/lib/again";
+import { cardStore } from "@/lib/cards";
+import { isMarketingCard } from "@/lib/marketing/workflow";
 import { MARKETING_TYPES, isMarketingKind } from "@/lib/marketing/forms";
 import { MARKETING_KINDS } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
@@ -21,8 +24,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 }
 
 /** Pick a type from the cards, then answer that type's questions. */
-export default async function NewMarketing({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
-  const { type } = await searchParams;
+export default async function NewMarketing({ searchParams }: { searchParams: Promise<{ type?: string; from?: string }> }) {
+  const { type, from } = await searchParams;
   const viewer = await requireViewer();
   const crumb = (
     <nav className="crumb" aria-label="Breadcrumb">
@@ -59,6 +62,11 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
 
   const t = MARKETING_TYPES[type];
   const committees = await committeesFor(viewer);
+  const today = todayLocal();
+  // "Request this again": start from a finished request of the same type this person made or chairs.
+  const source = from ? await (await cardStore()).get(from) : null;
+  const copy = isMarketingCard(source) && source.marketing.kind === type && canRequestAgain(source, viewer, today) ? marketingAgain(source.marketing, source.committee, today) : undefined;
+  if (copy && !committees.includes(copy.committee)) copy.committee = "";
   return (
     <div className="stack loose">
       <div className="stack tight">
@@ -77,7 +85,8 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
       {committees.length === 0 && (
         <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
       )}
-      <MarketingForm action={createMarketing} kind={type} committees={committees} today={todayLocal()} cancelHref="/marketing" submitLabel="Send request" />
+      {copy && source && <Note>{copiedNote(source.id)}</Note>}
+      <MarketingForm action={createMarketing} kind={type} committees={committees} initial={copy} today={today} cancelHref="/marketing" submitLabel="Send request" />
     </div>
   );
 }

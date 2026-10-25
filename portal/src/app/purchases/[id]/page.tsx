@@ -9,6 +9,7 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
+import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { COMMENT_MAX } from "@/lib/comments";
@@ -363,7 +364,15 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </select>
       </Field>
     );
+    const again = canRequestAgain(pc, viewer, todayLocal()) && (
+      <div className={styles.actRow}>
+        <Button href={`/purchases/new?from=${pc.id}`} icon="repeat" variant="quiet">
+          Request this again
+        </Button>
+      </div>
+    );
     if (!approve && !pay && !books && !cancel && !sendBack) {
+      if (again) return again;
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
       return why && !why.ok ? <p className={styles.why}>{why.reason}</p> : null;
     }
@@ -464,6 +473,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             </ConfirmButton>
           </form>
         )}
+
+        {again}
       </div>
     );
   }

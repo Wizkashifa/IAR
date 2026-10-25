@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
@@ -285,6 +286,15 @@ export default async function MarketingDetail({
             </span>
           )}
         </form>
+      );
+    }
+    if (canRequestAgain(mc, viewer, today)) {
+      return (
+        <div className="row">
+          <Button href={`/marketing/new?type=${m.kind}&from=${mc.id}`} icon="repeat" variant="quiet">
+            Request this again
+          </Button>
+        </div>
       );
     }
     return null;
