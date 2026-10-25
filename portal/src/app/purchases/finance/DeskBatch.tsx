@@ -78,7 +78,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
                 status={r.status}
                 state="act"
                 right={<span className={styles.amount}>{r.amountText}</span>}
-                lead={<input type="checkbox" name="pick" value={r.key} checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Select ${r.id}, ${r.title}`} />}
+                lead={<label className={styles.pick}><input type="checkbox" name="pick" value={r.key} checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Select ${r.id}, ${r.title}`} /></label>}
               />
             ))}
           </ul>
