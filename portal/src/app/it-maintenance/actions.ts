@@ -27,11 +27,11 @@ const back = (id: string, q: string) => `/it-maintenance/${id}?${q}`;
 const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
-/** Report a problem. Photos upload after the ticket has its number; if they fail, the ticket still stands. */
+/** A new AV/IT/Maintenance request. Photos upload after the ticket has its number; if they fail, the ticket still stands. */
 export async function createTicket(_prev: TicketFormState, form: FormData): Promise<TicketFormState> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
-  const parsed = parseTicketInput(Object.fromEntries(["team", "kind", "title", "room", "roomOther", "equipment", "urgency", "description"].map((k) => [k, form.get(k)])));
+  const parsed = parseTicketInput(Object.fromEntries(["team", "title", "room", "roomOther", "equipment", "urgency", "description"].map((k) => [k, form.get(k)])));
   const photos = filesFrom(form, "photos");
   const errors = [...(parsed.ok ? [] : parsed.errors), ...checkPhotos(photos)];
   if (!parsed.ok || errors.length) return { errors };
@@ -48,7 +48,7 @@ export async function createTicket(_prev: TicketFormState, form: FormData): Prom
       await store.save(wf.addPhotos(created, actor, nowIso(), saved), created.updatedAt);
     } catch (e) {
       console.error("ticket photo upload failed", e);
-      redirect(back(created.id, err("Your problem was reported, but the photos didn't upload. Try adding them again below.")));
+      redirect(back(created.id, err("Your request was sent, but the photos didn't upload. Try adding them again below.")));
     }
   }
   revalidatePath("/it-maintenance");

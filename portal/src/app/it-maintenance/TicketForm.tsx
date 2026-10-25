@@ -17,7 +17,6 @@ function Submit() {
 export default function TicketForm({ action, locations }: { action: (prev: TicketFormState, form: FormData) => Promise<TicketFormState>; locations: string[] }) {
   const [state, formAction] = useActionState(action, { errors: [] });
   const [team, setTeam] = useState<TicketTeam | "">("");
-  const [kind, setKind] = useState<"problem" | "request">("problem");
   const [room, setRoom] = useState("");
   const [urgency, setUrgency] = useState<Urgency>("normal");
   // Controlled, so what someone typed survives a round trip with errors.
@@ -40,7 +39,7 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
       )}
 
       <fieldset className="section">
-        <legend>What kind of problem?</legend>
+        <legend>Which team?</legend>
         <div className="choices">
           {(["facilities", "it"] as TicketTeam[]).map((t) => (
             <label key={t} className={`choice${team === t ? " on" : ""}`}>
@@ -50,24 +49,12 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
             </label>
           ))}
         </div>
-        <div className="choices spaced">
-          <label className={`choice${kind === "problem" ? " on" : ""}`}>
-            <input type="radio" name="kind" value="problem" checked={kind === "problem"} onChange={() => setKind("problem")} />
-            <strong>Something&apos;s broken</strong>
-            <small>It used to work and now it doesn&apos;t.</small>
-          </label>
-          <label className={`choice${kind === "request" ? " on" : ""}`}>
-            <input type="radio" name="kind" value="request" checked={kind === "request"} onChange={() => setKind("request")} />
-            <strong>A request</strong>
-            <small>Something new: a setup, an account, a repair you&apos;d like done.</small>
-          </label>
-        </div>
       </fieldset>
 
       <fieldset className="section">
         <legend>Where and what</legend>
         <label className="field">
-          <span>In a few words</span>
+          <span>What do you need, in a few words?</span>
           <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX} required placeholder={team === "it" ? "Projector in Room 240 shows no picture" : "Faucet in the wudu area keeps dripping"} />
         </label>
         <div className="grid2">
@@ -102,7 +89,7 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
         )}
         <label className="field">
           <span>Details</span>
-          <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} maxLength={DESCRIPTION_MAX} required placeholder="What happened, when, and anything you already tried." />
+          <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} maxLength={DESCRIPTION_MAX} required placeholder="What happened or what you need, when, and anything you already tried." />
         </label>
         <label className="field">
           <span>Photos (optional)</span>

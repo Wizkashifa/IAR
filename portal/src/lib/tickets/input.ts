@@ -1,5 +1,5 @@
 /**
- * Checking what someone typed on the "Report a problem" form, and the photos
+ * Checking what someone typed on the "AV/IT/Maintenance request" form, and the photos
  * they attached. Plain functions so they can be tested.
  */
 import type { NewTicketInput } from "./workflow";
@@ -9,16 +9,15 @@ export const TITLE_MAX = 120;
 export const DESCRIPTION_MAX = 5000;
 export const PLACE_MAX = 120;
 
-export type TicketFormInput = Partial<Record<"team" | "kind" | "title" | "room" | "roomOther" | "equipment" | "urgency" | "description", unknown>>;
+export type TicketFormInput = Partial<Record<"team" | "title" | "room" | "roomOther" | "equipment" | "urgency" | "description", unknown>>;
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 export function parseTicketInput(raw: TicketFormInput): { ok: true; input: NewTicketInput } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   const team = str(raw.team) as TicketTeam;
-  if (team !== "it" && team !== "facilities") errors.push("Choose whether it's a building problem or an IT, A/V or tech problem.");
-  const kind = (str(raw.kind) || "problem") as TicketKind;
-  if (kind !== "problem" && kind !== "request") errors.push("Choose whether something's broken or it's a request.");
+  if (team !== "it" && team !== "facilities") errors.push("Choose whether it's for building and maintenance, or for IT, A/V and tech.");
+  const kind: TicketKind = "request";
   const title = str(raw.title).replace(/\s+/g, " ");
   if (title.length < 3) errors.push("Say in a few words what's wrong.");
   else if (title.length > TITLE_MAX) errors.push(`Keep the short description under ${TITLE_MAX} characters; put the rest in the details.`);

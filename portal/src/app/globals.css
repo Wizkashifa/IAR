@@ -107,30 +107,28 @@ h2 { font-size: 16px; margin: 32px 0 12px; }
   .topbar { display: none; }
   body { background: #fff; }
 }
-/* The menu: a row on a computer, a drawer on a phone (MenuDrawer.tsx). */
-.menu { display: contents; }
-.menubtn, .bell-mobile { display: none; }
-.menubtn { background: none; border: 0; padding: 6px; margin-left: -6px; color: var(--cream); cursor: pointer; }
+/* The menu: a drawer from the left on every screen (MenuDrawer.tsx). The header keeps only the menu button, the logo and the bell. */
+.topbar-inner { gap: 12px; }
+.menubtn { display: inline-flex; order: -1; position: relative; z-index: 31; background: none; border: 0; padding: 6px; margin-left: -6px; color: var(--cream); cursor: pointer; }
 .menubtn svg, .bell-mobile svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bell-mobile { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: var(--cream); }
+.bell-mobile:hover { color: var(--gold-light); text-decoration: none; }
+.menu {
+  display: flex; flex-direction: column; gap: 18px;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(320px, 86vw); overflow-y: auto;
+  background: #0b2e12; border-right: 2px solid var(--gold); padding: max(20px, env(safe-area-inset-top, 0px)) 20px 24px max(20px, env(safe-area-inset-left, 0px));
+  transform: translateX(-102%); visibility: hidden; transition: transform 0.2s ease-out, visibility 0.2s;
+}
+.menu.open { transform: none; visibility: visible; }
+.menu .nav { flex-direction: column; flex-wrap: nowrap; gap: 0; flex: none; }
+.menu .nav a { padding: 10px 4px; font-size: 16px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
+.menu .topsearch { flex: none; order: -1; margin-top: 36px; }
+.menu .user { flex-direction: column; align-items: flex-start; gap: 12px; font-size: 15px; }
+.menu .user .bell { display: none; }
+.scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 29; }
+body.menu-open { overflow: hidden; }
 @media (max-width: 760px) {
-  .topbar-inner { gap: 12px; }
   .brand-logo { height: 34px; }
-  .menubtn { display: inline-flex; order: -1; position: relative; z-index: 31; }
-  .bell-mobile { display: inline-flex; align-items: center; margin-left: auto; color: var(--cream); }
-  .menu {
-    display: flex; flex-direction: column; gap: 18px;
-    position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(300px, 86vw); overflow-y: auto;
-    background: #0b2e12; border-right: 2px solid var(--gold); padding: max(20px, env(safe-area-inset-top, 0px)) 20px 24px max(20px, env(safe-area-inset-left, 0px));
-    transform: translateX(-102%); visibility: hidden; transition: transform 0.2s ease-out, visibility 0.2s;
-  }
-  .menu.open { transform: none; visibility: visible; }
-  .menu .nav { flex-direction: column; flex-wrap: nowrap; gap: 0; flex: none; }
-  .menu .nav a { padding: 10px 4px; font-size: 16px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
-  .menu .topsearch { flex: none; order: -1; margin-top: 36px; }
-  .menu .user { flex-direction: column; align-items: flex-start; gap: 12px; font-size: 15px; }
-  .menu .user .bell { display: none; }
-  .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 29; }
-  body.menu-open { overflow: hidden; }
 }
 
 /* ---- Purchase Requests ------------------------------------------------ */

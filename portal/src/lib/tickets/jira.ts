@@ -227,7 +227,7 @@ export function ticketFromJira(r: JiraRow, ctx: JiraContext): { ok: true; key: s
   if (mapped === "done" && !ctx.includeDone) return { ok: false, key, reason: "Already done in Jira.", done: statusRaw };
 
   const team = jiraTeam([...every(r, "component/s", "components", "component"), ...every(r, "labels", "label")]);
-  const kind: TicketKind = ["bug", "problem", "incident"].includes(type) ? "problem" : "request";
+  const kind: TicketKind = "request";
   const pr = jiraUrgency(first(r, "priority"));
   const created = parseJiraDate(first(r, "created"));
   const resolvedOn = parseJiraDate(first(r, "resolved"));

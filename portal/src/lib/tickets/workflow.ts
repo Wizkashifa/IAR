@@ -4,7 +4,7 @@
  * these; they never change a ticket's status themselves.
  *
  * Who may do what:
- * - Anyone signed in can report a problem. The reporter can add photos and
+ * - Anyone signed in can make a request. The reporter can add photos and
  *   comments, confirm the fix or say it isn't fixed (reopen), and cancel while
  *   it's still new.
  * - Anyone on the ticket's team (IT Services for IT and A/V, Facility
