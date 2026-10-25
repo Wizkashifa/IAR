@@ -105,6 +105,17 @@ export const MODULES: PortalModule[] = [
     ],
   },
   {
+    id: "whats-stuck",
+    nav: "What's stuck",
+    name: "What's Stuck",
+    summary: "Every open request by how long it has waited, who it's waiting on, and a reminder button.",
+    visibleTo: ["office", "executive", "admins"],
+    phase: 2,
+    status: "live",
+    href: "/stuck",
+    plannedFeatures: [],
+  },
+  {
     id: "rentals",
     name: "Facility Rentals",
     summary: "Review gym and hall rental requests from outside renters.",
