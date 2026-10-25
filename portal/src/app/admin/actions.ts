@@ -9,6 +9,7 @@ import { FUNDS } from "@/lib/purchases/accounts";
 import { checkCard, checkDriveFolder, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
 import { googleRooms } from "@/lib/rooms-google";
 import { RULES } from "@/lib/events/rules";
+import { parseDriveId } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
 
 async function requireAdmin() {
@@ -96,9 +97,23 @@ export async function saveEventRules(form: FormData): Promise<void> {
   const store = await settingsStore();
   const s = await store.get();
   const eventRules = Object.fromEntries(RULES.map((rule) => [rule.id, form.get(rule.id) === "on"]));
-  // Only a web link: it opens in a new tab from the event form.
-  const url = String(form.get("roomPolicyUrl") ?? "").trim().slice(0, 500);
+  // Only a web link: it opens in a new tab from the event form. A file picked from the Library wins over a typed link.
+  const picked = String(form.get("roomPolicyFile") ?? "").trim();
+  const url = (picked || String(form.get("roomPolicyUrl") ?? "")).trim().slice(0, 500);
   const roomPolicyUrl = /^https:\/\/\S+$/.test(url) ? url : "";
   await store.save({ ...s, eventRules, roomPolicyUrl, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   back({ ok: "Event rules saved." });
+}
+
+/** The Policies Shared Drive the Library lists: its link from the browser, or its ID. Empty disconnects it. */
+export async function savePoliciesDrive(form: FormData): Promise<void> {
+  const viewer = await requireAdmin();
+  const raw = String(form.get("policiesDrive") ?? "").trim().slice(0, 300);
+  const id = raw ? parseDriveId(raw) : "";
+  if (id === null) return back({ error: "That isn't a Shared Drive link. Open the drive in Google Drive and copy the address from the browser." });
+  const store = await settingsStore();
+  const s = await store.get();
+  await store.save({ ...s, policiesDrive: id, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
+  revalidatePath("/library");
+  back({ ok: id ? "Policies drive connected. The Library lists it within a few minutes." : "Policies drive disconnected." });
 }

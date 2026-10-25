@@ -23,6 +23,8 @@ export type PortalSettings = {
   teamInfo?: Record<string, TeamInfo>;
   /** The Shared Drive folder marketing request files go in (a folder ID). Unset: the forms take Drive links only. */
   marketingDriveFolder?: string;
+  /** The Policies Shared Drive's ID, listed in the Library (lib/library.ts). */
+  policiesDrive?: string;
   updatedAt?: string;
   updatedBy?: string;
 };

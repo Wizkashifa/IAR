@@ -11,7 +11,8 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, saveMarketingSettings, saveRoom, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, saveMarketingSettings, savePoliciesDrive, saveRoom, saveTeamFund } from "./actions";
+import { libraryReader, policiesLibrary } from "@/lib/library";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
@@ -34,7 +35,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { ok, error } = await searchParams;
   const viewer = await requireViewer();
   if (!viewer.actingRoles.includes("admins")) redirect("/");
-  const [dir, settings, google] = await Promise.all([directory(), portalSettings(), googleRooms()]);
+  const [dir, settings, google, library, reader] = await Promise.all([directory(), portalSettings(), googleRooms(), policiesLibrary(), libraryReader()]);
+  // Policy files the room policy can be picked from (current ones, not the archive).
+  const policyFiles = library.state === "ok" ? library.library.files.filter((f) => f.folder !== "Archive").sort((a, b) => a.name.localeCompare(b.name)) : [];
   const rooms = mergeRooms(google, settings.rooms ?? {});
   const funds = effectiveTeamFunds(dir, settings.teamFunds, FUNDS);
   const teams = [...dir.teams].sort((a, b) => a.name.localeCompare(b.name));
@@ -243,6 +246,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <input type="url" name="roomPolicyUrl" defaultValue={settings.roomPolicyUrl ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
           <small>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</small>
         </label>
+        {policyFiles.length > 0 && (
+          <label className="field">
+            <span>Or pick it from the Library</span>
+            <select name="roomPolicyFile" defaultValue={policyFiles.find((f) => f.url === settings.roomPolicyUrl)?.url ?? ""}>
+              <option value="">Use the link above</option>
+              {policyFiles.map((f) => (
+                <option key={f.id} value={f.url}>
+                  {f.name}{f.folder ? ` (${f.folder})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div><button className="button secondary" type="submit">Save rules</button></div>
       </form>
 
@@ -255,6 +271,26 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <small>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</small>
         </label>
         <div><button className="button secondary" type="submit">Save folder</button></div>
+      </form>
+
+      <h2 id="library">Library: the Policies drive</h2>
+      <p className="note">
+        The Library lists IAR&apos;s Policies Shared Drive for everyone at IAR, read-only; files open in Google Drive. To connect it, add{" "}
+        {reader ? <code>{reader}</code> : "the portal's service account"} to the drive as a <strong>Viewer</strong> (Drive → the drive&apos;s name → Manage members), then paste the drive&apos;s address here.
+      </p>
+      <form action={savePoliciesDrive} className="panel stack">
+        <label className="field">
+          <span>Policies drive (its address from the browser, or its ID)</span>
+          <input name="policiesDrive" defaultValue={settings.policiesDrive ? `https://drive.google.com/drive/folders/${settings.policiesDrive}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={300} />
+          <small>
+            {library.state === "ok"
+              ? `Connected: ${library.library.files.length} files in ${library.library.folders.length} folders.`
+              : library.state === "error"
+                ? "Set, but the portal can't read it. Check the service account is a Viewer on the drive."
+                : "Not connected. Leave empty to keep the Library off."}
+          </small>
+        </label>
+        <div><button className="button secondary" type="submit">Save</button></div>
       </form>
 
       <h2>Google Chat spaces</h2>

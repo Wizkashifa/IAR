@@ -127,6 +127,21 @@ export const MODULES: PortalModule[] = [
     plannedFeatures: [],
   },
   {
+    id: "library",
+    nav: "Library",
+    name: "Library",
+    summary: "IAR's approved policies, from the Policies Shared Drive. Files open in Google Drive.",
+    visibleTo: ["member"],
+    phase: 2,
+    status: "live",
+    href: "/library",
+    plannedFeatures: [
+      "Shura documents and each committee's drive, opened with the person's own Google access",
+      "Tags, policy owners and review reminders",
+      "Links from requests to the files they rely on",
+    ],
+  },
+  {
     id: "rentals",
     name: "Facility Rentals",
     summary: "Review gym and hall rental requests from outside renters.",

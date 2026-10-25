@@ -8,6 +8,8 @@ import styles from "./Search.module.css";
 
 export type SearchPlace = { label: string; href: string; icon: IconName };
 type Result = { id: string; title: string; sub: string; href: string };
+/** A Library file: opens in Google Drive in a new tab. */
+type Policy = { id: string; title: string; sub: string; url: string };
 
 const [store, panel] = createSpotlight();
 /** Open the search from anywhere (the drawer's search box uses it). */
@@ -23,6 +25,7 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
 
@@ -30,6 +33,7 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
     const q = query.trim();
     if (!q) {
       setResults([]);
+      setPolicies([]);
       setBusy(false);
       return;
     }
@@ -38,10 +42,16 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        const data = (await res.json()) as { results?: Result[] };
-        if (n === seq.current) setResults(data.results ?? []);
+        const data = (await res.json()) as { results?: Result[]; policies?: Policy[] };
+        if (n === seq.current) {
+          setResults(data.results ?? []);
+          setPolicies(data.policies ?? []);
+        }
       } catch {
-        if (n === seq.current) setResults([]);
+        if (n === seq.current) {
+          setResults([]);
+          setPolicies([]);
+        }
       } finally {
         if (n === seq.current) setBusy(false);
       }
@@ -52,6 +62,10 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
   const go = (href: string) => {
     panel.close();
     router.push(href);
+  };
+  const openFile = (url: string) => {
+    panel.close();
+    window.open(url, "_blank", "noopener,noreferrer");
   };
   const all = () => go(`/search?q=${encodeURIComponent(query.trim())}`);
   const q = query.trim().toLowerCase();
@@ -104,6 +118,13 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
                 ))}
               </Spotlight.ActionsGroup>
             )}
+            {policies.length > 0 && (
+              <Spotlight.ActionsGroup label="Policies">
+                {policies.map((p) => (
+                  <Spotlight.Action key={p.id} label={p.title} description={p.sub} leftSection={<Icon name="book" />} onClick={() => openFile(p.url)} />
+                ))}
+              </Spotlight.ActionsGroup>
+            )}
             {pages.length > 0 && (
               <Spotlight.ActionsGroup label="Pages">
                 {pages.map((p) => (
@@ -114,7 +135,7 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
             {q && (
               <Spotlight.Action label={`See all results for “${query.trim()}”`} leftSection={<Icon name="search" />} onClick={all} />
             )}
-            {q && !busy && results.length === 0 && pages.length === 0 && (
+            {q && !busy && results.length === 0 && policies.length === 0 && pages.length === 0 && (
               <Spotlight.Empty>No requests you can open match “{query.trim()}”. Press Enter to search everything.</Spotlight.Empty>
             )}
           </Spotlight.ActionsList>

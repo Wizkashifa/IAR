@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { ItemList, rowsFor } from "@/components/ItemList";
 import { ModuleHead } from "@/components/ModuleHead";
+import { Panel } from "@/components/Panel";
+import { searchPolicies } from "@/lib/library";
 import { canOpenCard } from "@/lib/access";
 import { todayLocal } from "@/lib/away";
 import { emailsIn } from "@/lib/card-row";
@@ -34,7 +36,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     const canSee = (c: Card) => canOpenCard(c, { ...actor, seeAll: viewer.roles.includes("admins") });
     results = matchCards([...(exact ? [exact] : []), ...recent], q).filter(canSee).slice(0, 50);
   }
-  const [names, ctx] = await Promise.all([nameResolver(emailsIn(results)), needsContext()]);
+  const [names, ctx, policies] = await Promise.all([nameResolver(emailsIn(results)), needsContext(), q && !requestNumber(q) ? searchPolicies(q) : Promise.resolve(null)]);
   // Someone else's request says whose it is.
   const rows = rowsFor(results, actor, { names, today: todayLocal(), ctx }).map((r, i) =>
     results[i].ownerEmail.toLowerCase() === actor.email ? r : { ...r, sub: `${r.sub} · from ${names(results[i].ownerEmail)}` },
@@ -56,6 +58,21 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           rows={rows}
           empty={`Nothing matches “${q}” among requests you can open. Search looks through the ${RECENT} most recently updated requests; for an older one, search its number.`}
         />
+      )}
+      {policies && policies.length > 0 && (
+        <Panel title="Policies" right={<a href={`/library?q=${encodeURIComponent(q)}`}>See all in the Library</a>} flush>
+          <ul className={styles.policies}>
+            {policies.slice(0, 5).map((f) => (
+              <li key={f.id}>
+                <a href={f.url} target="_blank" rel="noopener noreferrer">
+                  {f.name}
+                  <span className="sr-only"> (opens in Google Drive)</span>
+                </a>
+                <span className={styles.policySub}>{[f.kind.label, f.folder].filter(Boolean).join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
     </div>
   );
