@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { requireViewer } from "@/lib/viewer";
+import { readPrefill } from "@/lib/calendar-view";
 import { eventContext } from "@/lib/events/context";
 import { submitEvent } from "../actions";
 import EventForm from "../EventForm";
@@ -13,10 +14,14 @@ import { Crumb } from "../Crumb";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New event request" };
 
-export default async function NewEvent() {
+type Query = { date?: string; start?: string; end?: string; room?: string; people?: string; food?: string };
+
+export default async function NewEvent({ searchParams }: { searchParams: Promise<Query> }) {
   const viewer = await requireViewer();
   const ctx = await eventContext();
   const props = await formProps(viewer, ctx);
+  // From "Find a room" on the Calendar: start on that date, time, room and size.
+  const prefill = readPrefill(await searchParams, ctx.bookable.map((r) => r.id), ctx.today);
   return (
     <div className="stack loose">
       <div className="stack tight">
@@ -30,7 +35,7 @@ export default async function NewEvent() {
           </EmptyState>
         </Panel>
       ) : (
-        <EventForm action={submitEvent.bind(null, null)} {...props} submitLabel="Send request" />
+        <EventForm action={submitEvent.bind(null, null)} {...props} prefill={prefill} submitLabel="Send request" />
       )}
     </div>
   );
