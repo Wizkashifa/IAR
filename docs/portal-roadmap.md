@@ -38,7 +38,7 @@ Everything else stays ours, built from the demo: panels, list rows, pills, the s
 - **One colour-scheme switch.** Use Mantine's colour-scheme attribute as the only light/dark switch, and write our dark tokens against it. Two switches (ours and Mantine's) would fight. This replaces the separate `data-theme` idea in `design-system.md`.
 - **No Mantine layout or style props in pages** (`Stack`, `Group`, `mt="md"`). Pages use our layout classes, so pages don't depend on Mantine.
 - **Mantine 9 needs React 19.2 or later.** The portal is on 19.1, so the upgrade comes first in wave 0.
-- **Next.js 16 is out.** The portal is on 15.5. Plan the move to 16 in wave 4, after everything else lands, so the framework under the beta is a supported one.
+- **Next.js 16: done in wave 0.** Mantine 9 doesn't build on Next.js 15, because the React that ships inside it lacks APIs Mantine uses. The portal moved to Next.js 16.4.3 with React 19.3.1 and needed no code changes.
 
 **Magic UI is not a fit.** It's a set of animated components for marketing landing pages (marquees, particle backgrounds, animated text). It's built on Tailwind CSS and the Motion animation library and copied in through the shadcn tool. That would bring in a second styling system next to ours and add motion that doesn't belong on approval and receipt screens. The portal's polish should come from calm, consistent detail, as in the demo. If something deserves a small flourish, such as a count ticking up on a dashboard later, a few lines of CSS do it.
 
@@ -118,7 +118,6 @@ Every agent moves its pages onto `RequestPage` and `ItemList`, uses names, adds 
 - The "Styling" section in `CLAUDE.md`.
 - Dependabot with grouped monthly updates.
 - Dark mode reviewed on every screen.
-- Next.js 15 to 16, with the full test, typecheck and build run and the screenshot review repeated.
 
 ## A last check: effective, pretty, easy to use
 
