@@ -2,8 +2,6 @@
 @layer pages {
   .count { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--ink-3); white-space: nowrap; }
 
-  .crumb { font-size: var(--t-sm); color: var(--ink-2); margin-bottom: var(--s-2); }
-  .crumb a { color: var(--accent-text); }
   .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: var(--s-4); align-items: start; margin-top: var(--s-4); }
   .plain { margin: 0; }
   .notice { margin-top: var(--s-4); }

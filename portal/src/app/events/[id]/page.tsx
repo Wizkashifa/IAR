@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, FormActions } from "@/components/Field";
 import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelFoot } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
@@ -169,7 +169,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         <>
           <Panel title="About the event">
             <p className={styles.about}>{e.description}</p>
-            {e.setupNotes && <p className={styles.muted}>Setup plan: {e.setupNotes}</p>}
+            {e.setupNotes && <p className="hint">Setup plan: {e.setupNotes}</p>}
           </Panel>
 
           {e.isPublic && e.brief && (
@@ -215,7 +215,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} />
                 ))}
               </Rows>
-              {tasks.every((t) => t.status === "locked") && <div className={styles.foot}>Each team gets its task in Team Queues once the event is approved.</div>}
+              {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
             </Panel>
           )}
 
@@ -236,7 +236,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   />
                 ))}
               </Rows>
-              <div className={styles.foot}>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</div>
+              <PanelFoot>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</PanelFoot>
             </Panel>
           )}
 
@@ -252,10 +252,10 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   {linked.length > linkedVisible.length && <ItemRow state="plain" title={`${linked.length - linkedVisible.length} more you can't open`} sub="Restricted" />}
                 </Rows>
               )}
-              <div className={styles.foot}>
+              <PanelFoot>
                 Spent so far: <strong>{spendText(spent, e.budget)}</strong>
                 {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New purchase request</Link></> : null}
-              </div>
+              </PanelFoot>
             </Panel>
           )}
 
@@ -310,8 +310,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             return s ? <Pill tone={s.tone}>{s.label}</Pill> : undefined;
           })()}>
             <ChecksList checks={live ? live.checks : e.checks} empty="No checks were saved with this request." />
-            {live && live.clashes.some((c) => c.kind !== "pending") && <p className={styles.muted}>Something was booked in this room since it was sent. Send it back so the requester can pick another time.</p>}
-            {!live && e.checks.length > 0 && <p className={styles.muted}>As checked when it was sent.</p>}
+            {live && live.clashes.some((c) => c.kind !== "pending") && <p className="hint">Something was booked in this room since it was sent. Send it back so the requester can pick another time.</p>}
+            {!live && e.checks.length > 0 && <p className="hint">As checked when it was sent.</p>}
           </Panel>
 
           {calRoom && (
@@ -335,7 +335,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       const why = permission(ec, ev, "approve", directors);
       if (why.ok) return null;
       const who = e.stage === "director" ? reviewersFor(ec.ownerEmail, directors).map(names) : [];
-      return <p className={styles.muted}>{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
+      return <p className="hint">{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
     }
     return (
       <form action={actOnEvent} className="stack">
@@ -386,9 +386,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               Next period requested: <Link href={`/events/${renewal.id}`}>{renewal.id}</Link> <Pill tone="info">{STATUS_LABEL[renewal.status]}</Pill>
             </div>
           ) : ec.status === "approved" && ctx.today <= r.until && !renewing?.can ? (
-            <p className={styles.muted}>{ctx.today < renewalOpens(r) ? `Renewal opens ${longDate(renewalOpens(r))}, ${RENEW_DAYS} days before the series ends.` : renewing && !renewing.can ? renewing.why : ""}</p>
+            <p className="hint">{ctx.today < renewalOpens(r) ? `Renewal opens ${longDate(renewalOpens(r))}, ${RENEW_DAYS} days before the series ends.` : renewing && !renewing.can ? renewing.why : ""}</p>
           ) : renewing?.can ? (
-            <p className={styles.muted}>Renewal is open. It goes through the same checks and approval.</p>
+            <p className="hint">Renewal is open. It goes through the same checks and approval.</p>
           ) : null}
         </div>
       </Panel>
@@ -429,11 +429,11 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     return (
       <Panel title="Close out this event" id="closeout">
         {!may ? (
-          <p className={styles.muted}>The event is over. It&apos;s waiting on {names(ec.ownerEmail)} for the attendance and final costs.</p>
+          <p className="hint">The event is over. It&apos;s waiting on {names(ec.ownerEmail)} for the attendance and final costs.</p>
         ) : (
           <form action={closeOutEvent} className={styles.closeout}>
             {base}
-            <p className={styles.muted}>{own ? "The event is over. Tell us how it went and confirm the final costs. It takes a minute." : "You can close this out for the requester. Attendance and costs are optional for the office."}</p>
+            <p className="hint">{own ? "The event is over. Tell us how it went and confirm the final costs. It takes a minute." : "You can close this out for the requester. Attendance and costs are optional for the office."}</p>
             <div className="grid two">
               <Field label="About how many people came?" hint={`You expected ${e.attendance}.`} required={own}>
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />

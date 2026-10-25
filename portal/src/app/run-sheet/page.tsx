@@ -17,6 +17,7 @@ import { RoomDay } from "../events/RoomDay";
 import styles from "../events/events.module.css";
 import { PrintButton } from "./PrintButton";
 import { isDate } from "@/lib/dates";
+import { Pill } from "@/components/Pill";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Daily Run Sheet" };
@@ -88,7 +89,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                     <div className={styles.time}>{timeText(r.start)}–{timeText(r.end)}</div>
                     <div className="sub">Event {timeText(r.eventStart)}–{timeText(r.eventEnd)}</div>
                     {(r.setup > 0 || r.teardown > 0) && <div className="sub">{r.setup} min setup, {r.teardown} min cleanup</div>}
-                    {r.afterHours && <span className={styles.flag}>After hours</span>}
+                    {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
                     <Link href={`/events/${r.cardId}`} className={styles.lineTitle}>{r.title}</Link>
@@ -111,7 +112,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                 <li key={`c${i}`} className={`${styles.entry} ${styles.cal}`}>
                   <div>
                     <div className={styles.time}>{timeText(r.start)}–{timeText(r.end)}</div>
-                    {r.afterHours && <span className={styles.flag}>After hours</span>}
+                    {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
                     <div>{r.title}</div>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { requireViewer } from "@/lib/viewer";
 import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
@@ -12,6 +11,7 @@ import { todayLocal } from "@/lib/dates";
 import { canRequestAgain, copiedNote, purchaseAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { isPurchaseCard } from "@/lib/purchases/workflow";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New purchase request" };
@@ -29,9 +29,7 @@ export default async function NewPurchase({ searchParams }: { searchParams: Prom
   if (copy?.cardLast4 && !held.some((c) => c.last4 === copy.cardLast4)) copy.cardLast4 = undefined;
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb">
-        <Link href="/purchases">Purchase Requests</Link> / New
-      </nav>
+      <Crumb trail={[{ href: "/purchases", label: "Purchase Requests" }]} here="New" />
       <ModuleHead title="New purchase request" lead="It goes to your committee's chair, then the finance office. Split it across as many sub-accounts as you need, and link it to an event so its cost shows up there." />
       {copy && source && <Note tone="info">{copiedNote(source.id)} Add this time&apos;s receipts.</Note>}
       <PurchaseForm

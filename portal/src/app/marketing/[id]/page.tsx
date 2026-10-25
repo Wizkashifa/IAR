@@ -118,7 +118,7 @@ export default async function MarketingDetail({
             ]}
           />
           {own && can("edit") && m.stage === "review" && (
-            <p className={styles.sideNote}>
+            <p className="hint">
               Need to change something? <Link href={`/marketing/${mc.id}/edit`}>Edit the request</Link> until marketing schedules it.
             </p>
           )}
@@ -188,7 +188,7 @@ export default async function MarketingDetail({
                 </div>
               </form>
             ) : (
-              <p className={styles.sideNote}>File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
+              <p className="hint">File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
             ))}
         </div>
       </Panel>

@@ -86,7 +86,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
       {rows.length > 0 && (
         <Panel title={on.length ? `${on.length} selected · ${money(total)}` : "Nothing selected yet"} level={3}>
           {on.length === 0 ? (
-            <p className={styles.hint}>Tick the requests above, or Select all, then choose what to do with them.</p>
+            <p className="hint">Tick the requests above, or Select all, then choose what to do with them.</p>
           ) : (
             <div className="stack">
               {tab === "pay" && (

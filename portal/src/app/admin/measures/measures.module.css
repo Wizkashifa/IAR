@@ -3,15 +3,12 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: var(--s-4); margin-top: var(--s-4); }
 
   .total { font-weight: 700; }
-  .muted { color: var(--ink-2); }
   .barCol { width: 34%; min-width: 120px; }
 
   .wait { display: flex; flex-direction: column; gap: 4px; min-width: 110px; }
   .bar { display: block; width: 100%; height: 8px; }
   .track { fill: var(--surface-2); }
   .fill { fill: var(--accent); }
-
-  .foot { margin: 0; padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
 
   /* Phones: the week table keeps the week, the total and the bar; every table fits its card. */
   @media (max-width: 640px) {

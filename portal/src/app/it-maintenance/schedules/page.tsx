@@ -22,14 +22,13 @@ import { pauseSchedule, saveSchedule } from "../actions";
 import { FLASH, fmtDay } from "../ui";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "../tickets.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Preventive schedules" };
 
 const crumb = (
-  <nav className="crumb" aria-label="Breadcrumb">
-    <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-  </nav>
+  <Crumb trail={[{ href: "/it-maintenance", label: "IT & Maintenance" }]} />
 );
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; error?: string }> }) {

@@ -142,7 +142,7 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
         </div>
 
         <DeskBatch key={back} tab={tab} rows={rows} back={back} action={deskAction} title={filtered ? `${tabLabel} · filtered` : tabLabel} />
-        <p className={styles.hint}>The CSV has one row per line item for what&apos;s shown here: date, request, payee, fund, sub-account, memo and amount.</p>
+        <p className="hint">The CSV has one row per line item for what&apos;s shown here: date, request, payee, fund, sub-account, memo and amount.</p>
       </div>
     </>
   );

@@ -259,7 +259,7 @@ export default function EventForm(p: EventFormProps) {
                 <input type="number" min={0} max={240} step={15} value={d.teardown} onChange={(e) => set("teardown", Number(e.target.value))} />
               </Field>
             </div>
-            <p className={styles.hint}>You set up and clean up yourselves. That time is held on the calendar for you.</p>
+            <p className="hint">You set up and clean up yourselves. That time is held on the calendar for you.</p>
             <div className="grid two">
               <Field label="Repeats">
                 <select value={d.recurFreq} onChange={(e) => update((x) => ({ ...x, recurFreq: e.target.value as Draft["recurFreq"], recurUntil: e.target.value === "none" ? "" : x.recurUntil }))}>
@@ -318,7 +318,7 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="briefSect">
             <legend><span className={styles.sn}>{num("briefSect")}</span>Marketing</legend>
             <div className={styles.sectionBody}>
-              <p className={styles.hint}>Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
+              <p className="hint">Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
               <Field label="One-line subtitle (5–6 words)" hint="Used on the flyer and in other marketing.">
                 <input value={d.brief.subtitle} onChange={(e) => setBrief("subtitle", e.target.value)} maxLength={80} placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters" />
               </Field>
@@ -350,7 +350,7 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="avSect">
             <legend><span className={styles.sn}>{num("avSect")}</span>A/V</legend>
             <div className={styles.sectionBody}>
-              <p className={styles.hint}>The A/V team will contact you about what they can support.</p>
+              <p className="hint">The A/V team will contact you about what they can support.</p>
               <Choices legend="What A/V support do you need? Check all that apply.">
                 {Object.entries(AV_KINDS).map(([k, l]) => (
                   <Choice key={k} type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} label={l} />
@@ -391,7 +391,7 @@ export default function EventForm(p: EventFormProps) {
           </div>
         </fieldset>
         <FormActions>
-          {blockers.length > 0 && !asking && <span className={styles.hint}>{clashOnly ? "The room is taken. Change the time or room, or ask for it." : "Fix the conflicts in the checks first."}</span>}
+          {blockers.length > 0 && !asking && <span className="hint">{clashOnly ? "The room is taken. Change the time or room, or ask for it." : "Fix the conflicts in the checks first."}</span>}
           <Button href={p.editing ? `/events/${p.editing}` : "/events"} variant="quiet">Cancel</Button>
           <Submit label={asking ? "Send and ask for the time" : p.submitLabel} disabled={blockers.length > 0 && !asking} />
         </FormActions>
@@ -440,14 +440,14 @@ export default function EventForm(p: EventFormProps) {
                 )}
               </div>
             ))}
-            {askable.length === 0 && result.clashes.length > 0 && <p className={styles.hint}>Pick another time or room.</p>}
+            {askable.length === 0 && result.clashes.length > 0 && <p className="hint">Pick another time or room.</p>}
           </div>
         </Panel>
         <Panel title="IAR calendar that day" className={styles.calendarPanel}>
           {result.timeline ? (
             <Timeline items={result.timeline.items} request={result.timeline.request} caption={`${result.timeline.roomName} · ${dayText(result.timeline.date)}`} />
           ) : (
-            <p className={styles.hint}>{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
+            <p className="hint">{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
           )}
         </Panel>
       </div>

@@ -4,7 +4,9 @@ import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
-import { Panel } from "@/components/Panel";
+import { Crumb } from "@/components/Crumb";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
 import { SearchForm } from "@/components/SearchForm";
 import { Pill } from "@/components/Pill";
 import { Button } from "@/components/Button";
@@ -92,6 +94,34 @@ export function Pieces() {
           <FileList files={[{ name: "receipt-costco.jpg", url: "https://drive.google.com", size: 180_000, by: "you", at: "2026-10-24T14:00:00Z" }, { name: "flyer-draft.pdf", size: 2_400_000 }]} empty="No files yet." />
           <FileList files={[]} empty="No photos yet." />
         </div>
+      </Panel>
+
+      <Panel title="Page pieces" right="Crumb, LinkCard, Pill small, PanelNote, PanelFoot, .hint">
+        <div className="stack">
+          <Crumb trail={[{ href: "/dev/styles", label: "Purchase Requests" }, { href: "/dev/styles", label: "PO-12007" }]} here="Make changes" />
+          <LinkCards label="Examples">
+            <LinkCard href="/dev/styles" icon="megaphone" title="Graphic or flyer">
+              A flyer, social media post or slide for a program.
+            </LinkCard>
+            <LinkCard href="/dev/styles" icon="book" title="Purchase Requests">
+              How to pay a vendor, get reimbursed or send card receipts.
+            </LinkCard>
+          </LinkCards>
+          <div className="row">
+            <Pill tone="gold" small>Today</Pill>
+            <Pill tone="warn" small>3 new</Pill>
+            <Pill tone="warn" small>After hours</Pill>
+          </div>
+          <p className="hint">A short grey line: a hint under a field, or &ldquo;No files yet&rdquo;.</p>
+        </div>
+      </Panel>
+
+      <Panel title="A note and a footer on a list" flush>
+        <PanelNote>Only Social &amp; Welfare and the finance office see these.</PanelNote>
+        <Rows>
+          <ItemRow state="plain" title="Sample payee" sub="PO Box 100, Raleigh" />
+        </Rows>
+        <PanelFoot>Spent so far: $184.50 of $400.00</PanelFoot>
       </Panel>
 
       <Panel title="Choices" right="components/Choices.tsx">

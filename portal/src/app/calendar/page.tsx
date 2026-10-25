@@ -154,7 +154,7 @@ function WeekView({ days, byDate, today, href, filtered }: { days: string[]; byD
             <li key={d} className={`${styles.day}${d === today ? ` ${styles.today}` : ""}${items.length ? "" : ` ${styles.emptyDay}`}`} aria-current={d === today ? "date" : undefined}>
               <h3 className={styles.dayHead}>
                 {dayText(d)}
-                {d === today && <span className={styles.todayTag}>Today</span>}
+                {d === today && <Pill tone="gold" small>Today</Pill>}
               </h3>
               {items.length ? (
                 <ul className={styles.entries}>
@@ -163,7 +163,7 @@ function WeekView({ days, byDate, today, href, filtered }: { days: string[]; byD
                   ))}
                 </ul>
               ) : (
-                <p className={styles.none}>Nothing booked</p>
+                <p className="hint">Nothing booked</p>
               )}
             </li>
           );
@@ -227,7 +227,7 @@ function MonthView({ date, byDate, today, href, filtered, dayLink }: { date: str
               <li key={d} className={`${styles.day}${d === today ? ` ${styles.today}` : ""}`}>
                 <h3 className={styles.dayHead}>
                   {dayText(d)}
-                  {d === today && <span className={styles.todayTag}>Today</span>}
+                  {d === today && <Pill tone="gold" small>Today</Pill>}
                 </h3>
                 <ul className={styles.entries}>
                   {(byDate.get(d) ?? []).map((a) => (

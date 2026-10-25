@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Button } from "@/components/Button";
 import { DateField, TimeField } from "@/components/DateField";
 import { EmptyState } from "@/components/EmptyState";
@@ -15,6 +14,7 @@ import { dayText, timeText } from "@/lib/events/series";
 import styles from "../calendar.module.css";
 import { Checkbox } from "@/components/Choices";
 import { ItemRow, Rows } from "@/components/ItemRow";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Find a room" };
@@ -33,9 +33,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
   return (
     <div className="stack loose">
       <div className="stack tight">
-        <nav aria-label="Breadcrumb" className={styles.roomSub}>
-          <Link href="/calendar">Calendar</Link> / Find a room
-        </nav>
+        <Crumb trail={[{ href: "/calendar", label: "Calendar" }]} here="Find a room" />
         <ModuleHead title="Find a room" lead="Say when and how many people, and see which rooms are free and fit. Setup and cleanup time (30 minutes each) is included in the check." />
       </div>
 

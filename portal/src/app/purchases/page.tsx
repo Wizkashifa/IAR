@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelNote } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { cardStore } from "@/lib/cards";
 import { emailsIn, type RowData } from "@/lib/card-row";
@@ -154,7 +154,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
 function PurchaseList({ title, right, cards, rows, redact, empty, note }: { title: string; right?: React.ReactNode; cards: PurchaseCard[]; rows: RowData[]; redact: (c: PurchaseCard) => boolean; empty?: string; note?: string }) {
   return (
     <Panel title={title} right={right} flush>
-      {note && <p className={styles.panelNote}>{note}</p>}
+      {note && <PanelNote>{note}</PanelNote>}
       {cards.length === 0 ? (
         <EmptyState>{empty ?? "Nothing here."}</EmptyState>
       ) : (

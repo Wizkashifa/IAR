@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
@@ -14,6 +13,7 @@ import { requireViewer } from "@/lib/viewer";
 import { mayEditTeam, requestRoutes, seesMembers, teamEntries } from "@/lib/whos-who";
 import { saveTeamInfo } from "../actions";
 import styles from "../teams.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 
@@ -55,10 +55,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
   return (
     <>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link href="/teams">Who&apos;s who</Link>
-        {team.pillar ? ` / ${team.pillar}` : ""}
-      </nav>
+      <Crumb trail={[{ href: "/teams", label: "Who's who" }]} here={team.pillar} />
       <ModuleHead
         title={team.name}
         lead={team.description ?? "What this team handles hasn't been written yet."}

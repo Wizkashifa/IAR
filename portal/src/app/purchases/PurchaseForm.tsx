@@ -307,7 +307,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
         }
       >
         <div className="stack">
-          <p className={styles.why}>
+          <p className="hint">
             {card
               ? "One line per charge on the statement, each with its sub-account. Mark charges that will be refunded or repaid."
               : "Split the total across as many sub-accounts as it really covers."}

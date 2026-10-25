@@ -12,7 +12,6 @@ import { policiesLibrary, searchPolicies } from "@/lib/library";
 import { reviewState, type LibraryFile } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDate } from "@/lib/format";
-import styles from "./library.module.css";
 import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +83,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           </Rows>
         )}
       </Panel>
-      <p className={styles.foot}>
+      <p className="hint">
         Only what&apos;s in IAR&apos;s Policies drive shows here. To change a policy, open it in Drive; the Shura and executive can edit, everyone at IAR can read.
       </p>
     </div>

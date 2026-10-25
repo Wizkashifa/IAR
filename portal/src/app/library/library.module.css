@@ -1,4 +1,0 @@
-/* The Library (page.tsx): a search box, folder chips, and the files in a panel, one row each, like the demo's list rows. */
-@layer pages {
-  .foot { color: var(--ink-3); font-size: var(--t-sm); margin: 0; }
-}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelFoot } from "@/components/Panel";
 import { todayLocal } from "@/lib/dates";
 import { cardStore, type Card } from "@/lib/cards";
 import { feedbackStore } from "@/lib/feedback";
@@ -154,7 +154,7 @@ export default async function MeasuresPage() {
                             <Bar value={s.medianMs} of={longest} label={`${s.step}: usually ${fmtWait(s.medianMs)}`} />
                           </div>
                         </td>
-                        <td className={styles.muted}>{fmtWait(s.longestMs)}</td>
+                        <td className="hint">{fmtWait(s.longestMs)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -189,14 +189,14 @@ export default async function MeasuresPage() {
                   <th scope="row">{MEASURED_LABEL[b.type]}</th>
                   <td className={cell.num}>{b.requests}</td>
                   <td className={cell.num}>
-                    {b.sentBack} <span className={styles.muted}>({pct(b.sentBack, b.requests)}%)</span>
+                    {b.sentBack} <span className="hint">({pct(b.sentBack, b.requests)}%)</span>
                   </td>
                   <td className={cell.num}>{b.times}</td>
                 </tr>
               ))}
             </tbody>
           </DataTable>
-          <p className={styles.foot}>For changes, or with a question from the marketing team. From the {cards.length} most recent requests.</p>
+          <PanelFoot>For changes, or with a question from the marketing team. From the {cards.length} most recent requests.</PanelFoot>
         </Panel>
 
         <Panel title="Forms started but not sent" right={`Since ${shortDay(since)}`} flush>
@@ -227,10 +227,10 @@ export default async function MeasuresPage() {
               ))}
             </tbody>
           </DataTable>
-          <p className={styles.foot}>
+          <PanelFoot>
             A form counts as started the first time someone types in it; only the form&apos;s name and the day are kept. Requests opened another way (a Jira import, a
             preventive schedule) count as sent without a start.
-          </p>
+          </PanelFoot>
         </Panel>
 
         <Panel title="Beta feedback" right={<Link href="/feedback">See the feedback</Link>} flush>

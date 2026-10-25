@@ -12,7 +12,6 @@
   .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .refs li { display: grid; grid-template-columns: minmax(0, 1fr) 140px 200px; gap: var(--s-2); align-items: center; padding-top: var(--s-2); border-top: 1px solid var(--line); }
   .refName { min-width: 0; font-size: var(--t-md); overflow-wrap: anywhere; }
-  .hint { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
 
   .noteHead { margin: 0 0 var(--s-1); font-weight: 700; }
   .failed { margin: 0; padding-left: var(--s-4); }

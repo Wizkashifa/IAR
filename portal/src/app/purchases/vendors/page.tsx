@@ -1,11 +1,10 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Field } from "@/components/Field";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelNote } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { cardStore, type Vendor } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
@@ -18,6 +17,7 @@ import styles from "../purchases.module.css";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { SearchForm } from "@/components/SearchForm";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -37,9 +37,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb">
-        <Link href="/purchases">Purchase Requests</Link> / Saved vendors
-      </nav>
+      <Crumb trail={[{ href: "/purchases", label: "Purchase Requests" }]} here="Saved vendors" />
       <ModuleHead
         title="Saved vendors"
         lead="Every committee shares this list. Once a vendor is paid, the next request to them fills in their address and W-9 status. A W-9 is needed only for labor, and only once."
@@ -59,7 +57,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
         {restricted.length > 0 && (
           <Panel title="Social & Welfare payees" right={<Pill tone="bad">Restricted</Pill>} flush>
-            <p className={styles.panelNote}>Only Social &amp; Welfare and the finance office see these. They&apos;re never offered on other committees&apos; requests, so nobody can find out who received help.</p>
+            <PanelNote>Only Social &amp; Welfare and the finance office see these. They&apos;re never offered on other committees&apos; requests, so nobody can find out who received help.</PanelNote>
             <VendorTable list={restricted.filter(match)} finance={finance} />
           </Panel>
         )}
@@ -67,7 +65,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         {finance && (shared.length > 1 || restricted.length > 1) && (
           <Panel title="Merge duplicates">
             <form action={mergeVendor} className="stack">
-              <p className={styles.why}>Same vendor typed two ways? Keep one record; its committees, payment count and W-9 are combined.</p>
+              <p className="hint">Same vendor typed two ways? Keep one record; its committees, payment count and W-9 are combined.</p>
               <div className="grid">
                 <Field label="Keep">
                   <VendorSelect name="keep" shared={shared} restricted={restricted} />
@@ -152,7 +150,7 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                 </Disclosure>
               )}
             </td>
-            <td data-label="Used by" className={styles.when}>
+            <td data-label="Used by" className="hint">
               {(v.funds ?? []).map(shortFund).join(", ") || "—"}
             </td>
             <td data-label="W-9">
@@ -172,7 +170,7 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                 </span>
               )}
             </td>
-            <td data-label="Last paid" className={`${styles.when} ${cell.nowrap}`}>
+            <td data-label="Last paid" className={`hint ${cell.nowrap}`}>
               {v.lastPaidAt ? fmtDate(v.lastPaidAt) : "—"}
             </td>
             <td data-label="Times paid" className={cell.num}>

@@ -87,7 +87,7 @@ export function TicketBoard({ cards, showTeam, names }: { cards: TicketCard[]; s
               <span>{col.title}</span>
               <span className={styles.count}>{items.length}</span>
             </h3>
-            {items.length === 0 && <p className={styles.none}>None</p>}
+            {items.length === 0 && <p className="hint">None</p>}
             {items.map((c) => (
               <Link key={c.id} href={`/it-maintenance/${c.id}`} className={styles.card}>
                 <strong>{c.title}</strong>

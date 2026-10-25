@@ -27,7 +27,6 @@
   .pills { display: flex; gap: 6px; align-items: center; }
   .pill.in_review, .pill.submitted { background: var(--info-soft); color: var(--info); }
   .pill.restricted { background: var(--bad-soft); color: var(--bad); }
-  .crumb { margin: 0 0 8px; font-size: 13px; }
   .flash { background: var(--accent-soft); color: var(--accent-text); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 16px 0; }
   .error ul { margin: 6px 0 0; padding-left: 18px; }
   .nowrap { white-space: nowrap; }
@@ -119,7 +118,6 @@
   .queue { display: grid; gap: 8px; }
   .taskacts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: flex-start; }
   .taskacts .row { gap: 6px; }
-  .flag { display: inline-block; margin-top: 4px; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; background: var(--warn-soft); color: var(--warn); }
   @media (max-width: 640px) { .task { flex-direction: column; } .taskacts { justify-content: flex-start; } }
   @media print {
     .noprint, footer, .flash, .error { display: none !important; }

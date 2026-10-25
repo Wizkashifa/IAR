@@ -314,7 +314,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
     if (!approve && !pay && !books && !cancel && !sendBack) {
       if (again) return again;
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
-      return why && !why.ok ? <p className={styles.why}>{why.reason}</p> : null;
+      return why && !why.ok ? <p className="hint">{why.reason}</p> : null;
     }
     const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
     return (

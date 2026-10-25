@@ -12,8 +12,6 @@
   .day { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); padding: var(--s-2); }
   .day.today { border-color: var(--gold); box-shadow: inset 0 3px 0 var(--gold), var(--shadow-1); }
   .dayHead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 var(--s-2); font-family: var(--font-head); font-size: var(--t-md); font-weight: 600; }
-  .todayTag { font-family: var(--font); font-size: 11px; font-weight: 700; color: var(--brand-green); background: var(--gold); border-radius: 999px; padding: 0 7px; line-height: 18px; }
-  .none { margin: 0; font-size: var(--t-sm); color: var(--ink-3); }
   .entries { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
   .entry { border-radius: var(--r-sm); background: var(--surface-2); border-left: 3px solid var(--line); min-width: 0; }
   .entry.booked { border-left-color: var(--accent); }
@@ -76,7 +74,6 @@
   .takenSummary:hover { color: var(--ink); }
   .takenSummary:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r); }
   details[open] > .takenSummary { border-bottom: 1px solid var(--line); }
-  .roomSub { font-size: var(--t-sm); color: var(--ink-2); }
   .reasons { margin: 4px 0 0; padding-left: 18px; font-size: var(--t-sm); color: var(--ink-2); }
   .roomNote { margin-top: 4px; font-size: var(--t-sm); color: var(--warn); }
 }

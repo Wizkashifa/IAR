@@ -48,8 +48,7 @@
   .section > legend + * { clear: both; }
   .sectionBody { padding: var(--s-4); display: grid; gap: var(--s-4); }
   .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--brand-green); color: var(--cream); font-size: 12px; font-weight: 700; align-items: center; justify-content: center; flex: none; }
-  .hint { font-size: var(--t-sm); color: var(--ink-2); margin: 0; }
-  .hint.good { color: var(--ok); }
+  .good { color: var(--ok); }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .steps a { display: flex; align-items: center; gap: var(--s-2); min-height: 28px; color: var(--ink); text-decoration: none; font-size: var(--t-md); }
   .steps a:hover { color: var(--accent-text); }
@@ -59,9 +58,7 @@
 
   /* The request page */
   .about { white-space: pre-wrap; margin: 0; }
-  .muted { color: var(--ink-2); font-size: var(--t-sm); margin: var(--s-2) 0 0; }
   .lineTitle { font-weight: 700; }
-  .foot { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
   .history { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
   .history li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--s-2); align-items: start; font-size: var(--t-md); }
   .note { color: var(--ink-2); }
@@ -76,7 +73,6 @@
   .entry.cal { color: var(--ink-2); }
   .entry.cal .time { color: var(--ink-2); font-weight: 400; }
   .time { font-weight: 700; color: var(--ink); }
-  .flag { display: inline-block; margin-top: var(--s-1); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; background: var(--warn-soft); color: var(--warn); }
   .cells { display: grid; gap: var(--s-1); font-size: var(--t-sm); margin-top: var(--s-1); }
   @media (max-width: 760px) { .entry { grid-template-columns: 1fr; } }
   @media print {

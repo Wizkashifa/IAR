@@ -27,6 +27,8 @@
   h3 { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin: 0; }
   .lead { color: var(--ink-2); margin: var(--s-1) 0 var(--s-2); max-width: 68ch; }
   .muted { color: var(--ink-2); }
+  /* A short grey line: a hint under a field, "No files yet", what a list shows. */
+  .hint { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
   .small { font-size: var(--t-sm); }
   .mono { font-variant-numeric: tabular-nums; }
 

@@ -1,17 +1,14 @@
 /* Purchase Requests: lists, line items and the request form. Colours and sizes come from tokens.css. */
 @layer pages {
   .list { margin: 0; padding: 0; }
-  .panelNote { margin: 0; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: var(--t-sm); }
 
   /* Tables for staff data (line items, card checklist, vendors). Under 640px each row becomes a small card, labelled from data-label. */
   .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 
   /* The action row on a request page. */
   .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
-  .why { margin: 0; color: var(--ink-2); }
 
   /* Comments and history. */
-  .when { color: var(--ink-3); font-size: var(--t-sm); }
   .said { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* The form's lines: a row of fields per line on wide screens, stacked on phones. */
