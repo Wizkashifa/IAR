@@ -5,7 +5,7 @@ import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";

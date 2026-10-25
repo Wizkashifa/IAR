@@ -9,7 +9,7 @@
  *   date (rescheduled) can get its own reminder.
  */
 import type { Notice } from "../purchases/notices";
-import { daysBetween } from "./forms";
+import { daysBetween } from "../dates";
 import { type MarketingCard, shortDay } from "./workflow";
 
 export type DailyPlan = {

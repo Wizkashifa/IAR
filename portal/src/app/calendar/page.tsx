@@ -12,9 +12,10 @@ import { type CalendarView, byDay, committeesIn, filterAgenda, monthWeeks, stepV
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { eventContext } from "@/lib/events/context";
-import { dayText, isDate } from "@/lib/events/series";
+import { dayText } from "@/lib/events/series";
 import { Filters } from "./Filters";
 import styles from "./calendar.module.css";
+import { isDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendar" };

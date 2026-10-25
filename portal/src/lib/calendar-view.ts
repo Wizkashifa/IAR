@@ -6,7 +6,8 @@
  */
 import type { AgendaItem, RoomNeed } from "./agenda-core";
 import { type Room, roomsOverlap } from "./events/rooms";
-import { addDays, addMonths, dayOfWeek, isDate, isTime, toMinutes } from "./events/series";
+import { addMonths, dayOfWeek, isTime, toMinutes } from "./events/series";
+import { addDays, isDate } from "./dates";
 
 export type CalendarView = "week" | "month";
 

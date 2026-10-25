@@ -8,7 +8,7 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { PeoplePicker } from "@/components/PeoplePicker";
 import { Pill } from "@/components/Pill";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { nameResolver } from "@/lib/names";
 import { requireViewer } from "@/lib/viewer";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";

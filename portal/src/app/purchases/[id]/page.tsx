@@ -17,7 +17,7 @@ import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor, peopleStore } from "@/lib/people";
-import { isActive, todayLocal } from "@/lib/away";
+import { isActive } from "@/lib/away";
 import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
 import { purchaseContext } from "@/lib/purchases/settings";
 import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
@@ -25,6 +25,7 @@ import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprov
 import { actOnPurchase, commentOnPurchase } from "../actions";
 import { Flash, WaitingPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
 import styles from "../purchases.module.css";
+import { todayLocal } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 

@@ -31,6 +31,7 @@ import {
   openExpectedReturns,
   purchaseTotal,
 } from "./types";
+import { same } from "../text";
 
 export type RoutingSettings = {
   /** From the team groups that charge this fund (see teams.ts): Owners, Managers, pillar Owners. */
@@ -63,8 +64,6 @@ export type Actor = {
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };
 
 export class WorkflowError extends Error {}
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
 /** Whether `actor` is taking this chair step as the fund's director rather than as the named approver. */
 export function approvingAsDirector(card: PurchaseCard, actor: Actor): boolean {

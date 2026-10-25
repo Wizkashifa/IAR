@@ -14,6 +14,7 @@ import type { Role } from "./org";
 import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";
 import { queueItems, type QueueItem } from "./events/queues";
 import { TASK_TEAMS } from "./events/tasks";
+import { lc, same } from "./text";
 
 /**
  * The person looking: their own group roles (never the admin "see everything"
@@ -30,9 +31,6 @@ export type NeedsContext = {
 const OWNER_ACTS: CardStatus[] = ["draft", "changes_requested", "close_out"];
 /** Statuses with nothing left to do for the requester. */
 const FINISHED: CardStatus[] = ["paid", "closed", "denied", "cancelled"];
-
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
 
 function purchaseNeeds(card: PurchaseCard, v: NeedsViewer): boolean {
   if (actionableBy([card], v).length) return true;

@@ -10,10 +10,10 @@ import { dayText } from "./series";
 import { TaskError, worksTeam } from "./tasks";
 import type { EventHistoryEntry, EventTask, RoomCheck } from "./types";
 import type { EventActor, EventCard } from "./workflow";
+import { lc } from "../text";
 
 export const WHEN_LABEL: Record<RoomCheck["when"], string> = { before: "Before", after: "After" };
 
-const lc = (s: string) => s.trim().toLowerCase();
 const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 
 /** Security records room checks; the office can too, when security asks them to. */

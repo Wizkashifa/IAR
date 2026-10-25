@@ -15,8 +15,7 @@ import { commenters, preview } from "../comments";
 import type { Notice, Recipient } from "../purchases/notices";
 import { TEAM_LABEL, URGENCY } from "./types";
 import { type TicketActor, type TicketCard, TEAM_ROLE, withTeam } from "./workflow";
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+import { same } from "../text";
 
 /** ": “note”" to end a sentence with what someone wrote, or just the full stop. */
 const said = (note?: string) => (note ? `: “${note}”` : ".");

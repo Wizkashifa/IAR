@@ -20,6 +20,8 @@ import type { MarketingCard } from "./marketing/workflow";
 import { TEAM_NAME as TICKET_TEAM_NAME } from "./tickets/types";
 import { AUTO_CLOSE_DAYS, type TicketCard } from "./tickets/workflow";
 import { FLAG, NOTIFIED, STEP } from "./glossary";
+import { lc, same } from "./text";
+import { todayLocal } from "./dates";
 
 export type StepState = "done" | "now" | "todo" | "skip";
 export type Step = { label: string; state: StepState };
@@ -41,10 +43,6 @@ export type StepOptions = {
 export type Viewer = { email: string; actingRoles?: readonly string[] };
 /** A person's name from their address. */
 export type NameOf = (email: string) => string;
-
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
-const raleighToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 /** "fatima.ahmed@islam1.org" → "Fatima Ahmed": what to show when the directory has no name. */
 export function fallbackName(email: string): string {
@@ -103,7 +101,7 @@ function finishPurchase(card: PurchaseCard, steps: Step[]): Steps {
 
 function eventSteps(card: EventCard, o: StepOptions): Steps {
   const e = card.event;
-  const today = o.today ?? raleighToday();
+  const today = o.today ?? todayLocal();
   const labels: string[] = [
     STEP.submitted,
     ...(e.stage === "slot" ? [STEP.roomAnswer] : []),

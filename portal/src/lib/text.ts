@@ -1,0 +1,7 @@
+/** Small text helpers every module uses. */
+
+/** Trimmed and lower-cased, for comparing addresses and group names. */
+export const lc = (s: string) => s.trim().toLowerCase();
+
+/** The same address (or group), ignoring case and spaces. Empty never matches. */
+export const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));

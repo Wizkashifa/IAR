@@ -19,6 +19,7 @@ import { isAfterHours } from "./rules";
 import { dayText } from "./series";
 import type { EventDetails, EventHistoryEntry, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
+import { lc } from "../text";
 
 export const TASK_TEAMS: TaskTeam[] = ["marketing", "av", "security"];
 
@@ -28,7 +29,6 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = { locked: "Unlocks 
 
 export class TaskError extends Error {}
 
-const lc = (s: string) => s.trim().toLowerCase();
 const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 const short = (s: string, max = 70) => {
   const t = s.replace(/\s+/g, " ").trim();

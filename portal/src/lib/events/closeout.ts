@@ -9,14 +9,15 @@
 import type { Card } from "../cards";
 import type { Notice } from "../purchases/notices";
 import { purchaseTotal } from "../purchases/types";
-import { daysBetween, dayText } from "./series";
+import { dayText } from "./series";
 import type { CloseOut, EventHistoryEntry } from "./types";
 import { type EventActor, type EventCard, EventError, withStage } from "./workflow";
+import { lc } from "../text";
+import { daysBetween } from "../dates";
 
 /** Days in close-out before the requester is reminded. */
 export const NUDGE_DAYS = 7;
 
-const lc = (s: string) => s.trim().toLowerCase();
 const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 

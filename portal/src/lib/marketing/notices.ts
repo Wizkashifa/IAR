@@ -9,8 +9,8 @@
 import { commenters, preview } from "../comments";
 import type { Notice, Recipient } from "../purchases/notices";
 import { longDay, type Actor, type MarketingCard } from "./workflow";
+import { same } from "../text";
 
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 const TEAM: Recipient = { role: "marketing" };
 
 const label = (c: MarketingCard) => `${c.id} “${c.title}”`;

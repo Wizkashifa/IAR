@@ -7,8 +7,8 @@ import { commenters, preview } from "../comments";
 import type { Notice, Recipient } from "../purchases/notices";
 import { dayText } from "./series";
 import { type EventActor, type EventCard, reviewersFor } from "./workflow";
+import { same } from "../text";
 
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 const label = (c: EventCard) => `${c.id} “${c.title}” (${c.event.dates[0] ? dayText(c.event.dates[0]) : "no date"}${c.event.dates.length > 1 ? `, ${c.event.dates.length} dates` : ""})`;
 
 /** Notices for one change, from the card before (null for a new request) to after. The actor never notifies themselves. */

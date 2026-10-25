@@ -5,6 +5,7 @@
  * so they can be tested; the form page and server actions both use them.
  */
 import { MARKETING_KINDS, type MarketingKind } from "./types";
+import { addDays, daysBetween, isDate } from "../dates";
 
 export type FieldKind = "textarea" | "date" | "url" | "text" | "radio";
 
@@ -124,11 +125,6 @@ export const LEAD_DAYS = 14;
 
 const MAX: Record<FieldKind, number> = { textarea: 5000, text: 200, url: 500, date: 10, radio: 20 };
 export const NOTES_MAX = 2000;
-
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-export const isDate = (s: string) => DATE.test(s) && !Number.isNaN(Date.parse(`${s}T12:00:00Z`)) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
-export const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 864e5);
-export const addDays = (ymd: string, n: number) => new Date(Date.parse(`${ymd}T12:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
 
 /** A web link people can open: http(s) with a real-looking host. */
 export function isWebLink(s: string): boolean {

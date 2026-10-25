@@ -6,7 +6,7 @@ import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { directory } from "@/lib/groups";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { checkComment, withComment } from "@/lib/comments";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
 import { canViewMarketing } from "@/lib/marketing/access";

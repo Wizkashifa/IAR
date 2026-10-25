@@ -1,12 +1,13 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { checkAway, todayLocal } from "@/lib/away";
+import { checkAway } from "@/lib/away";
 import { deliver } from "@/lib/notifications";
 import { DEV_DOMAIN } from "@/lib/dev";
 import { ORG } from "@/lib/org";
 import { peopleStore } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
+import { todayLocal } from "@/lib/dates";
 
 export type AwayFormState = { errors: string[] };
 

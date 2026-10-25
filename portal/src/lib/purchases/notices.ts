@@ -11,6 +11,7 @@ import { commenters, preview } from "../comments";
 import type { Role } from "../org";
 import { STAGE_LABEL, purchaseTotal } from "./types";
 import type { Actor, PurchaseCard } from "./workflow";
+import { same } from "../text";
 
 /** One person, or everyone in a role's Google Group. */
 export type Recipient = { email: string } | { role: Role };
@@ -28,7 +29,6 @@ export type Notice = {
 };
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
 /** Social & Welfare details stay out of notices, which outlive the request's own access checks. */
 function label(c: PurchaseCard): string {

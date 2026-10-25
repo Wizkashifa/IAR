@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { cardStore, type Card } from "@/lib/cards";
 import { feedbackStore } from "@/lib/feedback";
 import { formStartStore } from "@/lib/form-starts";

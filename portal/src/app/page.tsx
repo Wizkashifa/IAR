@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import type { IconName } from "@/components/Icon";
 import { agendaBetween, type AgendaItem } from "@/lib/agenda";
 import { rangeText } from "@/lib/agenda-core";
-import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
+import { isActive, isCurrentOrUpcoming } from "@/lib/away";
 import { emailsIn, type RowData } from "@/lib/card-row";
 import { datesText, SLOT_STATUS_LABEL } from "@/lib/events/slot-requests";
 import { visibleModules } from "@/lib/modules";
@@ -21,6 +21,7 @@ import { requireViewer } from "@/lib/viewer";
 import { waitingFor } from "@/lib/waiting";
 import { WhatsNewNote } from "@/components/WhatsNewNote";
 import styles from "./home.module.css";
+import { todayLocal } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Home" };

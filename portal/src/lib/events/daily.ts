@@ -4,7 +4,7 @@ import { deliver } from "../notifications";
 import { directory } from "../groups";
 import { closeOutNotices, dueForCloseOut, markNudged, needsNudge, startCloseOut } from "./closeout";
 import { renewalDue, renewalReminder } from "./renewal";
-import { todayInRaleigh } from "./series";
+import { todayLocal } from "../dates";
 import * as sr from "./slot-requests";
 import { slotRequestStore } from "./slot-requests-store";
 import { isEventCard } from "./workflow";
@@ -38,7 +38,7 @@ export async function daily(now: Date): Promise<string> {
     else escalated++;
   }
 
-  const today = todayInRaleigh(now);
+  const today = todayLocal(now);
   const cards = await cardStore();
   let closing = 0;
   let nudged = 0;

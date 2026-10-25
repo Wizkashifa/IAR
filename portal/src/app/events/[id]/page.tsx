@@ -24,7 +24,7 @@ import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/eve
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
 import { eventChecks, missionReasons, windowText } from "@/lib/events/rules";
-import { dayText, daysBetween, longDate, recurText, timeText } from "@/lib/events/series";
+import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
@@ -39,6 +39,7 @@ import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
 import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
+import { daysBetween } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 

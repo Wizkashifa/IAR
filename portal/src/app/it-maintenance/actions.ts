@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { cardStore, ConflictError, type CardStatus } from "@/lib/cards";
 import { checkComment, withComment } from "@/lib/comments";
 import { filesFrom } from "@/lib/drive";

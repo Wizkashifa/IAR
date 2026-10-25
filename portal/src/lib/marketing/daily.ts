@@ -1,6 +1,6 @@
 import "server-only";
 import { cardStore, ConflictError } from "../cards";
-import { todayLocal } from "../away";
+import { todayLocal } from "../dates";
 import { deliver } from "../notifications";
 import { planDaily } from "./reminders";
 import { OPEN_STAGES, isMarketingCard, statusForStage } from "./workflow";

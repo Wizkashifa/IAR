@@ -13,7 +13,7 @@ import { emailsIn } from "@/lib/card-row";
 import { eventContext } from "@/lib/events/context";
 import { lockedCount, marketingQueue, nearTerm, queueItems, queueTeamsFor, recentlyDone, type QueueItem } from "@/lib/events/queues";
 import { roomById } from "@/lib/events/rooms";
-import { addDays, dayText, timeText } from "@/lib/events/series";
+import { dayText, timeText } from "@/lib/events/series";
 import { TASK_STATUS_LABEL, TEAM_NAME } from "@/lib/events/tasks";
 import type { EventTask, TaskTeam } from "@/lib/events/types";
 import { isEventCard } from "@/lib/events/workflow";
@@ -24,6 +24,7 @@ import { needsContext } from "@/lib/waiting";
 import { fmtDay } from "../ui";
 import { TaskButtons } from "../events/ops-ui";
 import styles from "./queues.module.css";
+import { addDays } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Team Queues" };

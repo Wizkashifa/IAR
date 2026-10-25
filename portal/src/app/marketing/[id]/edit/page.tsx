@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { isMarketingCard, permission } from "@/lib/marketing/workflow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { committeesFor, editMarketing } from "../../actions";

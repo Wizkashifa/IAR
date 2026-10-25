@@ -14,12 +14,13 @@ import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
 import { roomById } from "@/lib/events/rooms";
 import { taskUnlockNotices } from "@/lib/events/tasks";
 import { type Clash, eventChecks } from "@/lib/events/rules";
-import { addDays } from "@/lib/events/series";
+import { addDays } from "@/lib/dates";
 import * as sr from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import type { Check, EventInput } from "@/lib/events/types";
 import * as wf from "@/lib/events/workflow";
 import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
+import { lc } from "@/lib/text";
 
 export type EventFormState = { errors: string[] };
 
@@ -29,7 +30,6 @@ export type TimelineView = { roomName: string; date: string; items: { start: str
 export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timeline: TimelineView | null };
 
 const nowIso = () => new Date().toISOString();
-const lc = (s: string) => s.trim().toLowerCase();
 
 async function checksFor(ctx: EventContext, viewer: Viewer, input: EventInput, editing?: wf.EventCard) {
   const busy = await busyFor(ctx, input);

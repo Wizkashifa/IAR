@@ -2,8 +2,9 @@
  * Reading the event request form: what the browser sends, checked and
  * turned into an EventInput. Plain functions so they can be tested.
  */
-import { isDate, isTime, seriesMaxEnd } from "./series";
+import { isTime, seriesMaxEnd } from "./series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "./types";
+import { isDate } from "../dates";
 
 export const AV_KINDS: Record<string, string> = { stream: "Live streaming", projector: "Projectors on projector screens", tv: "Displaying on TVs", sound: "Sound system support" };
 export const AV_INCLUDES: Record<string, string> = { laptop: "A laptop presentation", video: "Videos with sound", mics: "More than one microphone", music: "Music or nasheeds" };

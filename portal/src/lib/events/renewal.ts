@@ -5,9 +5,10 @@
  * checks and approval. Plain functions so they can be tested.
  */
 import type { Notice } from "../purchases/notices";
-import { addDays, longDate, occurrences, seriesMaxEnd } from "./series";
+import { longDate, occurrences, seriesMaxEnd } from "./series";
 import type { Recurrence } from "./types";
 import type { EventCard } from "./workflow";
+import { addDays } from "../dates";
 
 /** Renewal opens this many days before a series ends. */
 export const RENEW_DAYS = 30;

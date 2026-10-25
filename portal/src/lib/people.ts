@@ -1,5 +1,5 @@
 import "server-only";
-import { type Away, coveringFor, todayLocal } from "./away";
+import { type Away, coveringFor } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import type { Alert } from "./alerts";
@@ -7,6 +7,7 @@ import { cleanPrefs, type NotifyPrefs } from "./notify-prefs";
 import { personFunds, purchaseContext } from "./purchases/settings";
 import type { Actor } from "./purchases/workflow";
 import type { Viewer } from "./viewer";
+import { todayLocal } from "./dates";
 
 /**
  * Per-person settings the portal keeps itself: out-of-office handoffs (at

@@ -5,7 +5,7 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { searchPolicies } from "@/lib/library";
 import { canOpenCard } from "@/lib/access";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { emailsIn } from "@/lib/card-row";
 import { cardStore, type Card } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";

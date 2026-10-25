@@ -6,8 +6,7 @@
  * names.test.ts.
  */
 import { PILLAR_PREFIX, ROLE_PREFIX, TEAM_PREFIX } from "./teams";
-
-const lc = (s: string) => s.trim().toLowerCase();
+import { lc } from "./text";
 
 /**
  * A readable name from an address alone: "fatima.ahmed@x.org" → "Fatima Ahmed",

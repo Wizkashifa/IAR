@@ -22,6 +22,7 @@ import { ORG, type Role } from "../org";
 import { eventDates, recurText, longDate, dayText } from "./series";
 import { newlyUnlockedTeams, planTasks, syncTasks, teamList } from "./tasks";
 import type { Check, EventApproval, EventDetails, EventHistoryEntry, EventInput, EventStage } from "./types";
+import { lc, same } from "../text";
 
 export type EventCard = Card & { type: "event"; event: EventDetails };
 
@@ -29,9 +30,6 @@ export type EventCard = Card & { type: "event"; event: EventDetails };
 export type EventActor = { email: string; name: string; roles: Role[] };
 
 export class EventError extends Error {}
-
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
 
 export function isEventCard(c: Card | null | undefined): c is EventCard {
   return Boolean(c && c.type === "event" && c.event);

@@ -19,9 +19,9 @@ import { STAGE_LABEL as MARKETING_STEP } from "./marketing/types";
 import { STATUS_LABEL as TICKET_STEP } from "./tickets/types";
 import { reviewersFor } from "./events/workflow";
 import { TEAM_ROLE } from "./tickets/workflow";
+import { lc } from "./text";
 
 const DAY = 864e5;
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** The history line a reminder from this page leaves on the request. */
 export const REMINDER_ACTION = "Reminder sent from What's stuck";

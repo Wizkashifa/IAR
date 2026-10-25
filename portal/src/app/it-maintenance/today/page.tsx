@@ -7,7 +7,7 @@ import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { cardStore } from "@/lib/cards";
 import { eventContext } from "@/lib/events/context";
 import { requireViewer } from "@/lib/viewer";

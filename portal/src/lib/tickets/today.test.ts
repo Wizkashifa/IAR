@@ -5,8 +5,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ORG } from "../org";
 import type { TicketSchedule } from "./schedules";
-import { addDays, workToday, worksTickets } from "./today";
+import { workToday, worksTickets } from "./today";
 import * as wf from "./workflow";
+import { addDays } from "../dates";
 
 const d = ORG.domain;
 const reporter: wf.TicketActor = { email: `vol@${d}`, name: "Vol Unteer", roles: ["member"] };

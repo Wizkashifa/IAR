@@ -20,9 +20,11 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
-import { LEAD_DAYS, MARKETING_TYPES, addDays, daysBetween, isDate, neededBy, titleFor, type ParsedMarketing } from "./forms";
+import { LEAD_DAYS, MARKETING_TYPES, neededBy, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
 import { type HistoryEntry, type MarketingDetails, type MarketingFile, type MarketingStage } from "./types";
+import { same } from "../text";
+import { addDays, daysBetween, isDate, todayLocal } from "../dates";
 
 export type { Actor };
 
@@ -30,14 +32,11 @@ export type MarketingCard = Card & { type: "marketing"; marketing: MarketingDeta
 
 export class WorkflowError extends Error {}
 
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-
 export function isMarketingCard(c: Card | null | undefined): c is MarketingCard {
   return Boolean(c && c.type === "marketing" && c.marketing);
 }
 
 /** Today in Raleigh (YYYY-MM-DD) for an ISO time. */
-const dayOf = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 /** "Nov 4" for a YYYY-MM-DD day. */
 export const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -188,7 +187,7 @@ const moved = (m: MarketingDetails, stage: MarketingStage, now: string): Marketi
 function checkDoneBy(doneBy: string, now: string): string {
   const d = doneBy.trim();
   if (!isDate(d)) throw new WorkflowError("Pick the date marketing aims to finish by.");
-  if (d < dayOf(now)) throw new WorkflowError("The done-by date has already passed.");
+  if (d < todayLocal(new Date(now))) throw new WorkflowError("The done-by date has already passed.");
   return d;
 }
 
@@ -196,7 +195,7 @@ function checkDoneBy(doneBy: string, now: string): string {
 function tightNote(answers: Record<string, string>, now: string): string | undefined {
   const due = neededBy(answers);
   if (!due) return undefined;
-  const days = daysBetween(dayOf(now), due);
+  const days = daysBetween(todayLocal(new Date(now)), due);
   if (days >= LEAD_DAYS) return undefined;
   return `Needed in ${days} day${days === 1 ? "" : "s"}. Marketing usually takes 1–2 weeks, so this may not be ready in time.`;
 }

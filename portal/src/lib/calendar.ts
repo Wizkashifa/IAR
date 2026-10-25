@@ -3,9 +3,10 @@ import { isDevAuth } from "./dev";
 import { failed } from "./health";
 import { delegatedToken } from "./google";
 import { type BusyItem, isStandingTitle } from "./events/rules";
-import { addDays, dayOfWeek, eventDates, fromMinutes, rrule, toMinutes, weekOfMonth } from "./events/series";
+import { dayOfWeek, eventDates, fromMinutes, rrule, toMinutes, weekOfMonth } from "./events/series";
 import type { CalendarOp } from "./events/slot-requests";
 import type { HoldStatus, Recurrence } from "./events/types";
+import { addDays } from "./dates";
 
 /**
  * IAR's room calendars in Google Calendar, the source of truth for bookings.

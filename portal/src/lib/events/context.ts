@@ -10,13 +10,14 @@ import { type Directory, teamPeople } from "../teams";
 import type { Viewer } from "../viewer";
 import { type Room, mergeRooms, roomsToCheck } from "./rooms";
 import type { BusyItem } from "./rules";
-import { eventDates, todayInRaleigh } from "./series";
+import { eventDates } from "./series";
 import type { EventInput } from "./types";
 import { canOpenEvent } from "./access";
 import { type EventChoice, linkableEvents } from "./link";
 import { type SlotRequest, canDecide } from "./slot-requests";
 import { slotRequestStore } from "./slot-requests-store";
 import { type EventActor, isEventCard } from "./workflow";
+import { todayLocal } from "../dates";
 
 /**
  * What every events page and action needs, put together from places nobody
@@ -37,7 +38,7 @@ export type EventContext = {
 export async function eventContext(): Promise<EventContext> {
   const [dir, settings, google] = await Promise.all([directory(), portalSettings(), googleRooms()]);
   const rooms = mergeRooms(google, settings.rooms ?? {});
-  const today = todayInRaleigh();
+  const today = todayLocal();
   if (isDevAuth()) seedDevCalendar(rooms, today);
   return {
     dir,
@@ -74,7 +75,7 @@ export const mayBookRestricted = (viewer: Viewer) => viewer.actingRoles.some((r)
 /** Events this person may link a purchase request to: their own approved ones (and ones in close-out), and their committees' upcoming approved events. */
 export async function linkableEventsFor(viewer: Viewer): Promise<EventChoice[]> {
   const cards = (await (await cardStore()).listByType("event", ["approved", "close_out"])).filter(isEventCard);
-  return linkableEvents(cards, { email: viewer.email, groups: viewer.teams.map((t) => t.group) }, todayInRaleigh());
+  return linkableEvents(cards, { email: viewer.email, groups: viewer.teams.map((t) => t.group) }, todayLocal());
 }
 
 export const eventActor = (viewer: Viewer): EventActor => ({ email: viewer.email.toLowerCase(), name: viewer.name, roles: viewer.actingRoles });

@@ -24,6 +24,7 @@
 import { ORG, type Role } from "../org";
 import type { Notice, Recipient } from "../purchases/notices";
 import { type Directory, teamPeople } from "../teams";
+import { lc, same } from "../text";
 
 /** What the requester's room check clashed with. */
 export type Hold = {
@@ -104,8 +105,6 @@ export const CHOICE_LABEL: Record<SlotChoice, string> = {
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
 const OPEN: SlotStatus[] = ["open", "escalated"];
 export const isOpenAsk = (r: SlotRequest) => OPEN.includes(r.status);
 

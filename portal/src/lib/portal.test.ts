@@ -3,12 +3,13 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { type Away, checkAway, coveringFor, isActive, todayLocal } from "./away";
+import { type Away, checkAway, coveringFor, isActive } from "./away";
 import type { Card } from "./cards";
 import { hrefOf } from "./card-links";
 import { internalPath } from "./links";
 import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";
+import { todayLocal } from "./dates";
 
 const me = { email: "chair@x.org", name: "Chair" };
 const ctx = { today: "2026-10-21", domain: "x.org", now: "2026-10-21T14:00:00Z" };

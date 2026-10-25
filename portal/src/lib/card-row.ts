@@ -10,6 +10,8 @@ import { MARKETING_TYPES } from "./marketing/forms";
 import { fallbackName, type NameOf } from "./next-step";
 import { isFinished, needsViewer, type NeedsContext, type NeedsViewer } from "./needs-you";
 import { TEAM_NAME as TICKET_TEAM } from "./tickets/types";
+import { lc, same } from "./text";
+import { todayLocal } from "./dates";
 
 /**
  * The edge colour: gold when it needs the person looking, blue while it waits
@@ -39,9 +41,6 @@ export type RowOptions = {
   ctx?: NeedsContext;
 };
 
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
-const raleighToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
@@ -51,7 +50,7 @@ const ticketOpen = (c: Card) => c.ticket && !["resolved", "closed", "cancelled"]
 /** The edge colour for this person (see RowState). */
 export function rowState(card: Card, viewer: NeedsViewer, o: RowOptions = {}): RowState {
   if (card.status === "denied" || card.status === "cancelled" || card.ticket?.status === "reopened") return "bad";
-  if (ticketOpen(card) && card.ticket?.dueDate && card.ticket.dueDate < (o.today ?? raleighToday())) return "bad";
+  if (ticketOpen(card) && card.ticket?.dueDate && card.ticket.dueDate < (o.today ?? todayLocal())) return "bad";
   if (needsViewer(card, viewer, o.ctx)) return "act";
   // Marketing work that's scheduled or under way is still waiting on the team.
   if (card.marketing) return card.marketing.stage === "done" ? "done" : "wait";

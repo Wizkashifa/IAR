@@ -1,5 +1,5 @@
 import "server-only";
-import { todayLocal } from "../away";
+import { todayLocal } from "../dates";
 import { ConflictError, cardStore } from "../cards";
 import { deliver } from "../notifications";
 import { reminderNotices, ticketNotices } from "./notices";

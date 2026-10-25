@@ -38,6 +38,8 @@ import {
   TEAM_NAME,
   URGENCY,
 } from "./types";
+import { lc, same } from "../text";
+import { daysBetween } from "../dates";
 
 /**
  * Who is acting. `roles` must be the person's own group roles, never the
@@ -49,9 +51,6 @@ export type TicketActor = { email: string; name: string; roles: Role[]; leads?: 
 export type TicketCard = Card & { type: "ticket"; ticket: TicketDetails };
 
 export class WorkflowError extends Error {}
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** Writes history entries for things the portal does by itself (the daily job). */
 export const SYSTEM = "IAR Portal";
@@ -560,7 +559,6 @@ export function isOverdue(card: TicketCard, now: Date, today: string): boolean {
 }
 
 /** Whole days from one YYYY-MM-DD to another. */
-const daysFrom = (from: string, to: string) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 864e5);
 
 /**
  * How late an open ticket is, in words ("3 days late", "Not started for
@@ -570,7 +568,7 @@ export function lateText(card: TicketCard, now: Date, today: string): string | n
   const t = card.ticket;
   if (!withTeam(t)) return null;
   if (t.dueDate && t.dueDate < today) {
-    const d = daysFrom(t.dueDate, today);
+    const d = daysBetween(t.dueDate, today);
     return `${d} day${d === 1 ? "" : "s"} late`;
   }
   if (pastResponseTarget(t, now)) {

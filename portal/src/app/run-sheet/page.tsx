@@ -9,13 +9,14 @@ import { nameResolver } from "@/lib/names";
 import { requireViewer } from "@/lib/viewer";
 import { campusesOf, runSheetRows } from "@/lib/runsheet";
 import { eventContext } from "@/lib/events/context";
-import { isDate, timeText } from "@/lib/events/series";
+import { timeText } from "@/lib/events/series";
 import { type EventCard, isEventCard } from "@/lib/events/workflow";
 import { fmtDay } from "../ui";
 import { RoomCheckCell } from "../events/ops-ui";
 import { RoomDay } from "../events/RoomDay";
 import styles from "../events/events.module.css";
 import { PrintButton } from "./PrintButton";
+import { isDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Daily Run Sheet" };

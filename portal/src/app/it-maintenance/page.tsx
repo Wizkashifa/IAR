@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { emailsIn } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";

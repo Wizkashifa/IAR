@@ -1,5 +1,5 @@
 import "server-only";
-import { isActive, todayLocal } from "./away";
+import { isActive } from "./away";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { type Alert, type Delivery, alertEmail, chatMessage, fallbackFor, routeAlerts } from "./alerts";
@@ -11,6 +11,7 @@ import { peopleStore } from "./people";
 import { type PortalSettings, portalSettings } from "./portal-settings";
 import type { Notice } from "./purchases/notices";
 import type { Viewer } from "./viewer";
+import { todayLocal } from "./dates";
 
 /**
  * In-portal notifications (the bell) and the alerts that go with them

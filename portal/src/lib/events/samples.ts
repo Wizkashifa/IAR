@@ -12,10 +12,11 @@ import type { EventContext } from "./context";
 import { syncHolds } from "./holds";
 import { recordRoomCheck } from "./roomchecks";
 import { mergeRooms } from "./rooms";
-import { addDays, dayOfWeek, todayInRaleigh } from "./series";
+import { dayOfWeek } from "./series";
 import { actOnTask } from "./tasks";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
+import { addDays, todayLocal } from "../dates";
 
 /**
  * Sample event requests for local development, built by running the real
@@ -29,7 +30,7 @@ const exec: wf.EventActor = { email: "exec@dev.local", name: "Sample Executive",
 const DIRECTORS = [director.email];
 
 export async function sampleEvents(): Promise<Card[]> {
-  const today = todayInRaleigh();
+  const today = todayLocal();
   const next = (dow: number, after: number) => {
     let d = addDays(today, after);
     while (dayOfWeek(d) !== dow) d = addDays(d, 1);
