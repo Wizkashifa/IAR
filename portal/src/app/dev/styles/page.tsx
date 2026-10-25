@@ -87,7 +87,7 @@ export default function StylesPage() {
         </div>
       </Panel>
 
-      <Panel title="Status pills" right="Gold = you need to act · blue = waiting on others · green = done · red = stopped">
+      <Panel title="Status pills" right="Rust = you need to act · teal = waiting on others · green = done · red = stopped">
         <div className="stack">
           <div className="row">
             {TONES.map((t) => (
