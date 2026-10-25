@@ -36,13 +36,18 @@ export default async function NotificationsPage() {
           </>
         }
         actions={
-          unread > 0 && (
-            <form action={markAllRead}>
-              <Button type="submit" icon="check">
-                Mark all read
-              </Button>
-            </form>
-          )
+          <>
+            <Button href="/notifications/settings" icon="sliders">
+              Notification settings
+            </Button>
+            {unread > 0 && (
+              <form action={markAllRead}>
+                <Button type="submit" icon="check">
+                  Mark all read
+                </Button>
+              </form>
+            )}
+          </>
         }
       />
       <Panel title="Latest" right={unread > 0 ? <Pill tone="warn">{unread} unread</Pill> : items.length > 0 ? <span>All read</span> : undefined} flush>

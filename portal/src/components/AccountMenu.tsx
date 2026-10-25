@@ -41,6 +41,10 @@ export function AccountLinks({ account, onPick, withAway = true }: { account: Ac
           {account.away && <span className={styles.away}>Away</span>}
         </Link>
       )}
+      <Link href="/notifications/settings" className={styles.link} onClick={onPick}>
+        <Icon name="bell" />
+        <span>Notification settings</span>
+      </Link>
       <Link href="/help" className={styles.link} onClick={onPick}>
         <Icon name="help" />
         <span>Help</span>

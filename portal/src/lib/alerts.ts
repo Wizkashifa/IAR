@@ -15,6 +15,8 @@ export type Alert = {
   cardId?: string;
   /** Sent to someone covering for an away approver. */
   cover?: { name: string; until: string };
+  /** An update the person asked to get (lib/notify-prefs.ts), not something waiting on them. */
+  fyi?: boolean;
 };
 
 export type Delivery =
@@ -101,7 +103,11 @@ export function alertEmail(a: Alert, url: string): { subject: string; text: stri
   const lead = a.cover ? `\n\n${a.cover.name} is away until ${a.cover.until} and asked you to cover their approvals.` : "";
   return {
     subject: a.text,
-    text: `${a.text}${lead}\n\nOpen it in the IAR Portal: ${url}\n\nYou're getting this because it's waiting on you. Everything else stays in the portal's notifications.`,
+    text: `${a.text}${lead}\n\nOpen it in the IAR Portal: ${url}\n\n${
+      a.fyi
+        ? "You're getting this because you asked for updates in your notification settings. Change them in the portal under Notification settings."
+        : "You're getting this because it's waiting on you. Everything else stays in the portal's notifications."
+    }`,
   };
 }
 
