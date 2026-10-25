@@ -1,6 +1,7 @@
 import "server-only";
 import { cardStore } from "../cards";
-import { deliver } from "../notifications";
+import { saveThenTell } from "../daily-save";
+import { plural } from "../text";
 import { directory } from "../groups";
 import { closeOutNotices, dueForCloseOut, markNudged, needsNudge, startCloseOut } from "./closeout";
 import { renewalDue, renewalReminder } from "./renewal";
@@ -28,12 +29,7 @@ export async function daily(now: Date): Promise<string> {
     const next = sr.followUp(req, iso);
     if (!next) continue;
     const after = next === "remind" ? sr.markReminded(req, iso) : sr.escalate(req, dir, iso);
-    try {
-      await store.save(after, req.updatedAt);
-    } catch {
-      continue;
-    }
-    await deliver(sr.slotNotices(req, after, "portal"), "portal");
+    if (!(await saveThenTell(store, req.updatedAt, after, sr.slotNotices(req, after, "portal")))) continue;
     if (next === "remind") reminded++;
     else escalated++;
   }
@@ -46,26 +42,14 @@ export async function daily(now: Date): Promise<string> {
   for (const card of (await cards.listByType("event", ["approved", "close_out"])).filter(isEventCard)) {
     if (renewalDue(card, today)) {
       const r = renewalReminder(card, iso);
-      try {
-        await cards.save(r.card, card.updatedAt);
-        await deliver([r.notice], "portal");
-        renewals++;
-      } catch {
-        // Saved by someone else a moment ago: tomorrow's run tells them.
-      }
+      if (await saveThenTell(cards, card.updatedAt, r.card, [r.notice])) renewals++;
       continue;
     }
     const after = dueForCloseOut(card, today) ? startCloseOut(card, iso) : needsNudge(card, today) ? markNudged(card, iso) : null;
     if (!after) continue;
-    try {
-      await cards.save(after, card.updatedAt);
-    } catch {
-      continue;
-    }
-    await deliver(closeOutNotices(card, after, null), "portal");
+    if (!(await saveThenTell(cards, card.updatedAt, after, closeOutNotices(card, after, null)))) continue;
     if (after.status !== card.status) closing++;
     else nudged++;
   }
-  const s = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-  return `${s(reminded, "ask")} reminded, ${escalated} sent to the director. ${s(closing, "event")} moved to close-out, ${nudged} reminded to close out, ${renewals} series told renewal is open.`;
+  return `${plural(reminded, "ask")} reminded, ${escalated} sent to the director. ${plural(closing, "event")} moved to close-out, ${nudged} reminded to close out, ${renewals} series told renewal is open.`;
 }

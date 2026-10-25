@@ -5,3 +5,6 @@ export const lc = (s: string) => s.trim().toLowerCase();
 
 /** The same address (or group), ignoring case and spaces. Empty never matches. */
 export const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
+
+/** "1 reminder", "3 reminders". */
+export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

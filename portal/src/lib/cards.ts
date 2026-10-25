@@ -167,31 +167,14 @@ async function ensureSeeded() {
 }
 
 async function seed() {
-  const { samplePurchases, sampleVendors } = await import("./purchases/samples");
-  for (const c of await samplePurchases()) {
-    mem.cards.set(c.id, c);
-    const n = Number(c.id.split("-")[1]);
-    if (n >= mem.next.PO) mem.next.PO = n + 1;
-  }
-  for (const v of sampleVendors()) mem.vendors.set(v.id, v);
-  const { sampleEvents } = await import("./events/samples");
-  // Event samples include a purchase linked to an event, so count each ID under its own prefix.
-  for (const c of await sampleEvents()) {
+  const [purchases, events, marketing, tickets] = await Promise.all([import("./purchases/samples"), import("./events/samples"), import("./marketing/samples"), import("./tickets/samples")]);
+  for (const v of purchases.sampleVendors()) mem.vendors.set(v.id, v);
+  const cards = [...(await purchases.samplePurchases()), ...(await events.sampleEvents()), ...marketing.sampleMarketing(), ...tickets.sampleTickets()];
+  // Event samples include a purchase linked to an event, so each ID counts under its own prefix.
+  for (const c of cards) {
     mem.cards.set(c.id, c);
     const [prefix, num] = c.id.split("-");
     if (Number(num) >= (mem.next[prefix] ?? 0)) mem.next[prefix] = Number(num) + 1;
-  }
-  const { sampleMarketing } = await import("./marketing/samples");
-  for (const c of sampleMarketing()) {
-    mem.cards.set(c.id, c);
-    const n = Number(c.id.split("-")[1]);
-    if (n >= mem.next.MK) mem.next.MK = n + 1;
-  }
-  const { sampleTickets } = await import("./tickets/samples");
-  for (const c of sampleTickets()) {
-    mem.cards.set(c.id, c);
-    const n = Number(c.id.split("-")[1]);
-    if (n >= mem.next.TK) mem.next.TK = n + 1;
   }
 }
 
