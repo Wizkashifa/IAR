@@ -12,7 +12,8 @@
 export type TicketTeam = "it" | "facilities";
 
 /** A problem (something broke), a request (something new), or preventive maintenance from a schedule. */
-export type TicketKind = "problem" | "request" | "preventive";
+/** Someone asked for it (broken or new, it goes to the same team), or a preventive schedule opened it. */
+export type TicketKind = "request" | "preventive";
 
 export type Urgency = "low" | "normal" | "high" | "urgent";
 
@@ -89,8 +90,7 @@ export const TEAM_CHOICE: Record<TicketTeam, { label: string; hint: string }> = 
 };
 
 export const KIND_LABEL: Record<TicketKind, string> = {
-  problem: "Something's broken",
-  request: "A request",
+  request: "Request",
   preventive: "Preventive maintenance",
 };
 

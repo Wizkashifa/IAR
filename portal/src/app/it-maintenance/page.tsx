@@ -52,7 +52,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
       <div className="pagehead">
         <div>
           <h1>IT &amp; Maintenance</h1>
-          <p className="lead">Report a building or tech problem once. It goes to the right team, and you can follow it until it&apos;s fixed.</p>
+          <p className="lead">Ask once, for anything broken or needed in the building, IT or A/V. It goes to the right team, and you can follow it until it&apos;s done.</p>
         </div>
         <div className="row">
           {canImportJira(actor) && (
@@ -66,7 +66,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
             </Link>
           )}
           <Link href="/it-maintenance/new" className="button">
-            Report a problem
+            AV/IT/Maintenance request
           </Link>
         </div>
       </div>
@@ -108,7 +108,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
       <TicketTable
         cards={[...myTickets].sort((a, b) => Number(isOpen(b.ticket)) - Number(isOpen(a.ticket)) || b.updatedAt.localeCompare(a.updatedAt))}
         showTeam
-        empty="Nothing yet. Use “Report a problem” when something breaks or you need something from IT or facilities."
+        empty="Nothing yet. Use “AV/IT/Maintenance request” when something breaks or you need something from IT, A/V or maintenance."
       />
 
       {following.length > 0 && (

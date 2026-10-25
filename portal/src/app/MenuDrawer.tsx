@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * The top bar's menu. On a computer it's the row of links as usual; on a
- * phone it folds into a drawer that slides in from the left, opened with the
- * menu button, so the header stays one line.
+ * The top bar's menu: every link, search, feedback and your account, in a
+ * drawer that slides in from the left when the menu button is pressed, so
+ * the header stays clean (menu button, logo, notifications).
  */
 export function MenuDrawer({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);

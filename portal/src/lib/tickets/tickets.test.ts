@@ -27,7 +27,7 @@ const members = [fac.email, fac2.email, facLead.email];
 const T = (h: number) => new Date(Date.UTC(2026, 9, 1, 12) + h * 36e5).toISOString();
 
 function reported(over: Partial<wf.NewTicketInput> = {}, by = reporter): wf.TicketCard {
-  const c = wf.newTicket({ team: "facilities", kind: "problem", title: "Faucet drips", room: "Women's Prayer Hall", urgency: "normal", description: "Left faucet drips.", ...over }, by, T(0));
+  const c = wf.newTicket({ team: "facilities", kind: "request", title: "Faucet drips", room: "Women's Prayer Hall", urgency: "normal", description: "Left faucet drips.", ...over }, by, T(0));
   c.id = "TK-1001";
   return c;
 }
@@ -362,7 +362,7 @@ test("schedules: form checks, and assignees must be on the team", () => {
 // ---- Form input ---------------------------------------------------------------------------
 
 test("input: required fields, the 'Other' location, and photos only", () => {
-  const ok = parseTicketInput({ team: "it", kind: "problem", title: " Projector  flickers ", room: "Other", roomOther: "Library", urgency: "high", description: "Every few seconds." });
+  const ok = parseTicketInput({ team: "it", title: " Projector  flickers ", room: "Other", roomOther: "Library", urgency: "high", description: "Every few seconds." });
   assert.ok(ok.ok);
   if (ok.ok) {
     assert.equal(ok.input.title, "Projector flickers");

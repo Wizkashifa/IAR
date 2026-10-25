@@ -38,34 +38,34 @@ export function sampleTickets(): Card[] {
   const out: Card[] = [];
 
   // Urgent, picked up and being worked on.
-  let c = make(office, { team: "facilities", kind: "problem", title: "MPH is not cooling before Family Night", room: "MPH A&B – full gym", equipment: "Rooftop HVAC unit 2", urgency: "urgent", description: "It's 84°F inside and setup starts at 4.\nThe unit 2 compressor sounds like it's struggling." }, t(2, 9));
+  let c = make(office, { team: "facilities", kind: "request", title: "MPH is not cooling before Family Night", room: "MPH A&B – full gym", equipment: "Rooftop HVAC unit 2", urgency: "urgent", description: "It's 84°F inside and setup starts at 4.\nThe unit 2 compressor sounds like it's struggling." }, t(2, 9));
   c = wf.assign(c, facilities, t(2, 10), facilities.email, MEMBERS.facilities);
   c = wf.start(c, facilities, t(1, 11));
   out.push(c);
 
   // New: waiting for someone to pick it up.
-  out.push(make(volunteer, { team: "facilities", kind: "problem", title: "Wudu area faucet on the left keeps dripping", room: "Women's Prayer Hall", urgency: "normal", description: "The left faucet drips all the time, even when it's turned off all the way." }, t(1, 18)));
+  out.push(make(volunteer, { team: "facilities", kind: "request", title: "Wudu area faucet on the left keeps dripping", room: "Women's Prayer Hall", urgency: "normal", description: "The left faucet drips all the time, even when it's turned off all the way." }, t(1, 18)));
 
   // Waiting on parts.
-  c = make(chair, { team: "facilities", kind: "problem", title: "Main hall side door doesn't latch", room: "Main Prayer Hall", equipment: "Side door by the shoe racks", urgency: "high", description: "The door swings open in the wind. It's chained shut for now." }, t(5, 9));
+  c = make(chair, { team: "facilities", kind: "request", title: "Main hall side door doesn't latch", room: "Main Prayer Hall", equipment: "Side door by the shoe racks", urgency: "high", description: "The door swings open in the wind. It's chained shut for now." }, t(5, 9));
   c = wf.assign(c, chair, t(5, 10), facilities.email, MEMBERS.facilities);
   c = wf.start(c, facilities, t(4, 9));
   c = wf.waitForParts(c, facilities, t(4, 15), "New strike plate ordered from the locksmith, due Thursday.");
   out.push(c);
 
   // High, nobody has started it: the daily job sends one reminder.
-  c = make(volunteer, { team: "it", kind: "problem", title: "Projector in Room 240 flickers", room: "Room 240 – conference room", equipment: "Ceiling projector", urgency: "high", description: "The picture flickers every few seconds on HDMI." }, t(1, 8));
+  c = make(volunteer, { team: "it", kind: "request", title: "Projector in Room 240 flickers", room: "Room 240 – conference room", equipment: "Ceiling projector", urgency: "high", description: "The picture flickers every few seconds on HDMI." }, t(1, 8));
   c.ticket.watchers.push(office.email);
   out.push(c);
 
   // Marked fixed 8 days ago and never confirmed: the daily job closes it.
-  c = make(office, { team: "it", kind: "problem", title: "Office printer jams on tray 2", room: "Admin office", equipment: "Office printer", urgency: "normal", description: "Paper jams about every 20 pages from tray 2." }, t(10, 9));
+  c = make(office, { team: "it", kind: "request", title: "Office printer jams on tray 2", room: "Admin office", equipment: "Office printer", urgency: "normal", description: "Paper jams about every 20 pages from tray 2." }, t(10, 9));
   c = wf.start(c, it, t(9, 10));
   c = wf.resolve(c, it, t(8, 14), "Replaced the tray 2 pickup roller.");
   out.push(c);
 
   // Fixed yesterday: Sample Volunteer is asked to confirm.
-  c = make(volunteer, { team: "it", kind: "problem", title: "Wi-Fi drops in the conference room", room: "Room 240 – conference room", urgency: "normal", description: "Wi-Fi drops every few minutes, mostly on video calls." }, t(3, 13));
+  c = make(volunteer, { team: "it", kind: "request", title: "Wi-Fi drops in the conference room", room: "Room 240 – conference room", urgency: "normal", description: "Wi-Fi drops every few minutes, mostly on video calls." }, t(3, 13));
   c = wf.assign(c, it, t(3, 15), it.email, MEMBERS.it);
   c = wf.start(c, it, t(2, 10));
   c = wf.resolve(c, it, t(1, 16), "Moved the access point off the crowded channel and updated its firmware.");
