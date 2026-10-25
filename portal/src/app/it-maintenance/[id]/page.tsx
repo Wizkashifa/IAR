@@ -30,6 +30,7 @@ import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTic
 import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
 import { Disclosure } from "@/components/Disclosure";
+import { FileList } from "@/components/FileList";
 
 export const dynamic = "force-dynamic";
 
@@ -276,26 +277,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
 
       <Panel title="Photos" right={<span>{t.photos.length}</span>}>
         <div className="stack">
-          {t.photos.length === 0 ? (
-            <p className="note">No photos yet.</p>
-          ) : (
-            <ul className={styles.photos}>
-              {t.photos.map((p, i) => (
-                <li key={`${p.name}-${i}`} className={styles.photo}>
-                  {p.url ? (
-                    <a href={p.url} target="_blank" rel="noreferrer">
-                      {p.name}
-                    </a>
-                  ) : (
-                    <span>{p.name}</span>
-                  )}
-                  <span className={styles.sub}>
-                    {Math.ceil(p.size / 1024)} KB · {nameOf(p.by)} · {fmtDate(p.at)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <FileList files={t.photos.map((p) => ({ ...p, by: nameOf(p.by) }))} empty="No photos yet." />
           {can("photos") && (
             <form action={addTicketPhotos} className="stack">
               <input type="hidden" name="id" value={card.id} />

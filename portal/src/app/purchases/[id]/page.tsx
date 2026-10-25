@@ -30,6 +30,7 @@ import { todayLocal } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
+import { FileList } from "@/components/FileList";
 
 export const dynamic = "force-dynamic";
 
@@ -211,24 +212,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </Panel>
 
       <Panel title="Receipts and files" right={`${p.attachments.length}`}>
-        {p.attachments.length === 0 ? (
-          <p className={styles.why}>No files attached.</p>
-        ) : (
-          <ul className={styles.files}>
-            {p.attachments.map((a, i) => (
-              <li key={`${a.name}-${i}`}>
-                {a.url ? (
-                  <a href={a.url} target="_blank" rel="noreferrer">
-                    {a.name}
-                  </a>
-                ) : (
-                  a.name
-                )}
-                <span className={styles.when}>{Math.ceil(a.size / 1024)} KB</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <FileList files={p.attachments} empty="No files attached." />
       </Panel>
 
       <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />

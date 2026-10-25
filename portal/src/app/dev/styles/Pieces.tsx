@@ -1,6 +1,7 @@
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
+import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
 import { Panel } from "@/components/Panel";
@@ -83,6 +84,13 @@ export function Pieces() {
         <div className="stack">
           <SearchForm action="/dev/styles" label="Search the Library" placeholder="Search policies by name or by words inside them" />
           <Chips label="Folders" chips={[{ label: "All folders", href: "/dev/styles", on: true }, { label: "Purchasing", href: "/dev/styles?f=p", count: 3 }, { label: "Rooms and rentals", href: "/dev/styles?f=r", count: 2 }]} />
+        </div>
+      </Panel>
+
+      <Panel title="Files on a request" right="components/FileList.tsx">
+        <div className="stack">
+          <FileList files={[{ name: "receipt-costco.jpg", url: "https://drive.google.com", size: 180_000, by: "you", at: "2026-10-24T14:00:00Z" }, { name: "flyer-draft.pdf", size: 2_400_000 }]} empty="No files yet." />
+          <FileList files={[]} empty="No photos yet." />
         </div>
       </Panel>
 

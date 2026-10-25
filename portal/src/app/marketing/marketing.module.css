@@ -23,12 +23,5 @@
   /* Actions on a request page */
   .answerBox { max-width: 720px; }
 
-  .when { color: var(--ink-3); font-size: var(--t-sm); }
-  .quiet { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
   .sideNote { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
-
-  /* Files on a request page. */
-  .files { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
-  .files li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); min-width: 0; }
-  .files a, .files li > span:first-of-type { overflow-wrap: anywhere; }
 }

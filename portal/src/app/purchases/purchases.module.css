@@ -6,9 +6,6 @@
   /* Tables for staff data (line items, card checklist, vendors). Under 640px each row becomes a small card, labelled from data-label. */
   .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 
-  .files { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
-  .files li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
-
   /* The action row on a request page. */
   .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
   .why { margin: 0; color: var(--ink-2); }

@@ -24,13 +24,15 @@ import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
 import { fmtDate, fmtDay } from "@/lib/format";
 import { FileDrop } from "@/components/FileDrop";
-import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf, sizeText } from "@/lib/marketing/files";
+import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf } from "@/lib/marketing/files";
 import { marketingFolder } from "@/lib/marketing/drive";
 import { actOnMarketing, addMarketingFiles, commentOnMarketing } from "../actions";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
 import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
+import { FileList } from "@/components/FileList";
+import { same } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
 
@@ -175,26 +177,7 @@ export default async function MarketingDetail({
     return (
       <Panel title="Files" right={files.length ? `${files.length}` : undefined} id="files">
         <div className="stack">
-          {files.length === 0 ? (
-            <p className={styles.quiet}>No files yet.{m.driveLink ? " The requester shared a Google Drive link above." : ""}</p>
-          ) : (
-            <ul className={styles.files}>
-              {files.map((f, i) => (
-                <li key={`${f.name}-${i}`}>
-                  {f.url ? (
-                    <a href={f.url} target="_blank" rel="noreferrer">
-                      {f.name}
-                    </a>
-                  ) : (
-                    <span>{f.name}</span>
-                  )}
-                  <span className={styles.when}>
-                    {sizeText(f.size)} · {f.by.toLowerCase() === viewer.email.toLowerCase() ? "you" : names(f.by)}, {fmtDate(f.at)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <FileList files={files.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty={`No files yet.${m.driveLink ? " The requester shared a Google Drive link above." : ""}`} />
           {canAdd &&
             (uploads ? (
               <form action={addMarketingFiles} className="stack">
