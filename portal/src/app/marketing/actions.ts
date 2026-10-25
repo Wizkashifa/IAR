@@ -12,6 +12,9 @@ import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingIn
 import { canViewMarketing } from "@/lib/marketing/access";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
 import * as wf from "@/lib/marketing/workflow";
+import { filesFrom } from "@/lib/drive";
+import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
+import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
 export type FormState = { errors: string[]; values?: MarketingInput; n: number };
@@ -48,14 +51,70 @@ export async function createMarketing(prev: FormState, form: FormData): Promise<
   const actor = await actorFor(viewer);
   const raw = inputFrom(form);
   const parsed = parseMarketingInput(raw, { today: todayLocal(), committees: await committeesFor(viewer) });
-  if (!parsed.ok) return { errors: parsed.errors, values: raw, n: prev.n + 1 };
+  const files = isMarketingKind(raw.kind) && asksForFiles(raw.kind) ? filesFrom(form, "files") : [];
+  const fileErrors = files.length === 0 ? [] : (await marketingFolder()) ? checkFiles(files) : [NOT_SET_UP];
+  if (!parsed.ok || fileErrors.length) return { errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors], values: raw, n: prev.n + 1 };
 
   const store = await cardStore();
   const { id: _blank, ...toCreate } = wf.newMarketing(parsed.details, actor, nowIso());
   const created = (await store.create(toCreate, "MK")) as wf.MarketingCard;
   await deliver(marketingNotices(null, created, actor), actor.email);
+  if (files.length) {
+    try {
+      const saved = await saveMarketingFiles(created.id, created.marketing.kind, files);
+      await store.save(wf.addFiles(created, actor, nowIso(), saved), created.updatedAt);
+    } catch (err) {
+      console.error("marketing file upload failed", err);
+      revalidatePath("/marketing");
+      redirect(`/marketing/${created.id}?sent=1&error=${encodeURIComponent("Your request was sent, but the files didn't upload. Try adding them again below, or share a Google Drive link.")}`);
+    }
+  }
   revalidatePath("/marketing");
   redirect(`/marketing/${created.id}?sent=1`);
+}
+
+/** Files added from the request page, by the requester or the marketing team. Never changes the stage. */
+export async function addMarketingFiles(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = await actorFor(viewer);
+  const id = String(form.get("id") ?? "");
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isMarketingCard(card)) redirect("/marketing");
+  const back = (q: string) => {
+    revalidatePath(`/marketing/${id}`);
+    redirect(`/marketing/${id}?${q}#files`);
+  };
+  const allowed = wf.permission(card, actor, "files");
+  if (!allowed.ok) back(`error=${encodeURIComponent(allowed.reason)}`);
+  const files = filesFrom(form, "files");
+  if (files.length === 0) back(`error=${encodeURIComponent("Choose a file first.")}`);
+  const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
+  if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
+
+  let error: string | null = null;
+  try {
+    const saved = await saveMarketingFiles(card.id, card.marketing.kind, files);
+    // Someone may have saved the request while the files uploaded: add them to the latest copy.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const latest = attempt === 0 ? card : await store.get(id);
+      if (!wf.isMarketingCard(latest)) break;
+      try {
+        await store.save(wf.addFiles(latest, actor, nowIso(), saved), latest.updatedAt);
+        break;
+      } catch (err) {
+        if (!(err instanceof ConflictError) || attempt === 1) throw err;
+      }
+    }
+  } catch (err) {
+    if (err instanceof wf.WorkflowError) error = err.message;
+    else {
+      console.error("marketing file upload failed", err);
+      error = "The files didn't upload. Try again, or share a Google Drive link.";
+    }
+  }
+  revalidatePath("/marketing");
+  back(error ? `error=${encodeURIComponent(error)}` : "ok=files");
 }
 
 /**

@@ -6,7 +6,7 @@ import { DEV_DOMAIN, isDevAuth } from "@/lib/dev";
 import { ORG } from "@/lib/org";
 import { settingsStore } from "@/lib/portal-settings";
 import { FUNDS } from "@/lib/purchases/accounts";
-import { checkCard, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
+import { checkCard, checkDriveFolder, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
 import { googleRooms } from "@/lib/rooms-google";
 import { RULES } from "@/lib/events/rules";
 import { requireViewer } from "@/lib/viewer";
@@ -77,6 +77,17 @@ export async function saveRoom(form: FormData): Promise<void> {
   const s = await store.get();
   await store.save({ ...s, rooms: { ...(s.rooms ?? {}), [roomId]: r.setting }, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   back({ ok: `${rooms.find((x) => x.id === roomId)?.name ?? "Room"} saved.` });
+}
+
+/** The Shared Drive folder marketing request files go in. Empty turns uploads off (Drive links still work). */
+export async function saveMarketingSettings(form: FormData): Promise<void> {
+  const viewer = await requireAdmin();
+  const r = checkDriveFolder(form.get("marketingDriveFolder"));
+  if (!r.ok) return back({ error: r.error });
+  const store = await settingsStore();
+  const s = await store.get();
+  await store.save({ ...s, marketingDriveFolder: r.id, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
+  back({ ok: r.id ? "Marketing files now upload to that folder." : "Marketing file uploads are off. People can still share Drive links." });
 }
 
 /** Turn event policy rules on or off. */

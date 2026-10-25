@@ -4,6 +4,7 @@ import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/away";
 import { MARKETING_TYPES, isMarketingKind } from "@/lib/marketing/forms";
 import { MARKETING_KINDS } from "@/lib/marketing/types";
+import { marketingFolder } from "@/lib/marketing/drive";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
@@ -77,7 +78,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
       {committees.length === 0 && (
         <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
       )}
-      <MarketingForm action={createMarketing} kind={type} committees={committees} today={todayLocal()} cancelHref="/marketing" submitLabel="Send request" />
+      <MarketingForm action={createMarketing} kind={type} committees={committees} today={todayLocal()} cancelHref="/marketing" submitLabel="Send request" uploads={Boolean(await marketingFolder())} />
     </div>
   );
 }

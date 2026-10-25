@@ -11,7 +11,7 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, saveRoom, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, saveMarketingSettings, saveRoom, saveTeamFund } from "./actions";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
@@ -244,6 +244,17 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <small>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</small>
         </label>
         <div><button className="button secondary" type="submit">Save rules</button></div>
+      </form>
+
+      <h2>Marketing files</h2>
+      <p className="note">Files people add to marketing requests (logos, photos, wording) go to this Shared Drive folder, one folder per year and per request. Until it&apos;s set, people share Google Drive links instead.</p>
+      <form action={saveMarketingSettings} className="panel stack">
+        <label className="field">
+          <span>Marketing Shared Drive folder</span>
+          <input name="marketingDriveFolder" defaultValue={settings.marketingDriveFolder ? `https://drive.google.com/drive/folders/${settings.marketingDriveFolder}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={500} />
+          <small>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</small>
+        </label>
+        <div><button className="button secondary" type="submit">Save folder</button></div>
       </form>
 
       <h2>Google Chat spaces</h2>

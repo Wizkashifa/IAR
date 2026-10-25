@@ -59,7 +59,6 @@ export const MODULES: PortalModule[] = [
     href: "/marketing",
     plannedFeatures: [
       "A board view for the marketing team, alongside event marketing tasks in Team Queues",
-      "File uploads straight to the marketing Shared Drive, instead of a Drive link",
     ],
   },
   {
