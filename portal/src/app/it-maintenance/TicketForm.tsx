@@ -1,16 +1,24 @@
 "use client";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { Button } from "@/components/Button";
+import { Field, FormActions } from "@/components/Field";
+import { FileDrop } from "@/components/FileDrop";
+import { Note } from "@/components/Note";
+import { Panel } from "@/components/Panel";
 import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/tickets/input";
 import { TEAM_CHOICE, URGENCIES, URGENCY, type TicketTeam, type Urgency } from "@/lib/tickets/types";
 import type { TicketFormState } from "./actions";
+import styles from "./tickets.module.css";
+
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"];
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <button className="button" type="submit" disabled={pending}>
+    <Button variant="primary" type="submit" disabled={pending}>
       {pending ? "Sending…" : "Send to the team"}
-    </button>
+    </Button>
   );
 }
 
@@ -25,96 +33,98 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
   const [equipment, setEquipment] = useState("");
   const [description, setDescription] = useState("");
 
+  const equipmentField = (
+    <Field label="Equipment (if you know)">
+      <input name="equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} maxLength={120} placeholder={team === "it" ? "Ceiling projector, office printer…" : "Rooftop AC unit, left faucet…"} />
+    </Field>
+  );
+
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="stack">
       {state.errors.length > 0 && (
-        <div className="error" role="alert">
-          Please fix these and send it again:
-          <ul>
-            {state.errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
+        <div role="alert">
+          <Note tone="bad">
+            Please fix these and send it again:
+            <ul>
+              {state.errors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </Note>
         </div>
       )}
 
-      <fieldset className="section">
-        <legend>Which team?</legend>
-        <div className="choices">
-          {(["facilities", "it"] as TicketTeam[]).map((t) => (
-            <label key={t} className={`choice${team === t ? " on" : ""}`}>
-              <input type="radio" name="team" value={t} checked={team === t} onChange={() => setTeam(t)} required />
-              <strong>{TEAM_CHOICE[t].label}</strong>
-              <small>{TEAM_CHOICE[t].hint}</small>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <Panel title="Which team?">
+        <fieldset className={styles.section}>
+          <legend className="sr-only">Which team?</legend>
+          <div className={styles.choices}>
+            {(["facilities", "it"] as TicketTeam[]).map((t) => (
+              <label key={t} className={styles.choice}>
+                <input type="radio" name="team" value={t} checked={team === t} onChange={() => setTeam(t)} required />
+                <strong>{TEAM_CHOICE[t].label}</strong>
+                <small>{TEAM_CHOICE[t].hint}</small>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </Panel>
 
-      <fieldset className="section">
-        <legend>Where and what</legend>
-        <label className="field">
-          <span>What do you need, in a few words?</span>
-          <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX} required placeholder={team === "it" ? "Projector in Room 240 shows no picture" : "Faucet in the wudu area keeps dripping"} />
-        </label>
-        <div className="grid2">
-          <label className="field">
-            <span>Where is it?</span>
-            <select name="room" value={room} onChange={(e) => setRoom(e.target.value)} required>
-              <option value="" disabled>
-                Choose a room or area
-              </option>
-              {locations.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </select>
-          </label>
-          {room === "Other" ? (
-            <label className="field">
-              <span>Where exactly?</span>
-              <input name="roomOther" value={roomOther} onChange={(e) => setRoomOther(e.target.value)} maxLength={120} placeholder="Library, 2nd floor hallway…" />
-            </label>
-          ) : (
-            <label className="field">
-              <span>Equipment (if you know)</span>
-              <input name="equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} maxLength={120} placeholder={team === "it" ? "Ceiling projector, office printer…" : "Rooftop AC unit, left faucet…"} />
-            </label>
-          )}
+      <Panel title="Where and what">
+        <div className="stack">
+          <Field label="What do you need, in a few words?" required>
+            <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX} required placeholder={team === "it" ? "Projector in Room 240 shows no picture" : "Faucet in the wudu area keeps dripping"} />
+          </Field>
+          <div className={styles.grid2}>
+            <Field label="Where is it?" required>
+              <select name="room" value={room} onChange={(e) => setRoom(e.target.value)} required>
+                <option value="" disabled>
+                  Choose a room or area
+                </option>
+                {locations.map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </select>
+            </Field>
+            {room === "Other" ? (
+              <Field label="Where exactly?">
+                <input name="roomOther" value={roomOther} onChange={(e) => setRoomOther(e.target.value)} maxLength={120} placeholder="Library, 2nd floor hallway…" />
+              </Field>
+            ) : (
+              equipmentField
+            )}
+          </div>
+          {room === "Other" && equipmentField}
+          <Field label="Details" required hint="What happened or what you need, when, and anything you already tried.">
+            <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} maxLength={DESCRIPTION_MAX} required />
+          </Field>
+          <FileDrop name="photos" label="Photos (optional)" hint="A photo often saves the team a trip. JPEG, PNG, HEIC or WebP, up to 10 MB each." accept={PHOTO_TYPES} camera />
         </div>
-        {room === "Other" && (
-          <label className="field">
-            <span>Equipment (if you know)</span>
-            <input name="equipment" value={equipment} onChange={(e) => setEquipment(e.target.value)} maxLength={120} />
-          </label>
-        )}
-        <label className="field">
-          <span>Details</span>
-          <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} maxLength={DESCRIPTION_MAX} required placeholder="What happened or what you need, when, and anything you already tried." />
-        </label>
-        <label className="field">
-          <span>Photos (optional)</span>
-          <input type="file" name="photos" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.heic,.heif" />
-          <small>A photo often saves the team a trip. JPEG, PNG, HEIC or WebP, up to 10 MB each.</small>
-        </label>
-      </fieldset>
+      </Panel>
 
-      <fieldset className="section">
-        <legend>How urgent is it?</legend>
-        <div className="choices">
-          {URGENCIES.map((u) => (
-            <label key={u} className={`choice${urgency === u ? " on" : ""}`}>
-              <input type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} />
-              <strong>{URGENCY[u].label}</strong>
-              <small>
-                {URGENCY[u].hint} The team aims to pick it up {URGENCY[u].target}.
-              </small>
-            </label>
-          ))}
-        </div>
-        {urgency === "urgent" && <p className="callout warn">If anyone is in danger (fire, gas, flooding near power), call 911 first, then tell the front office.</p>}
-      </fieldset>
+      <Panel title="How urgent is it?">
+        <fieldset className={styles.section}>
+          <legend className="sr-only">How urgent is it?</legend>
+          <div className={styles.choices}>
+            {URGENCIES.map((u) => (
+              <label key={u} className={styles.choice}>
+                <input type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} />
+                <strong>{URGENCY[u].label}</strong>
+                <small>
+                  {URGENCY[u].hint} The team aims to pick it up {URGENCY[u].target}.
+                </small>
+              </label>
+            ))}
+          </div>
+          {urgency === "urgent" && <Note tone="warn">If anyone is in danger (fire, gas, flooding near power), call 911 first, then tell the front office.</Note>}
+        </fieldset>
+      </Panel>
 
-      <Submit />
+      <FormActions>
+        <Submit />
+        <Button href="/it-maintenance" variant="quiet">
+          Cancel
+        </Button>
+      </FormActions>
     </form>
   );
 }

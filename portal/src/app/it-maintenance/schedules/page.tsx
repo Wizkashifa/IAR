@@ -1,5 +1,15 @@
 import Link from "next/link";
+import { Button } from "@/components/Button";
+import { DateField } from "@/components/DateField";
+import { EmptyState } from "@/components/EmptyState";
+import { Field, FormActions } from "@/components/Field";
+import { ItemRow } from "@/components/ItemRow";
+import { ModuleHead } from "@/components/ModuleHead";
+import { Panel } from "@/components/Panel";
+import { PeoplePicker } from "@/components/PeoplePicker";
+import { Pill } from "@/components/Pill";
 import { todayLocal } from "@/lib/away";
+import { nameResolver } from "@/lib/names";
 import { requireViewer } from "@/lib/viewer";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { locationChoices } from "@/lib/tickets/locations";
@@ -8,124 +18,124 @@ import { scheduleStore } from "@/lib/tickets/schedule-store";
 import { FREQUENCIES, FREQUENCY_LABEL, type TicketSchedule } from "@/lib/tickets/schedules";
 import { TEAM_LABEL, TEAM_NAME, URGENCIES, URGENCY } from "@/lib/tickets/types";
 import { teamsOf } from "@/lib/tickets/workflow";
-import { Flash } from "../../ui";
 import { pauseSchedule, saveSchedule } from "../actions";
-import { FLASH, fmtDay } from "../ui";
+import { TicketFlash, fmtDay } from "../ui";
+import styles from "../tickets.module.css";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Preventive schedules" };
+
+const crumb = (
+  <p className="crumb">
+    <Link href="/it-maintenance">IT &amp; Maintenance</Link>
+  </p>
+);
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; error?: string }> }) {
-  const locations = locationChoices((await googleRooms()).map((r) => r.name));
   const sp = await searchParams;
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
   const teams = teamsOf(actor);
-  const crumb = (
-    <p className="crumb">
-      <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-    </p>
-  );
   if (teams.length === 0) {
     return (
-      <>
+      <div className="stack">
         {crumb}
-        <h1>Preventive schedules</h1>
-        <div className="panel empty">Schedules belong to the IT Services and Facility Maintenance teams. If you think you should be on one, ask its chair.</div>
-      </>
+        <ModuleHead title="Preventive schedules" />
+        <Panel flush>
+          <EmptyState icon="repeat">Schedules belong to the IT Services and Facility Maintenance teams. If you think you should be on one, ask its chair.</EmptyState>
+        </Panel>
+      </div>
     );
   }
-  const [all, members] = await Promise.all([(await scheduleStore()).list(), teamMembers()]);
+  const [locations, all, members] = await Promise.all([googleRooms().then((r) => locationChoices(r.map((x) => x.name))), (await scheduleStore()).list(), teamMembers()]);
   const list = all.filter((s) => teams.includes(s.team));
   const editing = sp.edit ? list.find((s) => s.id === sp.edit) : undefined;
   const today = todayLocal();
+  const names = await nameResolver([...teams.flatMap((t) => members[t]), ...list.map((s) => s.assigneeEmail).filter((e): e is string => Boolean(e))]);
+  const people = teams.flatMap((t) => members[t].map((m) => ({ email: m, name: names(m), note: teams.length > 1 ? TEAM_LABEL[t] : undefined })));
 
   return (
-    <>
+    <div className="stack">
       {crumb}
-      <div className="pagehead">
-        <div>
-          <h1>Preventive schedules</h1>
-          <p className="lead">Regular jobs, like filter changes and alarm checks. On the due day the portal opens a ticket for the team, then moves the schedule to the next date.</p>
-        </div>
-        {!editing && !sp.new && (
-          <Link href="/it-maintenance/schedules?new=1" className="button">
-            Add a schedule
-          </Link>
-        )}
-      </div>
-      <Flash ok={sp.ok} error={sp.error} messages={FLASH} />
+      <ModuleHead
+        title="Preventive schedules"
+        lead="Regular jobs, like filter changes and alarm checks. On the due day the portal opens a ticket for the team, then moves the schedule to the next date."
+        actions={
+          !editing &&
+          !sp.new && (
+            <Button variant="primary" icon="plus" href="/it-maintenance/schedules?new=1">
+              Add a schedule
+            </Button>
+          )
+        }
+      />
+      <div className="stack">
+        <TicketFlash ok={sp.ok} error={sp.error} />
 
-      {(editing || sp.new) && <ScheduleForm s={editing} />}
+        {(editing || sp.new) && <ScheduleForm s={editing} />}
 
-      {list.length === 0 ? (
-        <div className="panel empty">No schedules yet.</div>
-      ) : (
-        <div className="tablewrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Job</th>
-                <th>How often</th>
-                <th>Next ticket</th>
-                <th>Goes to</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <Panel title="Schedules" right={<span>{list.length}</span>} flush>
+          {list.length === 0 ? (
+            <EmptyState icon="repeat">No schedules yet.</EmptyState>
+          ) : (
+            <ul className={styles.rowList}>
               {list.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <strong>{s.name}</strong>
-                    <div className="sub">
+                <ItemRow
+                  key={s.id}
+                  state={s.paused ? "bad" : s.next <= today ? "act" : "wait"}
+                  title={s.name}
+                  sub={
+                    <>
                       {teams.length > 1 ? `${TEAM_LABEL[s.team]} · ` : ""}
-                      {s.room}
-                      {s.equipment ? ` · ${s.equipment}` : ""}
-                    </div>
-                    {s.lastTicketId && (
-                      <div className="sub">
-                        Last: <Link href={`/it-maintenance/${s.lastTicketId}`}>{s.lastTicketId}</Link>
-                        {s.lastCreatedOn ? ` on ${fmtDay(s.lastCreatedOn)}` : ""}
-                      </div>
-                    )}
-                  </td>
-                  <td>{FREQUENCY_LABEL[s.frequency]}</td>
-                  <td>
-                    {s.paused ? <span className="pill draft">Paused</span> : fmtDay(s.next)}
-                    {!s.paused && s.next <= today && <div className="sub due">Opens with the next daily run</div>}
-                  </td>
-                  <td className="sub">{s.assigneeEmail ?? `The ${TEAM_LABEL[s.team]} team`}</td>
-                  <td className="nowrap">
-                    <Link href={`/it-maintenance/schedules?edit=${s.id}`}>Edit</Link>{" "}
-                    <form action={pauseSchedule} className="inlineform">
-                      <input type="hidden" name="id" value={s.id} />
-                      <input type="hidden" name="paused" value={s.paused ? "0" : "1"} />
-                      <button className="linkbtn" type="submit">
-                        {s.paused ? "Resume" : "Pause"}
-                      </button>
-                    </form>
-                  </td>
-                </tr>
+                      {FREQUENCY_LABEL[s.frequency]} · {s.room}
+                      {s.equipment ? ` · ${s.equipment}` : ""} · {s.assigneeEmail ? names(s.assigneeEmail) : `the ${TEAM_LABEL[s.team]} team`}
+                      {s.lastTicketId && (
+                        <>
+                          {" "}
+                          · last <Link href={`/it-maintenance/${s.lastTicketId}`}>{s.lastTicketId}</Link>
+                          {s.lastCreatedOn ? ` on ${fmtDay(s.lastCreatedOn)}` : ""}
+                        </>
+                      )}
+                    </>
+                  }
+                  right={
+                    <span className={styles.scheduleActions}>
+                      {s.paused ? (
+                        <Pill tone="bad">Paused</Pill>
+                      ) : (
+                        <Pill tone={s.next <= today ? "warn" : "info"} title={s.next <= today ? "Opens with the next daily run" : undefined}>
+                          {s.next <= today ? "Opens next run" : `Next ${fmtDay(s.next)}`}
+                        </Pill>
+                      )}
+                      <Link href={`/it-maintenance/schedules?edit=${s.id}`}>Edit</Link>
+                      <form action={pauseSchedule}>
+                        <input type="hidden" name="id" value={s.id} />
+                        <input type="hidden" name="paused" value={s.paused ? "0" : "1"} />
+                        <button className={styles.linkBtn} type="submit">
+                          {s.paused ? "Resume" : "Pause"}
+                        </button>
+                      </form>
+                    </span>
+                  }
+                />
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
+            </ul>
+          )}
+        </Panel>
+      </div>
+    </div>
   );
 
   function ScheduleForm({ s }: { s?: TicketSchedule }) {
     return (
-      <form action={saveSchedule} className="form">
-        {s && <input type="hidden" name="id" value={s.id} />}
-        <fieldset className="section">
-          <legend>{s ? `Edit “${s.name}”` : "New schedule"}</legend>
-          <div className="grid2">
-            <label className="field">
-              <span>Job</span>
+      <Panel title={s ? `Edit “${s.name}”` : "New schedule"}>
+        <form action={saveSchedule} className="stack">
+          {s && <input type="hidden" name="id" value={s.id} />}
+          <div className={styles.grid2}>
+            <Field label="Job" required>
               <input name="name" defaultValue={s?.name} required maxLength={80} placeholder="HVAC filter check" />
-            </label>
-            <label className="field">
-              <span>Team</span>
+            </Field>
+            <Field label="Team">
               <select name="team" defaultValue={s?.team ?? teams[0]}>
                 {teams.map((t) => (
                   <option key={t} value={t}>
@@ -133,9 +143,8 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="field">
-              <span>How often</span>
+            </Field>
+            <Field label="How often">
               <select name="frequency" defaultValue={s?.frequency ?? "monthly"}>
                 {FREQUENCIES.map((f) => (
                   <option key={f} value={f}>
@@ -143,26 +152,15 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="field">
-              <span>{s ? "Next date" : "First date"}</span>
-              <input type="date" name="next" defaultValue={s?.next ?? today} min={s ? undefined : today} required />
-            </label>
-            <label className="field">
-              <span>Where</span>
+            </Field>
+            <DateField name="next" label={s ? "Next date" : "First date"} defaultValue={s?.next ?? today} min={s ? undefined : today} required />
+            <Field label="Where" required>
               <input name="room" list="ticket-locations" defaultValue={s?.room} required maxLength={120} />
-              <datalist id="ticket-locations">
-                {locations.map((l) => (
-                  <option key={l} value={l} />
-                ))}
-              </datalist>
-            </label>
-            <label className="field">
-              <span>Equipment (optional)</span>
+            </Field>
+            <Field label="Equipment (optional)">
               <input name="equipment" defaultValue={s?.equipment} maxLength={120} />
-            </label>
-            <label className="field">
-              <span>Urgency</span>
+            </Field>
+            <Field label="Urgency">
               <select name="urgency" defaultValue={s?.urgency ?? "normal"}>
                 {URGENCIES.map((u) => (
                   <option key={u} value={u}>
@@ -170,38 +168,27 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="field">
-              <span>Assign each ticket to</span>
-              <select name="assignee" defaultValue={s?.assigneeEmail ?? ""}>
-                <option value="">Nobody: it goes to the team</option>
-                {teams.map((t) => (
-                  <optgroup key={t} label={TEAM_NAME[t]}>
-                    {members[t].map((m) => (
-                      <option key={`${t}-${m}`} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              <small>Pick someone on the schedule&apos;s team.</small>
-            </label>
+            </Field>
+            <PeoplePicker name="assignee" label="Give each ticket to" hint="Leave empty and it goes to the team. Pick someone on the schedule's team." people={people} defaultValue={s?.assigneeEmail ?? null} />
           </div>
-          <label className="field">
-            <span>What to do (copied onto each ticket)</span>
+          <datalist id="ticket-locations">
+            {locations.map((l) => (
+              <option key={l} value={l} />
+            ))}
+          </datalist>
+          <Field label="What to do (copied onto each ticket)">
             <textarea name="description" rows={3} defaultValue={s?.description} maxLength={3000} placeholder="Inspect and replace the filters on both rooftop units." />
-          </label>
-          <div className="row spaced">
-            <button className="button" type="submit">
+          </Field>
+          <FormActions sticky={false}>
+            <Button variant="primary" type="submit">
               {s ? "Save" : "Add schedule"}
-            </button>
-            <Link href="/it-maintenance/schedules" className="button secondary">
+            </Button>
+            <Button href="/it-maintenance/schedules" variant="quiet">
               Cancel
-            </Link>
-          </div>
-        </fieldset>
-      </form>
+            </Button>
+          </FormActions>
+        </form>
+      </Panel>
     );
   }
 }

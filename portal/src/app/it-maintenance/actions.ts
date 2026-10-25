@@ -52,7 +52,7 @@ export async function createTicket(_prev: TicketFormState, form: FormData): Prom
     }
   }
   revalidatePath("/it-maintenance");
-  redirect(back(created.id, "ok=reported"));
+  redirect(back(created.id, "sent=1"));
 }
 
 /** Assign, start, wait on parts, resolve, set a target date, confirm, reopen or cancel. */
