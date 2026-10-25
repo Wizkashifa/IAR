@@ -295,6 +295,15 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .stage.now { color: var(--ink); font-weight: 600; }
 .stage.done { color: var(--ink-2); }
 .stage.skip { opacity: 0.45; }
+/* Phones: every bar on one line and one line naming the current step; the labels stay for screen readers. */
+.stage-sum { display: none; margin: 8px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.stage-sum strong { color: var(--ink); }
+@media (max-width: 640px) {
+  .stages { overflow: visible; }
+  .stage { flex: 1 1 0; }
+  .stage .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .stage-sum { display: block; }
+}
 
 .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13.5px; margin: 0; }
 .kv dt { color: var(--ink-2); }
@@ -2034,7 +2043,9 @@ function seedSlots() {
    One layout for every request type (events, purchases, marketing, tickets):
    crumb · title, lead line and status · stages · notes · actions ·
    main column (the request, comments, history) and a side column (details). */
-const reqStages = (steps, at) => `<div class="stages">${steps.map((s, i) => { const o = typeof s === "string" ? { label: s } : s; return `<div class="stage ${o.cls ?? (i < at ? "done" : i === at ? "now" : "")}"><div class="bar"></div>${esc(o.label)}</div>`; }).join("")}</div>`;
+const reqStages = (steps, at) => `<div class="stages">${steps.map((s, i) => { const o = typeof s === "string" ? { label: s } : s; return `<div class="stage ${o.cls ?? (i < at ? "done" : i === at ? "now" : "")}"><div class="bar"></div><span class="lbl">${esc(o.label)}</span></div>`; }).join("")}</div>${stageSum(steps, at)}`;
+/* "Step 6 of 7: Close-out" under the bars on a phone. Events mark the current step with cls "now" instead of passing at. */
+const stageSum = (steps, at) => { const i = at ?? steps.findIndex((s) => typeof s !== "string" && s.cls === "now"), s = steps[i]; return s ? `<p class="stage-sum" aria-hidden="true">Step ${i + 1} of ${steps.length}: <strong>${esc(typeof s === "string" ? s : s.label)}</strong></p>` : ""; };
 /* "What happens next" on a request page: who acts next and what follows, in a sentence. */
 const personTo = (id) => (id === S.me ? "You" : fn(id));
 const financeName = () => fn(Object.keys(PEOPLE).find((p) => p !== "admin" && roleOf(p, "finance")) || "bookkeeper");
