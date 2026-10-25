@@ -53,7 +53,7 @@
     --gold-line: rgba(199, 161, 84, 0.55);
     --gold-wash: rgba(199, 161, 84, 0.14);
     --cream-wash: rgba(246, 238, 219, 0.1);
-    --cream-dim: rgba(246, 238, 219, 0.6);
+    --cream-dim: rgba(246, 238, 219, 0.72);
 
     /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
     --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

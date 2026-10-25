@@ -13,9 +13,9 @@ export default async function NewTicket() {
   await requireViewer();
   return (
     <div className="stack">
-      <p className="crumb">
+      <nav className="crumb" aria-label="Breadcrumb">
         <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-      </p>
+      </nav>
       <ModuleHead
         title="AV/IT/Maintenance"
         lead="Something broken or something you need: it goes to the maintenance or IT team. You'll hear when someone picks it up and when it's done, and you can follow it in My Requests."

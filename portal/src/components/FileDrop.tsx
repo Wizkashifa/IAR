@@ -57,7 +57,7 @@ export function FileDrop({ name, label, hint, error, required, accept, multiple 
       </Dropzone>
       {camera && (
         <div>
-          <input ref={cam} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => add(Array.from(e.currentTarget.files ?? []))} />
+          <input ref={cam} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden="true" aria-label="Take a photo" onChange={(e) => add(Array.from(e.currentTarget.files ?? []))} />
           <Button size="small" icon="plus" onClick={() => cam.current?.click()}>
             Take a photo
           </Button>
@@ -77,7 +77,9 @@ export function FileDrop({ name, label, hint, error, required, accept, multiple 
         </ul>
       )}
       {/* What the form sends. Kept focusable (not display:none) so the browser can point at it when it's required and empty. */}
-      <input ref={input} type="file" name={name} multiple={multiple} required={required && files.length === 0} tabIndex={-1} aria-hidden="true" className={styles.real} onChange={() => undefined} />
+      <span className={styles.realWrap}>
+        <input ref={input} type="file" name={name} multiple={multiple} required={required && files.length === 0} tabIndex={-1} aria-hidden="true" aria-label={label} className={styles.real} onChange={() => undefined} />
+      </span>
     </Field>
   );
 }

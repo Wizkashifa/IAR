@@ -26,9 +26,9 @@ export default async function HelpGuidePage({ params }: { params: Promise<{ modu
 
   return (
     <>
-      <p className={styles.crumb}>
+      <nav className={styles.crumb} aria-label="Breadcrumb">
         <Link href="/help">Help</Link> / {guide.title}
-      </p>
+      </nav>
       <ModuleHead
         title={guide.title}
         lead={guide.summary}

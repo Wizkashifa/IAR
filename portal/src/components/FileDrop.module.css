@@ -9,5 +9,7 @@
   .list li { display: flex; align-items: center; gap: var(--s-2); padding: 6px 6px 6px 10px; border-top: 1px solid var(--line); font-size: var(--t-md); }
   .list li:first-child { border-top: 0; }
   .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .real { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  /* The real input sits inside a zero-height box so it never widens the page on a phone. */
+  .realWrap { position: relative; display: block; height: 0; overflow: hidden; }
+  .real { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 }

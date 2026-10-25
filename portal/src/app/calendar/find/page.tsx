@@ -124,7 +124,7 @@ function RoomRow({ o, href }: { o: RoomOption; href?: string }) {
         ))}
       </div>
       {href && (
-        <Button href={href} variant="primary" size="small">
+        <Button href={href} size="small">
           Request this room
         </Button>
       )}

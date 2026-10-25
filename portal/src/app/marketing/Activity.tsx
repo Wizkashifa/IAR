@@ -42,7 +42,7 @@ export function CommentsPanel({ id, comments, names, action }: { id: string; com
           <input type="hidden" name="id" value={id} />
           <textarea name="text" rows={3} maxLength={COMMENT_MAX} required aria-label="Comment" placeholder="Ask a question or add context. Everyone who can open this request sees it." />
           <div className="row end">
-            <Button type="submit" variant="primary" size="small">
+            <Button type="submit" size="small">
               Comment
             </Button>
           </div>

@@ -15,6 +15,9 @@
   .link:focus-visible { outline: none; box-shadow: inset var(--ring); border-radius: var(--r-sm); }
   .text { min-width: 0; }
   .t { font-weight: 600; overflow-wrap: anywhere; }
+  /* A title that is its own link (rows with buttons beside them) reads like the other rows. */
+  .t a { color: inherit; }
+  .t a:hover { color: var(--accent-text); }
   .id { color: var(--ink-3); font-weight: 400; font-size: 12px; margin-left: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .s { color: var(--ink-2); font-size: var(--t-sm); overflow-wrap: anywhere; }
   .s strong { color: var(--ink-2); font-weight: 600; }

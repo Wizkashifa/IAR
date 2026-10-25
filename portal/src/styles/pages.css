@@ -24,6 +24,15 @@
   .table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: top; }
   .table .sub { color: var(--ink-2); font-size: 12px; }
   .tablewrap { overflow-x: auto; }
+  /* Phones: each row becomes a card, each cell a line with its column name (data-label) above it. */
+  @media (max-width: 640px) {
+    .table:has(td[data-label]) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .table:has(td[data-label]), .table:has(td[data-label]) tbody, .table:has(td[data-label]) tr, .table:has(td[data-label]) td { display: block; width: 100%; }
+    .table:has(td[data-label]) tr { border-top: 1px solid var(--line); padding: var(--s-2) 0; }
+    .table:has(td[data-label]) tr:first-child { border-top: 0; }
+    .table:has(td[data-label]) td { border-top: 0; padding: 4px 12px; text-align: left; }
+    .table td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
+  }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; }
   .panel ul { margin: 8px 0 0; padding-left: 20px; }

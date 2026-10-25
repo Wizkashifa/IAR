@@ -17,7 +17,7 @@
   .steps { margin: var(--s-2) 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: var(--t-md); color: var(--ink-2); max-width: 78ch; }
   .steps li::marker { color: var(--accent-text); font-weight: 700; }
   .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); }
-  .more { display: inline-flex; align-items: center; gap: 4px; font-size: var(--t-md); font-weight: 600; color: var(--accent-text); text-decoration: none; }
+  .more { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; font-size: var(--t-md); font-weight: 600; color: var(--accent-text); text-decoration: none; }
   .more:hover { text-decoration: underline; }
   .got {
     border: 0; background: none; padding: 4px 0; font: inherit; font-size: var(--t-md); color: var(--ink-2); cursor: pointer;

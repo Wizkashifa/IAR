@@ -88,7 +88,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
         {!working && can("start") && (
           <form action={actFromToday}>
             {hidden("start")}
-            <Button type="submit" variant="primary" icon="zap" full>
+            <Button type="submit" icon="zap" full>
               {startLabel}
             </Button>
           </form>
@@ -102,7 +102,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
                 <textarea name="note" rows={2} maxLength={2000} required placeholder={preventive ? "Changed the filters" : "Replaced the cartridge"} />
               </Field>
               <FileDrop name="photos" label="Photo (optional)" accept={PHOTO_TYPES} multiple={false} maxFiles={1} camera />
-              <Button type="submit" variant="primary" icon="check" full>
+              <Button type="submit" icon="check" full>
                 {preventive ? "Mark done" : "Mark fixed"}
               </Button>
             </form>

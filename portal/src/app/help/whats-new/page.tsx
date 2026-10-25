@@ -19,9 +19,9 @@ export default async function WhatsNewPage() {
 
   return (
     <>
-      <p className={styles.crumb}>
+      <nav className={styles.crumb} aria-label="Breadcrumb">
         <Link href="/help">Help</Link> / What&apos;s new
-      </p>
+      </nav>
       <ModuleHead title="What's new" lead="Changes to the portal you'll notice, newest first." />
       <div className={styles.stack}>
         {ordered.map(([date, items]) => (
