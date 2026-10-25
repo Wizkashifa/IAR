@@ -5,6 +5,8 @@ import { MARKETING_TYPES, NOTES_MAX, type MarketingField, type MarketingInput } 
 import type { MarketingKind } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
+import { FileDrop } from "@/components/FileDrop";
+import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions } from "@/components/Field";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -23,10 +25,16 @@ export type MarketingFormProps = {
   today: string;
   cancelHref: string;
   submitLabel: string;
+  /**
+   * New requests only: whether files can be uploaded (a marketing folder is set
+   * in Portal Settings). Left out on the edit page, where files are added on
+   * the request page instead.
+   */
+  uploads?: boolean;
 };
 
-/** One request type's questions, the committee, a Drive link and comments. */
-export default function MarketingForm({ action, kind, committees, initial, question, today, cancelHref, submitLabel }: MarketingFormProps) {
+/** One request type's questions, the committee, files or a Drive link, and comments. */
+export default function MarketingForm({ action, kind, committees, initial, question, today, cancelHref, submitLabel, uploads }: MarketingFormProps) {
   const [state, formAction] = useActionState(action, { errors: [], n: 0 });
   const v = state.values ?? initial;
   const t = MARKETING_TYPES[kind];
@@ -78,7 +86,27 @@ export default function MarketingForm({ action, kind, committees, initial, quest
               ))}
             </select>
           </Field>
-          <Field label="Google Drive link to files (optional)" hint="Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it.">
+          {uploads && asksForFiles(kind) && (
+            <div className="wide">
+              <FileDrop
+                name="files"
+                label="Files for marketing (optional)"
+                hint={`${FILE_HINT[kind] ?? ""} Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each; for more, use a Drive link.`}
+                accept={FILE_ACCEPT}
+                maxFiles={MAX_PER_UPLOAD}
+                maxSizeMb={MAX_FILE_MB}
+                camera={kind === "highlight" || kind === "badge" || kind === "signage"}
+              />
+            </div>
+          )}
+          <Field
+            label="Google Drive link to files (optional)"
+            hint={
+              uploads === false && asksForFiles(kind)
+                ? "File uploads aren't set up yet, so share your files with a Drive link. Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it."
+                : "For a folder or large files. Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it."
+            }
+          >
             <input type="url" name="driveLink" defaultValue={v?.driveLink ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
           </Field>
           <Field label="Comments (optional)" className="wide">

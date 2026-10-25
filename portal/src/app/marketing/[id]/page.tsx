@@ -24,7 +24,10 @@ import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
 import { ToastOnLoad } from "@/components/toast";
 import { fmtDate, fmtDay } from "../../ui";
-import { actOnMarketing, commentOnMarketing } from "../actions";
+import { FileDrop } from "@/components/FileDrop";
+import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf, sizeText } from "@/lib/marketing/files";
+import { marketingFolder } from "@/lib/marketing/drive";
+import { actOnMarketing, addMarketingFiles, commentOnMarketing } from "../actions";
 import { CommentsPanel, HistoryPanel } from "../Activity";
 import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
@@ -57,9 +60,11 @@ export default async function MarketingDetail({
   const own = mc.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const due = neededBy(m.answers);
   const days = daysUntilNeeded(mc, today);
-  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by)]);
+  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
   const tone = ROW_TONE[rowState(mc, actor, { today })];
+  const files = filesOf(m);
+  const uploads = Boolean(await marketingFolder());
 
   // Why a marketing member can't review this one (their own request).
   const why = m.stage === "review" && actor.roles.includes("marketing") ? permission(mc, actor, "schedule") : null;
@@ -106,7 +111,7 @@ export default async function MarketingDetail({
                   value: !v ? null : f.kind === "url" ? <a href={v} target="_blank" rel="noreferrer">{v}</a> : f.kind === "date" ? fmtDay(v) : <span className="pre">{answerText(f, v)}</span>,
                 };
               }),
-              { label: "Files", value: m.driveLink ? <a href={m.driveLink} target="_blank" rel="noreferrer">{m.driveLink}</a> : "No Drive link" },
+              { label: "Google Drive link", value: m.driveLink ? <a href={m.driveLink} target="_blank" rel="noreferrer">{m.driveLink}</a> : null },
               { label: "Comments from the requester", value: m.notes ? <span className="pre">{m.notes}</span> : null },
             ]}
           />
@@ -117,6 +122,7 @@ export default async function MarketingDetail({
           )}
         </div>
       </Panel>
+      <FilesPanel />
       <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} />
       <HistoryPanel entries={m.history} names={names} />
     </>
@@ -162,6 +168,50 @@ export default async function MarketingDetail({
       />
     </>
   );
+
+  /** Files on the request, and a way for the requester and the marketing team to add more. */
+  function FilesPanel() {
+    const canAdd = can("files");
+    if (files.length === 0 && !canAdd) return null;
+    return (
+      <Panel title="Files" right={files.length ? `${files.length}` : undefined} id="files">
+        <div className="stack">
+          {files.length === 0 ? (
+            <p className={styles.quiet}>No files yet.{m.driveLink ? " The requester shared a Google Drive link above." : ""}</p>
+          ) : (
+            <ul className={styles.files}>
+              {files.map((f, i) => (
+                <li key={`${f.name}-${i}`}>
+                  {f.url ? (
+                    <a href={f.url} target="_blank" rel="noreferrer">
+                      {f.name}
+                    </a>
+                  ) : (
+                    <span>{f.name}</span>
+                  )}
+                  <span className={styles.when}>
+                    {sizeText(f.size)} · {f.by.toLowerCase() === viewer.email.toLowerCase() ? "you" : names(f.by)}, {fmtDate(f.at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {canAdd &&
+            (uploads ? (
+              <form action={addMarketingFiles} className="stack">
+                <input type="hidden" name="id" value={mc.id} />
+                <FileDrop name="files" label="Add files" hint={`Up to ${MAX_PER_UPLOAD} files at a time, ${MAX_FILE_MB} MB each. Marketing and the requester can open them here.`} accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
+                <div>
+                  <Button type="submit">Add files</Button>
+                </div>
+              </form>
+            ) : (
+              <p className={styles.sideNote}>File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
+            ))}
+        </div>
+      </Panel>
+    );
+  }
 
   /** The buttons for the person looking, in one row, with the fields they share underneath. */
   function Actions() {

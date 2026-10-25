@@ -21,6 +21,8 @@ export type PortalSettings = {
   roomPolicyUrl?: string;
   /** Team group → what it handles and its Google Chat space link, shown in Who's who. Set by the team's chair or an admin. */
   teamInfo?: Record<string, TeamInfo>;
+  /** The Shared Drive folder marketing request files go in (a folder ID). Unset: the forms take Drive links only. */
+  marketingDriveFolder?: string;
   updatedAt?: string;
   updatedBy?: string;
 };
@@ -44,6 +46,20 @@ export function checkCard(
   if (!holderName) return { ok: false, error: "Enter the cardholder's name." };
   if (!ctx.funds.includes(fund)) return { ok: false, error: "Choose the fund the card is charged to." };
   return { ok: true, card: { last4, holderEmail, holderName, fund } };
+}
+
+/**
+ * A Google Drive folder from what an admin pasted: a folder link
+ * ("https://drive.google.com/drive/folders/<id>", with or without "/u/0" or
+ * "?usp=…") or the folder ID itself. Empty clears it. Anything else is an error.
+ */
+export function checkDriveFolder(raw: unknown): { ok: true; id: string } | { ok: false; error: string } {
+  const s = String(raw ?? "").trim();
+  if (!s) return { ok: true, id: "" };
+  const fromLink = s.match(/^https:\/\/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([A-Za-z0-9_-]{10,})(?:[/?#].*)?$/);
+  const id = fromLink ? fromLink[1] : /^[A-Za-z0-9_-]{10,}$/.test(s) ? s : null;
+  if (!id) return { ok: false, error: "Paste the folder's link from Google Drive (it looks like https://drive.google.com/drive/folders/…)." };
+  return { ok: true, id };
 }
 
 /** A team's fund choice, checked. An empty fund clears the choice so the suggestion applies again. */

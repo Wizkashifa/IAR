@@ -26,4 +26,5 @@ export const OK_MESSAGES: Record<string, string> = {
   finish: "Marked done. The requester is told.",
   cancel: "Request cancelled.",
   commented: "Comment added. The people on this request can see it.",
+  files: "Files added. Marketing can open them from this page.",
 };

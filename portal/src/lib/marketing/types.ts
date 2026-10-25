@@ -31,6 +31,17 @@ export const STAGE_LABEL: Record<MarketingStage, string> = {
 
 export type HistoryEntry = { at: string; by: string; action: string; note?: string };
 
+/** A file someone added to a request: logos, photos, wording, artwork. */
+export type MarketingFile = {
+  name: string;
+  size: number;
+  /** Google Drive file ID in the marketing Shared Drive folder (production). */
+  driveFileId?: string;
+  url?: string;
+  at: string;
+  by: string;
+};
+
 export type MarketingDetails = {
   kind: MarketingKind;
   /** Answers to the type's questions, by field key (see forms.ts). Dates are YYYY-MM-DD. */
@@ -39,6 +50,8 @@ export type MarketingDetails = {
   requesterName: string;
   /** A Google Drive link to files for marketing. */
   driveLink?: string;
+  /** Files added to the request, kept in the marketing Shared Drive folder (lib/marketing/files.ts). */
+  files?: MarketingFile[];
   /** "Comments (optional)" from the form. */
   notes?: string;
   stage: MarketingStage;

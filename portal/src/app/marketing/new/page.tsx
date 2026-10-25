@@ -7,6 +7,7 @@ import { cardStore } from "@/lib/cards";
 import { isMarketingCard } from "@/lib/marketing/workflow";
 import { MARKETING_TYPES, isMarketingKind } from "@/lib/marketing/forms";
 import { MARKETING_KINDS } from "@/lib/marketing/types";
+import { marketingFolder } from "@/lib/marketing/drive";
 import { Button } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
@@ -86,7 +87,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
         <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
       )}
       {copy && source && <Note>{copiedNote(source.id)}</Note>}
-      <MarketingForm action={createMarketing} kind={type} committees={committees} initial={copy} today={today} cancelHref="/marketing" submitLabel="Send request" />
+      <MarketingForm action={createMarketing} kind={type} committees={committees} initial={copy} today={today} cancelHref="/marketing" submitLabel="Send request" uploads={Boolean(await marketingFolder())} />
     </div>
   );
 }

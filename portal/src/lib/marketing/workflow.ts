@@ -21,7 +21,8 @@ import type { Card, CardStatus } from "../cards";
 import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, addDays, daysBetween, isDate, neededBy, titleFor, type ParsedMarketing } from "./forms";
-import { type HistoryEntry, type MarketingDetails, type MarketingStage, STAGE_LABEL } from "./types";
+import { MAX_PER_REQUEST, filesOf } from "./files";
+import { type HistoryEntry, type MarketingDetails, type MarketingFile, type MarketingStage, STAGE_LABEL } from "./types";
 
 export type { Actor };
 
@@ -110,7 +111,7 @@ export function isTight(card: MarketingCard, today: string): boolean {
 
 // ---- Who can act -------------------------------------------------------------
 
-export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel";
+export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel" | "files";
 
 /** The actions the marketing team takes; the others are the requester's. */
 export const TEAM_ACTIONS: Action[] = ["schedule", "ask", "decline", "start", "finish", "reschedule"];
@@ -132,6 +133,12 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
     if (!own) return no(action === "edit" ? "Only the requester can change the request." : "Only the requester can cancel a request.");
     if (m.stage !== "review" && m.stage !== "question")
       return no(m.stage === "scheduled" || m.stage === "doing" ? "Marketing has already scheduled this. Add a comment to ask for a change." : "This request is closed.");
+    return { ok: true };
+  }
+
+  if (action === "files") {
+    if (!own && !actor.roles.includes("marketing")) return no("Only the requester and the marketing team can add files.");
+    if (m.stage === "declined" || m.stage === "cancelled") return no("This request is closed, so no more files can be added.");
     return { ok: true };
   }
 
@@ -341,6 +348,22 @@ export function decline(card: MarketingCard, actor: Actor, now: string, reason: 
   const r = reason.trim();
   if (!r) throw new WorkflowError("Say why marketing can't take this on.");
   const m: MarketingDetails = { ...moved(card.marketing, "declined", now), declineReason: r, question: undefined, history: [...card.marketing.history, entry(actor, now, "Declined", r)] };
+  return withStage(card, m, now);
+}
+
+/** The requester or the marketing team adds files (already uploaded and checked with checkFiles). The stage doesn't change. */
+export function addFiles(card: MarketingCard, actor: Actor, now: string, files: Omit<MarketingFile, "at" | "by">[]): MarketingCard {
+  must(card, actor, "files");
+  if (files.length === 0) throw new WorkflowError("Choose a file first.");
+  const had = filesOf(card.marketing);
+  if (had.length + files.length > MAX_PER_REQUEST) throw new WorkflowError(`A request can have up to ${MAX_PER_REQUEST} files. For more, share a Google Drive folder instead.`);
+  const by = actor.email.toLowerCase();
+  const added = files.map((f) => ({ ...f, at: now, by }));
+  const m: MarketingDetails = {
+    ...card.marketing,
+    files: [...had, ...added],
+    history: [...card.marketing.history, entry(actor, now, `Added ${files.length} file${files.length === 1 ? "" : "s"}`, files.map((f) => f.name).join(", "))],
+  };
   return withStage(card, m, now);
 }
 
