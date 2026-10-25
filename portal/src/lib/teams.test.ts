@@ -15,7 +15,6 @@ import {
   fundsFor,
   membershipsOf,
   requestableFunds,
-  slugOf,
   suggestFund,
   TEAM_SLUGS,
   teamGroupEmail,

@@ -11,6 +11,7 @@ import { eventActor, eventContext } from "@/lib/events/context";
 import { recordRoomCheck, roomCheckNotices } from "@/lib/events/roomchecks";
 import { TaskError, type TaskAction, actOnTask, taskNotices } from "@/lib/events/tasks";
 import * as wf from "@/lib/events/workflow";
+import { WorkflowError } from "@/lib/workflow-core";
 
 /**
  * Team tasks, room checks and close-out: the server actions behind Team
@@ -44,7 +45,7 @@ async function change(id: string, by: string, apply: (card: wf.EventCard) => { n
       return null;
     } catch (err) {
       if (err instanceof ConflictError && attempt === 0) continue;
-      if (err instanceof TaskError || err instanceof wf.EventError || err instanceof ConflictError) return err.message;
+      if (err instanceof TaskError || err instanceof WorkflowError || err instanceof ConflictError) return err.message;
       console.error("event task change failed", err);
       return "Something went wrong. Nothing was changed.";
     }
@@ -116,7 +117,7 @@ export async function closeOutEvent(form: FormData): Promise<void> {
     await store.save(next, card.updatedAt);
     await deliver(closeOutNotices(card, next, actor), actor.email);
   } catch (err) {
-    if (err instanceof wf.EventError || err instanceof ConflictError) error = err.message;
+    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
     else {
       console.error("close-out failed", err);
       error = "Something went wrong. Nothing was changed.";

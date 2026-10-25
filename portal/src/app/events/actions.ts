@@ -21,6 +21,7 @@ import type { Check, EventInput } from "@/lib/events/types";
 import * as wf from "@/lib/events/workflow";
 import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 import { lc } from "@/lib/text";
+import { WorkflowError } from "@/lib/workflow-core";
 
 export type EventFormState = { errors: string[] };
 
@@ -233,12 +234,12 @@ export async function actOnEvent(form: FormData): Promise<void> {
     if (action === "approve") {
       // Check the calendar again: something may have been booked since it was submitted.
       const live = (await checksFor(ctx, viewer, card.event, card)).clashes.filter((c) => c.kind !== "pending");
-      if (live.length) throw new wf.EventError(`It now clashes with ${live.map((c) => c.label).join(", ")} on the room calendar. Send it back so the requester can pick another time.`);
+      if (live.length) throw new WorkflowError(`It now clashes with ${live.map((c) => c.label).join(", ")} on the room calendar. Send it back so the requester can pick another time.`);
       next = wf.approve(card, actor, directors, now, note || undefined);
     } else if (action === "return") next = wf.returnForChanges(card, actor, directors, now, note);
     else if (action === "deny") next = wf.deny(card, actor, directors, now, note);
     else if (action === "cancel") next = wf.cancel(card, actor, directors, now);
-    else throw new wf.EventError("Unknown action.");
+    else throw new WorkflowError("Unknown action.");
     const synced = await syncHolds(next, ctx);
     const trouble = calendarTrouble(synced.card, synced.error);
     await store.save(trouble.card, card.updatedAt);
@@ -246,7 +247,7 @@ export async function actOnEvent(form: FormData): Promise<void> {
     if (action === "cancel") notices.push(...(await withdrawOpenAsks(card.id, actor, now)));
     await deliver(notices, actor.email);
   } catch (err) {
-    if (err instanceof wf.EventError || err instanceof ConflictError) error = err.message;
+    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
     else {
       console.error("event action failed", err);
       error = "Something went wrong. Nothing was changed.";

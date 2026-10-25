@@ -4,7 +4,7 @@
  * then it's renewed as a new request. Plain functions so they can be tested.
  */
 import type { RecurFreq, Recurrence } from "./types";
-import { addDays, daysBetween, isDate, todayLocal } from "../dates";
+import { addDays, daysBetween } from "../dates";
 
 export const SERIES_MAX_MONTHS = 3;
 

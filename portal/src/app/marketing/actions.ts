@@ -15,6 +15,7 @@ import * as wf from "@/lib/marketing/workflow";
 import { filesFrom } from "@/lib/drive";
 import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
+import { WorkflowError } from "@/lib/workflow-core";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
 export type FormState = { errors: string[]; values?: MarketingInput; n: number };
@@ -107,7 +108,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
       }
     }
   } catch (err) {
-    if (err instanceof wf.WorkflowError) error = err.message;
+    if (err instanceof WorkflowError) error = err.message;
     else {
       console.error("marketing file upload failed", err);
       error = "The files didn't upload. Try again, or share a Google Drive link.";
@@ -146,7 +147,7 @@ export async function editMarketing(id: string, expected: string, prev: FormStat
     await store.save(next, card.updatedAt);
     await deliver(marketingNotices(card, next, actor), actor.email);
   } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) return fail([err.message]);
+    if (err instanceof WorkflowError || err instanceof ConflictError) return fail([err.message]);
     console.error("marketing edit failed", err);
     return fail(["Something went wrong saving the request. Nothing was changed."]);
   }
@@ -199,12 +200,12 @@ export async function actOnMarketing(form: FormData): Promise<void> {
         next = wf.cancel(card, actor, now);
         break;
       default:
-        throw new wf.WorkflowError("Unknown action.");
+        throw new WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
     await deliver(marketingNotices(card, next, actor), actor.email);
   } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) error = err.message;
+    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
     else {
       console.error("marketing action failed", err);
       error = "Something went wrong. Nothing was changed.";

@@ -1,7 +1,6 @@
 import "server-only";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
-import { ORG } from "./org";
 import type { Comment } from "./comments";
 import type { EventDetails } from "./events/types";
 import type { MarketingDetails } from "./marketing/types";

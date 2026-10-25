@@ -10,6 +10,7 @@ import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
 import { purchaseCommentNotices, purchaseNotices } from "./notices";
 import * as wf from "./workflow";
+import { WorkflowError } from "../workflow-core";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const chair: wf.Actor = { email: "chair@x.org", name: "Chair", roles: ["member", "chairs"] };
@@ -187,7 +188,7 @@ test("nobody approves, pays or books their own request", () => {
   const c = submitted({}, finance);
   assert.equal(wf.permission(c, finance, "approve").ok, false);
   const atFinance = wf.approve(c, chair, settings, T(1));
-  assert.throws(() => wf.approve(atFinance, finance, settings, T(2)), wf.WorkflowError);
+  assert.throws(() => wf.approve(atFinance, finance, settings, T(2)), WorkflowError);
   const paid = wf.approve(atFinance, finance2, settings, T(2));
   assert.equal(wf.permission(paid, finance, "pay").ok, false);
 });
@@ -242,7 +243,7 @@ test("finance can't approve a payee that needs a W-9 until it's confirmed", () =
 test("send back to an earlier step: from finance to the chair, and from the pay step", () => {
   let c = submitted();
   assert.deepEqual(wf.returnTargets(c), ["requester"]);
-  assert.throws(() => wf.returnForChanges(c, chair, T(1), "Fix it", "finance"), wf.WorkflowError);
+  assert.throws(() => wf.returnForChanges(c, chair, T(1), "Fix it", "finance"), WorkflowError);
   c = wf.approve(c, chair, settings, T(1));
   assert.deepEqual(wf.returnTargets(c), ["requester", "chair"]);
   const before = c;
@@ -282,7 +283,7 @@ test("send back to an earlier step: from finance to the chair, and from the pay 
 test("return needs a note; the requester edits and approval starts over", () => {
   let c = submitted();
   c = wf.approve(c, chair, settings, T(1));
-  assert.throws(() => wf.returnForChanges(c, finance, T(2), " "), wf.WorkflowError);
+  assert.throws(() => wf.returnForChanges(c, finance, T(2), " "), WorkflowError);
   c = wf.returnForChanges(c, finance, T(2), "Attach the receipt");
   assert.equal(c.status, "changes_requested");
   assert.equal(c.waitingOn, "You: Attach the receipt");
@@ -321,7 +322,7 @@ test("card receipts: finance review only, then QuickBooks; refunds and repayment
   c = wf.resolveLine(c, finance, T(3), "L2");
   c = wf.resolveLine(c, finance, T(4), "L3");
   assert.equal(c.waitingOn, undefined);
-  assert.throws(() => wf.resolveLine(c, finance, T(5), "L1"), wf.WorkflowError);
+  assert.throws(() => wf.resolveLine(c, finance, T(5), "L1"), WorkflowError);
 });
 
 test("Social & Welfare requests are restricted to S&W, finance and the people on the request", () => {

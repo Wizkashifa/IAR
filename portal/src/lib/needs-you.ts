@@ -14,7 +14,7 @@ import type { Role } from "./org";
 import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";
 import { queueItems, type QueueItem } from "./events/queues";
 import { TASK_TEAMS } from "./events/tasks";
-import { lc, same } from "./text";
+import { same } from "./text";
 
 /**
  * The person looking: their own group roles (never the admin "see everything"

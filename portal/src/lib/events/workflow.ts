@@ -21,15 +21,15 @@ import type { Card, CardStatus } from "../cards";
 import { ORG, type Role } from "../org";
 import { eventDates, recurText, longDate, dayText } from "./series";
 import { newlyUnlockedTeams, planTasks, syncTasks, teamList } from "./tasks";
-import type { Check, EventApproval, EventDetails, EventHistoryEntry, EventInput, EventStage } from "./types";
+import type { Check, EventApproval, EventDetails, EventInput, EventStage } from "./types";
 import { lc, same } from "../text";
+import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 export type EventCard = Card & { type: "event"; event: EventDetails };
 
 /** Who is acting: their own group roles (never the admin expansion). */
 export type EventActor = { email: string; name: string; roles: Role[] };
 
-export class EventError extends Error {}
 
 export function isEventCard(c: Card | null | undefined): c is EventCard {
   return Boolean(c && c.type === "event" && c.event);
@@ -134,15 +134,13 @@ export function permission(card: EventCard, actor: EventActor, action: EventActi
   return no("This request isn't waiting on a reviewer.");
 }
 
-function must(card: EventCard, actor: EventActor, action: EventAction, directors: string[]) {
-  const r = permission(card, actor, action, directors);
-  if (!r.ok) throw new EventError(r.reason);
+function mustDo(card: EventCard, actor: EventActor, action: EventAction, directors: string[]) {
+  must(permission(card, actor, action, directors));
 }
 
 // ---- Transitions ---------------------------------------------------------
 // Each returns a new card; the caller saves it and syncs the calendar holds.
 
-const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 
 /**
  * Team tasks follow the card: an approved event gets the tasks it needs
@@ -152,12 +150,12 @@ function withTasks(e: EventDetails, status: CardStatus, now: string): EventDetai
   if (status === "cancelled" || status === "denied") {
     if (!e.tasks) return e;
     const { tasks: _dropped, ...rest } = e;
-    return { ...rest, history: _dropped.length ? [...e.history, entry("portal", now, "Team tasks dropped")] : e.history };
+    return { ...rest, history: _dropped.length ? [...e.history, historyEntry("portal", now, "Team tasks dropped")] : e.history };
   }
   if (status !== "approved" || e.stage !== "approved") return e;
   const tasks = syncTasks(e.tasks, planTasks(e), now);
   const added = newlyUnlockedTeams(e.tasks, tasks);
-  return { ...e, tasks, history: added.length ? [...e.history, entry("portal", now, `Team tasks unlocked: ${teamList(added)}`)] : e.history };
+  return { ...e, tasks, history: added.length ? [...e.history, historyEntry("portal", now, `Team tasks unlocked: ${teamList(added)}`)] : e.history };
 }
 
 /** The card with new event details and status; also sets the fields lists and search read. Used by every transition. */
@@ -205,14 +203,14 @@ export function submit(card: EventCard, actor: EventActor, directors: string[], 
     stage,
     stageSince: now,
     waitingOnAsk: o.waitingOnAsk,
-    history: [...card.event.history, entry(actor.email, now, submittedText(card.event), notes)],
+    history: [...card.event.history, historyEntry(actor.email, now, submittedText(card.event), notes)],
   };
-  if (o.waitingOnAsk) e.history.push(entry(actor.email, now, `Waiting for an answer to ${o.waitingOnAsk} before mission review`));
+  if (o.waitingOnAsk) e.history.push(historyEntry(actor.email, now, `Waiting for an answer to ${o.waitingOnAsk} before mission review`));
   return withStage(card, e, now, directors);
 }
 
 export function approve(card: EventCard, actor: EventActor, directors: string[], now: string, note?: string): EventCard {
-  must(card, actor, "approve", directors);
+  mustDo(card, actor, "approve", directors);
   const cur = card.event;
   const approval: EventApproval = { stage: cur.stage as "director" | "mission", by: lc(actor.email), at: now };
   // A moved event needs only the director.
@@ -225,38 +223,38 @@ export function approve(card: EventCard, actor: EventActor, directors: string[],
     approvals: [...cur.approvals, approval],
     returnNote: undefined,
     releasedFor: stage === "approved" ? undefined : cur.releasedFor,
-    history: [...cur.history, entry(actor.email, now, action, note), ...(stage === "approved" && cur.rooms.length ? [entry("portal", now, "Room hold confirmed on the IAR calendar")] : [])],
+    history: [...cur.history, historyEntry(actor.email, now, action, note), ...(stage === "approved" && cur.rooms.length ? [historyEntry("portal", now, "Room hold confirmed on the IAR calendar")] : [])],
   };
   return withStage(card, e, now, directors);
 }
 
 export function returnForChanges(card: EventCard, actor: EventActor, directors: string[], now: string, note: string): EventCard {
-  must(card, actor, "return", directors);
-  if (!note.trim()) throw new EventError("Say what needs to change.");
+  mustDo(card, actor, "return", directors);
+  if (!note.trim()) throw new WorkflowError("Say what needs to change.");
   const e: EventDetails = {
     ...card.event,
     returnNote: note.trim(),
-    history: [...card.event.history, entry(actor.email, now, `Sent back for changes (${STAGE_LABEL[card.event.stage]})`, note.trim()), ...(card.event.rooms.length ? [entry("portal", now, "Room hold taken off the calendar until it's resubmitted")] : [])],
+    history: [...card.event.history, historyEntry(actor.email, now, `Sent back for changes (${STAGE_LABEL[card.event.stage]})`, note.trim()), ...(card.event.rooms.length ? [historyEntry("portal", now, "Room hold taken off the calendar until it's resubmitted")] : [])],
   };
   return withStage(card, e, now, directors, "changes_requested");
 }
 
 export function deny(card: EventCard, actor: EventActor, directors: string[], now: string, note: string): EventCard {
-  must(card, actor, "deny", directors);
-  if (!note.trim()) throw new EventError("Give a reason for denying it.");
-  const e: EventDetails = { ...card.event, returnNote: note.trim(), history: [...card.event.history, entry(actor.email, now, `Denied (${STAGE_LABEL[card.event.stage]})`, note.trim())] };
+  mustDo(card, actor, "deny", directors);
+  if (!note.trim()) throw new WorkflowError("Give a reason for denying it.");
+  const e: EventDetails = { ...card.event, returnNote: note.trim(), history: [...card.event.history, historyEntry(actor.email, now, `Denied (${STAGE_LABEL[card.event.stage]})`, note.trim())] };
   return withStage(card, e, now, directors, "denied");
 }
 
 export function cancel(card: EventCard, actor: EventActor, directors: string[], now: string): EventCard {
-  must(card, actor, "cancel", directors);
-  const e: EventDetails = { ...card.event, history: [...card.event.history, entry(actor.email, now, "Cancelled by the requester", card.event.rooms.length ? "Taken off the IAR calendar" : undefined)] };
+  mustDo(card, actor, "cancel", directors);
+  const e: EventDetails = { ...card.event, history: [...card.event.history, historyEntry(actor.email, now, "Cancelled by the requester", card.event.rooms.length ? "Taken off the IAR calendar" : undefined)] };
   return withStage(card, e, now, directors, "cancelled");
 }
 
 /** The requester sends back an edited request; review starts over (or only the director, for a moved event). */
 export function resubmit(card: EventCard, edited: EventInput, actor: EventActor, directors: string[], now: string, checks: Check[], o: { waitingOnAsk?: string } = {}): EventCard {
-  must(card, actor, "resubmit", directors);
+  mustDo(card, actor, "resubmit", directors);
   const released = card.event.releasedFor ? [] : card.event.released;
   const stage = firstStage(card.ownerEmail, directors, { waitingOnAsk: o.waitingOnAsk, releasedFor: card.event.releasedFor });
   const moved = Boolean(card.event.releasedFor);
@@ -274,7 +272,7 @@ export function resubmit(card: EventCard, edited: EventInput, actor: EventActor,
     releasedFor: stage === "approved" ? undefined : card.event.releasedFor,
     history: [
       ...card.event.history,
-      entry(actor.email, now, moved ? "Moved to give up its time and resubmitted" : "Edited and resubmitted", moved ? (stage === "approved" ? "No director over this committee, so it's approved without executive review." : "Only the director needs to approve it.") : undefined),
+      historyEntry(actor.email, now, moved ? "Moved to give up its time and resubmitted" : "Edited and resubmitted", moved ? (stage === "approved" ? "No director over this committee, so it's approved without executive review." : "Only the director needs to approve it.") : undefined),
     ],
   };
   return withStage(card, e, now, directors);
@@ -285,13 +283,13 @@ export function resubmit(card: EventCard, edited: EventInput, actor: EventActor,
 /** The holder gave the time up: the requester's card goes into mission review. */
 export function slotGranted(card: EventCard, directors: string[], now: string, askId: string): EventCard {
   const stage = firstStage(card.ownerEmail, directors);
-  const e: EventDetails = { ...card.event, stage, stageSince: now, waitingOnAsk: undefined, history: [...card.event.history, entry("portal", now, `The time was given up (${askId}). Sent to mission review`)] };
+  const e: EventDetails = { ...card.event, stage, stageSince: now, waitingOnAsk: undefined, history: [...card.event.history, historyEntry("portal", now, `The time was given up (${askId}). Sent to mission review`)] };
   return withStage(card, e, now, directors);
 }
 
 /** The holder kept the time: back to the requester to pick another. */
 export function slotRefused(card: EventCard, directors: string[], now: string, note: string): EventCard {
-  const e: EventDetails = { ...card.event, waitingOnAsk: undefined, returnNote: note, history: [...card.event.history, entry("portal", now, "The time was kept", note)] };
+  const e: EventDetails = { ...card.event, waitingOnAsk: undefined, returnNote: note, history: [...card.event.history, historyEntry("portal", now, "The time was kept", note)] };
   return withStage(card, e, now, directors, "changes_requested");
 }
 
@@ -304,7 +302,7 @@ export function releaseToMove(card: EventCard, directors: string[], now: string,
     dates: card.event.dates.filter((d) => !dates.includes(d)),
     releasedFor: askId,
     returnNote: "Pick a new time. Only the director needs to approve it.",
-    history: [...card.event.history, entry("portal", now, `Gave up ${dates.length === 1 ? dayText(dates[0]) : `${dates.length} dates`} for ${askId}. Pick a new time`)],
+    history: [...card.event.history, historyEntry("portal", now, `Gave up ${dates.length === 1 ? dayText(dates[0]) : `${dates.length} dates`} for ${askId}. Pick a new time`)],
   };
   return withStage(card, e, now, directors, "changes_requested");
 }
@@ -316,14 +314,14 @@ export function dropDates(card: EventCard, directors: string[], now: string, ask
     ...card.event,
     released,
     dates: card.event.dates.filter((d) => !dates.includes(d)),
-    history: [...card.event.history, entry("portal", now, `Gave up ${dates.map(dayText).join(", ")} for ${askId}. Those dates are cancelled`)],
+    history: [...card.event.history, historyEntry("portal", now, `Gave up ${dates.map(dayText).join(", ")} for ${askId}. Those dates are cancelled`)],
   };
   return withStage(card, e, now, directors, card.status);
 }
 
 /** The holder gives up their whole booking for an ask. */
 export function cancelForAsk(card: EventCard, directors: string[], now: string, askId: string): EventCard {
-  const e: EventDetails = { ...card.event, history: [...card.event.history, entry("portal", now, `Gave up the whole booking for ${askId}. Cancelled and taken off the IAR calendar`)] };
+  const e: EventDetails = { ...card.event, history: [...card.event.history, historyEntry("portal", now, `Gave up the whole booking for ${askId}. Cancelled and taken off the IAR calendar`)] };
   return withStage(card, e, now, directors, "cancelled");
 }
 

@@ -20,7 +20,7 @@ import type { MarketingCard } from "./marketing/workflow";
 import { TEAM_NAME as TICKET_TEAM_NAME } from "./tickets/types";
 import { AUTO_CLOSE_DAYS, type TicketCard } from "./tickets/workflow";
 import { FLAG, NOTIFIED, STEP } from "./glossary";
-import { lc, same } from "./text";
+import { same } from "./text";
 import { todayLocal } from "./dates";
 
 export type StepState = "done" | "now" | "todo" | "skip";

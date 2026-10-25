@@ -19,6 +19,7 @@ import { scheduleStore } from "@/lib/tickets/schedule-store";
 import { canManageSchedules, parseScheduleInput } from "@/lib/tickets/schedules";
 import type { TicketStatus, TicketTeam, Urgency } from "@/lib/tickets/types";
 import * as wf from "@/lib/tickets/workflow";
+import { WorkflowError } from "@/lib/workflow-core";
 
 export type TicketFormState = { errors: string[] };
 
@@ -97,12 +98,12 @@ export async function actOnTicket(form: FormData): Promise<void> {
         next = wf.cancel(card, actor, now);
         break;
       default:
-        throw new wf.WorkflowError("Unknown action.");
+        throw new WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
     await deliver(ticketNotices(card, next, actor), actor.email);
   } catch (e) {
-    if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+    if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
     else {
       console.error("ticket action failed", e);
       error = "Something went wrong. Nothing was changed.";
@@ -157,7 +158,7 @@ export async function actFromToday(form: FormData): Promise<void> {
         }
       }
     } catch (e) {
-      if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+      if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
       else {
         console.error("ticket action failed", e);
         error = "Something went wrong. Nothing was changed.";
@@ -185,7 +186,7 @@ export async function linkTicket(form: FormData): Promise<void> {
   if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
   let error: string | null = null;
   try {
-    if (!otherId) throw new wf.WorkflowError("Type the other ticket's number, like TK-1003.");
+    if (!otherId) throw new WorkflowError("Type the other ticket's number, like TK-1003.");
     const other = await store.get(otherId);
     // A ticket this person can't open looks the same as one that doesn't exist.
     const otherTicket = wf.isTicketCard(other) && canViewTicket(other, { ...actor, seeAll: viewer.roles.includes("admins") }) ? other : null;
@@ -195,14 +196,14 @@ export async function linkTicket(form: FormData): Promise<void> {
       await store.save(a, card.updatedAt);
       if (b && otherTicket) await store.save(b, otherTicket.updatedAt);
     } else {
-      if (!otherTicket) throw new wf.WorkflowError(`There's no ticket ${otherId}.`);
+      if (!otherTicket) throw new WorkflowError(`There's no ticket ${otherId}.`);
       const kind = field(form, "kind") as Parameters<typeof wf.linkTickets>[4];
       const [a, b] = wf.linkTickets(card, otherTicket, actor, now, kind);
       await store.save(a, card.updatedAt);
       await store.save(b, otherTicket.updatedAt);
     }
   } catch (e) {
-    if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+    if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
     else {
       console.error("ticket link failed", e);
       error = "Something went wrong. Nothing was changed.";
@@ -234,10 +235,10 @@ export async function addTicketPhotos(form: FormData): Promise<void> {
     try {
       const saved = await savePhotos(card.id, files, actor.email);
       const fresh = await store.get(id);
-      if (!wf.isTicketCard(fresh)) throw new wf.WorkflowError("That ticket no longer exists.");
+      if (!wf.isTicketCard(fresh)) throw new WorkflowError("That ticket no longer exists.");
       await store.save(wf.addPhotos(fresh, actor, nowIso(), saved), fresh.updatedAt);
     } catch (e) {
-      if (e instanceof wf.WorkflowError || e instanceof ConflictError) error = e.message;
+      if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
       else {
         console.error("ticket photo upload failed", e);
         error = "The photos didn't upload. Try again.";
@@ -265,7 +266,7 @@ export async function watchTicket(form: FormData): Promise<void> {
       error = null;
       break;
     } catch (e) {
-      if (e instanceof wf.WorkflowError) {
+      if (e instanceof WorkflowError) {
         error = e.message;
         break;
       }

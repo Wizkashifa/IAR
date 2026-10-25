@@ -16,8 +16,9 @@
  */
 import { ORG } from "../org";
 import { LOCATIONS, UNKNOWN_LOCATION } from "./locations";
-import { type TicketDetails, type TicketHistoryEntry, type TicketKind, type TicketStatus, type TicketTeam, type Urgency, TEAM_NAME } from "./types";
+import { type TicketDetails, type TicketKind, type TicketStatus, type TicketTeam, type Urgency, TEAM_NAME } from "./types";
 import { type TicketCard, searchTextFor, statusFor, waitingOnFor } from "./workflow";
+import type { HistoryEntry } from "../workflow-core";
 
 // ---- CSV ---------------------------------------------------------------------
 
@@ -271,7 +272,7 @@ export function ticketFromJira(r: JiraRow, ctx: JiraContext): { ok: true; key: s
   const room = LOCATIONS.find((l) => l.toLowerCase() === where.toLowerCase()) ?? (where ? cut(where, 120, "") : UNKNOWN_LOCATION);
   const equipment = first(r, "equipment", "asset") || matching(r, /^custom field \((equipment|asset)\)$/)[0] || undefined;
 
-  const history: TicketHistoryEntry[] = [
+  const history: HistoryEntry[] = [
     { at: createdAt, by: "Jira", action: `Reported in Jira by ${reporterRaw || "someone"}` },
     ...every(r, "comment", "comments").map((c) => jiraComment(c, createdAt)),
     { at: ctx.now, by: ctx.importer.email.toLowerCase(), action: `Imported from Jira (${key})`, note: notes.join("\n") },
@@ -314,7 +315,7 @@ export function ticketFromJira(r: JiraRow, ctx: JiraContext): { ok: true; key: s
 }
 
 /** A Jira comment cell ("23/Oct/26 10:15 AM;<author id>;text") as a history entry. */
-function jiraComment(cell: string, fallbackAt: string): TicketHistoryEntry {
+function jiraComment(cell: string, fallbackAt: string): HistoryEntry {
   const m = cell.match(/^([^;]+);([^;]*);([\s\S]*)$/);
   const at = m ? parseJiraDate(m[1]) : null;
   if (m && at) return { at: at.iso, by: "Jira", action: "Comment in Jira", note: cut(m[3].trim(), 2000, "") };

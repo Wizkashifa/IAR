@@ -5,7 +5,8 @@
  * them, and every change still goes through workflow.ts one request at a time.
  */
 import { openExpectedReturns, paymentMethodOf, type LineItem } from "./types";
-import { WorkflowError, type PurchaseCard } from "./workflow";
+import type { PurchaseCard } from "./workflow";
+import { WorkflowError } from "../workflow-core";
 
 export type DeskTab = "pay" | "books" | "returns";
 export const DESK_TABS: { id: DeskTab; label: string }[] = [

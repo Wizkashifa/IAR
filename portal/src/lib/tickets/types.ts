@@ -7,6 +7,7 @@
  * schedules; a one-time Jira import. Sprints, epics, sub-tasks and reports
  * wait until the facilities lead confirms they use them.
  */
+import type { HistoryEntry } from "../workflow-core";
 
 /** Which team works it. IT Services covers IT and A/V. */
 export type TicketTeam = "it" | "facilities";
@@ -38,7 +39,6 @@ export type TicketPhoto = {
   by: string;
 };
 
-export type TicketHistoryEntry = { at: string; by: string; action: string; note?: string };
 
 /** How two tickets are linked. Each side keeps the link, worded from its own side. */
 export type TicketLinkKind = "relates" | "duplicates" | "duplicated_by";
@@ -67,7 +67,7 @@ export type TicketDetails = {
   assigneeEmail?: string;
   /** People who follow the ticket and hear when it moves. The reporter always does. */
   watchers: string[];
-  history: TicketHistoryEntry[];
+  history: HistoryEntry[];
   /** What the team did, written when they resolve it. */
   resolutionNote?: string;
   /** The reporter's reason when they reopened it. */

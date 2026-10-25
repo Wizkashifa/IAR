@@ -13,6 +13,7 @@ import { jiraStatus, jiraTeam, jiraUrgency, parseCsv, parseJiraDate, planCounts,
 import { reminderNotices, ticketCommentNotices, ticketNotices } from "./notices";
 import { addFrequency, afterOpening, dueSchedules, nextAfter, parseScheduleInput, ticketFromSchedule, type TicketSchedule } from "./schedules";
 import * as wf from "./workflow";
+import { WorkflowError } from "../workflow-core";
 
 const d = ORG.domain;
 const reporter: wf.TicketActor = { email: `vol@${d}`, name: "Vol Unteer", roles: ["member"] };
@@ -32,7 +33,7 @@ function reported(over: Partial<wf.NewTicketInput> = {}, by = reporter): wf.Tick
   return c;
 }
 
-const throws = (fn: () => unknown, re?: RegExp) => assert.throws(fn, (e: unknown) => e instanceof wf.WorkflowError && (!re || re.test(e.message)));
+const throws = (fn: () => unknown, re?: RegExp) => assert.throws(fn, (e: unknown) => e instanceof WorkflowError && (!re || re.test(e.message)));
 
 // ---- Workflow -------------------------------------------------------------------
 

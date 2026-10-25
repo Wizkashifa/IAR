@@ -16,6 +16,7 @@ import { linkableEventsFor } from "@/lib/events/context";
 import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
 import type { PurchaseDetails } from "@/lib/purchases/types";
 import * as wf from "@/lib/purchases/workflow";
+import { WorkflowError } from "@/lib/workflow-core";
 
 export type FormState = { errors: string[] };
 
@@ -142,7 +143,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     await store.save(next, card.updatedAt);
     await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
   } catch (err) {
-    return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
+    return { errors: [err instanceof ConflictError || err instanceof WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
   revalidatePath("/purchases");
   redirect(`/purchases/${id}?sent=1`);
@@ -198,7 +199,7 @@ export async function actOnPurchase(form: FormData): Promise<void> {
         next = wf.cancel(card, actor, now);
         break;
       default:
-        throw new wf.WorkflowError("Unknown action.");
+        throw new WorkflowError("Unknown action.");
     }
     await store.save(next, card.updatedAt);
     await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
@@ -208,7 +209,7 @@ export async function actOnPurchase(form: FormData): Promise<void> {
       if (v) await store.saveVendor(v);
     }
   } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) error = err.message;
+    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
     else {
       console.error("purchase action failed", err);
       error = "Something went wrong. Nothing was changed.";

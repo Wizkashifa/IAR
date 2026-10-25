@@ -12,6 +12,7 @@ import { vendorAfterPayment } from "@/lib/purchases/vendors";
 import { batchSummary, runBatch, splitKey } from "@/lib/purchases/finance-desk";
 import * as wf from "@/lib/purchases/workflow";
 import { RESULT_COOKIE, type DeskResult } from "./result";
+import { WorkflowError } from "@/lib/workflow-core";
 
 const VERB = { pay: "marked paid", books: "marked entered in QuickBooks", resolve: "updated with the money received" } as const;
 type DeskAction = keyof typeof VERB;
@@ -47,7 +48,7 @@ export async function deskAction(form: FormData): Promise<void> {
   const failed: DeskResult["failed"] = [...lines.keys()].filter((id) => !loaded.some((c) => c.id === id)).map((id) => ({ id, message: "Not found." }));
 
   const result = runBatch(loaded, (c) => {
-    if (String(form.get(`v-${c.id}`) ?? "") !== c.updatedAt) throw new wf.WorkflowError("It changed while you were looking. Open it to check before acting.");
+    if (String(form.get(`v-${c.id}`) ?? "") !== c.updatedAt) throw new WorkflowError("It changed while you were looking. Open it to check before acting.");
     if (action === "pay") return wf.recordPayment(c, actor, now, String(form.get(`method-${c.id}`) ?? "").trim() || method, String(form.get(`ref-${c.id}`) ?? "").trim() || reference);
     if (action === "books") return wf.recordBooks(c, actor, now);
     return (lines.get(c.id) ?? []).reduce((card, line) => wf.resolveLine(card, actor, now, line), c);
