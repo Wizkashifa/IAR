@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { todayLocal } from "@/lib/dates";
 import { cardStore, ConflictError, type CardStatus } from "@/lib/cards";
-import { checkComment, withComment } from "@/lib/comments";
 import { filesFrom } from "@/lib/drive";
 import { deliver } from "@/lib/notifications";
 import { ORG } from "@/lib/org";
@@ -20,6 +19,7 @@ import { canManageSchedules, parseScheduleInput } from "@/lib/tickets/schedules"
 import type { TicketStatus, TicketTeam, Urgency } from "@/lib/tickets/types";
 import * as wf from "@/lib/tickets/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
+import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
 
 export type TicketFormState = { errors: string[] };
 
@@ -56,62 +56,48 @@ export async function createTicket(_prev: TicketFormState, form: FormData): Prom
   redirect(back(created.id, "sent=1"));
 }
 
+const tickets = { path: "/it-maintenance", is: wf.isTicketCard, noun: "ticket" };
+
 /** Assign, start, wait on parts, resolve, set a target date, confirm, reopen or cancel. */
 export async function actOnTicket(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
-  const id = field(form, "id");
-  const action = field(form, "action") as wf.Action;
   const note = field(form, "note").slice(0, 2000);
-  const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
-  if (field(form, "expected") !== card.updatedAt) redirect(back(id, err("This ticket changed while you were looking at it. Check it again before acting.")));
-
-  const now = nowIso();
-  let error: string | null = null;
-  try {
-    let next: wf.TicketCard;
-    switch (action) {
-      case "assign":
-        next = wf.assign(card, actor, now, field(form, "assignee"), (await teamMembers())[card.ticket.team]);
-        break;
-      case "start":
-        next = wf.start(card, actor, now);
-        break;
-      case "wait":
-        next = wf.waitForParts(card, actor, now, note);
-        break;
-      case "resolve":
-        next = wf.resolve(card, actor, now, note);
-        break;
-      case "due":
-        next = wf.setDueDate(card, actor, now, field(form, "due"));
-        break;
-      case "confirm":
-        next = wf.confirm(card, actor, now);
-        break;
-      case "reopen":
-        next = wf.reopen(card, actor, now, note);
-        break;
-      case "cancel":
-        next = wf.cancel(card, actor, now);
-        break;
-      default:
-        throw new WorkflowError("Unknown action.");
-    }
-    await store.save(next, card.updatedAt);
-    await deliver(ticketNotices(card, next, actor), actor.email);
-  } catch (e) {
-    if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
-    else {
-      console.error("ticket action failed", e);
-      error = "Something went wrong. Nothing was changed.";
-    }
-  }
-  revalidatePath("/it-maintenance");
-  revalidatePath(`/it-maintenance/${id}`);
-  redirect(back(id, error ? err(error) : `ok=${action}`));
+  await actOnCard(form, viewer, {
+    ...tickets,
+    async act(card, action, now) {
+      let next: wf.TicketCard;
+      switch (action as wf.Action) {
+        case "assign":
+          next = wf.assign(card, actor, now, field(form, "assignee"), (await teamMembers())[card.ticket.team]);
+          break;
+        case "start":
+          next = wf.start(card, actor, now);
+          break;
+        case "wait":
+          next = wf.waitForParts(card, actor, now, note);
+          break;
+        case "resolve":
+          next = wf.resolve(card, actor, now, note);
+          break;
+        case "due":
+          next = wf.setDueDate(card, actor, now, field(form, "due"));
+          break;
+        case "confirm":
+          next = wf.confirm(card, actor, now);
+          break;
+        case "reopen":
+          next = wf.reopen(card, actor, now, note);
+          break;
+        case "cancel":
+          next = wf.cancel(card, actor, now);
+          break;
+        default:
+          return unknownAction();
+      }
+      return { next, notices: ticketNotices(card, next, actor) };
+    },
+  });
 }
 
 // ---- My work today --------------------------------------------------------------
@@ -284,31 +270,11 @@ export async function watchTicket(form: FormData): Promise<void> {
 export async function commentOnTicket(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
-  const id = field(form, "id");
-  const store = await cardStore();
-  const check = checkComment(form.get("text"));
-  let error: string | null = check.ok ? null : check.error;
-  if (check.ok) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const card = await store.get(id);
-      if (!wf.isTicketCard(card) || !canViewTicket(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/it-maintenance");
-      const now = nowIso();
-      const next = wf.afterComment(withComment(card, { at: now, by: actor.email, name: viewer.name, text: check.text }), actor, now);
-      try {
-        await store.save(next, card.updatedAt);
-        await deliver(ticketCommentNotices(next, actor, check.text), actor.email);
-        error = null;
-        break;
-      } catch (e) {
-        if (!(e instanceof ConflictError) || attempt === 1) {
-          if (!(e instanceof ConflictError)) console.error("comment failed", e);
-          error = "Your comment couldn't be saved. Try again.";
-        }
-      }
-    }
-  }
-  revalidatePath(`/it-maintenance/${id}`);
-  redirect(error ? `${back(id, err(error))}#comments` : `${back(id, "ok=commented")}#comments`);
+  await commentOnCard(form, viewer, {
+    ...tickets,
+    after: (card, now) => wf.afterComment(card, actor, now),
+    notices: (card, text) => ticketCommentNotices(card, actor, text),
+  });
 }
 
 // ---- Preventive schedules ------------------------------------------------------
