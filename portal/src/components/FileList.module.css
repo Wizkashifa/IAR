@@ -1,0 +1,7 @@
+@layer components {
+  .list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
+  .list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); min-width: 0; }
+  .name { overflow-wrap: anywhere; }
+  .meta { color: var(--ink-3); font-size: var(--t-sm); }
+  .empty { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+}

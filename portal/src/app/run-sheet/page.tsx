@@ -17,6 +17,7 @@ import { RoomDay } from "../events/RoomDay";
 import styles from "../events/events.module.css";
 import { PrintButton } from "./PrintButton";
 import { isDate } from "@/lib/dates";
+import { Pill } from "@/components/Pill";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Daily Run Sheet" };
@@ -86,19 +87,19 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                 <li key={`e${r.cardId}`} className={`${styles.entry} ${styles.ev}`}>
                   <div>
                     <div className={styles.time}>{timeText(r.start)}–{timeText(r.end)}</div>
-                    <div className="sub">Event {timeText(r.eventStart)}–{timeText(r.eventEnd)}</div>
-                    {(r.setup > 0 || r.teardown > 0) && <div className="sub">{r.setup} min setup, {r.teardown} min cleanup</div>}
-                    {r.afterHours && <span className={styles.flag}>After hours</span>}
+                    <div className="hint">Event {timeText(r.eventStart)}–{timeText(r.eventEnd)}</div>
+                    {(r.setup > 0 || r.teardown > 0) && <div className="hint">{r.setup} min setup, {r.teardown} min cleanup</div>}
+                    {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
                     <Link href={`/events/${r.cardId}`} className={styles.lineTitle}>{r.title}</Link>
-                    <div className="sub">{r.rooms.join(", ")} · {r.committee} · {r.cardId}{r.series ? " · series" : ""}{r.closeOut ? " · closing out" : ""}</div>
-                    <div className="sub">Contact: {names(r.contact)} · {r.attendance} people</div>
+                    <div className="hint">{r.rooms.join(", ")} · {r.committee} · {r.cardId}{r.series ? " · series" : ""}{r.closeOut ? " · closing out" : ""}</div>
+                    <div className="hint">Contact: {names(r.contact)} · {r.attendance} people</div>
                   </div>
                   <div>
-                    <div>{r.setupNotes || <span className="sub">No special setup</span>}</div>
-                    {r.av && <div className="sub">A/V: {r.av}</div>}
-                    {r.security.length > 0 && <div className="sub">Security: {r.security.join(" ")}</div>}
+                    <div>{r.setupNotes || <span className="hint">No special setup</span>}</div>
+                    {r.av && <div className="hint">A/V: {r.av}</div>}
+                    {r.security.length > 0 && <div className="hint">Security: {r.security.join(" ")}</div>}
                     {byId.get(r.cardId) && (
                       <div className={styles.cells}>
                         <RoomCheckCell card={byId.get(r.cardId)!} date={date} when="before" check={r.checks.before} roles={viewer.actingRoles} back={back} />
@@ -111,13 +112,13 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                 <li key={`c${i}`} className={`${styles.entry} ${styles.cal}`}>
                   <div>
                     <div className={styles.time}>{timeText(r.start)}–{timeText(r.end)}</div>
-                    {r.afterHours && <span className={styles.flag}>After hours</span>}
+                    {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
                     <div>{r.title}</div>
-                    <div className="sub">{r.rooms.join(", ")} · {r.entry === "standing" ? "Standing hold (room policy)" : "Calendar entry"}</div>
+                    <div className="hint">{r.rooms.join(", ")} · {r.entry === "standing" ? "Standing hold (room policy)" : "Calendar entry"}</div>
                   </div>
-                  <div className="sub">On the IAR calendar, not booked through the portal.</div>
+                  <div className="hint">On the IAR calendar, not booked through the portal.</div>
                 </li>
               ),
             )}

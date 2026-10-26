@@ -10,6 +10,8 @@ import { Panel } from "@/components/Panel";
 import styles from "../tickets.module.css";
 import { STATUS_LABEL, TEAM_LABEL, URGENCY, type TicketStatus, type TicketTeam } from "@/lib/tickets/types";
 import type { ImportState } from "../actions";
+import { Checkbox } from "@/components/Choices";
+import { DataTable } from "@/components/DataTable";
 
 function Submit({ label, busy }: { label: string; busy: string }) {
   const { pending } = useFormStatus();
@@ -33,8 +35,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
         </Note>
         {state.failed ? <Note tone="bad">{state.failed} couldn&apos;t be saved. Import the same file again to retry them; nothing is imported twice.</Note> : null}
         {n > 0 && (
-          <div className="tablewrap">
-            <table className="table">
+          <DataTable framed>
               <thead>
                 <tr>
                   <th>Ticket</th>
@@ -50,12 +51,11 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                       </Link>{" "}
                       {c.title}
                     </td>
-                    <td className="sub">{c.key}</td>
+                    <td className="hint">{c.key}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </DataTable>
         )}
         <FormActions sticky={false}>
           <Button variant="primary" href="/it-maintenance?view=team">
@@ -90,16 +90,15 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
               ))}
             </ul>
           )}
-          {p.alreadyImported.length > 0 && <p className="sub">{p.alreadyImported.length} already imported earlier: skipped ({p.alreadyImported.map((x) => x.key).join(", ")}).</p>}
-          {p.skippedDone.length > 0 && <p className="sub">{p.skippedDone.length} already done in Jira: skipped{state.includeDone ? "" : " (tick “Also bring over done issues” to keep them as closed tickets)"}.</p>}
+          {p.alreadyImported.length > 0 && <p className="hint">{p.alreadyImported.length} already imported earlier: skipped ({p.alreadyImported.map((x) => x.key).join(", ")}).</p>}
+          {p.skippedDone.length > 0 && <p className="hint">{p.skippedDone.length} already done in Jira: skipped{state.includeDone ? "" : " (tick “Also bring over done issues” to keep them as closed tickets)"}.</p>}
         </Panel>
 
         {p.problems.length > 0 && (
           <>
             <h2>Rows that can&apos;t come over ({p.problems.length})</h2>
-            <p className="note">Fix these in Jira and export again, or add them by hand with “AV/IT/Maintenance request”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
-            <div className="tablewrap">
-              <table className="table">
+            <p className="hint">Fix these in Jira and export again, or add them by hand with “AV/IT/Maintenance request”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
+            <DataTable framed>
                 <thead>
                   <tr>
                     <th>Row</th>
@@ -110,14 +109,13 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                 <tbody>
                   {p.problems.map((x) => (
                     <tr key={`${x.row}-${x.key}`}>
-                      <td className="sub">{x.row}</td>
+                      <td className="hint">{x.row}</td>
                       <td>{x.key ?? "—"}</td>
                       <td>{x.reason}</td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+              </DataTable>
           </>
         )}
 
@@ -130,8 +128,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
         {p.ready.length > 0 && (
           <>
             <h2>Tickets to create</h2>
-            <div className="tablewrap">
-              <table className="table">
+            <DataTable framed>
                 <thead>
                   <tr>
                     <th>Jira</th>
@@ -143,20 +140,19 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                 <tbody>
                   {p.ready.map((r) => (
                     <tr key={r.key}>
-                      <td className="sub">{r.key}</td>
+                      <td className="hint">{r.key}</td>
                       <td>
                         <strong>{r.title}</strong>
-                        <div className="sub">
+                        <div className="hint">
                           {TEAM_LABEL[r.team]} · {r.room} · {URGENCY[r.urgency].label} urgency
                         </div>
                       </td>
                       <td>{STATUS_LABEL[r.status]}</td>
-                      <td className="sub">{r.assignee ?? "Nobody yet"}</td>
+                      <td className="hint">{r.assignee ?? "Nobody yet"}</td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+              </DataTable>
           </>
         )}
 
@@ -190,9 +186,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           <li>Upload the file here. You&apos;ll see what would happen before anything is saved.</li>
         </ol>
         <FileDrop name="file" label="CSV file" accept={["text/csv", ".csv"]} multiple={false} maxSizeMb={5} required />
-        <label className={styles.check}>
-          <input type="checkbox" name="includeDone" /> Also bring over done issues, as closed tickets (for the record)
-        </label>
+        <Checkbox name="includeDone">Also bring over done issues, as closed tickets (for the record)</Checkbox>
         </div>
       </Panel>
       <input type="hidden" name="step" value="preview" />

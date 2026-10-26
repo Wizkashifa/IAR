@@ -20,6 +20,7 @@ import { actFromToday } from "../actions";
 import { FLASH, fmtDay } from "../ui";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "./today.module.css";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My work today" };
@@ -95,8 +96,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </form>
         )}
         {working && can("resolve") && (
-          <details className={styles.more} open>
-            <summary className={styles.summary}>{preventive ? "Mark done" : "Mark fixed"}</summary>
+          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} open divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("resolve")}
               <Field label="What did you do?" required hint={preventive ? undefined : "The person who reported it is asked to check."}>
@@ -107,11 +107,10 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
                 {preventive ? "Mark done" : "Mark fixed"}
               </Button>
             </form>
-          </details>
+          </Disclosure>
         )}
         {t.status !== "waiting_parts" && t.assigneeEmail && can("wait") && (
-          <details className={styles.more}>
-            <summary className={styles.summary}>Waiting on parts</summary>
+          <Disclosure summary="Waiting on parts" divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("wait")}
               <Field label="What's on order, and when is it due?">
@@ -121,7 +120,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
                 Waiting on parts
               </Button>
             </form>
-          </details>
+          </Disclosure>
         )}
       </div>
     </li>
@@ -132,7 +131,7 @@ function Section({ title, cards, ctx, empty }: { title: string; cards: TicketCar
   return (
     <Panel title={title} right={<span>{cards.length}</span>}>
       {cards.length === 0 ? (
-        <p className="note">{empty}</p>
+        <p className="hint">{empty}</p>
       ) : (
         <ul className={styles.list}>
           {cards.map((c) => (
@@ -184,7 +183,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
         }
       />
       <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
-      {nothing && <p className="note">Nothing waiting. Quiet day, alhamdulillah.</p>}
+      {nothing && <p className="hint">Nothing waiting. Quiet day, alhamdulillah.</p>}
       <Section title="Assigned to you" cards={work.mine} ctx={ctx} empty="Nothing assigned to you right now." />
       <Section title="Nobody has taken these yet" cards={work.untaken} ctx={ctx} empty="Every request has someone on it." />
       <Section title="Preventive work this week" cards={work.preventive} ctx={ctx} empty="No preventive work due this week." />

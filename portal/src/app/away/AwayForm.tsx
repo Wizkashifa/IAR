@@ -6,7 +6,6 @@ import { Field, FormActions } from "@/components/Field";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import type { Away } from "@/lib/away";
 import { saveAway } from "./actions";
-import styles from "./away.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 
 export function AwayForm({ current, today, people }: { current: Away | null; today: string; people: PersonOption[] }) {
@@ -14,7 +13,7 @@ export function AwayForm({ current, today, people }: { current: Away | null; tod
   return (
     <form action={action} className="stack">
       <FormErrors errors={state.errors} />
-      <div className={styles.dates}>
+      <div className="grid two">
         <DateField name="from" label="First day away" defaultValue={current?.from ?? today} required />
         <DateField name="until" label="Last day away" min={today} defaultValue={current?.until ?? null} required />
       </div>

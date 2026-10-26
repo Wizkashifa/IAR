@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
@@ -10,7 +9,8 @@ import { portalSettings } from "@/lib/portal-settings";
 import { requireViewer } from "@/lib/viewer";
 import { byPillar, searchTeams, searchTopics, teamEntries } from "@/lib/whos-who";
 import { TeamRow } from "./ui";
-import styles from "./teams.module.css";
+import { Rows } from "@/components/ItemRow";
+import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Who's who" };
@@ -31,15 +31,7 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
     <>
       <ModuleHead title="Who's who" lead="Every committee and team at IAR, who leads it, and how to ask it for something." />
 
-      <form action="/teams" role="search" className={styles.search}>
-        <label htmlFor="who-q" className="sr-only">
-          Who handles…
-        </label>
-        <input id="who-q" type="search" name="q" defaultValue={query} placeholder="Who handles keys, the sound system, reimbursements…?" maxLength={100} />
-        <Button type="submit" icon="search">
-          Search
-        </Button>
-      </form>
+      <SearchForm action="/teams" label="Who handles…" value={query} placeholder="Who handles keys, the sound system, reimbursements…?" />
 
       {query ? (
         <div className="stack">
@@ -51,11 +43,11 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
           ))}
           <Panel title={`Teams for “${query}”`} right={<a href="/teams">Show all teams</a>} flush>
             {hits.length ? (
-              <div className={styles.list}>
+              <Rows>
                 {hits.map((t) => (
                   <TeamRow key={t.group} team={t} names={names} mine={mine.has(t.group)} />
                 ))}
-              </div>
+              </Rows>
             ) : (
               <EmptyState icon="search">
                 No team matches that. Try another word, or ask the IAR office.
@@ -71,22 +63,22 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
         <div className="stack">
           {yours.length > 0 && (
             <Panel title="Your committees and teams" right={yours.length} flush>
-              <div className={styles.list}>
+              <Rows>
                 {yours.map((t) => (
                   <TeamRow key={t.group} team={t} names={names} mine />
                 ))}
-              </div>
+              </Rows>
             </Panel>
           )}
           {byPillar(teams).map((g) => {
             const directors = [...new Set(g.teams.flatMap((t) => t.directors))];
             return (
               <Panel key={g.name} title={g.name} right={directors.length ? `Director: ${directors.map(names).join(", ")}` : `${g.teams.length} teams`} flush>
-                <div className={styles.list}>
+                <Rows>
                   {g.teams.map((t) => (
                     <TeamRow key={t.group} team={t} names={names} mine={mine.has(t.group)} />
                   ))}
-                </div>
+                </Rows>
               </Panel>
             );
           })}

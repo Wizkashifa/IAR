@@ -27,6 +27,7 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 
 - The demo (`demo/index.html`) is the reference for layout and look. If a screen needs to look different, change the demo first. Colours, fonts and logos follow IAR's brand guide (`docs/brand.md`); how the pieces fit is in `docs/design-system.md`.
 - Every colour, size, corner and shadow is a token in `portal/src/styles/tokens.css` (light and dark). No raw colours and no `style={{ }}` anywhere else: use the components in `portal/src/components/` and a co-located `.module.css`. `src/styles/guard.test.ts` fails the build on either.
+- Build module pages from the component library, not new markup: `ItemRow`/`Rows` for any list, `DataTable`, `Choices`/`Checkbox`, `Field`, `Disclosure`, `SearchForm`, `Chips`, `Crumb`, `FileList`, `LinkCard`, `Panel` (+ `PanelNote`/`PanelFoot`). Global classes are only the layout ones in `base.css`; a module's `.module.css` holds only what is truly its own.
 - Mantine is used only inside the wrappers in `src/components/` (DateField, RoomPicker, FileDrop, …). Pages never import `@mantine/*`.
 - `/dev/styles` (dev mode) shows every token and component in light and dark: check it after a change there.
 - Before pushing a UI change, with `npm run dev` running: `npm run a11y` (titles, headings, labels, tap targets, contrast) and `npm run shots` (each screen next to the demo, in `portal/.shots/report.html`).

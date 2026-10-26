@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, buttonClass } from "@/components/Button";
+import { Button } from "@/components/Button";
 import { Pill, type Tone } from "@/components/Pill";
 import { type NameOf, fallbackName } from "@/lib/steps";
 import type { Role } from "@/lib/org";
@@ -9,7 +9,10 @@ import { TASK_STATUS_LABEL, TEAM_NAME, worksTeam } from "@/lib/events/tasks";
 import type { EventTask, RoomCheck } from "@/lib/events/types";
 import type { EventCard } from "@/lib/events/workflow";
 import { saveRoomCheck, workOnTask } from "./ops-actions";
-import styles from "./events.module.css";
+import { ItemRow } from "@/components/ItemRow";
+import { Disclosure } from "@/components/Disclosure";
+import { Field } from "@/components/Field";
+import { Choice, Choices } from "@/components/Choices";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
@@ -35,7 +38,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
   );
   const mine = task.assignee?.toLowerCase() === email.toLowerCase();
   return (
-    <div className="taskacts noprint">
+    <div className="row end noprint">
       {/* One form per button: each carries its own step. */}
       {task.status !== "done" && !task.assignee && (
         <form action={workOnTask}>
@@ -52,31 +55,27 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
         </form>
       )}
       {task.status !== "done" && (
-        <details className="taskmore">
-          <summary className={buttonClass({ variant: "primary", size: "small" })}>Mark done</summary>
+        <Disclosure summary="Mark done" button="primary">
           <form action={workOnTask} className="stack">
             {base}
             <input type="hidden" name="step" value="done" />
-            <label className="field">
-              <span>Note for the requester (optional)</span>
+            <Field label="Note for the requester (optional)">
               <input name="note" maxLength={1000} placeholder={task.team === "marketing" ? "e.g. Flyer posted; link to the listing" : "e.g. Set up and tested"} />
-            </label>
+        </Field>
             <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
-        </details>
+        </Disclosure>
       )}
-      <details className="taskmore">
-        <summary className={buttonClass({ variant: "quiet", size: "small" })}>Ask the requester</summary>
+      <Disclosure summary="Ask the requester" button="quiet">
         <form action={workOnTask} className="stack">
           {base}
           <input type="hidden" name="step" value="ask" />
-          <label className="field">
-            <span>Your question (added as a comment on the event; the requester gets an alert)</span>
+          <Field label="Your question (added as a comment on the event; the requester gets an alert)">
             <textarea name="note" rows={2} maxLength={1000} required />
-          </label>
+        </Field>
           <div><Button size="small" type="submit">Send question</Button></div>
         </form>
-      </details>
+      </Disclosure>
     </div>
   );
 }
@@ -86,30 +85,27 @@ export function TaskLine({ card, task, roles, email, back, today, names }: { car
   const overdue = (task.status === "todo" || task.status === "doing") && task.dueDate < today;
   const who = task.assignee ? (names ? names(task.assignee) : task.assignee) : "";
   return (
-    <li className={styles.line}>
-      <div>
-        <div className={styles.lineTitle}>{task.title}</div>
-        <div className={styles.lineSub}>
-          {TEAM_NAME[task.team]} · due {dayText(task.dueDate)}
-          {who ? ` · ${who}` : ""}
-          {task.note ? ` · “${task.note}”` : ""}
-        </div>
-      </div>
-      <div className={styles.lineSide}>
-        <TaskPill task={task} overdue={overdue} />
-        <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
-      </div>
-    </li>
+    <ItemRow
+      state="plain"
+      title={task.title}
+      sub={`${TEAM_NAME[task.team]} · due ${dayText(task.dueDate)}${who ? ` · ${who}` : ""}${task.note ? ` · “${task.note}”` : ""}`}
+      right={
+        <>
+          <TaskPill task={task} overdue={overdue} />
+          <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
+        </>
+      }
+    />
   );
 }
 
 export function CheckResult({ check }: { check?: RoomCheck }) {
-  if (!check) return <span className="sub">Not recorded</span>;
+  if (!check) return <span className="hint">Not recorded</span>;
   return (
     <span>
       <Pill tone={check.ok ? "ok" : "bad"}>{check.ok ? "OK" : "Problem"}</Pill>
       {check.note ? ` ${check.note}` : ""}
-      <span className="sub"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
+      <span className="hint"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
     </span>
   );
 }
@@ -118,27 +114,25 @@ export function CheckResult({ check }: { check?: RoomCheck }) {
 export function RoomCheckCell({ card, date, when, check, roles, back }: { card: EventCard; date: string; when: RoomCheck["when"]; check?: RoomCheck; roles: Role[]; back: string }) {
   const can = mayCheckRooms({ roles }) && card.event.rooms.length > 0;
   return (
-    <div className="roomcheck">
+    <div className="stack tight">
       <div><strong>{WHEN_LABEL[when]}:</strong> <CheckResult check={check} /></div>
       {can && (
-        <details className="taskmore noprint">
-          <summary className={buttonClass({ variant: "quiet", size: "small" })}>{check ? "Change" : "Record"}</summary>
+        <Disclosure summary={check ? "Change" : "Record"} button="quiet" className="noprint">
           <form action={saveRoomCheck} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="date" value={date} />
             <input type="hidden" name="when" value={when} />
             <input type="hidden" name="back" value={back} />
-            <div className="row">
-              <label className="inline"><input type="radio" name="result" value="ok" defaultChecked={check?.ok !== false} required /> Room OK</label>
-              <label className="inline"><input type="radio" name="result" value="problem" defaultChecked={check?.ok === false} /> Problem</label>
-            </div>
-            <label className="field">
-              <span>Note (say what&apos;s wrong if there&apos;s a problem)</span>
+            <Choices legend="How was the room?" legendHidden>
+              <Choice type="radio" name="result" value="ok" defaultChecked={check?.ok !== false} required label="Room OK" />
+              <Choice type="radio" name="result" value="problem" defaultChecked={check?.ok === false} label="Problem" />
+            </Choices>
+            <Field label={<>Note (say what&apos;s wrong if there&apos;s a problem)</>}>
               <input name="note" maxLength={1000} defaultValue={check?.note ?? ""} placeholder="e.g. Chairs left out, spill by the door" />
-            </label>
+        </Field>
             <div><Button size="small" type="submit">Save check</Button></div>
           </form>
-        </details>
+        </Disclosure>
       )}
     </div>
   );

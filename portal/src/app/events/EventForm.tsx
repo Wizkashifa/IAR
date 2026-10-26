@@ -18,6 +18,7 @@ import { type DraftCheck, checkDraft } from "./actions";
 import { ChecksList, Timeline, checksSummary } from "./ui";
 import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
+import { Checkbox, Choice, Choices } from "@/components/Choices";
 
 export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
@@ -242,7 +243,7 @@ export default function EventForm(p: EventFormProps) {
             >
               <textarea rows={5} value={d.description} onChange={(e) => set("description", e.target.value)} placeholder="What will happen and who it's for. Include the schedule and any speakers or guests." maxLength={4000} required />
             </Field>
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="Sponsoring committee">
                 <select value={d.committeeGroup} onChange={(e) => update((x) => ({ ...x, committeeGroup: e.target.value, committeeName: p.committees.find((c) => c.group === e.target.value)?.name ?? "" }))}>
                   {p.committees.map((c) => <option key={c.group} value={c.group}>{c.name}</option>)}
@@ -258,8 +259,8 @@ export default function EventForm(p: EventFormProps) {
                 <input type="number" min={0} max={240} step={15} value={d.teardown} onChange={(e) => set("teardown", Number(e.target.value))} />
               </Field>
             </div>
-            <p className={styles.hint}>You set up and clean up yourselves. That time is held on the calendar for you.</p>
-            <div className={styles.two}>
+            <p className="hint">You set up and clean up yourselves. That time is held on the calendar for you.</p>
+            <div className="grid two">
               <Field label="Repeats">
                 <select value={d.recurFreq} onChange={(e) => update((x) => ({ ...x, recurFreq: e.target.value as Draft["recurFreq"], recurUntil: e.target.value === "none" ? "" : x.recurUntil }))}>
                   <option value="none">Does not repeat</option>
@@ -286,7 +287,7 @@ export default function EventForm(p: EventFormProps) {
               value={d.rooms}
               onChange={(ids) => set("rooms", ids)}
             />
-            <div className={styles.two}>
+            <div className="grid two">
               <Field label="Expected attendance">
                 <input type="number" min={1} value={d.attendance} onChange={(e) => set("attendance", Number(e.target.value))} />
               </Field>
@@ -297,9 +298,7 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Your setup plan (optional)">
               <input value={d.setupNotes} onChange={(e) => set("setupNotes", e.target.value)} placeholder="Tables, chairs, stage" maxLength={300} />
             </Field>
-            <fieldset className={styles.fieldset}>
-              <legend>Details</legend>
-              <div className={styles.choices}>
+            <Choices legend="Details">
                 {([
                   ["food", "Food served"],
                   ["isPublic", "Open to the public (needs marketing)"],
@@ -309,12 +308,9 @@ export default function EventForm(p: EventFormProps) {
                   ["newProgram", "New program"],
                   ["fundraiser", "Fundraiser"],
                 ] as const).map(([k, l]) => (
-                  <label key={k} className={styles.choice}>
-                    <input type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} /> <span>{l}</span>
-                  </label>
+                  <Choice key={k} type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} label={l} />
                 ))}
-              </div>
-            </fieldset>
+            </Choices>
           </div>
         </fieldset>
 
@@ -322,7 +318,7 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="briefSect">
             <legend><span className={styles.sn}>{num("briefSect")}</span>Marketing</legend>
             <div className={styles.sectionBody}>
-              <p className={styles.hint}>Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
+              <p className="hint">Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
               <Field label="One-line subtitle (5–6 words)" hint="Used on the flyer and in other marketing.">
                 <input value={d.brief.subtitle} onChange={(e) => setBrief("subtitle", e.target.value)} maxLength={80} placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters" />
               </Field>
@@ -340,7 +336,7 @@ export default function EventForm(p: EventFormProps) {
               <Field label="Payment info and instructions (if any)">
                 <textarea rows={2} value={d.brief.payment} onChange={(e) => setBrief("payment", e.target.value)} placeholder="Cost, how to pay, deadlines" maxLength={1000} />
               </Field>
-              <div className={styles.two}>
+              <div className="grid two">
                 <DateField label="Start marketing on" hint="At least 2 weeks before the event." value={d.brief.startOn || null} min={p.today} max={d.date} onChange={(v) => setBrief("startOn", v ?? "")} />
                 <Field label="Google Drive link to files (optional)" hint="Logos, photos, speaker bios. Share with everyone at IAR.">
                   <input type="url" value={d.brief.files} onChange={(e) => setBrief("files", e.target.value)} placeholder="https://drive.google.com/…" maxLength={500} />
@@ -354,27 +350,17 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="avSect">
             <legend><span className={styles.sn}>{num("avSect")}</span>A/V</legend>
             <div className={styles.sectionBody}>
-              <p className={styles.hint}>The A/V team will contact you about what they can support.</p>
-              <fieldset className={styles.fieldset}>
-                <legend>What A/V support do you need? Check all that apply.</legend>
-                <div className={styles.choices}>
-                  {Object.entries(AV_KINDS).map(([k, l]) => (
-                    <label key={k} className={styles.choice}>
-                      <input type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} /> <span>{l}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className={styles.fieldset}>
-                <legend>Will the event include any of these?</legend>
-                <div className={styles.choices}>
-                  {Object.entries(AV_INCLUDES).map(([k, l]) => (
-                    <label key={k} className={styles.choice}>
-                      <input type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} /> <span>{l}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <p className="hint">The A/V team will contact you about what they can support.</p>
+              <Choices legend="What A/V support do you need? Check all that apply.">
+                {Object.entries(AV_KINDS).map(([k, l]) => (
+                  <Choice key={k} type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} label={l} />
+                ))}
+              </Choices>
+              <Choices legend="Will the event include any of these?">
+                {Object.entries(AV_INCLUDES).map(([k, l]) => (
+                  <Choice key={k} type="checkbox" checked={d.avNeeds.includes.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, includes: toggle(x.avNeeds.includes, k) } }))} label={l} />
+                ))}
+              </Choices>
             </div>
           </fieldset>
         )}
@@ -385,36 +371,27 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Notes for the teams (optional)">
               <textarea rows={2} value={d.teamNotes} onChange={(e) => set("teamNotes", e.target.value)} placeholder="Anything marketing, A/V or security should know" maxLength={1000} />
             </Field>
-            <label className={styles.agree}>
-              <input type="checkbox" checked={d.agree} onChange={(e) => set("agree", e.target.checked)} />
-              <span>
-                I&apos;ve read the{" "}
-                {p.policyUrl ? (
-                  <a href={p.policyUrl} target="_blank" rel="noreferrer">
-                    room reservation policy
-                  </a>
-                ) : (
-                  "room reservation policy"
-                )}{" "}
-                and accept its rules and liability statement.
-              </span>
-            </label>
+            <Checkbox checked={d.agree} onChange={(e) => set("agree", e.target.checked)}>
+              I&apos;ve read the{" "}
+              {p.policyUrl ? (
+              <a href={p.policyUrl} target="_blank" rel="noreferrer">
+              room reservation policy
+              </a>
+              ) : (
+              "room reservation policy"
+              )}{" "}
+              and accept its rules and liability statement.
+            </Checkbox>
             {d.av && (
-              <label className={styles.agree}>
-                <input type="checkbox" checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))} />
-                <span>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.</span>
-              </label>
+              <Checkbox checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))}>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.</Checkbox>
             )}
             {d.isPublic && (
-              <label className={styles.agree}>
-                <input type="checkbox" checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)} />
-                <span>The details I&apos;ve given are final, so marketing can publish them.</span>
-              </label>
+              <Checkbox checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)}>The details I&apos;ve given are final, so marketing can publish them.</Checkbox>
             )}
           </div>
         </fieldset>
         <FormActions>
-          {blockers.length > 0 && !asking && <span className={styles.hint}>{clashOnly ? "The room is taken. Change the time or room, or ask for it." : "Fix the conflicts in the checks first."}</span>}
+          {blockers.length > 0 && !asking && <span className="hint">{clashOnly ? "The room is taken. Change the time or room, or ask for it." : "Fix the conflicts in the checks first."}</span>}
           <Button href={p.editing ? `/events/${p.editing}` : "/events"} variant="quiet">Cancel</Button>
           <Submit label={asking ? "Send and ask for the time" : p.submitLabel} disabled={blockers.length > 0 && !asking} />
         </FormActions>
@@ -450,11 +427,11 @@ export default function EventForm(p: EventFormProps) {
                   ) : (
                     <div>
                       <Button size="small" onClick={() => setAsk({ key: c.key, reason: "" })} disabled={result.clashes.length > 1 || !clashOnly}>Ask to use this time</Button>
-                      {result.clashes.length > 1 && <div className="sub">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
+                      {result.clashes.length > 1 && <div className="hint">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
                     </div>
                   )
                 ) : (
-                  <div className="sub">{c.why}</div>
+                  <div className="hint">{c.why}</div>
                 )}
                 {ask?.key === c.key && (
                   <div>
@@ -463,14 +440,14 @@ export default function EventForm(p: EventFormProps) {
                 )}
               </div>
             ))}
-            {askable.length === 0 && result.clashes.length > 0 && <p className={styles.hint}>Pick another time or room.</p>}
+            {askable.length === 0 && result.clashes.length > 0 && <p className="hint">Pick another time or room.</p>}
           </div>
         </Panel>
         <Panel title="IAR calendar that day" className={styles.calendarPanel}>
           {result.timeline ? (
             <Timeline items={result.timeline.items} request={result.timeline.request} caption={`${result.timeline.roomName} · ${dayText(result.timeline.date)}`} />
           ) : (
-            <p className={styles.hint}>{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
+            <p className="hint">{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
           )}
         </Panel>
       </div>

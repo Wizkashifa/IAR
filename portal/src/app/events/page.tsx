@@ -90,7 +90,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
             <Timeline items={items} caption={`${room.name} · ${dayText(date)}`} />
           </>
         ) : (
-          <p className="note">No rooms are set up for booking yet. An admin turns rooms on in Portal Settings.</p>
+          <p className="hint">No rooms are set up for booking yet. An admin turns rooms on in Portal Settings.</p>
         )}
       </Panel>
     </div>

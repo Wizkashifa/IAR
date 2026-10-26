@@ -2,10 +2,9 @@
  * The order styles apply in, lowest first. A later layer always wins over an
  * earlier one, whatever order the files load in: Mantine's widgets sit under
  * our base styles, shared components (src/components/*.module.css) sit above
- * those, and page styles come last. See docs/design-system.md.
+ * those, and each page's own .module.css comes last. See docs/design-system.md.
  */
 @layer reset, tokens, mantine, base, components, pages;
 
 @import "../styles/tokens.css";
 @import "../styles/base.css";
-@import "../styles/pages.css";

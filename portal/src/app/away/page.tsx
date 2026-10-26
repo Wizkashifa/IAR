@@ -15,6 +15,7 @@ import { AwayForm } from "./AwayForm";
 import { clearAway } from "./actions";
 import styles from "./away.module.css";
 import { todayLocal } from "@/lib/dates";
+import { ItemRow, Rows } from "@/components/ItemRow";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Out of office" };
@@ -67,24 +68,17 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         <AwayForm current={mine} today={today} people={choices} />
       </Panel>
 
-      <p className="note">
+      <p className="hint">
         This hands off approvals that wait on you by name, such as a committee&apos;s chair approval. Finance and executive steps already go to everyone in that group, so they don&apos;t need covering.
       </p>
 
       {covering.length > 0 && (
         <Panel title="You're covering for" right={<span>{covering.length}</span>} flush>
-          <ul className={styles.covering}>
+          <Rows>
             {covering.map((a) => (
-              <li key={a.email}>
-                <strong>{a.name}</strong>
-                <span>
-                  {fmtDay(a.from)} to {fmtDay(a.until)}
-                  {isActive(a, today) ? " · now" : ""}
-                  {a.note ? ` · “${a.note}”` : ""}
-                </span>
-              </li>
+              <ItemRow key={a.email} state="plain" title={a.name} sub={`${fmtDay(a.from)} to ${fmtDay(a.until)}${isActive(a, today) ? " · now" : ""}${a.note ? ` · “${a.note}”` : ""}`} />
             ))}
-          </ul>
+          </Rows>
         </Panel>
       )}
     </div>

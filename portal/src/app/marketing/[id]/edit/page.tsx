@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
@@ -8,6 +7,7 @@ import { isMarketingCard, permission } from "@/lib/marketing/workflow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { committeesFor, editMarketing } from "../../actions";
 import MarketingForm from "../../MarketingForm";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +29,7 @@ export default async function EditMarketing({ params }: { params: Promise<{ id: 
   return (
     <div className="stack loose">
       <div className="stack tight">
-        <nav className="crumb" aria-label="Breadcrumb">
-          <Link href="/marketing">Marketing Requests</Link> / <Link href={`/marketing/${id}`}>{id}</Link> / {answering ? "Answer" : "Edit"}
-        </nav>
+        <Crumb trail={[{ href: "/marketing", label: "Marketing Requests" }, { href: `/marketing/${id}`, label: id }]} here={answering ? "Answer" : "Edit"} />
         <ModuleHead title={answering ? "Answer marketing's question" : "Edit your request"} lead={card.title} />
       </div>
       <MarketingForm

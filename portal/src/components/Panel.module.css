@@ -8,4 +8,7 @@
   .body { padding: var(--s-4); }
   /* Lists and tables run edge to edge. */
   .flush { padding: 0; }
+  /* A line under or above a flush panel's list. */
+  .foot { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
+  .note { margin: 0; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
 }

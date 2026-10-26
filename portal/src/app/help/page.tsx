@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { HELP_GUIDES, WHO_TO_ASK, type HelpGuide } from "@/lib/help";
@@ -9,6 +8,7 @@ import { requireViewer } from "@/lib/viewer";
 import { WHATS_NEW } from "@/lib/whats-new";
 import { GUIDE_ICON } from "./icons";
 import styles from "./help.module.css";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Help" };
@@ -28,19 +28,13 @@ export default async function HelpPage() {
     <>
       <ModuleHead title="Help" lead="Step-by-step guides for each part of the portal, in plain words." />
 
-      <ul className={styles.guides} aria-label="Guides">
+      <LinkCards label="Guides">
         {guides.map((g) => (
-          <li key={g.key}>
-            <Link href={`/help/${g.key}`} className={styles.guide}>
-              <Icon name={GUIDE_ICON[g.key]} size="lg" className={styles.guideIcon} />
-              <span>
-                <span className={styles.guideTitle}>{g.title}</span>
-                <span className={styles.guideText}>{g.summary}</span>
-              </span>
-            </Link>
-          </li>
+          <LinkCard key={g.key} href={`/help/${g.key}`} icon={GUIDE_ICON[g.key]} title={g.title}>
+            {g.summary}
+          </LinkCard>
         ))}
-      </ul>
+      </LinkCards>
 
       <div className={styles.stack}>
         <Panel title="What's new" right={<Link href="/help/whats-new">See all</Link>}>

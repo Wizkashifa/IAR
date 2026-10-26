@@ -16,6 +16,7 @@ import { dayText } from "@/lib/events/series";
 import { Filters } from "./Filters";
 import styles from "./calendar.module.css";
 import { isDate } from "@/lib/dates";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendar" };
@@ -62,14 +63,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <Panel>
         <div className="stack">
           <div className={styles.bar}>
-            <nav className={styles.views} aria-label="View">
-              <Link href={link({ view: "week" })} className={styles.chip} aria-current={view === "week" ? "page" : undefined}>
-                Week
-              </Link>
-              <Link href={link({ view: "month" })} className={styles.chip} aria-current={view === "month" ? "page" : undefined}>
-                Month
-              </Link>
-            </nav>
+            <Chips label="View" chips={[{ label: "Week", href: link({ view: "week" }), on: view === "week" }, { label: "Month", href: link({ view: "month" }), on: view === "month" }]} />
             <h2 className={styles.title}>{viewTitle(view, date)}</h2>
             <div className={styles.nav}>
               <Button href={link({ date: stepView(view, date, -1) })} size="small">
@@ -160,7 +154,7 @@ function WeekView({ days, byDate, today, href, filtered }: { days: string[]; byD
             <li key={d} className={`${styles.day}${d === today ? ` ${styles.today}` : ""}${items.length ? "" : ` ${styles.emptyDay}`}`} aria-current={d === today ? "date" : undefined}>
               <h3 className={styles.dayHead}>
                 {dayText(d)}
-                {d === today && <span className={styles.todayTag}>Today</span>}
+                {d === today && <Pill tone="gold" small>Today</Pill>}
               </h3>
               {items.length ? (
                 <ul className={styles.entries}>
@@ -169,7 +163,7 @@ function WeekView({ days, byDate, today, href, filtered }: { days: string[]; byD
                   ))}
                 </ul>
               ) : (
-                <p className={styles.none}>Nothing booked</p>
+                <p className="hint">Nothing booked</p>
               )}
             </li>
           );
@@ -233,7 +227,7 @@ function MonthView({ date, byDate, today, href, filtered, dayLink }: { date: str
               <li key={d} className={`${styles.day}${d === today ? ` ${styles.today}` : ""}`}>
                 <h3 className={styles.dayHead}>
                   {dayText(d)}
-                  {d === today && <span className={styles.todayTag}>Today</span>}
+                  {d === today && <Pill tone="gold" small>Today</Pill>}
                 </h3>
                 <ul className={styles.entries}>
                   {(byDate.get(d) ?? []).map((a) => (

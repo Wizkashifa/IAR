@@ -9,7 +9,7 @@ const ICON: Record<Check["sev"], IconName> = { ok: "check", warn: "alert", bad: 
 
 /** The room and policy checks. `empty` is what to say when there are none. */
 export function ChecksList({ checks, empty = "Pick a date, times and a room to see the checks." }: { checks: Check[]; empty?: string }) {
-  if (!checks.length) return <p className="note">{empty}</p>;
+  if (!checks.length) return <p className="hint">{empty}</p>;
   return (
     <ul className={styles.checks}>
       {checks.map((c, i) => (

@@ -22,14 +22,13 @@ import { pauseSchedule, saveSchedule } from "../actions";
 import { FLASH, fmtDay } from "../ui";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "../tickets.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Preventive schedules" };
 
 const crumb = (
-  <nav className="crumb" aria-label="Breadcrumb">
-    <Link href="/it-maintenance">IT &amp; Maintenance</Link>
-  </nav>
+  <Crumb trail={[{ href: "/it-maintenance", label: "IT & Maintenance" }]} />
 );
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; error?: string }> }) {
@@ -132,7 +131,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
       <Panel title={s ? `Edit “${s.name}”` : "New schedule"}>
         <form action={saveSchedule} className="stack">
           {s && <input type="hidden" name="id" value={s.id} />}
-          <div className={styles.grid2}>
+          <div className="grid">
             <Field label="Job" required>
               <input name="name" defaultValue={s?.name} required maxLength={80} placeholder="HVAC filter check" />
             </Field>

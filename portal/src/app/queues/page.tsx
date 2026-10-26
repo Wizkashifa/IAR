@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor } from "@/components/ItemList";
-import { ItemRow } from "@/components/ItemRow";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
@@ -23,8 +23,9 @@ import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
 import { fmtDay } from "@/lib/format";
 import { TaskButtons } from "../events/ops-ui";
-import styles from "./queues.module.css";
 import { addDays } from "@/lib/dates";
+import { Disclosure } from "@/components/Disclosure";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Team Queues" };
@@ -110,30 +111,24 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       {sp.ok && MESSAGES[sp.ok] && <Note tone="ok">{MESSAGES[sp.ok]}</Note>}
 
       {teams.length > 1 && (
-        <nav className={styles.chips} aria-label="Team">
-          {teams.map((t) => (
-            <Link key={t} href={`/queues?team=${t}`} className={t === team ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={t === team ? "page" : undefined}>
-              {TEAM_NAME[t]} <span>{queueItems(cards, t, ctx.today).length}</span>
-            </Link>
-          ))}
-        </nav>
+        <Chips label="Team" chips={teams.map((t) => ({ label: TEAM_NAME[t], href: `/queues?team=${t}`, on: t === team, count: queueItems(cards, t, ctx.today).length }))} />
       )}
 
       <Panel title={`${TEAM_NAME[team]}: open tasks`} right={<span>{allOpen.length} open</span>} flush>
         {allOpen.length === 0 ? (
           <EmptyState icon="tasks">Nothing open for {TEAM_NAME[team]}. New tasks show up here when an event is approved.</EmptyState>
         ) : (
-          <ul className={styles.list}>{open.map((q) => row(q, true))}</ul>
+          <Rows>{open.map((q) => row(q, true))}</Rows>
         )}
       </Panel>
 
       {later > 0 && (
-        <p className="note">
+        <p className="hint">
           {later} more for later dates of a series. <Link href={`/queues?team=${team}&all=1`}>Show all</Link>
         </p>
       )}
       {locked > 0 && (
-        <p className="note">
+        <p className="hint">
           {locked} more {TEAM_NAME[team]} task{locked === 1 ? " is" : "s are"} waiting on events still in review, and will show up here once they&apos;re approved.
         </p>
       )}
@@ -151,12 +146,11 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       )}
 
       {done.length > 0 && (
-        <details className={styles.done}>
-          <summary>Recently done ({done.length})</summary>
+        <Disclosure summary={`Recently done (${done.length})`}>
           <Panel flush>
-            <ul className={styles.list}>{done.map((q) => row(q, false))}</ul>
+            <Rows>{done.map((q) => row(q, false))}</Rows>
           </Panel>
-        </details>
+        </Disclosure>
       )}
     </div>
   );

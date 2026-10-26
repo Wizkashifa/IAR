@@ -17,6 +17,7 @@ import { TicketBoard, FLASH } from "./ui";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "./tickets.module.css";
 import { Chips } from "@/components/Chips";
+import { Pill } from "@/components/Pill";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "IT & Maintenance" };
@@ -88,7 +89,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           </Link>
           <Link href="/it-maintenance?view=team" className={onTeamTab ? `${styles.tab} ${styles.on}` : styles.tab} aria-current={onTeamTab ? "page" : undefined}>
             {team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`}
-            {teamNew > 0 && <span className={styles.badge}>{teamNew} new</span>}
+            {teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill>}
           </Link>
           <span className={styles.spacer} />
           <Link href="/it-maintenance/schedules" className={styles.quiet}>

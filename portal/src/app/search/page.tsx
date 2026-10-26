@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/Button";
 import { ItemList, rowsFor } from "@/components/ItemList";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
@@ -13,7 +12,8 @@ import { actorFor } from "@/lib/people";
 import { matchCards, requestNumber } from "@/lib/search";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
-import styles from "./search.module.css";
+import { ItemRow, Rows } from "@/components/ItemRow";
+import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Search" };
@@ -45,12 +45,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <div className="stack">
       <ModuleHead title="Search" lead="Find any request you can open, by its number or by words from its title, payee or committee." />
-      <form action="/search" className={styles.form} role="search">
-        <input type="search" name="q" defaultValue={q} placeholder="PO-12001, EV-1101, or words like “halaqa snacks”" aria-label="Search requests" autoFocus />
-        <Button type="submit" variant="primary" icon="search">
-          Search
-        </Button>
-      </form>
+      <SearchForm action="/search" label="Search requests" value={q} placeholder="PO-12001, EV-1101, or words like “halaqa snacks”" autoFocus />
       {q && (
         <ItemList
           title={`Results for “${q}”`}
@@ -61,17 +56,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       )}
       {policies && policies.length > 0 && (
         <Panel title="Policies" right={<a href={`/library?q=${encodeURIComponent(q)}`}>See all in the Library</a>} flush>
-          <ul className={styles.policies}>
+          <Rows>
             {policies.slice(0, 5).map((f) => (
-              <li key={f.id}>
-                <a href={f.url} target="_blank" rel="noopener noreferrer">
-                  {f.name}
-                  <span className="sr-only"> (opens in Google Drive)</span>
-                </a>
-                <span className={styles.policySub}>{[f.kind.label, f.folder].filter(Boolean).join(" · ")}</span>
-              </li>
+              <ItemRow key={f.id} state="plain" icon={f.kind.icon} title={f.name} href={f.url} external="Google Drive" sub={[f.kind.label, f.folder].filter(Boolean).join(" · ")} />
             ))}
-          </ul>
+          </Rows>
         </Panel>
       )}
     </div>

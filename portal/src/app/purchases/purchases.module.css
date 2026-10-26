@@ -1,54 +1,14 @@
 /* Purchase Requests: lists, line items and the request form. Colours and sizes come from tokens.css. */
 @layer pages {
   .list { margin: 0; padding: 0; }
-  .panelNote { margin: 0; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: var(--t-sm); }
-
 
   /* Tables for staff data (line items, card checklist, vendors). Under 640px each row becomes a small card, labelled from data-label. */
-  .table { width: 100%; border-collapse: collapse; font-size: var(--t-md); }
-  .table th { text-align: left; padding: 10px var(--s-4); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); background: var(--surface-2); border-bottom: 1px solid var(--line); }
-  .table td { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); vertical-align: top; }
-  .table tbody tr:first-child td { border-top: 0; }
-  .table tfoot td { border-top: 1px solid var(--line); font-weight: 600; }
-  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .table th.num { text-align: right; }
-  .sub { display: block; color: var(--ink-2); font-size: var(--t-sm); }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
-  .nowrap { white-space: nowrap; }
-  @media (max-width: 640px) {
-    .table thead { display: none; }
-    .table, .table tbody, .table tfoot, .table tr, .table td { display: block; width: 100%; }
-    .table tr { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
-    .table tbody tr:first-child { border-top: 0; }
-    .table td { padding: 2px 0; border: 0; text-align: left; }
-    .table td[data-label]::before { content: attr(data-label); display: block; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
-    .table td:empty { display: none; }
-    .table .num { text-align: left; }
-    .table tfoot tr { display: flex; justify-content: space-between; }
-    .table tfoot td { width: auto; border: 0; }
-    /* Line items: what it was on the left, the amount on the right, no labels. */
-    .compact tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-3); }
-    .compact td[data-label]::before { display: none; }
-    .compact tbody td { grid-column: 1; }
-    .compact tbody td.num { grid-column: 2; grid-row: 1 / span 2; text-align: right; font-weight: 600; }
-    .compact td.date { color: var(--ink-2); font-size: var(--t-sm); }
-  }
-
-  .files { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
-  .files li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 
   /* The action row on a request page. */
-  .actForm { display: grid; gap: var(--s-3); flex: 1 1 100%; width: 100%; }
-  .more > summary { cursor: pointer; color: var(--accent-text); font-weight: 600; width: fit-content; }
-  .more[open] > summary { margin-bottom: var(--s-3); }
-  .actGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-3); }
-  .actRow { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
-  .search input { flex: 1 1 240px; width: auto; min-width: 0; }
   .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
-  .why { margin: 0; color: var(--ink-2); }
 
   /* Comments and history. */
-  .when { color: var(--ink-3); font-size: var(--t-sm); }
   .said { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* The form's lines: a row of fields per line on wide screens, stacked on phones. */
@@ -68,19 +28,9 @@
   .lineFoot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-3); }
   .total { font-size: var(--t-base); }
   .total strong { font-size: 18px; margin-left: var(--s-2); font-variant-numeric: tabular-nums; }
-  .check { display: flex; gap: var(--s-2); align-items: flex-start; font-size: var(--t-md); }
-  .check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
-  .checks { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
   .fieldsets { display: grid; gap: var(--s-4); margin-top: var(--s-5); }
   /* Space between a page heading and what follows it. */
   .body { margin-top: var(--s-5); }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-3); }
-  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-2); }
-  .choice { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; cursor: pointer; font-size: var(--t-md); background: var(--surface); }
-  .choice:has(input:checked) { border-color: var(--gold); background: var(--accent-soft); }
-  .choice:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
-  .choice input { width: 18px; height: 18px; }
-  .choice small { flex-basis: 100%; color: var(--ink-2); font-size: 12px; }
   .static { padding: 8px 0; }
   .hintOk { color: var(--ok); }
   .hintWarn { color: var(--warn); font-weight: 600; }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
@@ -14,6 +13,7 @@ import { requireViewer } from "@/lib/viewer";
 import { mayEditTeam, requestRoutes, seesMembers, teamEntries } from "@/lib/whos-who";
 import { saveTeamInfo } from "../actions";
 import styles from "../teams.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 
@@ -55,10 +55,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
   return (
     <>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link href="/teams">Who&apos;s who</Link>
-        {team.pillar ? ` / ${team.pillar}` : ""}
-      </nav>
+      <Crumb trail={[{ href: "/teams", label: "Who's who" }]} here={team.pillar} />
       <ModuleHead
         title={team.name}
         lead={team.description ?? "What this team handles hasn't been written yet."}
@@ -110,10 +107,10 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
                   ))}
                 </ul>
               ) : (
-                <p className="note">Only the leaders so far.</p>
+                <p className="hint">Only the leaders so far.</p>
               )
             ) : (
-              <p className="note">The full list is shown to the team itself and the IAR office. To ask the team for something, contact its chair or send a request.</p>
+              <p className="hint">The full list is shown to the team itself and the IAR office. To ask the team for something, contact its chair or send a request.</p>
             )}
           </Panel>
         </div>
@@ -154,7 +151,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               </Panel>
             ) : (
               <Panel title="What the team handles">
-                <p className="note">You can change what the team handles and its Chat link.</p>
+                <p className="hint">You can change what the team handles and its Chat link.</p>
                 <Button href={`/teams/${team.slug}?edit=1`} size="small">
                   Change
                 </Button>

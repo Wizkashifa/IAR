@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Button } from "@/components/Button";
 import { DateField, TimeField } from "@/components/DateField";
 import { EmptyState } from "@/components/EmptyState";
@@ -13,6 +12,9 @@ import { requireViewer } from "@/lib/viewer";
 import { eventContext, mayBookRestricted } from "@/lib/events/context";
 import { dayText, timeText } from "@/lib/events/series";
 import styles from "../calendar.module.css";
+import { Checkbox } from "@/components/Choices";
+import { ItemRow, Rows } from "@/components/ItemRow";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Find a room" };
@@ -31,9 +33,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
   return (
     <div className="stack loose">
       <div className="stack tight">
-        <nav aria-label="Breadcrumb" className={styles.roomSub}>
-          <Link href="/calendar">Calendar</Link> / Find a room
-        </nav>
+        <Crumb trail={[{ href: "/calendar", label: "Calendar" }]} here="Find a room" />
         <ModuleHead title="Find a room" lead="Say when and how many people, and see which rooms are free and fit. Setup and cleanup time (30 minutes each) is included in the check." />
       </div>
 
@@ -46,10 +46,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
             <Field label="About how many people?" htmlFor="find-people" required>
               <input id="find-people" name="people" type="number" min={1} max={MAX_PEOPLE} defaultValue={q.people ?? "20"} required />
             </Field>
-            <label className={styles.check}>
-              <input type="checkbox" name="food" value="1" defaultChecked={q.food === "1"} />
-              Food will be served
-            </label>
+            <Checkbox name="food" value="1" defaultChecked={q.food === "1"}>Food will be served</Checkbox>
           </div>
           <div>
             <Button type="submit" variant="primary" icon="search">
@@ -75,11 +72,11 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
                 No room fits that time and size. Try another time, or fewer people.
               </EmptyState>
             ) : (
-              <ul className={styles.rooms}>
+              <Rows>
                 {free.map((o) => (
                   <RoomRow key={o.room.id} o={o} href={requestHref(need, o.room.id)} />
                 ))}
-              </ul>
+              </Rows>
             )}
           </Panel>
           {taken.length > 0 && (
@@ -88,11 +85,11 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
                 <summary className={styles.takenSummary}>
                   {taken.length === 1 ? "Show the 1 room that doesn't fit or isn't free" : `Show the ${taken.length} rooms that don't fit or aren't free`}
                 </summary>
-                <ul className={styles.rooms}>
+                <Rows>
                   {taken.map((o) => (
                     <RoomRow key={o.room.id} o={o} />
                   ))}
-                </ul>
+                </Rows>
               </details>
             </Panel>
           )}
@@ -105,29 +102,35 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
 function RoomRow({ o, href }: { o: RoomOption; href?: string }) {
   const r = o.room;
   const facts = [r.capacity ? `Holds ${r.capacity}` : "", r.building, r.food ? "Food allowed" : "No food"].filter(Boolean).join(" · ");
-  return (
-    <li className={`${styles.room} ${o.ok ? styles.free : styles.taken}`}>
-      <div>
-        <div className={styles.roomName}>{r.name}</div>
-        <div className={styles.roomSub}>{facts}</div>
-        {o.reasons.length > 0 && (
-          <ul className={styles.reasons}>
-            {o.reasons.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        )}
-        {o.notes.map((n) => (
-          <div key={n} className={styles.roomNote}>
-            {n}
-          </div>
-        ))}
-      </div>
-      {href && (
-        <Button href={href} size="small">
-          Request this room
-        </Button>
+  const extra = (o.reasons.length > 0 || o.notes.length > 0) && (
+    <>
+      {o.reasons.length > 0 && (
+        <ul className={styles.reasons}>
+          {o.reasons.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
       )}
-    </li>
+      {o.notes.map((n) => (
+        <div key={n} className={styles.roomNote}>
+          {n}
+        </div>
+      ))}
+    </>
+  );
+  return (
+    <ItemRow
+      state={o.ok ? "done" : "plain"}
+      title={r.name}
+      sub={facts}
+      extra={extra}
+      right={
+        href && (
+          <Button href={href} size="small">
+            Request this room
+          </Button>
+        )
+      }
+    />
   );
 }

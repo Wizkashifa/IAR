@@ -20,3 +20,13 @@ export function Panel({ title, right, level = 2, flush, children, id, className 
     </section>
   );
 }
+
+/** A small grey line under a panel's list or table ("Spent so far…", "From the 34 most recent requests"). */
+export function PanelFoot({ children }: { children: ReactNode }) {
+  return <div className={styles.foot}>{children}</div>;
+}
+
+/** A small grey line above a panel's list, saying what's in it or who can see it. */
+export function PanelNote({ children }: { children: ReactNode }) {
+  return <p className={styles.note}>{children}</p>;
+}

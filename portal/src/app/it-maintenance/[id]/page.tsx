@@ -7,7 +7,6 @@ import { ConfirmButton } from "@/components/Confirm";
 import { DateField } from "@/components/DateField";
 import { Field } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
-import { Icon } from "@/components/Icon";
 import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -30,6 +29,8 @@ import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam,
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
 import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
+import { Disclosure } from "@/components/Disclosure";
+import { FileList } from "@/components/FileList";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   // ---- The action forms, each usable in the row or under "More" ----------------
   const forms: Record<string, ReactNode> = {
     link: (
-      <form key="link" action={linkTicket} className={`stack ${styles.grow}`}>
+      <form key="link" action={linkTicket} className={`stack grow`}>
         <input type="hidden" name="id" value={card.id} />
         <Field label="Link another ticket" hint="Its number, like TK-1003.">
           <input name="other" maxLength={20} required placeholder="TK-1003" />
@@ -120,7 +121,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     confirm: (
-      <form key="confirm" action={actOnTicket} className={`stack ${styles.grow}`}>
+      <form key="confirm" action={actOnTicket} className={`stack grow`}>
         {base}
         <Field label="If it's not fixed, say what's still wrong" hint={`It closes by itself after 7 days if nobody says otherwise.`}>
           <textarea name="note" rows={2} maxLength={2000} />
@@ -136,7 +137,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     assign: (
-      <div key="assign" className={styles.actionRow}>
+      <div key="assign" className="row bottom">
         {team && t.assigneeEmail !== actor.email && (
           <form action={actOnTicket}>
             {base}
@@ -148,7 +149,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           </form>
         )}
         {members.filter((m) => m !== t.assigneeEmail).length > 0 ? (
-          <form action={actOnTicket} className={styles.actionRow}>
+          <form action={actOnTicket} className="row bottom">
             {base}
             <input type="hidden" name="action" value="assign" />
             <div className={styles.picker}>
@@ -161,7 +162,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
             <Button type="submit">Assign</Button>
           </form>
         ) : (
-          members.length === 0 && <p className="note">Nobody is in the {TEAM_NAME[t.team]} Google Group yet. Ask a portal admin to add the team.</p>
+          members.length === 0 && <p className="hint">Nobody is in the {TEAM_NAME[t.team]} Google Group yet. Ask a portal admin to add the team.</p>
         )}
       </div>
     ),
@@ -175,7 +176,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     resolve: (
-      <form key="resolve" action={actOnTicket} className={`stack ${styles.grow}`}>
+      <form key="resolve" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="resolve" />
         <Field label={preventive ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={preventive ? undefined : "The reporter is asked to check and confirm."}>
@@ -189,7 +190,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     wait: (
-      <form key="wait" action={actOnTicket} className={`stack ${styles.grow}`}>
+      <form key="wait" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="wait" />
         <Field label="Waiting on parts? Say what's on order and when it's due">
@@ -201,7 +202,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     due: (
-      <form key="due" action={actOnTicket} className={`stack ${styles.grow}`}>
+      <form key="due" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="due" />
         <DateField name="due" label={preventive ? "Due date" : "Target date"} defaultValue={t.dueDate ?? null} clearable />
@@ -224,19 +225,15 @@ export default async function TicketDetail({ params, searchParams }: { params: P
 
   const actions =
     primary.length || more.length || cancel ? (
-      <div className={styles.actionsWrap}>
-        {primary.length > 0 && <div className={styles.actionRow}>{primary.map((a) => forms[a])}</div>}
+      <div className="stack">
+        {primary.length > 0 && <div className="row bottom">{primary.map((a) => forms[a])}</div>}
         {(more.length > 0 || cancel) && (
-          <details className={primary.length ? styles.more : styles.moreAlone}>
-            <summary>
-              <Icon name="chevD" size="sm" />
-              More
-            </summary>
-            <div className={styles.moreGrid}>
+          <Disclosure summary="More" divided={primary.length > 0}>
+            <div className="grid">
               {more.map((a) => forms[a])}
               {cancel}
             </div>
-          </details>
+          </Disclosure>
         )}
       </div>
     ) : undefined;
@@ -280,26 +277,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
 
       <Panel title="Photos" right={<span>{t.photos.length}</span>}>
         <div className="stack">
-          {t.photos.length === 0 ? (
-            <p className="note">No photos yet.</p>
-          ) : (
-            <ul className={styles.photos}>
-              {t.photos.map((p, i) => (
-                <li key={`${p.name}-${i}`} className={styles.photo}>
-                  {p.url ? (
-                    <a href={p.url} target="_blank" rel="noreferrer">
-                      {p.name}
-                    </a>
-                  ) : (
-                    <span>{p.name}</span>
-                  )}
-                  <span className={styles.sub}>
-                    {Math.ceil(p.size / 1024)} KB · {nameOf(p.by)} · {fmtDate(p.at)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <FileList files={t.photos.map((p) => ({ ...p, by: nameOf(p.by) }))} empty="No photos yet." />
           {can("photos") && (
             <form action={addTicketPhotos} className="stack">
               <input type="hidden" name="id" value={card.id} />
@@ -360,7 +338,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <form action={watchTicket} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="on" value={isWatching(card, actor.email) ? "0" : "1"} />
-            <p className="note">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
+            <p className="hint">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
             <div>
               <Button type="submit" icon={isWatching(card, actor.email) ? "x" : "bell"}>
                 {isWatching(card, actor.email) ? "Stop following" : "Follow this ticket"}

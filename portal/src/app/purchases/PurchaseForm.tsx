@@ -14,6 +14,7 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
+import { Checkbox, Choice, Choices } from "@/components/Choices";
 
 type Line = LineInput & { key: number };
 
@@ -151,20 +152,16 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
       <FormErrors errors={state.errors} />
 
       <Panel title="What do you need?">
-        <div className={styles.choices} role="radiogroup" aria-label="What do you need?">
+        <Choices legend="What do you need?" legendHidden>
           {(Object.keys(KIND_LABEL) as PurchaseKind[]).map((k) => (
-            <label key={k} className={styles.choice}>
-              <input type="radio" name="kind" value={k} checked={kind === k} disabled={k === "card" && cards.length === 0} onChange={() => chooseKind(k)} />
-              <span>{KIND_LABEL[k]}</span>
-              {k === "card" && cards.length === 0 && <small>For people who hold an IAR card</small>}
-            </label>
+            <Choice key={k} type="radio" name="kind" value={k} checked={kind === k} disabled={k === "card" && cards.length === 0} onChange={() => chooseKind(k)} label={KIND_LABEL[k]} hint={k === "card" && cards.length === 0 ? "For people who hold an IAR card" : undefined} />
           ))}
-        </div>
+        </Choices>
       </Panel>
 
       <Panel title={card ? "Card and statement" : "About the request"}>
         <div className="stack">
-          <div className={styles.grid2}>
+          <div className="grid">
             {card ? (
               <>
                 <Field label="Card">
@@ -219,7 +216,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
       {!card && (
         <Panel title={kind === "reimburse" ? "Paying you back" : "Who gets paid"}>
           <div className="stack">
-            <div className={styles.grid2}>
+            <div className="grid">
               {kind === "pay" ? (
                 <Field
                   label="Payee"
@@ -254,17 +251,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                 </Field>
               )}
             </div>
-            <div className={styles.choices} role="radiogroup" aria-label="How should it be paid?">
+            <Choices legend="How should it be paid?" legendHidden>
               {(["check", "ach"] as PaymentMethod[]).map((m) => (
-                <label key={m} className={styles.choice}>
-                  <input type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required />
-                  <span>{PAYMENT_METHOD_LABEL[m]}</span>
-                </label>
+                <Choice key={m} type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required label={PAYMENT_METHOD_LABEL[m]} />
               ))}
-            </div>
+            </Choices>
             {method === "ach" && <Note>The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</Note>}
             {method === "check" && (
-              <div className={styles.grid2}>
+              <div className="grid">
                 <Field label="Where should the check go?" required>
                   <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
                     <option value="">Choose…</option>
@@ -281,18 +275,12 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
               </div>
             )}
             {kind === "pay" && (
-              <div className={styles.checks}>
-                <label className={styles.check}>
-                  <input type="checkbox" checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)} />
-                  <span>
-                    This payment is for labor or services
-                    {laborLine && <small> (a line is charged to a labor sub-account)</small>}
-                  </span>
-                </label>
-                <label className={styles.check}>
-                  <input type="checkbox" checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)} />
-                  <span>The payee is a Shura or committee member, a relative of one, or a business one owns</span>
-                </label>
+              <div className="stack tight">
+                <Checkbox checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)}>
+                  This payment is for labor or services
+                  {laborLine && <small> (a line is charged to a labor sub-account)</small>}
+                </Checkbox>
+                <Checkbox checked={relatedParty} onChange={(e) => setRelatedParty(e.target.checked)}>The payee is a Shura or committee member, a relative of one, or a business one owns</Checkbox>
               </div>
             )}
             {w9Needed && (
@@ -319,15 +307,12 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
         }
       >
         <div className="stack">
-          <p className={styles.why}>
+          <p className="hint">
             {card
               ? "One line per charge on the statement, each with its sub-account. Mark charges that will be refunded or repaid."
               : "Split the total across as many sub-accounts as it really covers."}
           </p>
-          <label className={styles.check}>
-            <input type="checkbox" checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)} />
-            <span>Show sub-accounts from every fund</span>
-          </label>
+          <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>
           <div className={styles.lines}>
             {lines.map((l, i) => (
               <div key={l.key} className={styles.line}>
@@ -379,10 +364,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                           <input value={l.repayBy} onChange={(e) => setLine(l.key, { repayBy: e.target.value })} maxLength={120} required aria-label={`Repaid by, line ${i + 1}`} />
                         </Field>
                       )}
-                      <label className={styles.check}>
-                        <input type="checkbox" checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })} />
-                        <span>No receipt</span>
-                      </label>
+                      <Checkbox checked={l.hasReceipt === false} onChange={(e) => setLine(l.key, { hasReceipt: !e.target.checked })}>No receipt</Checkbox>
                     </>
                   )}
                 </div>
@@ -421,10 +403,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
 
       <Panel title="Sign">
         <div className="stack">
-          <label className={styles.check}>
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-            <span>I confirm this request is accurate and for IAR business.</span>
-          </label>
+          <Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required>I confirm this request is accurate and for IAR business.</Checkbox>
           <Field label="Type your full name" required className={styles.narrow}>
             <input value={attestationName} onChange={(e) => setAttestationName(e.target.value)} maxLength={120} required autoComplete="name" />
           </Field>

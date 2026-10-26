@@ -11,6 +11,7 @@ import { peopleStore } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { saveNotificationSettings } from "./actions";
 import styles from "./settings.module.css";
+import { Choice, Choices } from "@/components/Choices";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Notification settings" };
@@ -39,28 +40,15 @@ export default async function NotificationSettingsPage({ searchParams }: { searc
           <p className={styles.p}>
             Approvals, questions for you, and requests sent back to you always reach you by a Google Chat message from IAR Portal, or by email if Chat can&apos;t reach you. You can&apos;t turn these off: someone is waiting.
           </p>
-          <label className={styles.check}>
-            <input type="checkbox" name="quiet" defaultChecked={prefs.quiet} />
-            <span>
-              <strong>Quiet overnight</strong>
-              <span className={styles.hint}>Messages that would arrive between 9 PM and 7 AM wait until 7 AM. Team spaces aren&apos;t affected.</span>
-            </span>
-          </label>
+          <Choice type="checkbox" name="quiet" defaultChecked={prefs.quiet} label={<strong>Quiet overnight</strong>} hint="Messages that would arrive between 9 PM and 7 AM wait until 7 AM. Team spaces aren't affected." />
         </Panel>
 
         <Panel title="Updates on your requests">
-          <fieldset className={styles.choices}>
-            <legend className={styles.p}>When one of your requests moves along, or someone comments, and nothing is waiting on you:</legend>
+          <Choices legend="When one of your requests moves along, or someone comments, and nothing is waiting on you:" stacked>
             {FYI_CHOICES.map((c) => (
-              <label key={c.value} className={styles.choice}>
-                <input type="radio" name="fyi" value={c.value} defaultChecked={prefs.fyi === c.value} />
-                <span>
-                  <strong>{c.label}</strong>
-                  <span className={styles.hint}>{c.hint}</span>
-                </span>
-              </label>
+              <Choice key={c.value} type="radio" name="fyi" value={c.value} defaultChecked={prefs.fyi === c.value} label={<strong>{c.label}</strong>} hint={c.hint} />
             ))}
-          </fieldset>
+          </Choices>
         </Panel>
 
         <FormActions>

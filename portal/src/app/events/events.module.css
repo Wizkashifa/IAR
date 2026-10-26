@@ -47,19 +47,8 @@
   .section > legend { float: left; width: 100%; display: flex; align-items: center; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
   .section > legend + * { clear: both; }
   .sectionBody { padding: var(--s-4); display: grid; gap: var(--s-4); }
-  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-4); }
-  @media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
   .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--brand-green); color: var(--cream); font-size: 12px; font-weight: 700; align-items: center; justify-content: center; flex: none; }
-  .hint { font-size: var(--t-sm); color: var(--ink-2); margin: 0; }
-  .hint.good { color: var(--ok); }
-  .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--s-2); }
-  .choice { display: flex; gap: var(--s-2); align-items: center; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); cursor: pointer; font-size: var(--t-md); background: var(--surface); }
-  .choice:has(input:checked) { border-color: var(--gold); background: var(--accent-soft); }
-  .choice input, .agree input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
-  .agree { display: flex; gap: var(--s-3); align-items: flex-start; font-size: var(--t-md); min-height: 32px; }
-  .agree a { font-weight: 700; }
-  .fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-2); min-width: 0; }
-  .fieldset > legend { font-size: var(--t-sm); font-weight: 700; color: var(--ink-2); padding: 0; margin-bottom: var(--s-2); }
+  .good { color: var(--ok); }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .steps a { display: flex; align-items: center; gap: var(--s-2); min-height: 28px; color: var(--ink); text-decoration: none; font-size: var(--t-md); }
   .steps a:hover { color: var(--accent-text); }
@@ -67,24 +56,12 @@
   .ask { border: 1px solid var(--gold); border-radius: var(--r-sm); padding: var(--s-3); background: var(--warn-soft); color: var(--ink); font-size: var(--t-md); display: grid; gap: var(--s-2); }
   .draft { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 
-
   /* The request page */
   .about { white-space: pre-wrap; margin: 0; }
-  .muted { color: var(--ink-2); font-size: var(--t-sm); margin: var(--s-2) 0 0; }
-  .lines { list-style: none; margin: 0; padding: 0; }
-  .line { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); }
-  .line:first-child { border-top: 0; }
-  .line > :first-child { min-width: 0; }
-  .lineSide { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-2); flex: none; max-width: 55%; }
   .lineTitle { font-weight: 700; }
-  .lineSub { font-size: var(--t-sm); color: var(--ink-2); }
-  .foot { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
-  @media (max-width: 640px) { .line { flex-direction: column; } .lineSide { align-items: flex-start; max-width: none; } }
   .history { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
   .history li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--s-2); align-items: start; font-size: var(--t-md); }
   .note { color: var(--ink-2); }
-  .actionForm { display: grid; gap: var(--s-3); width: 100%; }
-  .actionRow { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
   .grow { flex: 1; }
   .closeout { display: grid; gap: var(--s-4); }
 
@@ -96,7 +73,6 @@
   .entry.cal { color: var(--ink-2); }
   .entry.cal .time { color: var(--ink-2); font-weight: 400; }
   .time { font-weight: 700; color: var(--ink); }
-  .flag { display: inline-block; margin-top: var(--s-1); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; background: var(--warn-soft); color: var(--warn); }
   .cells { display: grid; gap: var(--s-1); font-size: var(--t-sm); margin-top: var(--s-1); }
   @media (max-width: 760px) { .entry { grid-template-columns: 1fr; } }
   @media print {

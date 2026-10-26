@@ -17,7 +17,10 @@ import { libraryReader, policiesLibrary } from "@/lib/library";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
 import { RULES, ruleOn } from "@/lib/events/rules";
-import styles from "./admin.module.css";
+import { DataTable, cell } from "@/components/DataTable";
+import { Pill } from "@/components/Pill";
+import { Checkbox } from "@/components/Choices";
+import { Field } from "@/components/Field";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Portal Settings" };
@@ -63,7 +66,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {error && <Note tone="bad">{error}</Note>}
 
       <h2>Committees and teams ({teams.length})</h2>
-      <p className="note">
+      <p className="hint">
         Each is a group named <code>portal-team-…@{ORG.domain}</code>. In the group, the Owner is the chair, a Manager is the vice chair (the backup
         approver), and Members are members. {gaps ? `${gaps} need a chair or a fund.` : "Every team has a chair and a fund."}
       </p>
@@ -72,15 +75,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Team</th>
                 <th>Chair</th>
                 <th>Vice chair</th>
                 <th>Director</th>
-                <th className="num">People</th>
+                <th className={cell.num}>People</th>
                 <th>Fund</th>
               </tr>
             </thead>
@@ -94,13 +96,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <tr key={t.email}>
                     <td data-label="Team">
                       <strong>{t.name}</strong>
-                      <div className="sub">{t.email}</div>
-                      {queue && <div className="sub">Also gives: {queue}</div>}
+                      <div className="hint">{t.email}</div>
+                      {queue && <div className="hint">Also gives: {queue}</div>}
                     </td>
-                    <td data-label="Chair">{p.chairs.length ? p.chairs.join(", ") : <span className="pill changes_requested">No chair</span>}</td>
-                    <td data-label="Vice chair">{p.vices.join(", ") || <span className="sub">None</span>}</td>
-                    <td data-label="Director">{p.directors.join(", ") || <span className="sub">None</span>}</td>
-                    <td data-label="People" className="num">{p.memberCount}</td>
+                    <td data-label="Chair">{p.chairs.length ? p.chairs.join(", ") : <Pill tone="warn">No chair</Pill>}</td>
+                    <td data-label="Vice chair">{p.vices.join(", ") || <span className="hint">None</span>}</td>
+                    <td data-label="Director">{p.directors.join(", ") || <span className="hint">None</span>}</td>
+                    <td data-label="People" className={cell.num}>{p.memberCount}</td>
                     <td data-label="Fund">
                       <form action={saveTeamFund} className="row">
                         <input type="hidden" name="group" value={t.email} />
@@ -112,20 +114,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                             </option>
                           ))}
                         </select>
-                        <button className="button secondary" type="submit">Save</button>
+                        <Button type="submit">Save</Button>
                       </form>
-                      <div className="sub">{saved ? "Saved" : suggested ? "Using the suggestion" : <span className="pill changes_requested">Needs a fund</span>}</div>
+                      <div className="hint">{saved ? "Saved" : suggested ? "Using the suggestion" : <Pill tone="warn">Needs a fund</Pill>}</div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Directors</h2>
-      <p className="note">
+      <p className="hint">
         Each pillar is a group named <code>portal-pillar-…@{ORG.domain}</code>. Its Owner is the director, and its members are the team groups they
         oversee. A director sees those committees&apos; requests and can approve them alongside the chair, except Social &amp; Welfare.
       </p>
@@ -134,8 +135,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No portal-pillar groups found yet.</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Pillar</th>
@@ -148,21 +148,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <tr key={p.group}>
                   <td data-label="Pillar">
                     <strong>{p.name}</strong>
-                    <div className="sub">{p.group}</div>
+                    <div className="hint">{p.group}</div>
                   </td>
-                  <td data-label="Director">{p.directors.join(", ") || <span className="pill changes_requested">No director</span>}</td>
+                  <td data-label="Director">{p.directors.join(", ") || <Pill tone="warn">No director</Pill>}</td>
                   <td data-label="Committees">{p.teams.map(nameOf).join(", ")}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Role groups</h2>
-      <p className="note">Portal-wide jobs. Add people as members in Google Admin.</p>
-      <div className="tablewrap">
-        <table className="table">
+      <p className="hint">Portal-wide jobs. Add people as members in Google Admin.</p>
+      <DataTable framed>
           <tbody>
             {Object.entries(ORG.roleGroups).map(([role, group]) => (
               <tr key={role}>
@@ -177,11 +175,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               </tr>
             )}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
 
       <h2>Rooms ({rooms.filter((r) => r.bookable).length} of {rooms.length} bookable)</h2>
-      <p className="note">
+      <p className="hint">
         Rooms come from Google (Admin console → Buildings and resources), each with its own calendar. Add or rename rooms there. Here you choose which ones
         can be booked through the portal and set what Google doesn&apos;t know: food, rooms that share a space (the full gym and its halves), and who may book.
       </p>
@@ -190,8 +187,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon="info">No room resources found in Google yet.</EmptyState>
         </Panel>
       ) : (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Room</th>
@@ -203,54 +199,47 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <tr key={r.id}>
                   <td data-label="Room">
                     <strong>{r.name}</strong>
-                    <div className="sub">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
-                    <div className="sub">{r.calendarId}</div>
+                    <div className="hint">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
+                    <div className="hint">{r.calendarId}</div>
                   </td>
                   <td data-label="Settings">
                     <form action={saveRoom} className="stack">
                       <input type="hidden" name="room" value={r.id} />
                       <div className="row">
-                        <label className="inline"><input type="checkbox" name="bookable" defaultChecked={r.bookable} /> Bookable in the portal</label>
-                        <label className="inline"><input type="checkbox" name="food" defaultChecked={r.food} /> Food allowed</label>
-                        <label className="inline"><input type="checkbox" name="mph" defaultChecked={r.mph} /> Part of the MPH (cleaning gap)</label>
-                        <label className="inline"><input type="checkbox" name="restricted" defaultChecked={r.restricted} /> Leadership, imams and chairs only</label>
+                        <Checkbox name="bookable" defaultChecked={r.bookable}>Bookable in the portal</Checkbox>
+                        <Checkbox name="food" defaultChecked={r.food}>Food allowed</Checkbox>
+                        <Checkbox name="mph" defaultChecked={r.mph}>Part of the MPH (cleaning gap)</Checkbox>
+                        <Checkbox name="restricted" defaultChecked={r.restricted}>Leadership, imams and chairs only</Checkbox>
                       </div>
-                      <label className="field">
-                        <span>Shares space with (booking one blocks the other)</span>
+                      <Field label="Shares space with (booking one blocks the other)">
                         <select name="overlaps" multiple defaultValue={r.overlaps} size={Math.min(4, rooms.length - 1)}>
                           {rooms.filter((x) => x.id !== r.id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                         </select>
-                      </label>
-                      <label className="field">
-                        <span>Note shown on the form (optional)</span>
+        </Field>
+                      <Field label="Note shown on the form (optional)">
                         <input name="note" defaultValue={r.note} maxLength={200} placeholder="$100/hour minimum food and drink purchase" />
-                      </label>
-                      <div><button className="button secondary" type="submit">Save</button></div>
+        </Field>
+                      <div><Button type="submit">Save</Button></div>
                     </form>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
 
       <h2>Event rules</h2>
-      <p className="note">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
-      <form action={saveEventRules} className="panel stack">
+      <p className="hint">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
+      <Panel>
+        <form action={saveEventRules} className="stack">
         {RULES.map((rule) => (
-          <label key={rule.id} className="inline">
-            <input type="checkbox" name={rule.id} defaultChecked={ruleOn(settings.eventRules ?? {}, rule.id)} /> {rule.name} <span className="sub">· {rule.policy}</span>
-          </label>
+          <Checkbox key={rule.id} name={rule.id} defaultChecked={ruleOn(settings.eventRules ?? {}, rule.id)}>{rule.name} <span className="hint">· {rule.policy}</span></Checkbox>
         ))}
-        <label className="field">
-          <span>Link to the room reservation policy (optional)</span>
+        <Field label="Link to the room reservation policy (optional)" hint={<>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</>}>
           <input type="url" name="roomPolicyUrl" defaultValue={settings.roomPolicyUrl ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
-          <small>The event form links to it next to “I&apos;ve read the room reservation policy”. Share the file with everyone at IAR.</small>
-        </label>
+        </Field>
         {policyFiles.length > 0 && (
-          <label className="field">
-            <span>Or pick it from the Library</span>
+          <Field label="Or pick it from the Library">
             <select name="roomPolicyFile" defaultValue={policyFiles.find((f) => f.url === settings.roomPolicyUrl)?.url ?? ""}>
               <option value="">Use the link above</option>
               {policyFiles.map((f) => (
@@ -259,49 +248,47 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </option>
               ))}
             </select>
-          </label>
+        </Field>
         )}
-        <div><button className="button secondary" type="submit">Save rules</button></div>
+        <div><Button type="submit">Save rules</Button></div>
       </form>
+      </Panel>
 
       <h2>Marketing files</h2>
-      <p className="note">Files people add to marketing requests (logos, photos, wording) go to this Shared Drive folder, one folder per year and per request. Until it&apos;s set, people share Google Drive links instead.</p>
-      <form action={saveMarketingSettings} className="panel stack">
-        <label className="field">
-          <span>Marketing Shared Drive folder</span>
+      <p className="hint">Files people add to marketing requests (logos, photos, wording) go to this Shared Drive folder, one folder per year and per request. Until it&apos;s set, people share Google Drive links instead.</p>
+      <Panel>
+        <form action={saveMarketingSettings} className="stack">
+        <Field label="Marketing Shared Drive folder" hint={<>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</>}>
           <input name="marketingDriveFolder" defaultValue={settings.marketingDriveFolder ? `https://drive.google.com/drive/folders/${settings.marketingDriveFolder}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={500} />
-          <small>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</small>
-        </label>
-        <div><button className="button secondary" type="submit">Save folder</button></div>
+        </Field>
+        <div><Button type="submit">Save folder</Button></div>
       </form>
+      </Panel>
 
       <h2 id="library">Library: the Policies drive</h2>
-      <p className="note">
+      <p className="hint">
         The Library lists IAR&apos;s Policies Shared Drive for everyone at IAR, read-only; files open in Google Drive. To connect it, add{" "}
         {reader ? <code>{reader}</code> : "the portal's service account"} to the drive as a <strong>Viewer</strong> (Drive → the drive&apos;s name → Manage members), then paste the drive&apos;s address here.
       </p>
-      <form action={savePoliciesDrive} className="panel stack">
-        <label className="field">
-          <span>Policies drive (its address from the browser, or its ID)</span>
-          <input name="policiesDrive" defaultValue={settings.policiesDrive ? `https://drive.google.com/drive/folders/${settings.policiesDrive}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={300} />
-          <small>
-            {library.state === "ok"
+      <Panel>
+        <form action={savePoliciesDrive} className="stack">
+        <Field label="Policies drive (its address from the browser, or its ID)" hint={<>{library.state === "ok"
               ? `Connected: ${library.library.files.length} files in ${library.library.folders.length} folders.`
               : library.state === "error"
                 ? "Set, but the portal can't read it. Check the service account is a Viewer on the drive."
-                : "Not connected. Leave empty to keep the Library off."}
-          </small>
-        </label>
-        <div><button className="button secondary" type="submit">Save</button></div>
+                : "Not connected. Leave empty to keep the Library off."}</>}>
+          <input name="policiesDrive" defaultValue={settings.policiesDrive ? `https://drive.google.com/drive/folders/${settings.policiesDrive}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={300} />
+        </Field>
+        <div><Button type="submit">Save</Button></div>
       </form>
+      </Panel>
 
       <h2>Google Chat spaces</h2>
-      <p className="note">Alerts for a role or team are posted in its Chat space. go-live creates the spaces and fills these in.</p>
-      <div className="tablewrap">
-        <table className="table">
+      <p className="hint">Alerts for a role or team are posted in its Chat space. go-live creates the spaces and fills these in.</p>
+      <DataTable framed>
           <tbody>
             {Object.entries(settings.chatSpaces ?? {}).length === 0 ? (
-              <tr><td className="sub">No Chat spaces yet. Until go-live sets them up, role alerts go to the role&apos;s group by email.</td></tr>
+              <tr><td className="hint">No Chat spaces yet. Until go-live sets them up, role alerts go to the role&apos;s group by email.</td></tr>
             ) : (
               Object.entries(settings.chatSpaces ?? {}).map(([role, space]) => (
                 <tr key={role}>
@@ -311,14 +298,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               ))
             )}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
 
       <h2>IAR cards</h2>
-      <p className="note">Only the last four digits are stored. The cardholder can submit receipts for the card each month.</p>
+      <p className="hint">Only the last four digits are stored. The cardholder can submit receipts for the card each month.</p>
       {settings.cards.length > 0 && (
-        <div className="tablewrap">
-          <table className="table">
+        <DataTable framed>
             <thead>
               <tr>
                 <th>Card</th>
@@ -331,35 +316,31 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               {settings.cards.map((c) => (
                 <tr key={c.last4}>
                   <td data-label="Card">···{c.last4}</td>
-                  <td data-label="Cardholder">{c.holderName}<div className="sub">{c.holderEmail}</div></td>
+                  <td data-label="Cardholder">{c.holderName}<div className="hint">{c.holderEmail}</div></td>
                   <td data-label="Fund">{shortFund(c.fund)}</td>
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />
-                      <button className="button secondary" type="submit">Remove</button>
+                      <Button type="submit">Remove</Button>
                     </form>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       )}
-      <form action={addCard} className={`panel grid2 ${styles.addcard}`}>
-        <label className="field">
-          <span>Last four digits</span>
+      <Panel title="Add a card">
+      <form action={addCard} className="grid">
+        <Field label="Last four digits">
           <input name="last4" inputMode="numeric" maxLength={4} pattern="\d{4}" required />
-        </label>
-        <label className="field">
-          <span>Cardholder&apos;s name</span>
+        </Field>
+        <Field label={<>Cardholder&apos;s name</>}>
           <input name="holderName" required />
-        </label>
-        <label className="field">
-          <span>Cardholder&apos;s email</span>
+        </Field>
+        <Field label={<>Cardholder&apos;s email</>}>
           <input name="holderEmail" type="email" placeholder={`name@${ORG.domain}`} required />
-        </label>
-        <label className="field">
-          <span>Fund</span>
+        </Field>
+        <Field label="Fund">
           <select name="fund" required defaultValue="">
             <option value="">Choose…</option>
             {FUNDS.map((f) => (
@@ -368,12 +349,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               </option>
             ))}
           </select>
-        </label>
+        </Field>
         <div>
-          <button className="button" type="submit">Add card</button>
+          <Button type="submit" variant="primary">Add card</Button>
         </div>
       </form>
-      {settings.updatedAt && <p className="note">Last changed {fmtDateTime(settings.updatedAt)} by {settings.updatedBy}.</p>}
+      </Panel>
+      {settings.updatedAt && <p className="hint">Last changed {fmtDateTime(settings.updatedAt)} by {settings.updatedBy}.</p>}
     </>
   );
 }

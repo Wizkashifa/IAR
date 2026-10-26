@@ -1,0 +1,13 @@
+@layer components {
+  .d > summary { list-style: none; cursor: pointer; width: fit-content; }
+  .d > summary::-webkit-details-marker { display: none; }
+  .link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--accent-text); font-weight: 600; font-size: var(--t-md); }
+  .link:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r-sm); }
+  .chev { color: var(--ink-3); transition: transform var(--speed); }
+  .d[open] > summary .chev { transform: rotate(90deg); }
+  .body { margin-top: var(--s-2); }
+  .divided { align-self: stretch; width: 100%; border-top: 1px solid var(--line); padding-top: var(--s-3); }
+  /* A summary that looks like a button opens across the whole row. */
+  .asButton[open] { flex-basis: 100%; }
+  .asButton .body { min-width: 240px; text-align: left; }
+}
