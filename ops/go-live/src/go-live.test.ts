@@ -10,6 +10,7 @@ import { DELEGATION, SETTINGS_DOC, SPACES, scopeCount } from "./config";
 import { dnsEmail } from "./email";
 import { fieldPath, fromFields, toFields } from "./firestore-values";
 import { FakeGoogle } from "./google-fake";
+import { GcloudError, absent } from "./google-real";
 import { DEFAULTS, goLive } from "./go-live";
 import { LAUNCH_TEAMS } from "./launch";
 import { TAB, templateTabs } from "./sheet";
@@ -291,6 +292,14 @@ test("testers are added only in the last step, and only after their own yes", as
   const later = await run(fake, structuredClone(r.ctx.state), { apply: true, only: "beta" });
   assert.equal(later.stopped, undefined, later.out);
   assert.deepEqual(fake.members.get("portal-role-beta@x.org")?.map((m) => m.email), ["tester1@x.org", "tester2@x.org"]);
+});
+
+test("on a new project, a lookup through an API that isn't on yet means nothing exists yet", () => {
+  const off = new GcloudError(["firestore", "databases", "describe"], "ERROR: (gcloud.firestore.databases.describe) PERMISSION_DENIED: Cloud Firestore API has not been used in project iar-portal before or it is disabled.\n  reason: SERVICE_DISABLED");
+  assert.equal(absent(off), true);
+  assert.equal(absent(new GcloudError(["run"], "NOT_FOUND: Resource 'x' was not found")), true);
+  assert.equal(absent(new GcloudError(["run"], "PERMISSION_DENIED: Permission 'run.services.get' denied")), false);
+  assert.equal(absent(new Error("SERVICE_DISABLED")), false);
 });
 
 test("Gmail is only ever a draft", async () => {

@@ -19,12 +19,12 @@ Open http://localhost:3000. `npm run dev` turns on dev mode: there is no Google 
 ### 1. Google Cloud project
 
 1. In the Google Cloud console, create a project under the **islam1.org** organization, for example `iar-portal`, and attach billing.
-2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM Service Account Credentials, Admin SDK, Drive (receipts, W-9s, maintenance photos), Gmail (fallback emails), Calendar (room bookings), Chat (alerts), Cloud Scheduler (the daily job), Cloud Storage (backups) and Monitoring (uptime alert). go-live also uses Groups Settings, Sheets, Licensing, Billing Budgets and the Marketplace SDK.
+2. Enable these APIs: Cloud Run, Cloud Build, Artifact Registry, Firestore, Secret Manager, IAM, IAM Service Account Credentials, Admin SDK, Drive (receipts, W-9s, maintenance photos), Gmail (fallback emails), Calendar (room bookings), Chat (alerts), Cloud Scheduler (the daily job), Cloud Storage (backups) and Monitoring (uptime alert). go-live also uses Groups Settings, Sheets, Licensing, Billing Budgets and the Marketplace SDK.
 
 ```
 gcloud config set project iar-portal
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  firestore.googleapis.com secretmanager.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
+  firestore.googleapis.com secretmanager.googleapis.com iam.googleapis.com iamcredentials.googleapis.com admin.googleapis.com \
   drive.googleapis.com gmail.googleapis.com calendar-json.googleapis.com chat.googleapis.com \
   cloudscheduler.googleapis.com storage.googleapis.com monitoring.googleapis.com
 ```

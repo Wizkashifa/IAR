@@ -86,11 +86,13 @@ function gcloud(args: string[], input?: string): Promise<string> {
 }
 const gjson = async <T>(args: string[]): Promise<T> => JSON.parse((await gcloud([...args, "--format=json"])) || "null") as T;
 const gone = (e: unknown) => e instanceof GcloudError && /NOT_FOUND|not found|does not exist|404/i.test(e.stderr);
+/** Not there, or its API isn't on yet (a new project): either way, nothing exists to find. */
+export const absent = (e: unknown) => gone(e) || (e instanceof GcloudError && /SERVICE_DISABLED|has not been used in project|it is disabled/i.test(e.stderr));
 const orNull = async <T>(p: Promise<T>) => {
   try {
     return await p;
   } catch (e) {
-    if (gone(e)) return null;
+    if (absent(e)) return null;
     throw e;
   }
 };
