@@ -6,6 +6,7 @@
  */
 import type { Card } from "./cards";
 import { hrefOf } from "./kinds";
+import { eventFlags } from "./events/rules";
 import { MARKETING_TYPES } from "./marketing/forms";
 import { fallbackName, type NameOf } from "./steps";
 import { isFinished, needsViewer, type NeedsContext, type NeedsViewer } from "./needs-you";
@@ -32,6 +33,8 @@ export type RowData = {
   who?: string;
   status: string;
   state: RowState;
+  /** Things to notice, as pills under the title (an event's food, outside speaker, new program, fundraiser). */
+  flags?: string[];
 };
 
 export type RowOptions = {
@@ -107,5 +110,6 @@ export function cardRow(card: Card, viewer: NeedsViewer, status: string, o: RowO
     who: isFinished(card) ? undefined : whoText(card, viewer, o.names),
     status,
     state: rowState(card, viewer, o),
+    ...(card.event && eventFlags(card.event).length ? { flags: eventFlags(card.event) } : {}),
   };
 }

@@ -29,6 +29,7 @@
   .s { color: var(--ink-2); font-size: var(--t-sm); overflow-wrap: anywhere; }
   .s strong { color: var(--ink-2); font-weight: 600; }
   .extra { color: var(--ink-3); font-size: var(--t-sm); overflow-wrap: anywhere; margin-top: 2px; }
+  .flags { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-1); }
   .r { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
   .chev { color: var(--ink-3); opacity: 0; transition: opacity 0.12s, transform 0.12s; }
   .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(2px); }

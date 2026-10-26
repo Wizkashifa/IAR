@@ -319,7 +319,7 @@ test("purchase link: your own approved events and your committees' upcoming ones
   assert.deepEqual(choices.map((c) => c.id).sort(), [mine.id, mineDone.id, committee.id].sort());
   assert.ok(choices.find((c) => c.id === mineDone.id)!.label.includes("closing out"));
 
-  const input = (eventCardId?: string): PurchaseInput => ({ kind: "reimburse", fund: "Youth Expenses", description: "Game night snacks", delivery: "ach", lines: [{ accountId: "a38", amount: "25" }], attestationName: "Youth Chair", eventCardId });
+  const input = (eventCardId?: string): PurchaseInput => ({ kind: "reimburse", fund: "Youth Expenses", description: "Game night snacks", delivery: "mail", mailingAddress: "1 Main St, Raleigh NC 27601", lines: [{ accountId: "a38", amount: "25" }], attestationName: "Youth Chair", eventCardId });
   const ctx = { requesterName: "Youth Chair", cards: [], vendors: [], events: [mine.id] };
   const ok = parsePurchaseInput(input(mine.id), ctx);
   assert.ok(ok.ok && ok.details.eventCardId === mine.id);

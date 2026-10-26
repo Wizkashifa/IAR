@@ -1,18 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { ItemRow } from "@/components/ItemRow";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import { Pill } from "@/components/Pill";
-import { FEEDBACK_KIND_LABEL, feedbackStore } from "@/lib/feedback";
+import { FEEDBACK_KIND_LABEL, type Feedback, feedbackStore } from "@/lib/feedback";
 import { internalPath } from "@/lib/links";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "@/lib/format";
 import { FeedbackForm } from "./FeedbackForm";
-import { setFeedbackStatus } from "./actions";
 import styles from "./feedback.module.css";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +20,8 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
   const page = internalPath(from) ?? "/";
   const viewer = await requireViewer();
   const admin = viewer.roles.includes("admins");
-  const items = admin ? await (await feedbackStore()).list(200) : [];
+  const store = await feedbackStore();
+  const [items, mine] = admin ? [await store.list(200), []] : [[], await store.listBy(viewer.email, 50)];
   const open = items.filter((f) => f.status === "new");
 
   return (
@@ -39,40 +37,39 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
         </Panel>
       )}
 
-      {admin && (
+      {admin ? (
         <Panel title="Feedback received" right={<span>{open.length} open</span>} flush>
-          {items.length === 0 ? (
-            <EmptyState icon="message">Nothing yet.</EmptyState>
-          ) : (
-            <ul className={styles.list}>
-              {items.map((f) => (
-                <ItemRow
-                  key={f.id}
-                  title={<span className={styles.message}>{f.message}</span>}
-                  sub={
-                    <>
-                      {FEEDBACK_KIND_LABEL[f.kind]} · {f.name} · on {internalPath(f.page) ? <Link href={f.page}>{f.page}</Link> : f.page} · {fmtDateTime(f.at)}
-                    </>
-                  }
-                  state={f.status === "done" ? "done" : f.kind === "problem" ? "bad" : "act"}
-                  right={
-                    <form action={setFeedbackStatus} className={styles.status}>
-                      <input type="hidden" name="id" value={f.id} />
-                      <input type="hidden" name="status" value={f.status === "new" ? "done" : "new"} />
-                      <Pill tone={f.status === "done" ? "ok" : "warn"} dot>
-                        {f.status === "done" ? "Done" : "Open"}
-                      </Pill>
-                      <Button type="submit" size="small" variant="quiet">
-                        {f.status === "new" ? "Mark done" : "Reopen"}
-                      </Button>
-                    </form>
-                  }
-                />
-              ))}
-            </ul>
-          )}
+          <FeedbackRows items={items} who empty="Nothing yet." />
         </Panel>
+      ) : (
+        mine.length > 0 && (
+          <Panel title="Your feedback" right={<span>{mine.length}</span>} flush>
+            <FeedbackRows items={mine} empty="Nothing yet." />
+          </Panel>
+        )
       )}
     </div>
+  );
+}
+
+/** Feedback as rows: each opens its own page, with the replies. `who` adds who sent it (for the admins' list). */
+function FeedbackRows({ items, who, empty }: { items: Feedback[]; who?: boolean; empty: string }) {
+  if (items.length === 0) return <EmptyState icon="message">{empty}</EmptyState>;
+  return (
+    <Rows>
+      {items.map((f) => {
+        const replies = f.replies?.length ?? 0;
+        return (
+          <ItemRow
+            key={f.id}
+            href={`/feedback/${encodeURIComponent(f.id)}`}
+            title={<span className={styles.message}>{f.message}</span>}
+            sub={[FEEDBACK_KIND_LABEL[f.kind], who && f.name, `on ${f.page}`, fmtDateTime(f.at), replies > 0 && `${replies} repl${replies === 1 ? "y" : "ies"}`].filter(Boolean).join(" · ")}
+            status={f.status === "done" ? "Done" : "Open"}
+            state={f.status === "done" ? "done" : f.kind === "problem" ? "bad" : "act"}
+          />
+        );
+      })}
+    </Rows>
   );
 }
