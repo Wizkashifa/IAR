@@ -357,7 +357,8 @@ export class RealGoogle implements Google {
     return data.files?.[0]?.id ?? null;
   }
   async createFolder(driveId: string, name: string) {
-    const { data } = await this.drv().files.create({ supportsAllDrives: true, fields: "id", requestBody: { name, mimeType: "application/vnd.google-apps.folder", parents: [driveId] } });
+    // A Shared Drive just made can answer "not found" for a few seconds.
+    const { data } = await retry(() => this.drv().files.create({ supportsAllDrives: true, fields: "id", requestBody: { name, mimeType: "application/vnd.google-apps.folder", parents: [driveId] } }), notFound);
     return data.id!;
   }
   async createSpreadsheet(title: string, tabs: Tab[]) {
