@@ -125,7 +125,7 @@ export const console_ = {
   roles: "https://admin.google.com/ac/roles",
   resources: "https://admin.google.com/ac/calendarresources",
   subscriptions: "https://admin.google.com/ac/billing/subscriptions",
-  marketplaceApps: "https://admin.google.com/ac/apps/gmail/marketplace",
+  marketplace: "https://workspace.google.com/marketplace",
   consent: (p: string) => `https://console.cloud.google.com/apis/credentials/consent?project=${p}`,
   credentials: (p: string) => `https://console.cloud.google.com/apis/credentials?project=${p}`,
   client: (p: string, id: string) => `https://console.cloud.google.com/apis/credentials/oauthclient/${id}?project=${p}`,
