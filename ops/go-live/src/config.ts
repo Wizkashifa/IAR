@@ -33,6 +33,8 @@ export const CLOUD_APIS = [
   "iam.googleapis.com", "iamcredentials.googleapis.com", "admin.googleapis.com", "drive.googleapis.com", "gmail.googleapis.com", "calendar-json.googleapis.com",
   "chat.googleapis.com", "cloudscheduler.googleapis.com", "monitoring.googleapis.com", "groupssettings.googleapis.com", "sheets.googleapis.com",
   "billingbudgets.googleapis.com", "licensing.googleapis.com", "appsmarket-component.googleapis.com", "storage.googleapis.com",
+  // Address suggestions on purchase requests (Google Maps), called as the portal's own service account.
+  "places.googleapis.com",
 ];
 
 const S = "https://www.googleapis.com/auth/";

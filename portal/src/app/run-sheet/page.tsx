@@ -104,7 +104,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div>
                     <div className={styles.program}>{r.title}</div>
-                    <div className="hint">{r.rooms.join(", ")} · {r.entry === "standing" ? "Standing hold (room policy)" : "Calendar entry"}</div>
+                    <div className="hint">{r.rooms.join(", ")} · Calendar entry</div>
                   </div>
                   <div className="hint">On the IAR calendar, not booked through the portal.</div>
                 </li>

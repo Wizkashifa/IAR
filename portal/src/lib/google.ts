@@ -48,3 +48,15 @@ export async function delegatedToken(subject: string, scope: string): Promise<st
   cache.set(key, { token: body.access_token, expires: Date.now() + body.expires_in * 1000 });
   return body.access_token;
 }
+
+/**
+ * The service account's own token (no impersonation), for Google Cloud APIs
+ * billed to the portal's project, like address suggestions. Also the project,
+ * which those APIs want named on each call.
+ */
+export async function ownToken(): Promise<{ token: string; project: string }> {
+  const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] });
+  const [token, project] = await Promise.all([auth.getAccessToken(), auth.getProjectId()]);
+  if (!token) throw new Error("No access token for the portal's service account.");
+  return { token, project };
+}

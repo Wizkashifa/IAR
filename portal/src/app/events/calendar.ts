@@ -16,7 +16,7 @@ export function roomDay(agenda: AgendaItem[], rooms: Room[], room: Room, date: s
       start: a.holdStart ?? a.start,
       end: a.holdEnd ?? a.end,
       label: a.title,
-      kind: a.source === "standing" ? "standing" : a.pending ? "pending" : "booking",
+      kind: a.pending ? "pending" : "booking",
     }));
 }
 
@@ -25,7 +25,7 @@ export function busiestRoom(agenda: AgendaItem[], rooms: Room[], bookable: Room[
   let best: Room | undefined;
   let most = 0;
   for (const r of bookable) {
-    const n = roomDay(agenda, rooms, r, date).filter((x) => x.kind !== "standing").length;
+    const n = roomDay(agenda, rooms, r, date).length;
     if (n > most) {
       most = n;
       best = r;

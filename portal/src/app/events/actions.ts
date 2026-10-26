@@ -28,7 +28,8 @@ import type { FormState } from "@/components/FormErrors";
 /** A clash, as the form shows it: whether its holder can be asked, and if not, why. */
 export type ClashView = { key: string; label: string; roomName: string; start: string; end: string; dates: string[]; kind: Clash["kind"]; askable: boolean; why?: string };
 export type TimelineView = { roomName: string; date: string; items: { start: string; end: string; label: string; kind: string }[]; request?: { start: string; end: string } };
-export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timeline: TimelineView | null };
+/** `timelines`: the day on each room asked for, in the order picked. */
+export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timelines: TimelineView[] };
 
 const nowIso = () => new Date().toISOString();
 
@@ -46,7 +47,6 @@ async function gaveToKey(askId: string): Promise<string | undefined> {
 
 /** Whether this person can ask the clash's holder for the time, and if not, why. */
 async function askability(c: Clash, viewer: Viewer): Promise<{ askable: boolean; why?: string }> {
-  if (c.kind === "standing") return { askable: false, why: "A standing hold under the room policy. It can't be given up." };
   const store = await cardStore();
   if (c.cardId) {
     const holder = await store.get(c.cardId);
@@ -67,30 +67,31 @@ export async function checkDraft(raw: EventFormInput & { editing?: string }): Pr
   const viewer = await requireViewer();
   const ctx = await eventContext();
   const input = draftInput(raw, { committees: committeesFor(viewer, ctx.dir), roomIds: ctx.bookable.map((r) => r.id) });
-  if (!input) return { checks: [], clashes: [], timeline: null };
+  if (!input) return { checks: [], clashes: [], timelines: [] };
   const editing = raw.editing ? await (await cardStore()).get(String(raw.editing)) : null;
   const r = await checksFor(ctx, viewer, input, wf.isEventCard(editing) ? editing : undefined);
   const clashes: ClashView[] = await Promise.all(
     r.clashes.map(async (c) => ({ key: c.key, label: c.label, roomName: roomById(ctx.rooms, c.roomId)?.name ?? "", start: c.start, end: c.end, dates: c.dates, kind: c.kind, ...(await askability(c, viewer)) })),
   );
-  const first = input.rooms.map((id) => roomById(ctx.rooms, id)).find(Boolean);
-  let timeline: TimelineView | null = null;
-  if (first) {
-    const day = input.date;
+  const day = input.date;
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+  const fm = (m: number) => `${String(Math.floor(Math.max(0, m) / 60)).padStart(2, "0")}:${String(Math.max(0, m) % 60).padStart(2, "0")}`;
+  const request = { start: fm(toMin(input.start) - input.setup), end: fm(toMin(input.end) + input.teardown) };
+  const timelines: TimelineView[] = input.rooms.flatMap((id) => {
+    const room = roomById(ctx.rooms, id);
+    if (!room) return [];
     const seen = new Set<string>();
     const items = r.busy
       .filter((b) => b.date === day && (!wf.isEventCard(editing) || b.cardId !== editing.id))
-      .filter((b) => roomById(ctx.rooms, b.roomId) && (b.roomId === first.id || first.overlaps.includes(b.roomId) || roomById(ctx.rooms, b.roomId)!.overlaps.includes(first.id)))
+      .filter((b) => roomById(ctx.rooms, b.roomId) && (b.roomId === room.id || room.overlaps.includes(b.roomId) || roomById(ctx.rooms, b.roomId)!.overlaps.includes(room.id)))
       .filter((b) => {
         const k = `${b.label}|${b.start}|${b.end}`;
         return !seen.has(k) && Boolean(seen.add(k));
       })
       .map((b) => ({ start: b.start, end: b.end, label: b.label, kind: b.kind }));
-    const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
-    const fm = (m: number) => `${String(Math.floor(Math.max(0, m) / 60)).padStart(2, "0")}:${String(Math.max(0, m) % 60).padStart(2, "0")}`;
-    timeline = { roomName: first.name, date: day, items, request: { start: fm(toMin(input.start) - input.setup), end: fm(toMin(input.end) + input.teardown) } };
-  }
-  return { checks: r.checks, clashes, timeline };
+    return [{ roomName: room.name, date: day, items, request }];
+  });
+  return { checks: r.checks, clashes, timelines };
 }
 
 /** The Hold an ask is about, from the clash and its holder. */

@@ -21,7 +21,7 @@ import { Chips } from "@/components/Chips";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Calendar" };
 
-type Query = { view?: string; date?: string; room?: string; committee?: string; standing?: string };
+type Query = { view?: string; date?: string; room?: string; committee?: string };
 
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_MORE = 3;
@@ -33,8 +33,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const view: CalendarView = q.view === "month" ? "month" : "week";
   const date = isDate(q.date) ? q.date : ctx.today;
   const { from, to } = viewRange(view, date);
-  const [agenda, mine] = await Promise.all([agendaBetween(from, to, { standing: true }), (await cardStore()).listByOwner(viewer.email)]);
-  const shown = filterAgenda(agenda, ctx.rooms, { roomId: q.room, committee: q.committee, standing: q.standing === "1" });
+  const [agenda, mine] = await Promise.all([agendaBetween(from, to), (await cardStore()).listByOwner(viewer.email)]);
+  const shown = filterAgenda(agenda, ctx.rooms, { roomId: q.room, committee: q.committee });
   const days = byDay(shown);
   const filtered = Boolean(q.room || q.committee);
   // Approved events are open to everyone; a request still in review only to its requester here.
@@ -43,7 +43,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   const link = (o: Partial<Query>) => {
     const p = new URLSearchParams();
-    const merged = { view, date, room: q.room, committee: q.committee, standing: q.standing, ...o };
+    const merged = { view, date, room: q.room, committee: q.committee, ...o };
     for (const [k, v] of Object.entries(merged)) if (v && !(k === "view" && v === "week")) p.set(k, v);
     return `/calendar?${p}`;
   };
@@ -78,7 +78,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
           <Suspense fallback={null}>
-            <Filters key={`${q.room ?? ""}|${q.committee ?? ""}|${q.standing ?? ""}`} rooms={ctx.bookable.map((r) => ({ id: r.id, name: r.name }))} committees={committeesIn(agenda)} />
+            <Filters key={`${q.room ?? ""}|${q.committee ?? ""}`} rooms={ctx.bookable.map((r) => ({ id: r.id, name: r.name }))} committees={committeesIn(agenda)} />
           </Suspense>
         </div>
       </Panel>
@@ -96,16 +96,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         <span className={styles.keyItem}>
           <i className={styles.dotPending} /> Requested, waiting for approval
         </span>
-        <span className={styles.keyItem}>
-          <i className={styles.dotStanding} /> Prayers, school and other standing holds
-        </span>
       </p>
     </div>
   );
 }
 
 function Entry({ a, href, compact }: { a: AgendaItem; href?: string; compact?: boolean }) {
-  const kind = a.source === "standing" ? styles.standing : a.pending ? styles.pending : styles.booked;
+  const kind = a.pending ? styles.pending : styles.booked;
   const body = (
     <>
       <span className={styles.time}>{rangeText(a.start, a.end)}</span>

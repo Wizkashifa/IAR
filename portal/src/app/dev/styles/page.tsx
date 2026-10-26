@@ -21,7 +21,7 @@ const COLOURS: [string, string[]][] = [
   ["Text", ["--ink", "--ink-2", "--ink-3"]],
   ["Brand", ["--accent", "--accent-text", "--accent-soft", "--gold", "--gold-light", "--cream", "--brand-green"]],
   ["Meaning", ["--ok", "--ok-soft", "--warn", "--warn-soft", "--bad", "--bad-soft", "--info", "--info-soft"]],
-  ["Calendar", ["--hold-standing", "--hold-booking", "--hold-request"]],
+  ["Calendar", ["--hold-booking", "--hold-request"]],
 ];
 const TONES: Tone[] = ["neutral", "ok", "warn", "bad", "info", "accent"];
 

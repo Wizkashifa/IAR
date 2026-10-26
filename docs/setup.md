@@ -227,7 +227,7 @@ IAR's rooms are resources in Google Workspace (Admin console → Directory → B
 
 1. Check the resources against the real room list with the office: every bookable room is a resource with its building and capacity. Add missing ones there.
 2. Share each room's calendar, and IAR's main events calendar, with `portal@islam1.org` with **Make changes to events**. The portal puts a "Hold (pending approval)" on the room calendar when a request is submitted, confirms it on approval and removes it if the request is sent back, denied or cancelled.
-3. Make sure the standing holds are on the room calendars as named recurring events: the daily prayers, Jumuah, school hours (Al-Iman, An-Noor, Al-Furqan) and the food pantry. The portal reads them as standing holds that can't be asked for (it recognises prayer, Jumuah, school and pantry names).
+3. Make sure the daily prayers, Jumuah, school hours (Al-Iman, An-Noor, Al-Furqan) and the food pantry are on the room calendars as recurring events. The portal treats them like any other booking: they show on the calendar and the run sheet, and a request that clashes with one is flagged.
 4. In Portal Settings → Rooms, turn on the rooms people can book, and set food, rooms that share a space (the full gym and its halves) and restricted rooms (Room 240). Policy rules can be turned off there too.
 
 ### 11. The daily job, backups and alerts

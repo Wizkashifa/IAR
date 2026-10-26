@@ -25,9 +25,6 @@ export type RuleId = (typeof RULES)[number]["id"];
 /** Rules are on unless an admin turned them off. */
 export const ruleOn = (rules: Partial<Record<string, boolean>>, id: RuleId) => rules[id] !== false;
 
-/** Words that mark a calendar entry as a standing hold under the room policy (prayers, school, pantry): it can't be asked for. */
-const STANDING = /\b(fajr|zuhr|dhuhr|asr|maghrib|isha|jumu?'?ah|jummah|prayer|salah|school|al-?iman|an-?noor|al-?furqan|pantry|standing hold)\b/i;
-export const isStandingTitle = (title: string) => STANDING.test(title);
 
 /** Marketing asks for at least this many weeks of promotion before a public event. */
 export const MARKETING_WEEKS = 2;
@@ -41,7 +38,7 @@ export type BusyItem = {
   start: string;
   end: string;
   label: string;
-  kind: "standing" | "booking" | "pending";
+  kind: "booking" | "pending";
   /** The Google Calendar event (the series, for a repeating one). */
   eventId?: string;
   /** The portal request holding it, if it came from the portal. */
@@ -55,7 +52,7 @@ export type Clash = Omit<BusyItem, "date"> & { key: string; dates: string[] };
 
 /** "card:EV-1101" or "cal:<event id>", the same key slot asks use. */
 export const clashKey = (b: Pick<BusyItem, "cardId" | "eventId" | "label" | "start" | "end" | "kind">) =>
-  b.cardId ? `card:${b.cardId}` : b.eventId && b.kind !== "standing" ? `cal:${b.eventId}` : `standing:${b.label}|${b.start}|${b.end}`;
+  b.cardId ? `card:${b.cardId}` : b.eventId ? `cal:${b.eventId}` : `cal:${b.label}|${b.start}|${b.end}`;
 
 /** Bookings the request's rooms and times run into, including setup and cleanup. */
 export function findClashes(input: EventInput, rooms: Room[], busy: BusyItem[], opts: { excludeCard?: string; dates?: string[] } = {}): Clash[] {
@@ -152,7 +149,7 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
         add("bad", `This still overlaps ${c.label}, which you gave this time to. Pick another time or room.`, "Room ask", true);
         continue;
       }
-      const what = c.kind === "standing" ? "a standing hold under the room policy" : c.kind === "pending" ? "a request waiting for approval" : "booked on the IAR calendar";
+      const what = c.kind === "pending" ? "a request waiting for approval" : "booked on the IAR calendar";
       add("bad", `${room} overlaps ${c.label}, ${timeText(c.start)}–${timeText(c.end)}${on}: ${what}.`, CAL, true);
     }
     if (!clashes.length) {
@@ -163,7 +160,7 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
       for (const r of picked.filter((x) => x.mph)) {
         const near = ctx.busy.filter((b) => {
           const br = roomById(ctx.rooms, b.roomId);
-          if (b.kind === "standing" || !dates.includes(b.date) || !br?.mph || !roomsOverlap(r, br) || (ctx.excludeCard && b.cardId === ctx.excludeCard)) return false;
+          if (!dates.includes(b.date) || !br?.mph || !roomsOverlap(r, br) || (ctx.excludeCard && b.cardId === ctx.excludeCard)) return false;
           const bs = toMinutes(b.start), be = toMinutes(b.end);
           return (be <= ws && ws - be < 120) || (bs >= we && bs - we < 120);
         });

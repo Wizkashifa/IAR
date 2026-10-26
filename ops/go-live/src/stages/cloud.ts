@@ -87,6 +87,7 @@ export const cloud: Stage = {
     const want: [string, string, string][] = [
       [`serviceAccount:${run}`, "roles/datastore.user", "read and write Firestore"],
       [`serviceAccount:${run}`, "roles/secretmanager.secretAccessor", "read its two secrets"],
+      [`serviceAccount:${run}`, "roles/serviceusage.serviceUsageConsumer", "call Google Maps for address suggestions, billed to this project"],
       [`serviceAccount:${sched}`, "roles/run.invoker", "call the daily job"],
       [`serviceAccount:${sched}`, "roles/datastore.importExportAdmin", "start the nightly Firestore backup"],
     ];

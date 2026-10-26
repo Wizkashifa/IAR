@@ -8,7 +8,7 @@ import { canOpenEvent, canViewEvent } from "./access";
 import { parseEventInput } from "./input";
 import { eventCommentNotices, eventNotices } from "./notices";
 import { type GoogleRoom, mergeRooms, roomsOverlap, roomsToCheck } from "./rooms";
-import { type BusyItem, eventChecks, eventFlags, findClashes, isStandingTitle, missionReasons } from "./rules";
+import { type BusyItem, eventChecks, eventFlags, findClashes, missionReasons } from "./rules";
 import { occurrences, rrule, seriesMaxEnd } from "./series";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
@@ -128,9 +128,7 @@ test("checks: a series longer than 3 months, or an end before the start, stops t
   assert.equal(eventChecks(base({ end: "17:00" }), ctx()).blocked, true);
 });
 
-test("checks: standing holds are recognised by their names; mission reasons are listed", () => {
-  for (const t of ["Zuhr prayer", "Jumuah", "Al-Iman school hours", "Food pantry"]) assert.ok(isStandingTitle(t), t);
-  assert.equal(isStandingTitle("Youth Halaqa"), false);
+test("checks: mission reasons are listed", () => {
   assert.deepEqual(missionReasons(base({ newProgram: true, attendance: 200, budget: 3000 })), ["new program", "200 expected", "budget $3,000"]);
 });
 test("flags: food, outside speaker, new program and fundraiser show as pills, in that order", () => {

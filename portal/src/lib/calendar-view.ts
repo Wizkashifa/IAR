@@ -49,17 +49,16 @@ export function stepView(view: CalendarView, date: string, by: -1 | 1): string {
   return view === "week" ? addDays(weekStart(date), 7 * by) : `${addMonths(`${date.slice(0, 7)}-01`, by)}`;
 }
 
-export type AgendaFilter = { roomId?: string; committee?: string; standing?: boolean };
+export type AgendaFilter = { roomId?: string; committee?: string };
 
 /**
  * The entries a filter keeps. A room keeps what's on it and on rooms sharing
  * its space (the full gym blocks each half). A committee keeps only portal
- * requests from it. Standing holds (prayers, school, the pantry) only when asked.
+ * requests from it.
  */
 export function filterAgenda(items: AgendaItem[], rooms: Room[], f: AgendaFilter): AgendaItem[] {
   const room = f.roomId ? rooms.find((r) => r.id === f.roomId) : undefined;
   return items.filter((a) => {
-    if (a.source === "standing" && !f.standing) return false;
     if (f.committee && a.committee !== f.committee) return false;
     if (room && !a.roomIds.some((id) => roomsOverlap(room, rooms.find((r) => r.id === id)))) return false;
     return true;

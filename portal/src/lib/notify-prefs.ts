@@ -9,7 +9,8 @@
  *   that would arrive between 9 PM and 7 AM Raleigh time waits until 7 AM.
  * - Updates that aren't waiting on them (someone approved their request, a
  *   comment, a status change) go where they choose: right away in Chat, in
- *   one morning digest, or only in the portal (the default, as before).
+ *   one morning digest, or only in the portal. Right away in Chat is the
+ *   default.
  */
 
 export type FyiChoice = "chat" | "digest" | "portal";
@@ -35,7 +36,7 @@ export const QUIET_FROM = 21;
 export const QUIET_UNTIL = 7;
 
 export function defaultPrefs(email: string): NotifyPrefs {
-  return { email: email.toLowerCase(), fyi: "portal", quiet: true };
+  return { email: email.toLowerCase(), fyi: "chat", quiet: true };
 }
 
 /** A stored record, or anything a form sent, as valid choices. */

@@ -83,7 +83,7 @@ Every event gets mission review in two steps: the director of the committee's pi
 
 **Asking for a booked time**
 
-When a request clashes with another booking, the requester can ask whoever holds it to give it up, instead of only changing their own time. Prayer times, school hours and other standing holds can't be asked for.
+When a request clashes with another booking, the requester can ask whoever holds it to give it up, instead of only changing their own time. Prayer times and school hours are ordinary entries on the room calendars, shown and checked like any other booking.
 
 - The ask goes to the booking's owner and their committee's chair and vice chair. For an entry made straight on the calendar, it goes to whoever made it, or to the office. The requester says why they need the time. Their request is submitted, but it doesn't hold the room or go to mission review until there's an answer
 - A recurring series is asked for date by date: only the clashing dates. The rest of the series stays

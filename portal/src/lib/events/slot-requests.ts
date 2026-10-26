@@ -5,7 +5,6 @@
  * call these and never change a request's status themselves.
  *
  * Rules:
- * - Standing holds (prayers, school hours, the food pantry) can't be asked for.
  * - Nobody asks for their own booking.
  * - One open ask per booking and date. Once the holder keeps a date, it can't
  *   be asked for again.
@@ -28,7 +27,7 @@ import { lc, same } from "../text";
 
 /** What the requester's room check clashed with. */
 export type Hold = {
-  kind: "standing" | "booking" | "pending";
+  kind: "booking" | "pending";
   /** Shown to people: "Youth Weekly Halaqa", "Zuhr prayer". */
   label: string;
   room: string;
@@ -157,7 +156,6 @@ export function escalationTargets(req: SlotRequest, dir: Directory): string[] {
 
 /** Can this requester ask for these dates of this booking? */
 export function checkAsk(hold: Hold, dates: string[], requesterEmail: string, existing: SlotRequest[]): { ok: true } | { ok: false; error: string } {
-  if (hold.kind === "standing") return { ok: false, error: `${hold.label} is a standing hold under the room policy. It can't be given up.` };
   if (!holdKeyOf(hold)) return { ok: false, error: "This booking isn't linked to a calendar entry, so there's nobody to ask. Ask the office." };
   if (same(hold.ownerEmail, requesterEmail) || (!hold.cardId && same(hold.organizerEmail, requesterEmail))) {
     return { ok: false, error: "This is your own booking. Change it from its request instead." };
