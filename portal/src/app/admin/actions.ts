@@ -6,11 +6,12 @@ import { DEV_DOMAIN, isDevAuth } from "@/lib/dev";
 import { ORG } from "@/lib/org";
 import { settingsStore } from "@/lib/portal-settings";
 import { FUNDS } from "@/lib/purchases/accounts";
-import { checkCard, checkDriveFolder, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
+import { checkCard, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
 import { googleRooms } from "@/lib/rooms-google";
 import { RULES } from "@/lib/events/rules";
 import { parseDriveId } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
+import type { AdminSection } from "./sections";
 
 async function requireAdmin() {
   const viewer = await requireViewer();
@@ -18,9 +19,11 @@ async function requireAdmin() {
   return viewer;
 }
 
-const back = (msg: { ok?: string; error?: string }) => {
+/** Back to Portal Settings with a message, and the section the change was made in left open. */
+const back = (msg: { ok?: string; error?: string }, open: AdminSection) => {
   revalidatePath("/admin");
-  redirect(msg.error ? `/admin?error=${encodeURIComponent(msg.error)}` : `/admin?ok=${encodeURIComponent(msg.ok ?? "Saved")}`);
+  const q = msg.error ? `error=${encodeURIComponent(msg.error)}` : `ok=${encodeURIComponent(msg.ok ?? "Saved")}`;
+  redirect(`/admin?${q}&open=${open}`);
 };
 
 /** Which fund a team charges. An empty choice goes back to the suggestion. */
@@ -30,7 +33,7 @@ export async function saveTeamFund(form: FormData): Promise<void> {
   const fund = String(form.get("fund") ?? "");
   const dir = await directory();
   const check = checkTeamFund(group, fund, { funds: FUNDS, teamGroups: dir.teams.map((t) => t.email) });
-  if (!check.ok) return back({ error: check.error });
+  if (!check.ok) return back({ error: check.error }, "teams");
   const store = await settingsStore();
   const s = await store.get();
   const teamFunds = { ...s.teamFunds };
@@ -38,7 +41,7 @@ export async function saveTeamFund(form: FormData): Promise<void> {
   else delete teamFunds[group];
   await store.save({ ...s, teamFunds, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   const name = dir.teams.find((t) => t.email === group)?.name ?? group;
-  back({ ok: fund ? `${name} now charges ${fund}.` : `${name} is back to the suggested fund.` });
+  back({ ok: fund ? `${name} now charges ${fund}.` : `${name} is back to the suggested fund.` }, "teams");
 }
 
 export async function addCard(form: FormData): Promise<void> {
@@ -49,9 +52,9 @@ export async function addCard(form: FormData): Promise<void> {
     { last4: form.get("last4"), holderEmail: form.get("holderEmail"), holderName: form.get("holderName"), fund: form.get("fund") },
     { funds: FUNDS, domain: isDevAuth() ? DEV_DOMAIN : ORG.domain, existing: s.cards },
   );
-  if (!r.ok) return back({ error: r.error });
+  if (!r.ok) return back({ error: r.error }, "cards");
   await store.save({ ...s, cards: [...s.cards, r.card], updatedAt: new Date().toISOString(), updatedBy: viewer.email });
-  back({ ok: `Card ending ${r.card.last4} added.` });
+  back({ ok: `Card ending ${r.card.last4} added.` }, "cards");
 }
 
 export async function removeCard(form: FormData): Promise<void> {
@@ -60,7 +63,7 @@ export async function removeCard(form: FormData): Promise<void> {
   const store = await settingsStore();
   const s = await store.get();
   await store.save({ ...s, cards: s.cards.filter((c) => c.last4 !== last4), updatedAt: new Date().toISOString(), updatedBy: viewer.email });
-  back({ ok: `Card ending ${last4} removed. Its past receipts are kept.` });
+  back({ ok: `Card ending ${last4} removed. Its past receipts are kept.` }, "cards");
 }
 
 /** A room's portal settings: bookable, food, shared space, restricted, a note. */
@@ -73,22 +76,11 @@ export async function saveRoom(form: FormData): Promise<void> {
     { bookable: form.get("bookable"), food: form.get("food"), restricted: form.get("restricted"), mph: form.get("mph"), overlaps: form.getAll("overlaps"), note: form.get("note") },
     { roomIds: rooms.map((x) => x.id) },
   );
-  if (!r.ok) return back({ error: r.error });
+  if (!r.ok) return back({ error: r.error }, "rooms");
   const store = await settingsStore();
   const s = await store.get();
   await store.save({ ...s, rooms: { ...(s.rooms ?? {}), [roomId]: r.setting }, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
-  back({ ok: `${rooms.find((x) => x.id === roomId)?.name ?? "Room"} saved.` });
-}
-
-/** The Shared Drive folder marketing request files go in. Empty turns uploads off (Drive links still work). */
-export async function saveMarketingSettings(form: FormData): Promise<void> {
-  const viewer = await requireAdmin();
-  const r = checkDriveFolder(form.get("marketingDriveFolder"));
-  if (!r.ok) return back({ error: r.error });
-  const store = await settingsStore();
-  const s = await store.get();
-  await store.save({ ...s, marketingDriveFolder: r.id, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
-  back({ ok: r.id ? "Marketing files now upload to that folder." : "Marketing file uploads are off. People can still share Drive links." });
+  back({ ok: `${rooms.find((x) => x.id === roomId)?.name ?? "Room"} saved.` }, "rooms");
 }
 
 /** Turn event policy rules on or off. */
@@ -102,7 +94,7 @@ export async function saveEventRules(form: FormData): Promise<void> {
   const url = (picked || String(form.get("roomPolicyUrl") ?? "")).trim().slice(0, 500);
   const roomPolicyUrl = /^https:\/\/\S+$/.test(url) ? url : "";
   await store.save({ ...s, eventRules, roomPolicyUrl, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
-  back({ ok: "Event rules saved." });
+  back({ ok: "Event rules saved." }, "rules");
 }
 
 /** The Policies Shared Drive the Library lists: its link from the browser, or its ID. Empty disconnects it. */
@@ -110,10 +102,10 @@ export async function savePoliciesDrive(form: FormData): Promise<void> {
   const viewer = await requireAdmin();
   const raw = String(form.get("policiesDrive") ?? "").trim().slice(0, 300);
   const id = raw ? parseDriveId(raw) : "";
-  if (id === null) return back({ error: "That isn't a Shared Drive link. Open the drive in Google Drive and copy the address from the browser." });
+  if (id === null) return back({ error: "That isn't a Shared Drive link. Open the drive in Google Drive and copy the address from the browser." }, "library");
   const store = await settingsStore();
   const s = await store.get();
   await store.save({ ...s, policiesDrive: id, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   revalidatePath("/library");
-  back({ ok: id ? "Policies drive connected. The Library lists it within a few minutes." : "Policies drive disconnected." });
+  back({ ok: id ? "Policies drive connected. The Library lists it within a few minutes." : "Policies drive disconnected." }, "library");
 }

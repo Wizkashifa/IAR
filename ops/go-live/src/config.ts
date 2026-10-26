@@ -118,6 +118,13 @@ export const DRIVES: DriveDef[] = [
       { email: sa, type: "user", role: DRIVE_ROLE.contributor },
     ],
   },
+  {
+    key: "marketing", name: "Marketing Files", env: "MARKETING_DRIVE_FOLDER_ID", why: "logos, photos and wording attached to marketing requests",
+    access: (d, sa) => [
+      { email: sa, type: "user", role: DRIVE_ROLE.contentManager },
+      { email: teamGroup("Marketing", d), type: "group", role: DRIVE_ROLE.contentManager },
+    ],
+  },
 ];
 
 export const console_ = {

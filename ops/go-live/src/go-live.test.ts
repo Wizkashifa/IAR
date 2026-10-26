@@ -172,7 +172,7 @@ test("apply from nothing creates everything, then a second run plans no changes"
   ]);
   assert.equal(fake.spaces.size, SPACES.length);
   for (const s of fake.spaces.values()) assert.deepEqual(s.members.map((m) => m.type).sort(), ["BOT", "GROUP", "HUMAN"]);
-  assert.equal(fake.drives.size, 3);
+  assert.equal(fake.drives.size, 4);
   const w9 = [...fake.drives.values()].find((d) => d.name === "W-9s")!;
   assert.deepEqual(w9.perms.map((p) => `${p.email}:${p.role}`).sort(), [`portal-role-finance@x.org:organizer`, `${run_}:writer`]);
   assert.ok(fake.acl.get("c_hall@resource.calendar.google.com")?.some((a) => a.email === "portal@x.org" && a.role === "writer"));

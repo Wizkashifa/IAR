@@ -36,6 +36,7 @@ export function desiredEnv(ctx: Ctx, url: string, strict = false): Record<string
     PO_DRIVE_FOLDER_ID: folder("po"),
     W9_DRIVE_FOLDER_ID: folder("w9"),
     MAINTENANCE_DRIVE_FOLDER_ID: folder("photos"),
+    MARKETING_DRIVE_FOLDER_ID: folder("marketing"),
     PORTAL_MAIL_FROM: mailbox(d),
     PORTAL_CALENDAR_SUBJECT: mailbox(d),
     PORTAL_CHAT: "on",

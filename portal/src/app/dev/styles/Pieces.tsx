@@ -1,6 +1,7 @@
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
+import { Section } from "@/components/Section";
 import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
@@ -50,6 +51,17 @@ export function Pieces() {
             </tr>
           </tbody>
         </DataTable>
+      </Panel>
+
+      <Panel title="Sections that fold" right="components/Section.tsx">
+        <div>
+          <Section title="Open section" open>
+            <p className="hint">A long settings page reads like a table of contents. Click a heading to open or close it.</p>
+          </Section>
+          <Section title="Closed section">
+            <p className="hint">Hidden until opened.</p>
+          </Section>
+        </div>
       </Panel>
 
       <Panel title="Folded away" right="components/Disclosure.tsx">

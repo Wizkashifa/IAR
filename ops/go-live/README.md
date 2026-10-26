@@ -52,7 +52,7 @@ Other options:
 4. **Domain-wide delegation** (*by hand, asked*). go-live prints the exact Client ID and scopes to paste, then tests every scope itself.
 5. **Google Groups.** Every committee, pillar and role group, with its settings and the people from the Sheet. Testers are never added here.
 6. **Google Chat** (*partly by hand*). The "IAR Portal" Chat app, then one Chat space per team with its group and the app in it.
-7. **Shared Drives** for receipts, W-9s (finance only) and maintenance photos.
+7. **Shared Drives** for receipts, W-9s (finance only), maintenance photos and marketing files.
 8. **Room calendars.** Lists IAR's room resources in Google (it never creates rooms) and asks once which ones people can't book; the Sheet's Rooms tab can also say Yes or No for a room. Shares each bookable room's calendar, and the main events calendar if IAR has one (press Enter to skip), with `portal@`.
 9. **Deploy.** Builds and deploys the portal to Cloud Run with all its settings, has you add its sign-in address to the Web client (*by hand, checked*), and maps `portal.islam1.org`: go-live writes a **Gmail draft** to IAR's DNS manager with the exact records. On later runs it checks DNS and the certificate, and switches the portal to `portal.islam1.org` once both work.
 10. **Portal Settings.** Writes the Sheet's team funds and cards, the Chat spaces and the bookable rooms from step 8 into Portal Settings. Only fills gaps: anything an admin already chose is kept. Then archives the Sheet: from then on, **Google Groups is the record** of who does what.
