@@ -6,7 +6,6 @@
  */
 import { console_, mailbox } from "../config";
 import type { CalendarResource } from "../google";
-import { askText } from "../run";
 import { type Change, type Ctx, type Stage, Stop } from "../types";
 
 const norm = (s: string) => s.toLowerCase().replace(/[–—-]/g, " ").replace(/[^a-z0-9&' ]/g, "").replace(/\s+/g, " ").trim();
@@ -67,9 +66,10 @@ export const rooms: Stage = {
     } else
       out.push({
         kind: "create",
-        text: `Share IAR's main events calendar with ${portal} (make changes to events). go-live asks for its calendar ID once`,
+        text: `Share IAR's main events calendar with ${portal} (make changes to events). go-live asks for its calendar ID once; leave it blank if IAR has none yet`,
         run: async (c) => {
-          const id = await askText(c, "  The main events calendar's ID (Google Calendar → its Settings → Integrate calendar → Calendar ID):");
+          const id = (await c.prompt({ kind: "text", question: "  The main events calendar's ID (Google Calendar → its Settings → Integrate calendar → Calendar ID), or press Enter to skip:" })).trim();
+          if (!id) return void c.log("  Skipped. Run go-live again later to share it.");
           c.state.eventsCalendarId = id;
           if (!(await canWrite(c, id, portal))) await c.g.addCalendarWriter(id, portal);
         },
