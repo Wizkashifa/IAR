@@ -88,6 +88,8 @@ const gjson = async <T>(args: string[]): Promise<T> => JSON.parse((await gcloud(
 const gone = (e: unknown) => e instanceof GcloudError && /NOT_FOUND|not found|does not exist|404/i.test(e.stderr);
 /** Not there, or its API isn't on yet (a new project): either way, nothing exists to find. */
 export const absent = (e: unknown) => gone(e) || (e instanceof GcloudError && /SERVICE_DISABLED|has not been used in project|it is disabled/i.test(e.stderr));
+/** The project a service account belongs to (name@project.iam.gserviceaccount.com). gcloud needs it when no project is set. */
+const saProject = (email: string) => `--project=${email.split("@")[1]?.split(".")[0] ?? ""}`;
 /** Firestore is still busy with a change just made (like creating the database): wait and try again. */
 const busy = (e: unknown) => e instanceof GcloudError && /ABORTED|concurrent/i.test(e.stderr);
 const orNull = async <T>(p: Promise<T>) => {
@@ -545,7 +547,7 @@ export class RealGoogle implements Google {
     await retry(() => gcloud(["firestore", "indexes", "composite", "create", `--collection-group=${idx.collectionGroup}`, ...idx.fields.map((f) => `--field-config=field-path=${f.path},order=${f.order.toLowerCase()}`), "--async", `--project=${project}`]), busy);
   }
   async getServiceAccount(email: string) {
-    const sa = await orNull(gjson<{ email: string; uniqueId: string }>(["iam", "service-accounts", "describe", email]));
+    const sa = await orNull(gjson<{ email: string; uniqueId: string }>(["iam", "service-accounts", "describe", email, saProject(email)]));
     return sa ? { email: sa.email, uniqueId: sa.uniqueId } : null;
   }
   async createServiceAccount(project: string, name: string, displayName: string) {
@@ -561,13 +563,13 @@ export class RealGoogle implements Google {
     await retry(() => gcloud(["projects", "add-iam-policy-binding", project, `--member=${member}`, `--role=${role}`, "--condition=None", "--format=none"]), gone);
   }
   async serviceAccountBindings(email: string) {
-    return bindings(await gjson(["iam", "service-accounts", "get-iam-policy", email]));
+    return bindings(await gjson(["iam", "service-accounts", "get-iam-policy", email, saProject(email)]));
   }
   async addServiceAccountBinding(email: string, member: string, role: string) {
-    await retry(() => gcloud(["iam", "service-accounts", "add-iam-policy-binding", email, `--member=${member}`, `--role=${role}`, "--format=none"]), gone);
+    await retry(() => gcloud(["iam", "service-accounts", "add-iam-policy-binding", email, saProject(email), `--member=${member}`, `--role=${role}`, "--format=none"]), gone);
   }
   async removeServiceAccountBinding(email: string, member: string, role: string) {
-    await gcloud(["iam", "service-accounts", "remove-iam-policy-binding", email, `--member=${member}`, `--role=${role}`, "--format=none"]);
+    await gcloud(["iam", "service-accounts", "remove-iam-policy-binding", email, saProject(email), `--member=${member}`, `--role=${role}`, "--format=none"]);
   }
   async listSecrets(project: string) {
     return (await gcloud(["secrets", "list", `--project=${project}`, "--format=value(name)"])).split(/\s+/).filter(Boolean).map((n) => n.split("/").pop()!);
@@ -584,7 +586,7 @@ export class RealGoogle implements Google {
       writeFileSync(join(dir, "claims.json"), claims);
       // IAM Credentials signJwt: the service account signs, no key involved. A role just granted can take a minute.
       await retry(
-        () => gcloud(["iam", "service-accounts", "sign-jwt", join(dir, "claims.json"), join(dir, "jwt"), `--iam-account=${serviceAccount}`]),
+        () => gcloud(["iam", "service-accounts", "sign-jwt", join(dir, "claims.json"), join(dir, "jwt"), `--iam-account=${serviceAccount}`, saProject(serviceAccount)]),
         (e) => e instanceof GcloudError && /PERMISSION_DENIED|403|iam.serviceAccounts.signJwt/i.test(e.stderr),
         8,
         5000,
