@@ -318,7 +318,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "The daily run sheet",
         steps: [
-          "Open Daily Run Sheet and pick the day and campus.",
+          "Open Daily Run Sheet (under IAR in the menu; everyone can see it) and pick the day and campus.",
           "It lists each room's bookings in time order, with the contact, the setup plan and security notes.",
           "Print it for the front desk or the security team.",
         ],

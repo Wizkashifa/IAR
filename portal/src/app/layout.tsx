@@ -33,13 +33,13 @@ export const viewport: Viewport = { themeColor: "#0b3a24" };
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {
   events: { group: "request", label: "Events & Rooms", icon: "calendar" },
-  calendar: { group: "request", label: "Calendar", icon: "calendar" },
   "purchase-requests": { group: "request", label: "Purchase Requests", icon: "receipt" },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: "megaphone" },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
-  "run-sheet": { group: "team", label: "Daily Run Sheet", icon: "book" },
   "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
+  calendar: { group: "iar", label: "Calendar", icon: "calendar" },
+  "run-sheet": { group: "iar", label: "Daily Run Sheet", icon: "book" },
   "whos-who": { group: "iar", label: "Who's who", icon: "building" },
   library: { group: "files", label: "Library", icon: "folder" },
   "finance-desk": { group: "team", label: "Finance desk", icon: "receipt" },

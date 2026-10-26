@@ -71,7 +71,7 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
   const opens = Boolean(href || submit);
   const linkCls = [styles.link, icon && styles.withIcon, !opens && styles.still].filter(Boolean).join(" ");
   const chev = <Icon name="chevR" className={styles.chev} />;
-  const cls = [styles.item, state !== "plain" && styles[state], lead && styles.withLead].filter(Boolean).join(" ");
+  const cls = [styles.item, opens && styles.opens, state !== "plain" && styles[state], lead && styles.withLead].filter(Boolean).join(" ");
   return (
     <li className={cls}>
       {lead && <div className={styles.lead}>{lead}</div>}

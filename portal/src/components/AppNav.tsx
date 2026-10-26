@@ -109,7 +109,13 @@ export function AppFrame({
           </button>
           <Brand org={org} />
           <div className={styles.spacer} />
-          <div className={styles.desk}>{search}</div>
+          <div className={styles.desk}>
+            {search}
+            <Link href="/help" className={`${styles.iconBtn} ${styles.textBtn}`} aria-current={path.startsWith("/help") ? "page" : undefined}>
+              <Icon name="help" />
+              <span>Help</span>
+            </Link>
+          </div>
           <Link href="/notifications" className={styles.iconBtn} aria-label={bellLabel} title={bellLabel} aria-current={path === "/notifications" ? "page" : undefined}>
             <Icon name="bell" />
             {unread > 0 && <span className={styles.bellCount}>{unread > 49 ? "50+" : unread}</span>}
@@ -140,7 +146,7 @@ export function AppFrame({
           ))}
           <div className={`${styles.mob} ${styles.foot}`}>
             <div className={styles.groupLabel}>{account.name}</div>
-            <AccountLinks account={account} withAway={false} onPick={() => setOpen(false)} />
+            <AccountLinks account={account} withAway={false} withHelp onPick={() => setOpen(false)} />
           </div>
         </nav>
         {open && <div className={styles.scrim} onClick={() => setOpen(false)} aria-hidden="true" />}

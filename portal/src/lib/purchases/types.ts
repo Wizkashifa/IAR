@@ -16,7 +16,7 @@ export type PurchaseKind = "pay" | "reimburse" | "card";
  */
 export type PurchaseStage = "chair" | "finance" | "executive" | "payment" | "books" | "done";
 
-/** "ach" is a bank transfer; every other value is a check and says where the check goes. */
+/** How the check goes. "ach" (a bank transfer) is only on older requests: new ones are always paid by check. */
 export type DeliveryMethod = "committee_box" | "office_pickup" | "security" | "mail" | "ach";
 
 export type PaymentMethod = "check" | "ach";

@@ -27,21 +27,9 @@ const MESSAGES: Record<string, string> = {
   "check-problem": "Room check saved. The requester and the IAR office have been told about the problem.",
 };
 
-const SEES = ["office", "facilities", "security", "admins"];
-
 export default async function RunSheetPage({ searchParams }: { searchParams: Promise<{ date?: string; campus?: string; ok?: string; error?: string }> }) {
   const sp = await searchParams;
   const viewer = await requireViewer();
-  if (!viewer.roles.some((r) => SEES.includes(r))) {
-    return (
-      <div className="stack loose">
-        <ModuleHead title="Daily Run Sheet" />
-        <Panel>
-          <EmptyState icon="book">The run sheet is for the IAR office, facilities and security.</EmptyState>
-        </Panel>
-      </div>
-    );
-  }
   const ctx = await eventContext();
   const date = isDate(sp.date) ? sp.date : ctx.today;
   const campuses = campusesOf(ctx.rooms);

@@ -72,18 +72,16 @@ test("input: every check needs an address, wherever it goes; card receipts need 
     assert.equal(parsePurchaseInput(input({ delivery, mailingAddress: "" }), ctx).ok, false, delivery);
     assert.equal(parsePurchaseInput(input({ kind: "reimburse", delivery, mailingAddress: "" }), ctx).ok, false, `reimburse ${delivery}`);
   }
-  const ach = parsePurchaseInput(input({ delivery: "ach", mailingAddress: "" }), ctx);
-  assert.ok(ach.ok && ach.details.mailingAddress === undefined);
   const cardIn = parsePurchaseInput(input({ kind: "card", cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57" }] }), ctx);
   assert.equal(cardIn.ok, false);
   if (!cardIn.ok) assert.ok(cardIn.errors.some((e) => e.includes("charge date")));
 });
 
-test("input: check or ACH first; a check needs to say where it goes", () => {
+test("input: requests are paid by check, so they say how the check goes; ACH isn't offered", () => {
   const noWhere = parsePurchaseInput(input({ paymentMethod: "check", delivery: "" }), ctx);
-  assert.ok(!noWhere.ok && noWhere.errors.includes("Choose where the check should go."));
-  const nothing = parsePurchaseInput(input({ delivery: "" }), ctx);
-  assert.ok(!nothing.ok && nothing.errors.includes("Choose check or ACH."));
+  assert.ok(!noWhere.ok && noWhere.errors.includes("Choose how we should send the check."));
+  const ach = parsePurchaseInput(input({ delivery: "ach", mailingAddress: "" }), ctx);
+  assert.ok(!ach.ok && ach.errors.includes("Choose how we should send the check."));
 });
 
 test("input: someone can only submit receipts for a card they hold, and the fund follows the card", () => {
