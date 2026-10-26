@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ModuleHead } from "@/components/ModuleHead";
@@ -26,15 +25,20 @@ export default async function HelpGuidePage({ params }: { params: Promise<{ modu
   const page = guide.module ? (findModule(guide.module)?.name ?? guide.title) : guide.title;
 
   return (
-    <>
+    <div className="stack loose">
       <Crumb trail={[{ href: "/help", label: "Help" }]} here={guide.title} />
       <ModuleHead
         title={guide.title}
         lead={guide.summary}
         actions={
-          <Button href={guide.href} icon={GUIDE_ICON[guide.key]}>
-            Go to {page}
-          </Button>
+          <>
+            <Button href={guide.href} icon={GUIDE_ICON[guide.key]}>
+              Go to {page}
+            </Button>
+            <Button href={`/feedback?from=${encodeURIComponent(`/help/${guide.key}`)}`} icon="message">
+              Send feedback about this guide
+            </Button>
+          </>
         }
       />
       <div className={styles.stack}>
@@ -53,11 +57,8 @@ export default async function HelpGuidePage({ params }: { params: Promise<{ modu
               <li key={t}>{t}</li>
             ))}
           </ul>
-          <p className={styles.more}>
-            <Link href={`/feedback?from=${encodeURIComponent(`/help/${guide.key}`)}`}>Send feedback about this guide</Link>
-          </p>
         </Panel>
       </div>
-    </>
+    </div>
   );
 }

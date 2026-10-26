@@ -100,6 +100,20 @@ export const groupSlug = (email: string) => lc(email).split("@")[0].replace(TEAM
 
 const ROLE_OF: Record<GroupMember["role"], TeamRole> = { OWNER: "chair", MANAGER: "vice", MEMBER: "member" };
 
+/**
+ * Everyone the portal knows from Google Groups (team, pillar and role
+ * groups), as addresses. With a beta `gate` group, only people directly in
+ * it or in `admins`, the two groups that let someone sign in.
+ */
+export function portalPeopleFrom(groups: DirectoryGroup[], gate?: { group: string; admins: string }): string[] {
+  const users = (g?: DirectoryGroup) => (g?.members ?? []).filter((m) => m.type === "USER").map((m) => m.email.toLowerCase());
+  const all = new Set(groups.flatMap((g) => users(g)));
+  if (!gate) return [...all].sort();
+  const find = (email: string) => groups.find((g) => g.email.toLowerCase() === email.toLowerCase());
+  const allowed = new Set([...users(find(gate.group)), ...users(find(gate.admins))]);
+  return [...all].filter((e) => allowed.has(e)).sort();
+}
+
 /** The teams a person is on, with their role in each. */
 export function membershipsOf(dir: Directory, email: string): Membership[] {
   const e = lc(email);

@@ -13,6 +13,7 @@ import {
   directedTeamGroups,
   effectiveTeamFunds,
   fundsFor,
+  portalPeopleFrom,
   membershipsOf,
   requestableFunds,
   suggestFund,
@@ -176,4 +177,11 @@ test("group names: a leading \"Portal:\" (used to find groups in the Admin conso
   assert.equal(groupDisplayName("Youth"), "Youth");
   assert.equal(groupDisplayName("Portal Road Crew"), "Portal Road Crew");
   assert.equal(groupDisplayName("Portal:"), "Portal:");
+});
+
+test("portal people: everyone in the portal's groups; during the beta only the beta group and admins", () => {
+  const g = (email: string, members: string[], type: "USER" | "GROUP" = "USER"): DirectoryGroup => ({ email, name: email, members: members.map((m) => ({ email: m, role: "MEMBER" as const, type })) });
+  const groups = [g("portal-team-youth@x.org", ["Chair@x.org", "member@x.org"]), g("portal-role-beta@x.org", ["chair@x.org", "tester@x.org"]), g("portal-role-admin@x.org", ["admin@x.org"]), g("portal-team-women@x.org", ["portal-role-beta@x.org"], "GROUP")];
+  assert.deepEqual(portalPeopleFrom(groups), ["admin@x.org", "chair@x.org", "member@x.org", "tester@x.org"]);
+  assert.deepEqual(portalPeopleFrom(groups, { group: "portal-role-beta@x.org", admins: "portal-role-admin@x.org" }), ["admin@x.org", "chair@x.org", "tester@x.org"]);
 });

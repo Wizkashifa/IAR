@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import { ORG } from "./org";
@@ -86,12 +87,19 @@ export async function settingsStore(): Promise<SettingsStore> {
   return isDevAuth() ? memoryStore : getFirestoreStore();
 }
 
-/** Settings for reading. A database hiccup falls back to none, which sends every request to finance review. */
-export async function portalSettings(): Promise<PortalSettings> {
+/**
+ * Settings for reading, read once per request however many places ask. A
+ * database hiccup falls back to none, which sends every request to finance
+ * review. Each caller gets its own copy, so changing one changes nothing else.
+ */
+const readSettings = cache(async (): Promise<PortalSettings> => {
   try {
     return await (await settingsStore()).get();
   } catch (err) {
     console.error("settings lookup failed", err);
     return structuredClone(EMPTY_SETTINGS);
   }
+});
+export async function portalSettings(): Promise<PortalSettings> {
+  return structuredClone(await readSettings());
 }

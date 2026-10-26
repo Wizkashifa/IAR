@@ -1,8 +1,9 @@
 import "server-only";
-import { devDirectory, isDevAuth } from "./dev";
+import { DEV_PERSONAS, devDirectory, isDevAuth } from "./dev";
+import { ORG } from "./org";
 import { delegatedToken } from "./google";
 import { reportFailure, reportOk } from "./health";
-import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, TEAM_PREFIX, groupDisplayName } from "./teams";
+import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, ROLE_PREFIX, TEAM_PREFIX, groupDisplayName, portalPeopleFrom } from "./teams";
 
 /**
  * Look up a user's Google Groups through the Admin SDK Directory API,
@@ -105,4 +106,22 @@ export async function directory(): Promise<Directory> {
   })();
   cache.__iarDirectory = { at: c?.at ?? 0, dir: c?.dir ?? EMPTY_DIRECTORY, loading };
   return loading;
+}
+
+const peopleCache = globalThis as unknown as { __iarPortalPeople?: { at: number; people: string[] } };
+
+/**
+ * Everyone who can use the portal, as addresses, for an admin picking whom to
+ * sign in as (lib/teams.ts `portalPeopleFrom`). Refreshed every 15 minutes.
+ * Someone in the beta group only through another group isn't listed.
+ */
+export async function portalPeople(): Promise<string[]> {
+  if (isDevAuth()) return DEV_PERSONAS.map((p) => p.email);
+  const c = peopleCache.__iarPortalPeople;
+  if (c && Date.now() - c.at < DIRECTORY_REFRESH_MS) return c.people;
+  const [dir, roles] = await Promise.all([directory(), directoryToken().then((t) => groupsWithPrefix(t, ROLE_PREFIX))]);
+  const gate = process.env.PORTAL_ACCESS_GROUP?.trim().toLowerCase();
+  const people = portalPeopleFrom([...dir.teams, ...dir.pillars, ...roles], gate ? { group: gate, admins: String(ORG.roleGroups.admins) } : undefined);
+  peopleCache.__iarPortalPeople = { at: Date.now(), people };
+  return people;
 }

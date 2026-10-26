@@ -65,7 +65,8 @@ export const currentActAs = cache(async (): Promise<ActAs | null> => {
 /** Each form sent while signed in as someone goes in the audit log, once per request. */
 const auditForm = cache(async (a: ActAs, page: string) => audit({ admin: a.admin, target: a.target, action: `Sent a form on ${page}` }));
 
-export async function getViewer(): Promise<Viewer | null> {
+/** Who is looking, built once per request however many places ask (the layout, the page, its actions). */
+export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (isDevAuth()) {
     const id = (await cookies()).get("dev_persona")?.value;
     const p = DEV_PERSONAS.find((x) => x.id === id) ?? DEV_PERSONAS[0];
@@ -90,7 +91,7 @@ export async function getViewer(): Promise<Viewer | null> {
     }
   }
   return build(me.email, me.name, me.groups, false);
-}
+});
 
 export async function requireViewer(): Promise<Viewer> {
   const v = await getViewer();

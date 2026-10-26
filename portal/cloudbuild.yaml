@@ -1,25 +1,36 @@
 # Deploys the portal each time a change to portal/ is merged into main.
 # Run by the Cloud Build trigger that go-live's "autodeploy" step sets up
 # (npm --prefix ops/go-live start -- --only autodeploy --apply), as the
-# portal-deployer service account. It tests, builds the image, and gives
-# the running Cloud Run service a new revision: the service keeps its own
-# settings, secrets and service account, which go-live manages.
+# portal-deployer service account. The tests run alongside the image build,
+# and the deploy waits for both: a failed test deploys nothing. The service
+# keeps its own settings, secrets and service account, which go-live manages.
 steps:
   - id: test
     name: node:22
     dir: portal
     entrypoint: bash
-    args: ["-c", "npm ci --no-audit --no-fund && npm test && npm run typecheck"]
+    args: ["-c", "npm ci --no-audit --no-fund --prefer-offline && npm test && npm run typecheck"]
+    waitFor: ["-"]
+  # Builds and pushes the image, reusing every layer that hasn't changed since the last build
+  # (kept in the image repository as the "buildcache" tag): the dependency install is skipped
+  # when package-lock.json is the same.
   - id: build
     name: gcr.io/cloud-builders/docker
-    args: ["build", "-t", "${_IMAGE}:${SHORT_SHA}", "portal"]
-  - id: push
-    name: gcr.io/cloud-builders/docker
-    args: ["push", "${_IMAGE}:${SHORT_SHA}"]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker buildx create --use --name portal >/dev/null &&
+        docker buildx build portal \
+          --cache-from type=registry,ref=${_IMAGE}:buildcache \
+          --cache-to type=registry,ref=${_IMAGE}:buildcache,mode=max \
+          --tag ${_IMAGE}:${SHORT_SHA} --push
+    waitFor: ["-"]
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: gcloud
     args: ["run", "deploy", "${_SERVICE}", "--image=${_IMAGE}:${SHORT_SHA}", "--region=${_REGION}", "--quiet"]
+    waitFor: ["test", "build"]
 substitutions:
   _SERVICE: iar-portal
   _REGION: us-east1
