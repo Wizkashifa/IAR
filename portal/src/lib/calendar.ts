@@ -87,6 +87,13 @@ type GEvent = {
   extendedProperties?: { private?: Record<string, string> };
 };
 
+/** A calendar portal@ can't read: a room whose calendar isn't shared with it (one nobody can book). Not an outage, so not reported. */
+class NotShared extends Error {
+  constructor(path: string) {
+    super(`Calendar ${path.split("?")[0]} isn't shared with the portal's mailbox`);
+  }
+}
+
 async function call<T>(path: string, init: { method?: string; body?: unknown; query?: Record<string, string> } = {}): Promise<T> {
   const token = await delegatedToken(subject(), SCOPE);
   const url = new URL(`${API}/${path}`);
@@ -97,6 +104,7 @@ async function call<T>(path: string, init: { method?: string; body?: unknown; qu
     body: init.body ? JSON.stringify(init.body) : undefined,
   });
   if (res.status === 204 || res.status === 410) return undefined as T;
+  if ((res.status === 404 || res.status === 403) && (init.method ?? "GET") === "GET") throw new NotShared(path);
   if (!res.ok) throw failed("calendar", `Calendar ${init.method ?? "GET"} ${path.split("?")[0]} failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as T;
 }
@@ -154,7 +162,12 @@ const googleCalendar: RoomCalendar = {
   async listBusy(cals, from, to) {
     const lists = await Promise.all(
       cals.map(async (c) => {
-        const items = await listAll(c.calendarId, "events", { timeMin: rfc(from, "00:00"), timeMax: rfc(addDays(to, 1), "00:00"), singleEvents: "true", timeZone: TIME_ZONE, showDeleted: "false" });
+        // A room whose calendar isn't shared with portal@ is skipped rather than failing the whole page.
+        const items = await listAll(c.calendarId, "events", { timeMin: rfc(from, "00:00"), timeMax: rfc(addDays(to, 1), "00:00"), singleEvents: "true", timeZone: TIME_ZONE, showDeleted: "false" }).catch((e) => {
+          if (!(e instanceof NotShared)) throw e;
+          console.warn(e.message);
+          return [] as GEvent[];
+        });
         return items.flatMap((g) => toBusy(c.roomId, g));
       }),
     );

@@ -31,6 +31,15 @@ export type TeamRole = "chair" | "vice" | "member";
 export type Membership = { name: string; group: string; role: TeamRole };
 
 /**
+ * A group's name as people see it. Admins may start group names with
+ * "Portal:" to find them in the Admin console; inside the portal that's
+ * noise, so "Portal: Youth" shows as "Youth".
+ */
+export function groupDisplayName(name: string): string {
+  return name.replace(/^\s*portal\s*[:\-–—|]\s*/i, "").trim() || name.trim();
+}
+
+/**
  * A slug from a name: lowercase, apostrophes, "&" and the word "Committee"
  * dropped, words joined with hyphens. "Women's Committee" → "women". Used for
  * pillar groups and any team that isn't in TEAM_SLUGS.
