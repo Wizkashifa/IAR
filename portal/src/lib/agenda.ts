@@ -15,7 +15,7 @@ import { type AgendaItem, type RoomNeed, type RoomOption, agendaFrom, freeRoomsF
 export type { AgendaItem, RoomNeed, RoomOption } from "./agenda-core";
 
 /** Everything booked between two dates (inclusive), across every room or one campus. */
-export async function agendaBetween(from: string, to: string, opts: { campus?: string; roomIds?: string[]; standing?: boolean } = {}): Promise<AgendaItem[]> {
+export async function agendaBetween(from: string, to: string, opts: { campus?: string; roomIds?: string[] } = {}): Promise<AgendaItem[]> {
   const ctx = await eventContext();
   const rooms = ctx.rooms.filter((r) => (!opts.campus || (r.building || "") === opts.campus) && (!opts.roomIds || opts.roomIds.includes(r.id)));
   if (!rooms.length || to < from) return [];
@@ -23,7 +23,7 @@ export async function agendaBetween(from: string, to: string, opts: { campus?: s
     ctx.calendar.listBusy(rooms.map((r) => ({ roomId: r.id, calendarId: r.calendarId })), from, to),
     (await cardStore()).listByType("event", ["submitted", "in_review", "approved", "close_out"]),
   ]);
-  return agendaFrom(busy, ctx.rooms, cards.filter(isEventCard), { standing: opts.standing });
+  return agendaFrom(busy, ctx.rooms, cards.filter(isEventCard));
 }
 
 /** Bookable rooms for a need, free ones first. `mayBookRestricted` is the viewer's (lib/events/context.ts). */

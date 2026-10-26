@@ -10,12 +10,12 @@ import { directory, portalPeople } from "@/lib/groups";
 import { namesFor } from "@/lib/names";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import { ORG } from "@/lib/org";
-import { portalSettings } from "@/lib/portal-settings";
+import { portalSettings, purchasesDemoOn } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
+import { addCard, removeCard, saveEventRules, savePurchasesDemo, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
 import { auditStore } from "@/lib/audit";
 import { isDevAuth } from "@/lib/dev";
 import { libraryReader, policiesLibrary } from "@/lib/library";
@@ -243,6 +243,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       )}
       </Section>
 
+      <Section open={open === "purchases"} title={<>Purchase requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
+      <p className="hint">
+        While purchase requests are a demo, every purchase page says so, and only requests from beta testers (people in {ORG.betaGroup}) alert their chair and
+        finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make purchase requests live for everyone.
+      </p>
+      <Panel>
+        <form action={savePurchasesDemo} className="stack">
+          <Checkbox name="demo" defaultChecked={purchasesDemoOn(settings)}>Purchase requests are a demo</Checkbox>
+          <div><Button type="submit">Save</Button></div>
+        </form>
+      </Panel>
+      </Section>
+
       <Section open={open === "rules"} title="Event rules">
       <p className="hint">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
       <Panel>
@@ -368,7 +381,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <Section open={open === "support"} id="support" title="Sign in as someone">
         <p className="hint">
           To troubleshoot, see the portal exactly as someone else does, and do what they can, for up to an hour. Anything you save is marked as done by you on
-          their behalf, and each start, stop and save is kept in the log below.
+          their behalf, and each start, stop and save is kept in the log below. To stop from any tab, open{" "}
+          <a href="/admin/stop-signing-in-as">/admin/stop-signing-in-as</a>.
         </p>
         {isDevAuth() ? (
           <Note>In dev mode, switch sample users at /dev instead.</Note>

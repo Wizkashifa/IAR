@@ -14,8 +14,8 @@ import { eventDates, toMinutes } from "./events/series";
 import type { EventInput, Recurrence } from "./events/types";
 import type { EventCard } from "./events/workflow";
 
-/** Where an entry came from: a portal request, a standing hold under the room policy (prayers, school, pantry), or anything else on the IAR calendar. */
-export type AgendaSource = "portal" | "standing" | "calendar";
+/** Where an entry came from: a portal request, or anything else on the IAR calendar (prayers and school hours included). */
+export type AgendaSource = "portal" | "calendar";
 
 export type AgendaItem = {
   key: string;
@@ -45,11 +45,10 @@ export type AgendaCard = Pick<EventCard, "id" | "status"> & { event: Pick<EventC
  * every room. Portal holds take the request's title and times when the
  * request is known. Sorted by date, then time.
  */
-export function agendaFrom(busy: BusyItem[], rooms: Room[], cards: AgendaCard[] = [], opts: { standing?: boolean } = {}): AgendaItem[] {
+export function agendaFrom(busy: BusyItem[], rooms: Room[], cards: AgendaCard[] = []): AgendaItem[] {
   const byCard = new Map(cards.map((c) => [c.id, c]));
   const out = new Map<string, AgendaItem>();
   for (const b of busy) {
-    if (b.kind === "standing" && opts.standing === false) continue;
     const card = b.cardId ? byCard.get(b.cardId) : undefined;
     const key = b.cardId ? `${b.date}|card:${b.cardId}` : `${b.date}|${b.label}|${b.start}|${b.end}`;
     const room = roomById(rooms, b.roomId);
@@ -67,7 +66,7 @@ export function agendaFrom(busy: BusyItem[], rooms: Room[], cards: AgendaCard[] 
       start: card ? card.event.start : b.start,
       end: card ? card.event.end : b.end,
       title: card ? card.event.title : b.label,
-      source: b.cardId ? "portal" : b.kind === "standing" ? "standing" : "calendar",
+      source: b.cardId ? "portal" : "calendar",
       pending: b.kind === "pending",
       roomIds: [b.roomId],
       rooms: [room?.name ?? b.roomId],
@@ -165,9 +164,11 @@ export function freeRoomsFrom(need: RoomNeed, rooms: Room[], busy: BusyItem[], c
       const notes: string[] = [];
       const input = probe(need, room.id);
       for (const c of findClashes(input, rooms, busy)) {
-        const what = c.kind === "standing" ? "Held" : c.kind === "pending" ? "Requested" : "Booked";
+        const what = c.kind === "pending" ? "Requested" : "Booked";
         const on = many ? ` (${c.dates.length} of ${dates.length} dates)` : "";
-        reasons.push(`${what} ${rangeText(c.start, c.end)}: ${c.label}${on}`);
+        // One entry on several rooms' calendars (the gym and its halves) is one reason.
+        const why = `${what} ${rangeText(c.start, c.end)}: ${c.label}${on}`;
+        if (!reasons.includes(why)) reasons.push(why);
       }
       if (ruleOn(ctx.rules, "capacity") && room.capacity && need.attendance > room.capacity) reasons.push(`Too small for ${need.attendance} (holds ${room.capacity})`);
       if (need.food && ruleOn(ctx.rules, "food") && !room.food) reasons.push("No food allowed");

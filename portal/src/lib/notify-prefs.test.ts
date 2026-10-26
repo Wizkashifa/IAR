@@ -9,10 +9,10 @@ import { cleanPrefs, defaultPrefs, deliverAt, digestText, isQuietHours, nextMorn
 const at = (iso: string) => new Date(iso);
 
 test("notify prefs: quiet overnight is on and updates stay in the portal unless someone changes them", () => {
-  assert.deepEqual(defaultPrefs("Sam@X.org"), { email: "sam@x.org", fyi: "portal", quiet: true });
+  assert.deepEqual(defaultPrefs("Sam@X.org"), { email: "sam@x.org", fyi: "chat", quiet: true });
   assert.deepEqual(cleanPrefs("a@x.org", { fyi: "digest", quiet: false }), { email: "a@x.org", fyi: "digest", quiet: false });
   // Anything a form shouldn't send falls back to the defaults.
-  assert.deepEqual(cleanPrefs("a@x.org", { fyi: "fax", quiet: "yes" }), { email: "a@x.org", fyi: "portal", quiet: true });
+  assert.deepEqual(cleanPrefs("a@x.org", { fyi: "fax", quiet: "yes" }), { email: "a@x.org", fyi: "chat", quiet: true });
   assert.deepEqual(cleanPrefs("a@x.org", null), defaultPrefs("a@x.org"));
 });
 

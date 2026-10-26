@@ -5,7 +5,7 @@ import { isDevAuth } from "./dev";
 import { type Alert, type Delivery, alertEmail, chatMessage, fallbackFor, routeAlerts } from "./alerts";
 import { ChatUnreachable, chatEnabled, postToSpace, sendDm } from "./chat";
 import { mailEnabled, sendMail } from "./mail";
-import { digestText, routeFyi, splitForQuietHours, type NotifyPrefs } from "./notify-prefs";
+import { defaultPrefs, digestText, routeFyi, splitForQuietHours, type NotifyPrefs } from "./notify-prefs";
 import { roleMailbox, type Role } from "./org";
 import { peopleStore } from "./people";
 import { type PortalSettings, portalSettings } from "./portal-settings";
@@ -138,26 +138,31 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   const updates: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
+  // Purchase requests in demo mode: only beta testers' requests reach Chat or email (lib/purchases/demo.ts).
+  const sends = await purchaseAlerts(notices.map((n) => n.cardId ?? ""));
 
   try {
     for (const n of notices) {
+      // A demo purchase request: on the bell only, never Chat or email.
+      const live = !n.cardId || sends(n.cardId);
+      const alert = n.alert && live;
       const base = { cardId: n.cardId, href: n.href, at: now, by: actor, readBy: [] as string[] };
       if ("role" in n.to) {
         items.push({ ...base, to: `role:${n.to.role}`, text: n.text });
-        if (n.alert) alerts.push({ to: `role:${n.to.role}`, text: n.text, href: n.href, cardId: n.cardId });
+        if (alert) alerts.push({ to: `role:${n.to.role}`, text: n.text, href: n.href, cardId: n.cardId });
         continue;
       }
       const to = n.to.email.toLowerCase();
       items.push({ ...base, to, text: n.text });
-      if (n.alert) alerts.push({ to, text: n.text, href: n.href, cardId: n.cardId });
-      else if (to !== actor) updates.push({ to, text: n.text, href: n.href, cardId: n.cardId, fyi: true });
+      if (alert) alerts.push({ to, text: n.text, href: n.href, cardId: n.cardId });
+      else if (to !== actor && live) updates.push({ to, text: n.text, href: n.href, cardId: n.cardId, fyi: true });
       if (n.delegable) {
         people ??= await peopleStore();
         const away = await people.getAway(to);
         if (away && isActive(away, today) && away.delegate !== actor) {
           const text = `Covering for ${away.name}: ${n.text}`;
           items.push({ ...base, to: away.delegate, text });
-          if (n.alert) alerts.push({ to: away.delegate, text, href: n.href, cardId: n.cardId, cover: { name: away.name, until: away.until } });
+          if (alert) alerts.push({ to: away.delegate, text, href: n.href, cardId: n.cardId, cover: { name: away.name, until: away.until } });
         }
       }
     }
@@ -166,6 +171,12 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
     console.error("notification write failed", err);
   }
   await sendAlerts([...alerts, ...(await wantedUpdates(updates))], { now: new Date(now) });
+}
+
+/** Which cards' alerts may go out (purchase requests in demo mode only for testers). Loaded on first use, as it reads the card store. */
+async function purchaseAlerts(cardIds: string[]): Promise<(cardId: string) => boolean> {
+  const { purchaseAlertsFor } = await import("./purchases/demo");
+  return purchaseAlertsFor(cardIds);
 }
 
 /** The updates whose person chose "Right away in Chat". A lookup failure sends none: they're still on the bell. */
@@ -185,7 +196,7 @@ async function prefsFor(emails: string[]): Promise<(email: string) => NotifyPref
   const people = await peopleStore();
   const unique = [...new Set(emails.filter((e) => e.includes("@")).map((e) => e.toLowerCase()))];
   const found = new Map((await Promise.all(unique.map((e) => people.getPrefs(e)))).map((p) => [p.email, p]));
-  return (email) => found.get(email.toLowerCase()) ?? { email, fyi: "portal", quiet: true };
+  return (email) => found.get(email.toLowerCase()) ?? defaultPrefs(email);
 }
 
 export type SendOptions = {
@@ -259,7 +270,9 @@ export async function sendDigests(now = new Date()): Promise<number> {
   const s = await store();
   const digests: Alert[] = [];
   for (const email of emails) {
-    const recent = (await s.listFor([email], 50)).filter((n) => n.at >= since && n.by !== email && !n.readBy.includes(email));
+    const listed = (await s.listFor([email], 50)).filter((n) => n.at >= since && n.by !== email && !n.readBy.includes(email));
+    const sends = await purchaseAlerts(listed.map((n) => n.cardId ?? ""));
+    const recent = listed.filter((n) => !n.cardId || sends(n.cardId));
     const text = digestText(recent);
     if (text) digests.push({ to: email, text, href: "/notifications", fyi: true });
   }

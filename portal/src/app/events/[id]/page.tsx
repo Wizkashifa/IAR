@@ -114,7 +114,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   // The calendar beside the request: its first room on its next date (or its first).
   const calDate = e.dates.find((d) => d >= ctx.today) ?? e.dates[0] ?? e.date;
   const calRoom = e.rooms.map((r) => roomById(ctx.rooms, r)).find(Boolean);
-  const calItems = calRoom ? roomDay(await agendaBetween(calDate, calDate, { standing: true }), ctx.rooms, calRoom, calDate, card.id) : [];
+  const calItems = calRoom ? roomDay(await agendaBetween(calDate, calDate), ctx.rooms, calRoom, calDate, card.id) : [];
   const holdWindow = holdTimes(e.start, e.end, e.setup, e.teardown);
 
   const base = (

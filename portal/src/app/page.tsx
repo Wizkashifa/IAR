@@ -41,7 +41,7 @@ const QUICK: { module: string; href: string; label: string; icon: IconName }[] =
 /** "MPH A&B – full gym", or the first two rooms and how many more. */
 const roomsText = (rooms: string[]) => (rooms.length === 0 ? "Off-site" : rooms.length <= 2 ? rooms.join(", ") : `${rooms.slice(0, 2).join(", ")} and ${rooms.length - 2} more`);
 
-const SOURCE: Record<AgendaItem["source"], string> = { portal: "Portal request", standing: "Standing hold", calendar: "IAR calendar" };
+const SOURCE: Record<AgendaItem["source"], string> = { portal: "Portal request", calendar: "IAR calendar" };
 
 export default async function Home() {
   const viewer = await requireViewer();
@@ -53,8 +53,7 @@ export default async function Home() {
     waitingFor(viewer),
     people.getAway(viewer.email),
     people.listAwayByDelegate(viewer.email),
-    // Bookings only: prayers, school hours and other standing holds are on the run sheet.
-    agendaBetween(today, today, { standing: false }).catch(() => null),
+    agendaBetween(today, today).catch(() => null),
   ]);
   const { cards, asks, actor, ctx } = waiting;
   const names = await nameResolver([...emailsIn(cards), ...(actor.covering ?? []), ...(myAway ? [myAway.delegate] : [])]);

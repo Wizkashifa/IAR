@@ -23,9 +23,21 @@ export type PortalSettings = {
   teamInfo?: Record<string, TeamInfo>;
   /** The Policies Shared Drive's ID, listed in the Library (lib/library.ts). */
   policiesDrive?: string;
+  /** Purchase requests are a demo for everyone but the beta testers. On unless an admin turns it off (`purchasesDemoOn`). */
+  purchasesDemo?: boolean;
   updatedAt?: string;
   updatedBy?: string;
 };
+
+/** Whether purchase requests are a demo. On until an admin turns it off in Portal Settings, so going live with them is one switch. */
+export const purchasesDemoOn = (s: Pick<PortalSettings, "purchasesDemo">) => s.purchasesDemo !== false;
+
+/**
+ * Whether a purchase request's alert goes out by Google Chat or email. In demo
+ * mode only a beta tester's requests send them; everyone else's stay in the
+ * portal, on the bell.
+ */
+export const purchaseAlertsSend = (o: { demo: boolean; ownerIsTester: boolean }) => !o.demo || o.ownerIsTester;
 
 export const EMPTY_SETTINGS: PortalSettings = { teamFunds: {}, cards: [], chatSpaces: {}, rooms: {}, eventRules: {} };
 

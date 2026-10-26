@@ -17,6 +17,18 @@ export type WhatsNew = {
 export const WHATS_NEW: WhatsNew[] = [
   {
     date: "2026-10-26",
+    title: "Updates come to Google Chat",
+    text: "When one of your requests moves or someone comments, you now get a Chat message right away. Prefer a morning digest, or only the bell? Change it in Notification settings.",
+    href: "/notifications/settings",
+  },
+  {
+    date: "2026-10-26",
+    title: "See every room's day",
+    text: "Picking several rooms on an event request, like all three vans, shows each one's day side by side. Prayers and school hours on the room calendars show like any other booking.",
+    href: "/events/new",
+  },
+  {
+    date: "2026-10-26",
     title: "Calendar and the Daily Run Sheet, for everyone",
     text: "Both are now under IAR in the menu, open to everyone, so anyone can see what's happening where today.",
     href: "/run-sheet",

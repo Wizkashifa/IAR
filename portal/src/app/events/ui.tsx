@@ -48,7 +48,8 @@ export type TimelineItem = { start: string; end: string; label: string; kind: st
  * and cleanup. Drawn as SVG with percentage positions, so each booking's place
  * comes from its times without inline styles.
  */
-export function Timeline({ items, request, caption }: { items: TimelineItem[]; request?: { start: string; end: string }; caption?: string }) {
+/** `legend: false` leaves out the key, for all but the last of several timelines in a row. */
+export function Timeline({ items, request, caption, legend = true }: { items: TimelineItem[]; request?: { start: string; end: string }; caption?: string; legend?: boolean }) {
   const all = [...items, ...(request ? [{ ...request, label: "Your request", kind: "req" }] : [])].sort((a, b) => toMin(a.start) - toMin(b.start));
   // Overlapping entries go on separate rows so each label stays readable.
   const ends: number[] = [];
@@ -60,7 +61,7 @@ export function Timeline({ items, request, caption }: { items: TimelineItem[]; r
   });
   const rows = Math.max(1, ...placed.map((x) => x.lane + 1));
   const h = rows * LANE + 6;
-  const kind = (k: string) => (k === "req" ? styles.req : k === "standing" ? styles.standing : k === "pending" ? styles.pending : styles.booking);
+  const kind = (k: string) => (k === "req" ? styles.req : k === "pending" ? styles.pending : styles.booking);
   return (
     <div className={styles.timeline}>
       {caption && <div className={styles.caption}>{caption}</div>}
@@ -86,11 +87,12 @@ export function Timeline({ items, request, caption }: { items: TimelineItem[]; r
         <span>7 PM</span>
         <span>11 PM</span>
       </div>
-      <ul className={styles.legend}>
-        <li><i className={styles.kStanding} />Standing hold (policy)</li>
-        <li><i className={styles.kBooking} />Booked or pending</li>
-        {request && <li><i className={styles.kReq} />Your request, with setup and cleanup</li>}
-      </ul>
+      {legend && (
+        <ul className={styles.legend}>
+          <li><i className={styles.kBooking} />Booked or pending</li>
+          {request && <li><i className={styles.kReq} />Your request, with setup and cleanup</li>}
+        </ul>
+      )}
     </div>
   );
 }

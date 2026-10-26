@@ -30,7 +30,7 @@ const SAMPLE_CHAIRED = ["Youth", "Cleaning", "Events Committee", "Facility Maint
 
 export const DEV_PERSONAS: DevPersona[] = [
   { id: "member", name: "Sample Volunteer", email: "volunteer@dev.local", title: "Member of Youth and Education", groups: [], teams: { Youth: "member", Education: "member" } },
-  { id: "chair", name: "Sample Chair", email: "chair@dev.local", title: "Chairs Youth and other committees; member of Education", groups: [], teams: { ...chairOf(SAMPLE_CHAIRED), Education: "member", "Social & Welfare": "vice" } },
+  { id: "chair", name: "Sample Chair", email: "chair@dev.local", title: "Chairs Youth and other committees; member of Education; beta tester", groups: [ORG.betaGroup], teams: { ...chairOf(SAMPLE_CHAIRED), Education: "member", "Social & Welfare": "vice" } },
   { id: "vice", name: "Sample Vice Chair", email: "vice@dev.local", title: "Vice chair of Youth and other committees", groups: [], teams: viceOf(SAMPLE_CHAIRED) },
   { id: "office", name: "Sample Office", email: "office@dev.local", title: "IAR office", groups: [g.office], teams: { Administration: "member" } },
   { id: "finance", name: "Sample Finance", email: "finance@dev.local", title: "Finance, cardholder", groups: [g.finance], teams: { Administration: "member" } },

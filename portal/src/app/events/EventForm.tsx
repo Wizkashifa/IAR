@@ -112,7 +112,7 @@ function writeDraft(key: string, d: Draft | null) {
 export default function EventForm(p: EventFormProps) {
   const [state, formAction] = useActionState(p.action, { errors: [] });
   const [d, setD] = useState<Draft>(() => initialDraft(p));
-  const [result, setResult] = useState<DraftCheck>({ checks: [], clashes: [], timeline: null });
+  const [result, setResult] = useState<DraftCheck>({ checks: [], clashes: [], timelines: [] });
   const [checking, startCheck] = useTransition();
   const [ask, setAsk] = useState<{ key: string; reason: string } | null>(null);
   const [saved, setSaved] = useState<{ at: string; d: Draft } | null>(null);
@@ -215,7 +215,6 @@ export default function EventForm(p: EventFormProps) {
               </Button>
               <Button
                 size="small"
-                variant="quiet"
                 onClick={() => {
                   writeDraft(key, null);
                   setSaved(null);
@@ -444,8 +443,12 @@ export default function EventForm(p: EventFormProps) {
           </div>
         </Panel>
         <Panel title="IAR calendar that day" className={styles.calendarPanel}>
-          {result.timeline ? (
-            <Timeline items={result.timeline.items} request={result.timeline.request} caption={`${result.timeline.roomName} · ${dayText(result.timeline.date)}`} />
+          {result.timelines.length > 0 ? (
+            <div className="stack">
+              {result.timelines.map((t, i) => (
+                <Timeline key={t.roomName} items={t.items} request={t.request} caption={`${t.roomName} · ${dayText(t.date)}`} legend={i === result.timelines.length - 1} />
+              ))}
+            </div>
           ) : (
             <p className="hint">{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
           )}

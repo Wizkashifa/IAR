@@ -10,8 +10,6 @@ import "./globals.css";
 import { fontVariables } from "./fonts";
 import { AppFrame, PublicFrame, type NavGroup, type NavLink } from "@/components/AppNav";
 import { AppNavCount } from "@/components/AppNavCount";
-import { Button } from "@/components/Button";
-import { Note } from "@/components/Note";
 import { Providers } from "@/components/Providers";
 import { Search, type SearchPlace } from "@/components/Search";
 import type { IconName } from "@/components/Icon";
@@ -23,7 +21,6 @@ import { peopleStore } from "@/lib/people";
 import { visibleModules } from "@/lib/modules";
 import { teamsOf } from "@/lib/tickets/workflow";
 import { todayLocal } from "@/lib/dates";
-import { stopActingAs } from "./admin/actions";
 
 export const metadata: Metadata = {
   title: { template: `%s · ${ORG.shortName} Portal`, default: `${ORG.shortName} Portal` },
@@ -112,23 +109,7 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
       unread={unread}
       account={account}
     >
-      {viewer.supportAdmin ? (
-        <div className="stack loose">
-          <Note tone="warn">
-            <form action={stopActingAs} className="row">
-              <span>
-                You&apos;re signed in as <strong>{viewer.name}</strong> to troubleshoot. Anything you save is marked as done by you ({viewer.supportAdmin.name}) on their behalf.
-              </span>
-              <Button type="submit" size="small">
-                Stop and go back to you
-              </Button>
-            </form>
-          </Note>
-          <div>{children}</div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AppFrame>
   );
 }

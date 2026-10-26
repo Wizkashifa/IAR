@@ -38,10 +38,10 @@ const rooms = mergeRooms(
 const SAT = "2026-11-07";
 const SUN = "2026-11-08";
 const busy: BusyItem[] = [
-  // Standing hold under the room policy, on the gym and both halves' calendars.
-  { roomId: "mphAB", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "standing", eventId: "s1" },
-  { roomId: "mphA", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "standing", eventId: "s2" },
-  { roomId: "mphB", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "standing", eventId: "s3" },
+  // Weekend school, on the gym and both halves' calendars.
+  { roomId: "mphAB", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "booking", eventId: "s1" },
+  { roomId: "mphA", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "booking", eventId: "s2" },
+  { roomId: "mphB", date: SUN, start: "09:00", end: "13:30", label: "Al-Furqan weekend school (until Zuhr)", kind: "booking", eventId: "s3" },
   // A booking someone made on the calendar.
   { roomId: "mphAB", date: SAT, start: "10:00", end: "13:00", label: "Youth Basketball League", kind: "booking", eventId: "b1" },
   // A portal request: the hold includes setup and cleanup.
@@ -68,7 +68,8 @@ test("agenda: one entry per event per date, rooms merged, sorted by date and tim
     `${SAT} 18:00 Youth Family Night`,
     `${SUN} 09:00 Al-Furqan weekend school (until Zuhr)`,
   ]);
-  const school = a.find((x) => x.source === "standing")!;
+  const school = a.find((x) => x.title.startsWith("Al-Furqan"))!;
+  assert.equal(school.source, "calendar", "prayers and school are ordinary calendar entries");
   assert.deepEqual(school.roomIds, ["mphAB", "mphA", "mphB"]);
   assert.equal(school.rooms.length, 3);
 });
@@ -84,10 +85,6 @@ test("agenda: portal requests show the event's own times and title; the hold kee
   const tafsir = agendaFrom(busy, rooms, cards).find((x) => x.cardId === "EV-1050")!;
   assert.equal(tafsir.pending, true);
   assert.equal(tafsir.title, "Sisters' Tafsir Circle · Women");
-});
-
-test("agenda: standing holds can be left out", () => {
-  assert.equal(agendaFrom(busy, rooms, cards, { standing: false }).some((x) => x.source === "standing"), false);
 });
 
 test("find a room: free rooms first, snuggest fit first, with reasons for the rest", () => {
@@ -120,7 +117,7 @@ test("find a room: capacity, food and the people who may book restricted rooms",
 test("find a room: setup and cleanup count, and the gym covers both halves", () => {
   // 1:30–3 PM on Sunday: free, but the 30-minute setup runs into weekend school.
   const sun = freeRoomsFrom({ date: SUN, start: "13:45", end: "15:00", attendance: 40 }, rooms, busy, ctx);
-  assert.deepEqual(sun.find((o) => o.room.id === "mphA")!.reasons, ["Held 9 AM–1:30 PM: Al-Furqan weekend school (until Zuhr)"]);
+  assert.deepEqual(sun.find((o) => o.room.id === "mphA")!.reasons, ["Booked 9 AM–1:30 PM: Al-Furqan weekend school (until Zuhr)"]);
   const noSetup = freeRoomsFrom({ date: SUN, start: "13:45", end: "15:00", setup: 0, attendance: 40 }, rooms, busy, ctx);
   assert.equal(noSetup.find((o) => o.room.id === "mphA")!.ok, true);
   // The basketball booking is on the full gym's calendar, so each half is taken too.

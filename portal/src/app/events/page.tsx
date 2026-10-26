@@ -38,7 +38,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     store.listByOwner(viewer.email),
     store.listByType("event", ["submitted", "in_review", "approved"]),
     (await slotRequestStore()).listWaitingOn(addressesOf(viewer)),
-    agendaBetween(date, date, { standing: true }),
+    agendaBetween(date, date),
   ]);
   const events = open.filter(isEventCard);
   const myEvents = mine.filter(isEventCard);

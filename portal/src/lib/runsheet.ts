@@ -2,8 +2,8 @@
  * The daily run sheet: one printable page of what's happening where on a day,
  * for one campus. Approved events (and ones in close-out) come from the
  * portal with everything the office, facilities and security need; the other
- * entries on the room calendars (bookings made in Google Calendar, standing
- * holds like prayers and school) are listed too, marked as calendar entries.
+ * entries on the room calendars (bookings made in Google Calendar, prayers
+ * and school hours included) are listed too, marked as calendar entries.
  * Plain functions so they can be tested.
  */
 import { AV_KINDS } from "./events/input";
@@ -45,8 +45,6 @@ export type RunSheetEntry = {
   start: string;
   end: string;
   rooms: string[];
-  /** "standing": prayers, school and other holds under the room policy; "booking": made in Google Calendar. */
-  entry: "standing" | "booking";
   afterHours: boolean;
 };
 
@@ -119,7 +117,7 @@ export function runSheetRows(events: EventCard[], busy: BusyItem[], rooms: Room[
       if (!have.rooms.includes(room)) have.rooms.push(room);
       continue;
     }
-    entries.set(key, { kind: "calendar", title: b.label, start: b.start, end: b.end, rooms: [room], entry: b.kind === "standing" ? "standing" : "booking", afterHours: toMinutes(b.end) > 22 * 60 || toMinutes(b.start) < 7 * 60 });
+    entries.set(key, { kind: "calendar", title: b.label, start: b.start, end: b.end, rooms: [room], afterHours: toMinutes(b.end) > 22 * 60 || toMinutes(b.start) < 7 * 60 });
   }
   // The same entry on several room calendars (a hall and its halves) shows once.
   const seen = new Map<string, RunSheetEntry>();

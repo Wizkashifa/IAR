@@ -2,7 +2,7 @@ import "server-only";
 import { isDevAuth } from "./dev";
 import { failed } from "./health";
 import { delegatedToken } from "./google";
-import { type BusyItem, isStandingTitle } from "./events/rules";
+import type { BusyItem } from "./events/rules";
 import { dayOfWeek, eventDates, fromMinutes, rrule, toMinutes, weekOfMonth } from "./events/series";
 import type { CalendarOp } from "./events/slot-requests";
 import type { HoldStatus, Recurrence } from "./events/types";
@@ -126,7 +126,7 @@ function toBusy(roomId: string, g: GEvent): BusyItem[] {
   if (g.status === "cancelled" || g.transparency === "transparent") return [];
   const cardId = g.extendedProperties?.private?.portalCard;
   const label = (g.summary ?? "Busy").replace(/^Hold \(pending approval\): /, "");
-  const kind: BusyItem["kind"] = cardId ? (g.status === "tentative" ? "pending" : "booking") : isStandingTitle(label) ? "standing" : "booking";
+  const kind: BusyItem["kind"] = cardId ? (g.status === "tentative" ? "pending" : "booking") : "booking";
   const common = { roomId, label, kind, eventId: g.recurringEventId ?? g.id, ...(cardId ? { cardId } : {}), organizerEmail: g.organizer?.self ? g.creator?.email : g.organizer?.email ?? g.creator?.email };
   if (g.start?.dateTime && g.end?.dateTime) {
     const s = local(g.start.dateTime), e = local(g.end.dateTime);
@@ -214,7 +214,7 @@ type DevEvent = { id: string; calendarId: string; summary: string; dates: string
 const g = globalThis as unknown as { __iarCal?: { events: DevEvent[]; seq: number; seeded: boolean } };
 const mem = (g.__iarCal ??= { events: [], seq: 0, seeded: false });
 
-/** Seeds the sample calendar once: standing holds from the room policy and a few bookings. */
+/** Seeds the sample calendar once: prayers, school hours and a few bookings, as IAR keeps them on the room calendars. */
 export function seedDevCalendar(rooms: { id: string; calendarId: string; name: string }[], today: string) {
   if (mem.seeded) return;
   mem.seeded = true;
@@ -245,7 +245,7 @@ const devCalendar: RoomCalendar = {
     for (const c of cals)
       for (const e of mem.events.filter((x) => x.calendarId === c.calendarId))
         for (const date of e.dates.filter((d) => d >= from && d <= to))
-          out.push({ roomId: c.roomId, date, start: e.start, end: e.end, label: e.summary, kind: e.cardId ? (e.status === "tentative" ? "pending" : "booking") : isStandingTitle(e.summary) ? "standing" : "booking", eventId: e.id, ...(e.cardId ? { cardId: e.cardId } : {}), organizerEmail: e.organizerEmail });
+          out.push({ roomId: c.roomId, date, start: e.start, end: e.end, label: e.summary, kind: e.cardId ? (e.status === "tentative" ? "pending" : "booking") : "booking", eventId: e.id, ...(e.cardId ? { cardId: e.cardId } : {}), organizerEmail: e.organizerEmail });
     return out;
   },
   async seriesDates(calendarId, eventId, from, to) {

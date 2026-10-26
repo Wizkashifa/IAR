@@ -11,6 +11,7 @@ import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
 import { Note } from "@/components/Note";
+import { AddressField } from "@/components/AddressField";
 import { Panel } from "@/components/Panel";
 import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
@@ -260,9 +261,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                   ))}
                 </select>
               </Field>
-              <Field label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person.">
-                <textarea value={mailingAddress} onChange={(e) => setMailingAddress(e.target.value)} rows={2} maxLength={300} placeholder="Street, city, state, ZIP" required />
-              </Field>
+              <AddressField label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Start typing to pick it from Google Maps. Needed for every check, even one picked up in person." value={mailingAddress} onChange={setMailingAddress} />
             </div>
             {kind === "pay" && (
               <div className="stack tight">

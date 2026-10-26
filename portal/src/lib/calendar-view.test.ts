@@ -41,16 +41,15 @@ test("a month is whole weeks, with the days either side marked", () => {
   assert.equal(stepView("month", "2026-01-31", -1), "2025-12-01");
 });
 
-test("filters: a room keeps what shares its space; a committee keeps its requests; standing holds only when asked", () => {
+test("filters: a room keeps what shares its space; a committee keeps its requests", () => {
   const items = [
     item({ date: "2026-10-26", title: "Full gym", roomIds: ["mphAB"], committee: "Youth" }),
     item({ date: "2026-10-26", title: "Halaqa", committee: "Youth" }),
     item({ date: "2026-10-27", title: "Sisters' fitness", roomIds: ["mphB"], committee: "Women's Committee" }),
-    item({ date: "2026-10-27", title: "Isha", roomIds: ["mphA"], source: "standing" }),
+    item({ date: "2026-10-27", title: "Isha", roomIds: ["mphA"], source: "calendar" }),
   ];
-  assert.deepEqual(filterAgenda(items, rooms, { roomId: "mphA" }).map((a) => a.title), ["Full gym"]);
-  assert.deepEqual(filterAgenda(items, rooms, { roomId: "mphA", standing: true }).map((a) => a.title), ["Full gym", "Isha"]);
-  assert.deepEqual(filterAgenda(items, rooms, { roomId: "mphAB" }).map((a) => a.title), ["Full gym", "Sisters' fitness"]);
+  assert.deepEqual(filterAgenda(items, rooms, { roomId: "mphA" }).map((a) => a.title), ["Full gym", "Isha"]);
+  assert.deepEqual(filterAgenda(items, rooms, { roomId: "mphAB" }).map((a) => a.title), ["Full gym", "Sisters' fitness", "Isha"]);
   assert.deepEqual(filterAgenda(items, rooms, { committee: "Youth" }).map((a) => a.title), ["Full gym", "Halaqa"]);
   assert.deepEqual(committeesIn(items), ["Women's Committee", "Youth"]);
   assert.deepEqual([...byDay(filterAgenda(items, rooms, {})).keys()], ["2026-10-26", "2026-10-27"]);

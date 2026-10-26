@@ -32,7 +32,6 @@ const TUESDAYS = ["2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24", "2026-
 const oneTime: sr.Hold = { kind: "booking", label: "Family Night", room: "Room 250", start: "18:00", end: "21:00", cardId: "EV-1031", ownerEmail: owner.email, committeeGroup: youth, calendarEventId: "cal1031", seriesDates: ["2026-11-07"] };
 const series: sr.Hold = { kind: "booking", label: "Youth Weekly Halaqa", room: "Room 250", start: "19:00", end: "20:30", cardId: "EV-1022", ownerEmail: owner.email, committeeGroup: youth, calendarEventId: "cal1022", seriesDates: TUESDAYS };
 const calendarOnly: sr.Hold = { kind: "booking", label: "Shura meeting", room: "Room 280", start: "19:00", end: "21:00", calendarEventId: "calShura", organizerEmail: "someone@gmail.com", seriesDates: ["2026-11-05"] };
-const prayer: sr.Hold = { kind: "standing", label: "Maghrib prayer", room: "Mussalah", start: "18:35", end: "19:00", seriesDates: ["2026-11-07"] };
 
 function ask(hold: sr.Hold, dates: string[], existing: sr.SlotRequest[] = [], id = "SR-1"): sr.SlotRequest {
   const r = sr.newSlotRequest({ fromCard: "EV-1061", requester, hold, dates, reason: "Annual sisters' dinner, only date the speaker can come" }, dir, existing, T(0));
@@ -57,8 +56,7 @@ test("a calendar entry made outside the portal: its maker if they're at IAR, els
   assert.deepEqual(ask({ ...calendarOnly, organizerEmail: `secretary@${d}` }, ["2026-11-05"]).askedOf, [`secretary@${d}`]);
 });
 
-test("standing holds, your own booking, and dates it isn't booked can't be asked for", () => {
-  assert.equal(sr.checkAsk(prayer, ["2026-11-07"], requester.email, []).ok, false);
+test("your own booking, and dates it isn't booked, can't be asked for", () => {
   assert.equal(sr.checkAsk(oneTime, ["2026-11-07"], owner.email, []).ok, false);
   assert.equal(sr.checkAsk(oneTime, ["2026-11-08"], requester.email, []).ok, false);
   assert.equal(sr.checkAsk(oneTime, [], requester.email, []).ok, false);

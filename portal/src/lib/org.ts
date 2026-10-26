@@ -42,6 +42,8 @@ export const ORG = {
     executive: `portal-role-executive@${domain}`,
     admins: `portal-role-admin@${domain}`,
   } as Partial<Record<Role, string>>,
+  /** The beta testers. They keep trying what's still a demo (purchase requests) for real, after the rest of the portal opens to everyone. */
+  betaGroup: `portal-role-beta@${domain}`,
 };
 
 /** Where email for a role's queue goes: its role group, or the team group that grants it. */

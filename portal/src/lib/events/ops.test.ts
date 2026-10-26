@@ -199,8 +199,8 @@ test("run sheet: the day's approved events by time, with setup and cleanup; othe
   const offDay = approved(base({ title: "Other day", date: "2026-11-15" }));
   const busy: BusyItem[] = [
     { roomId: "mphA", date: "2026-11-14", start: "18:30", end: "22:30", label: "Game Night", kind: "booking", cardId: night.id },
-    { roomId: "mphA", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "standing", eventId: "j1" },
-    { roomId: "mphB", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "standing", eventId: "j2" },
+    { roomId: "mphA", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "booking", eventId: "j1" },
+    { roomId: "mphB", date: "2026-11-14", start: "12:30", end: "14:30", label: "Jumuah", kind: "booking", eventId: "j2" },
     { roomId: "mphB", date: "2026-11-14", start: "17:00", end: "19:00", label: "Not yet", kind: "pending", cardId: pending.id },
     { roomId: "r250", date: "2026-11-14", start: "15:00", end: "16:00", label: "Quran class", kind: "booking", eventId: "q1" },
     { roomId: "pr1", date: "2026-11-14", start: "15:00", end: "16:00", label: "Page Road class", kind: "booking", eventId: "p1" },
@@ -214,7 +214,7 @@ test("run sheet: the day's approved events by time, with setup and cleanup; othe
     ["event", "Game Night", "18:30", "22:30"],
   ]);
   const jumuah = rows[1];
-  assert.ok(jumuah.kind === "calendar" && jumuah.entry === "standing" && jumuah.rooms.length === 2, "one row for an entry on several rooms");
+  assert.ok(jumuah.kind === "calendar" && jumuah.rooms.length === 2, "one row for an entry on several rooms");
   const gn = rows[3];
   assert.ok(gn.kind === "event");
   if (gn.kind === "event") {

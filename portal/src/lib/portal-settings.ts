@@ -7,7 +7,7 @@ import { teamGroupEmail } from "./teams";
 import { EMPTY_SETTINGS, type PortalSettings } from "./settings-rules";
 import { DEV_ROOM_SETTINGS } from "./rooms-google";
 
-export { type CreditCard, type PortalSettings } from "./settings-rules";
+export { type CreditCard, type PortalSettings, purchasesDemoOn } from "./settings-rules";
 
 /**
  * What portal admins set in Portal Settings: the fund each team charges,
