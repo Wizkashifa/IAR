@@ -1,16 +1,20 @@
 "use server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { directory } from "@/lib/groups";
+import { ACT_AS_COOKIE, ACT_AS_MINUTES, signActAs } from "@/lib/act-as";
+import { audit } from "@/lib/audit";
+import { directory, lookupGroups } from "@/lib/groups";
+import { nameOf } from "@/lib/names";
 import { DEV_DOMAIN, isDevAuth } from "@/lib/dev";
-import { ORG } from "@/lib/org";
+import { ORG, mayUsePortal } from "@/lib/org";
 import { settingsStore } from "@/lib/portal-settings";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { checkCard, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules";
 import { googleRooms } from "@/lib/rooms-google";
 import { RULES } from "@/lib/events/rules";
 import { parseDriveId } from "@/lib/library-core";
-import { requireViewer } from "@/lib/viewer";
+import { currentActAs, requireViewer } from "@/lib/viewer";
 import type { AdminSection } from "./sections";
 
 async function requireAdmin() {
@@ -108,4 +112,41 @@ export async function savePoliciesDrive(form: FormData): Promise<void> {
   await store.save({ ...s, policiesDrive: id, updatedAt: new Date().toISOString(), updatedBy: viewer.email });
   revalidatePath("/library");
   back({ ok: id ? "Policies drive connected. The Library lists it within a few minutes." : "Policies drive disconnected." }, "library");
+}
+
+/**
+ * Signs this admin in as someone else, to see and do what they would, for an
+ * hour or until they stop. Everything they save says the admin did it, and
+ * the start, the stop and each save go in the audit log.
+ */
+export async function startActingAs(form: FormData): Promise<void> {
+  const viewer = await requireAdmin();
+  if (viewer.dev || isDevAuth()) return back({ error: "In dev mode, switch sample users at /dev instead." }, "support");
+  const target = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!target.endsWith(`@${ORG.domain}`)) return back({ error: `Enter an @${ORG.domain} address.` }, "support");
+  if (target === viewer.email.toLowerCase()) return back({ error: "That's you." }, "support");
+  let groups: string[];
+  try {
+    groups = await lookupGroups(target);
+  } catch {
+    return back({ error: "Couldn't look that person up in Google. Check the address." }, "support");
+  }
+  if (!mayUsePortal(groups)) return back({ error: "That person can't use the portal yet (they're not in the beta group)." }, "support");
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) return back({ error: "Signing in as someone needs NEXTAUTH_SECRET, which isn't set." }, "support");
+  const targetName = await nameOf(target);
+  const token = signActAs({ admin: viewer.email.toLowerCase(), adminName: viewer.name, target, targetName, exp: Date.now() + ACT_AS_MINUTES * 60_000 }, secret);
+  (await cookies()).set(ACT_AS_COOKIE, token, { httpOnly: true, secure: true, sameSite: "strict", path: "/", maxAge: ACT_AS_MINUTES * 60 });
+  await audit({ admin: viewer.email.toLowerCase(), target, action: "Started signing in as them" });
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+
+/** Back to being the admin. Works from any page while signed in as someone. */
+export async function stopActingAs(): Promise<void> {
+  const as = await currentActAs();
+  (await cookies()).delete(ACT_AS_COOKIE);
+  if (as) await audit({ admin: as.admin, target: as.target, action: "Stopped signing in as them" });
+  revalidatePath("/", "layout");
+  redirect(as ? "/admin?open=support" : "/");
 }

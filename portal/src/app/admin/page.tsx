@@ -13,7 +13,9 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
+import { auditStore } from "@/lib/audit";
+import { isDevAuth } from "@/lib/dev";
 import { libraryReader, policiesLibrary } from "@/lib/library";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
@@ -40,7 +42,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { ok, error, open } = await searchParams;
   const viewer = await requireViewer();
   if (!viewer.actingRoles.includes("admins")) redirect("/");
-  const [dir, settings, google, library, reader] = await Promise.all([directory(), portalSettings(), googleRooms(), policiesLibrary(), libraryReader()]);
+  const [dir, settings, google, library, reader, auditLog] = await Promise.all([directory(), portalSettings(), googleRooms(), policiesLibrary(), libraryReader(), auditStore().then((a) => a.list(25)).catch(() => [])]);
   // Policy files the room policy can be picked from (current ones, not the archive).
   const policyFiles = library.state === "ok" ? library.library.files.filter((f) => f.folder !== "Archive").sort((a, b) => a.name.localeCompare(b.name)) : [];
   const rooms = mergeRooms(google, settings.rooms ?? {});
@@ -353,6 +355,49 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </form>
       </Panel>
       {settings.updatedAt && <p className="hint">Last changed {fmtDateTime(settings.updatedAt)} by {settings.updatedBy}.</p>}
+      </Section>
+
+      <Section open={open === "support"} id="support" title="Sign in as someone">
+        <p className="hint">
+          To troubleshoot, see the portal exactly as someone else does, and do what they can, for up to an hour. Anything you save is marked as done by you on
+          their behalf, and each start, stop and save is kept in the log below.
+        </p>
+        {isDevAuth() ? (
+          <Note>In dev mode, switch sample users at /dev instead.</Note>
+        ) : (
+          <Panel title="Sign in as">
+            <form action={startActingAs} className="grid">
+              <Field label="Their email">
+                <input name="email" type="email" placeholder={`name@${ORG.domain}`} required />
+              </Field>
+              <div>
+                <Button type="submit" variant="primary">Sign in as them</Button>
+              </div>
+            </form>
+          </Panel>
+        )}
+        {auditLog.length > 0 && (
+          <DataTable framed>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Admin</th>
+                <th>Signed in as</th>
+                <th>What</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditLog.map((a, i) => (
+                <tr key={i}>
+                  <td data-label="When">{fmtDateTime(a.at)}</td>
+                  <td data-label="Admin">{a.admin}</td>
+                  <td data-label="Signed in as">{a.target}</td>
+                  <td data-label="What">{a.action}</td>
+                </tr>
+              ))}
+            </tbody>
+          </DataTable>
+        )}
       </Section>
     </>
   );
