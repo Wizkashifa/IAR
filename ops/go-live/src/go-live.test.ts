@@ -307,6 +307,16 @@ test("on a new project, a lookup through an API that isn't on yet means nothing 
   assert.equal(absent(new Error("SERVICE_DISABLED")), false);
 });
 
+test("portal.<domain> can wait: saying no to it doesn't stop the run", async () => {
+  const fake = setup();
+  fake.verified = [];
+  const r = await run(fake, startState(fake), { apply: true }, { no: [/can wait/] });
+  assert.equal(r.stopped, undefined, r.out);
+  assert.equal(fake.domainMapping, null);
+  assert.ok(!fake.calls.includes("createDraft"));
+  assert.ok(fake.service, "the portal is still deployed");
+});
+
 test("Gmail is only ever a draft", async () => {
   const fake = setup({ ready: false });
   await fullApply(fake);

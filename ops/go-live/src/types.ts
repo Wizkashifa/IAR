@@ -66,8 +66,8 @@ export type State = {
 
 export type ChangeKind = "create" | "update" | "remove" | "manual" | "check";
 
-/** Changes that need their own yes, because they cost money, email people, widen access or remove something. */
-export type AskKind = "billing" | "license" | "access" | "email" | "budget" | "remove";
+/** Changes that need their own yes, because they cost money, email people, widen access or remove something, or can wait for a later run. */
+export type AskKind = "billing" | "license" | "access" | "email" | "budget" | "remove" | "later";
 
 export const ASK_LABEL: Record<AskKind, string> = {
   billing: "costs money",
@@ -76,6 +76,7 @@ export const ASK_LABEL: Record<AskKind, string> = {
   email: "may email people",
   budget: "billing setting",
   remove: "removes something",
+  later: "can wait: say no to do it on a later run",
 };
 
 export type Change = {
