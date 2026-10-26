@@ -284,7 +284,7 @@ export class RealGoogle implements Google {
       (pageToken) => this.dir().resources.calendars.list({ customer: this.customer, maxResults: 500, pageToken }),
       (d) => d.items,
     );
-    return items.filter((r) => r.resourceEmail).map((r) => ({ name: r.resourceName ?? "", email: r.resourceEmail!, building: r.buildingId ?? undefined, capacity: r.capacity ?? undefined }));
+    return items.filter((r) => r.resourceEmail).map((r) => ({ id: r.resourceId ?? undefined, name: r.resourceName ?? "", email: r.resourceEmail!, building: r.buildingId ?? undefined, capacity: r.capacity ?? undefined }));
   }
 
   // ---- Licensing ---------------------------------------------------------------

@@ -17,7 +17,7 @@ import { TAB, templateTabs } from "./sheet";
 import { parseArgs } from "./main";
 import { readerPrivileges } from "./stages/accounts";
 import { sheetIdOf } from "./stages/sheet";
-import { matchRooms } from "./stages/rooms";
+import { matchRooms, pickRooms } from "./stages/rooms";
 import { mergeSettings, spacesByRole } from "./stages/settings";
 import type { Ask, Options, State } from "./types";
 
@@ -54,9 +54,10 @@ function setup(o: { ready?: boolean; sheet?: Record<string, string[][]>; freeLic
     users: PEOPLE,
     freeLicenses: o.freeLicenses,
     resources: [
-      { name: "Main Prayer Hall", email: "c_hall@resource.calendar.google.com" },
-      { name: "Room 240 - conference room", email: "c_240@resource.calendar.google.com" },
-      { name: "Basement storage", email: "c_store@resource.calendar.google.com" },
+      { id: "r-hall", name: "Main Prayer Hall", email: "c_hall@resource.calendar.google.com" },
+      { id: "r-240", name: "Room 240 - conference room", email: "c_240@resource.calendar.google.com" },
+      { id: "r-store", name: "Basement storage", email: "c_store@resource.calendar.google.com" },
+      { id: "r-flex", name: "Flex Room A", email: "c_flex@resource.calendar.google.com" },
     ],
   });
   fake.events.set("c_hall@resource.calendar.google.com", [{ summary: "Jumuah prayer", recurring: true }]);
@@ -78,6 +79,7 @@ function prompter(fake: FakeGoogle, a: Answers = {}) {
     if (/Billing account ID/.test(q.question)) return fake.billingAccounts[0].id;
     if (/Client ID/.test(q.question)) return fake.webClientId;
     if (/calendar's ID/.test(q.question)) return "events@group.calendar.google.com";
+    if (/Rooms people can't book/.test(q.question)) return "basement STORAGE";
     if (/DNS manager's email/.test(q.question)) return "dns@elsewhere.org";
     if (/first name/.test(q.question)) return "DNS Manager";
     throw new Error(`unexpected question: ${q.question}`);
@@ -175,8 +177,10 @@ test("apply from nothing creates everything, then a second run plans no changes"
   assert.deepEqual(w9.perms.map((p) => `${p.email}:${p.role}`).sort(), [`portal-role-finance@x.org:organizer`, `${run_}:writer`]);
   assert.ok(fake.acl.get("c_hall@resource.calendar.google.com")?.some((a) => a.email === "portal@x.org" && a.role === "writer"));
   assert.ok(fake.acl.get("events@group.calendar.google.com")?.some((a) => a.email === "portal@x.org"));
-  assert.ok(!fake.acl.has("c_store@resource.calendar.google.com"), "rooms not on the Sheet are left alone");
-  assert.match(r.out, /Warning: "Room 240 – conference room" has no recurring hold/);
+  assert.ok(!fake.acl.has("c_store@resource.calendar.google.com"), "a room left out isn't shared");
+  assert.ok(fake.acl.get("c_flex@resource.calendar.google.com")?.some((a) => a.email === "portal@x.org"), "a room not on the Sheet and not left out is shared");
+  assert.deepEqual(Object.keys((fake.docs.get(SETTINGS_DOC)?.rooms as Record<string, unknown>) ?? {}).sort(), ["r-240", "r-flex", "r-hall"]);
+  assert.match(r.out, /Warning: "Room 240 - conference room" has no recurring hold/);
 
   // Deploy
   const env = fake.service!.env;
@@ -414,6 +418,16 @@ test("rooms: names match despite dash styles; missing, extra and undecided are r
   assert.deepEqual(m.missing, ["Gym"]);
   assert.deepEqual(m.extra, ["Storage"]);
   assert.deepEqual(m.undecided, ["Fire Pit Area"]);
+});
+
+test("rooms: Google's list, with the Sheet's Yes or No, and the rooms left out", () => {
+  const res = [{ name: "MPH-A", email: "a" }, { name: "Dummy", email: "d" }, { name: "Math Classroom", email: "m" }, { name: "Glass Room 230A", email: "g" }];
+  const sheet = [{ name: "Glass Room 230A", bookable: false }, { name: "MPH A – half gym", bookable: null }];
+  const asked = pickRooms(sheet, res, undefined);
+  assert.deepEqual(asked.undecided.map((r) => r.email), ["a", "d", "m"]);
+  assert.deepEqual(asked.bookable, [], "nothing is bookable until the admin answers");
+  assert.deepEqual(pickRooms(sheet, res, ["dummy", "Math  Classroom"]).bookable.map((r) => r.email), ["a"]);
+  assert.deepEqual(pickRooms(sheet, res, []).bookable.map((r) => r.email), ["a", "d", "m"]);
 });
 
 test("Firestore values: Portal Settings round-trips through the REST format", () => {
