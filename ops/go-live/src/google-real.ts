@@ -88,6 +88,8 @@ const gjson = async <T>(args: string[]): Promise<T> => JSON.parse((await gcloud(
 const gone = (e: unknown) => e instanceof GcloudError && /NOT_FOUND|not found|does not exist|404/i.test(e.stderr);
 /** Not there, or its API isn't on yet (a new project): either way, nothing exists to find. */
 export const absent = (e: unknown) => gone(e) || (e instanceof GcloudError && /SERVICE_DISABLED|has not been used in project|it is disabled/i.test(e.stderr));
+/** Firestore is still busy with a change just made (like creating the database): wait and try again. */
+const busy = (e: unknown) => e instanceof GcloudError && /ABORTED|concurrent/i.test(e.stderr);
 const orNull = async <T>(p: Promise<T>) => {
   try {
     return await p;
@@ -529,7 +531,7 @@ export class RealGoogle implements Google {
     await gcloud(["firestore", "databases", "create", `--location=${region}`, "--type=firestore-native", `--project=${project}`]);
   }
   async enablePitr(project: string) {
-    await gcloud(["firestore", "databases", "update", "--database=(default)", "--enable-pitr", `--project=${project}`]);
+    await retry(() => gcloud(["firestore", "databases", "update", "--database=(default)", "--enable-pitr", `--project=${project}`]), busy);
   }
   async listIndexes(project: string): Promise<FirestoreIndex[]> {
     const list = await gjson<{ name: string; fields: { fieldPath: string; order?: string }[] }[]>(["firestore", "indexes", "composite", "list", `--project=${project}`]);
@@ -540,7 +542,7 @@ export class RealGoogle implements Google {
     }));
   }
   async createIndex(project: string, idx: FirestoreIndex) {
-    await gcloud(["firestore", "indexes", "composite", "create", `--collection-group=${idx.collectionGroup}`, ...idx.fields.map((f) => `--field-config=field-path=${f.path},order=${f.order.toLowerCase()}`), "--async", `--project=${project}`]);
+    await retry(() => gcloud(["firestore", "indexes", "composite", "create", `--collection-group=${idx.collectionGroup}`, ...idx.fields.map((f) => `--field-config=field-path=${f.path},order=${f.order.toLowerCase()}`), "--async", `--project=${project}`]), busy);
   }
   async getServiceAccount(email: string) {
     const sa = await orNull(gjson<{ email: string; uniqueId: string }>(["iam", "service-accounts", "describe", email]));
