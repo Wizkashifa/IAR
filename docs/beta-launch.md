@@ -40,7 +40,7 @@ Social & Welfare aid goes through Purchase Requests, restricted to S&W and finan
 
 ## Steps
 
-0. **Check the code going out.** CI is green on the commit being deployed (tests, typecheck, build and the style rules). With `npm --prefix portal run dev` running, `npm --prefix portal run a11y -- --strict` passes on every screen. Look over `npm --prefix portal run shots` (each screen next to the demo, in `portal/.shots/report.html`) for anything that looks wrong.
+0. **Check the code going out.** CI is green on the commit being deployed (tests, typecheck, build and the style rules). With `npm --prefix portal run dev` running, `npm --prefix portal run a11y -- --strict` passes on every screen. Look over `npm --prefix portal run shots` (each screen in light and dark, desktop and phone, in `portal/.shots/report.html`) for anything that looks wrong.
 1. **Make the Sheet and send it to the office.** `npm --prefix ops/go-live install`, then `npm --prefix ops/go-live start -- --template --apply`. Share the Sheet with the office admins (email A in the plan).
 2. **Look first.** `npm --prefix ops/go-live start -- --sheet <Sheet link>` lists every change and makes none. If the Sheet has problems (an address that doesn't exist, a committee name changed), it lists them all; fix them in the Sheet and run again.
 3. **Apply.** `npm --prefix ops/go-live start -- --apply`. Say yes step by step. The steps done by hand (about 20 minutes), each with exact instructions and a check afterwards:
@@ -130,5 +130,5 @@ To pause the beta, remove the testers from `portal-role-beta@`; they lose access
 ## After the beta
 
 - **Production:** `go-live --production` opens the portal to every islam1.org account (it asks first). Install the Chat app for everyone in the Admin console.
-- **Facilities off Jira:** run IT & Maintenance and Jira side by side for two weeks, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next (the demo shows them).
+- **Facilities off Jira:** run IT & Maintenance and Jira side by side for two weeks, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next.
 - **People:** Google Groups is the record. A Members page in the portal, where chairs manage their own committee, is the planned next step, so nobody needs the Admin console for it.
