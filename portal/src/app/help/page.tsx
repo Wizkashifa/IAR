@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/Button";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { HELP_GUIDES, WHO_TO_ASK, type HelpGuide } from "@/lib/help";
@@ -25,8 +26,16 @@ export default async function HelpPage() {
   const recent = WHATS_NEW.slice(0, 3);
 
   return (
-    <>
-      <ModuleHead title="Help" lead="Step-by-step guides for each part of the portal, in plain words." />
+    <div className="stack loose">
+      <ModuleHead
+        title="Help"
+        lead="Step-by-step guides for each part of the portal, in plain words."
+        actions={
+          <Button href="/feedback?from=%2Fhelp" icon="message">
+            Send feedback
+          </Button>
+        }
+      />
 
       <LinkCards label="Guides">
         {guides.map((g) => (
@@ -54,11 +63,8 @@ export default async function HelpPage() {
               <li key={t}>{t}</li>
             ))}
           </ul>
-          <p className={styles.more}>
-            <Link href="/feedback?from=%2Fhelp">Send feedback</Link>
-          </p>
         </Panel>
       </div>
-    </>
+    </div>
   );
 }

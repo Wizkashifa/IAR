@@ -6,11 +6,13 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Section } from "@/components/Section";
-import { directory } from "@/lib/groups";
+import { directory, portalPeople } from "@/lib/groups";
+import { namesFor } from "@/lib/names";
+import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import { ORG } from "@/lib/org";
 import { portalSettings } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
-import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
+import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
 import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
@@ -51,6 +53,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const nameOf = (g: string) => dir.teams.find((t) => t.email === g)?.name ?? g;
   const gaps = teams.filter((t) => teamPeople(dir, t.email).chairs.length === 0 || !funds[t.email]).length;
   const beta = process.env.PORTAL_ACCESS_GROUP;
+  // Whom an admin can sign in as: everyone who can use the portal but themselves, by name, with their first team.
+  const others = isDevAuth() ? [] : (await portalPeople().catch(() => [])).filter((e) => e !== viewer.email.toLowerCase());
+  const otherNames = await namesFor(others);
+  const signInChoices: PersonOption[] = others
+    .map((e) => ({ email: e, name: otherNames.get(e) ?? e, note: membershipsOf(dir, e)[0]?.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
@@ -367,9 +375,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         ) : (
           <Panel title="Sign in as">
             <form action={startActingAs} className="grid">
-              <Field label="Their email">
-                <input name="email" type="email" placeholder={`name@${ORG.domain}`} required />
-              </Field>
+              <PeoplePicker
+                name="email"
+                label="Who"
+                people={signInChoices}
+                required
+                hint="Everyone who can use the portal. Someone in the beta group only through another group isn't listed."
+              />
               <div>
                 <Button type="submit" variant="primary">Sign in as them</Button>
               </div>

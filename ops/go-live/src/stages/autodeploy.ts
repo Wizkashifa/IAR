@@ -131,7 +131,7 @@ export const autodeploy: Stage = {
     if (!have)
       out.push({
         kind: "create",
-        text: `Make the trigger ${TRIGGER}: each change to portal/ merged into main is tested, built and deployed as ${DEPLOYER_SA} (about 8 minutes)`,
+        text: `Make the trigger ${TRIGGER}: each change to portal/ merged into main is tested, built and deployed as ${DEPLOYER_SA} (about 5 minutes)`,
         detail: [`Builds with ${BUILD_CONFIG}. A failed test stops it; the running portal stays as it was.`, "Watch the builds: Cloud Build → History in the Cloud console."],
         run: (c) => c.g.createBuildTrigger(p, r, desiredTrigger(c)),
       });
