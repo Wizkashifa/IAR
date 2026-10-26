@@ -23,7 +23,7 @@ function steps(ctx: Ctx): string[] {
     `   Visibility: "Make this Chat app available to specific people and groups in ${d}", and enter ${role("beta", d)} and ${role("admins", d)}.`,
     "   Make sure you're in one of those two groups yourself, or go-live can't add the app to the spaces. Save.",
     `2. Open ${console_.marketplaceSdk(p)} (Google Workspace Marketplace SDK → App configuration).`,
-    "   App visibility: Private (only people in your domain). Installation settings: Admin only install.",
+    "   App visibility: Private (only people in your domain). Installation settings: Individual + Admin Install (Chat apps can't be admin-only; the Chat visibility above still limits who sees it).",
     "   App integrations: tick Chat app (it uses the configuration from 1). Fill in the developer details with IAR's office address, save.",
     "   Store listing: app name IAR Portal, short description, the logo above, category Productivity; then Publish (Private listings aren't reviewed by Google).",
     `3. Install it for the beta group: Admin console → Apps → Google Workspace Marketplace apps (${console_.marketplaceApps}) → Add app → search "IAR Portal" →`,
