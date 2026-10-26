@@ -302,6 +302,7 @@ test("on a new project, a lookup through an API that isn't on yet means nothing 
   const off = new GcloudError(["firestore", "databases", "describe"], "ERROR: (gcloud.firestore.databases.describe) PERMISSION_DENIED: Cloud Firestore API has not been used in project iar-portal before or it is disabled.\n  reason: SERVICE_DISABLED");
   assert.equal(absent(off), true);
   assert.equal(absent(new GcloudError(["run"], "NOT_FOUND: Resource 'x' was not found")), true);
+  assert.equal(absent(new GcloudError(["run", "services", "describe"], "ERROR: (gcloud.run.services.describe) Cannot find service [iar-portal]")), true);
   assert.equal(absent(new GcloudError(["run"], "PERMISSION_DENIED: Permission 'run.services.get' denied")), false);
   assert.equal(absent(new Error("SERVICE_DISABLED")), false);
 });

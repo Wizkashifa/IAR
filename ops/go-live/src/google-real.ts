@@ -85,7 +85,7 @@ function gcloud(args: string[], input?: string): Promise<string> {
   });
 }
 const gjson = async <T>(args: string[]): Promise<T> => JSON.parse((await gcloud([...args, "--format=json"])) || "null") as T;
-const gone = (e: unknown) => e instanceof GcloudError && /NOT_FOUND|not found|does not exist|404/i.test(e.stderr);
+const gone = (e: unknown) => e instanceof GcloudError && /NOT_FOUND|not found|cannot find|does not exist|404/i.test(e.stderr);
 /** Not there, or its API isn't on yet (a new project): either way, nothing exists to find. */
 export const absent = (e: unknown) => gone(e) || (e instanceof GcloudError && /SERVICE_DISABLED|has not been used in project|it is disabled/i.test(e.stderr));
 /** The project a service account belongs to (name@project.iam.gserviceaccount.com). gcloud needs it when no project is set. */
