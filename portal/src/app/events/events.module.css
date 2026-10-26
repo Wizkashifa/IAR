@@ -58,7 +58,6 @@
 
   /* The request page */
   .about { white-space: pre-wrap; margin: 0; }
-  .lineTitle { font-weight: 700; }
   .history { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
   .history li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--s-2); align-items: start; font-size: var(--t-md); }
   .note { color: var(--ink-2); }
@@ -73,11 +72,14 @@
   .entry.cal { color: var(--ink-2); }
   .entry.cal .time { color: var(--ink-2); font-weight: 400; }
   .time { font-weight: 700; color: var(--ink); }
+  /* The program's name: the first thing to read on each line, on screen and on paper. */
+  .program { font-size: var(--t-base); font-weight: 700; color: var(--ink); }
   .cells { display: grid; gap: var(--s-1); font-size: var(--t-sm); margin-top: var(--s-1); }
   @media (max-width: 760px) { .entry { grid-template-columns: 1fr; } }
   @media print {
     .noprint { display: none !important; }
     .entry { grid-template-columns: 110px 1fr 1fr; padding: 4px 6px; font-size: 11px; break-inside: avoid; }
     .entry.cal { background: none; }
+    .program { font-size: var(--t-base); }
   }
 }
