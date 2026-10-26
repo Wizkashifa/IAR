@@ -15,7 +15,7 @@ function steps(ctx: Ctx): string[] {
   const p = ctx.opt.project, d = ctx.opt.domain, base = portalBase(ctx);
   return [
     `1. Open ${console_.chatConfig(p)} (Google Chat API → Configuration).`,
-    '   App name: IAR Portal. Avatar URL: ' + `${base}/iar-logo-white.png` + '. Description: "Alerts and approvals from the IAR Portal".',
+    '   App name: IAR Portal. Avatar URL: ' + `${base}/brand/iar-logo-green.png` + '. Description: "Alerts and approvals from the IAR Portal".',
     "   Interactive features: on. Functionality: tick both \"Receive 1:1 messages\" and \"Join spaces and group conversations\".",
     "   If asked, don't build it as a Google Workspace add-on: choose the plain Chat app.",
     `   Connection settings: HTTP endpoint URL: ${base}/api/chat. Authentication audience: HTTP endpoint URL.`,
