@@ -9,6 +9,7 @@ import { findModule } from "@/lib/modules";
 import { requireViewer } from "@/lib/viewer";
 import { GUIDE_ICON } from "../icons";
 import styles from "../help.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,7 @@ export default async function HelpGuidePage({ params }: { params: Promise<{ modu
 
   return (
     <>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link href="/help">Help</Link> / {guide.title}
-      </nav>
+      <Crumb trail={[{ href: "/help", label: "Help" }]} here={guide.title} />
       <ModuleHead
         title={guide.title}
         lead={guide.summary}

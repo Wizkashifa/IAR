@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cardStore, type CardStatus } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { nameResolver } from "@/lib/names";
 import { emailsIn, type RowData } from "@/lib/card-row";
 import { groupForViewer } from "@/lib/needs-you";
@@ -82,7 +82,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
         />
       )}
       {team && onTeam && review.length > reviewable && (
-        <p className="sub">Your own requests are reviewed by someone else on the team.</p>
+        <p className="hint">Your own requests are reviewed by someone else on the team.</p>
       )}
       {team && <ItemList title="Scheduled and in progress" right={`${working.length}`} rows={withRequester(working)} empty="Nothing scheduled." />}
       {team && asked.length > 0 && (

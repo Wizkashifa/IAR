@@ -1,5 +1,5 @@
 import "server-only";
-import { todayLocal } from "../away";
+import { todayLocal } from "../dates";
 import type { Card } from "../cards";
 import type { Role } from "../org";
 import { addFrequency, type TicketSchedule } from "./schedules";

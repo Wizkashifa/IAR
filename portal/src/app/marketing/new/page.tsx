@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireViewer } from "@/lib/viewer";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { canRequestAgain, copiedNote, marketingAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { isMarketingCard } from "@/lib/marketing/workflow";
@@ -9,13 +9,13 @@ import { MARKETING_TYPES, isMarketingKind } from "@/lib/marketing/forms";
 import { MARKETING_KINDS } from "@/lib/marketing/types";
 import { marketingFolder } from "@/lib/marketing/drive";
 import { Button } from "@/components/Button";
-import { Icon } from "@/components/Icon";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { committeesFor, createMarketing } from "../actions";
 import MarketingForm from "../MarketingForm";
 import { TYPE_ICON } from "../ui";
-import styles from "../marketing.module.css";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +29,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
   const { type, from } = await searchParams;
   const viewer = await requireViewer();
   const crumb = (
-    <nav className="crumb" aria-label="Breadcrumb">
-      <Link href="/marketing">Marketing Requests</Link> / New request
-    </nav>
+    <Crumb trail={[{ href: "/marketing", label: "Marketing Requests" }]} here="New request" />
   );
 
   if (!isMarketingKind(type)) {
@@ -44,19 +42,13 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
         <Note>
           Marketing a program or event? Put it on the <Link href="/events/new">event request</Link>. It asks marketing&apos;s questions and unlocks marketing once the event is approved.
         </Note>
-        <div className={styles.types}>
+        <LinkCards label="Kinds of marketing request">
           {MARKETING_KINDS.map((k) => (
-            <Link key={k} href={`/marketing/new?type=${k}`} className={styles.type}>
-              <span className={styles.typeIcon} aria-hidden="true">
-                <Icon name={TYPE_ICON[k]} />
-              </span>
-              <div>
-                <h2>{MARKETING_TYPES[k].label}</h2>
-                <p>{MARKETING_TYPES[k].blurb}</p>
-              </div>
-            </Link>
+            <LinkCard key={k} href={`/marketing/new?type=${k}`} icon={TYPE_ICON[k]} title={MARKETING_TYPES[k].label}>
+              {MARKETING_TYPES[k].blurb}
+            </LinkCard>
           ))}
-        </div>
+        </LinkCards>
       </div>
     );
   }

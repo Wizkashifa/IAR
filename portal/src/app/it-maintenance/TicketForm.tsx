@@ -9,8 +9,8 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/tickets/input";
 import { TEAM_CHOICE, URGENCIES, URGENCY, type TicketTeam, type Urgency } from "@/lib/tickets/types";
-import type { TicketFormState } from "./actions";
-import styles from "./tickets.module.css";
+import { FormErrors, type FormState } from "@/components/FormErrors";
+import { Choice, Choices } from "@/components/Choices";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"];
 
@@ -23,7 +23,7 @@ function Submit() {
   );
 }
 
-export default function TicketForm({ action, locations }: { action: (prev: TicketFormState, form: FormData) => Promise<TicketFormState>; locations: string[] }) {
+export default function TicketForm({ action, locations }: { action: (prev: FormState, form: FormData) => Promise<FormState>; locations: string[] }) {
   const [state, formAction] = useActionState(action, { errors: [] });
   const [team, setTeam] = useState<TicketTeam | "">("");
   const [room, setRoom] = useState("");
@@ -43,32 +43,14 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
   return (
     <form action={formAction} className="stack">
       <FormStarted form="ticket" />
-      {state.errors.length > 0 && (
-        <div role="alert">
-          <Note tone="bad">
-            Please fix these and send it again:
-            <ul>
-              {state.errors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </Note>
-        </div>
-      )}
+      <FormErrors errors={state.errors} />
 
       <Panel title="Which team?">
-        <fieldset className={styles.section}>
-          <legend className="sr-only">Which team?</legend>
-          <div className={styles.choices}>
-            {(["facilities", "it"] as TicketTeam[]).map((t) => (
-              <label key={t} className={styles.choice}>
-                <input type="radio" name="team" value={t} checked={team === t} onChange={() => setTeam(t)} required />
-                <strong>{TEAM_CHOICE[t].label}</strong>
-                <small>{TEAM_CHOICE[t].hint}</small>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <Choices legend="Which team?" legendHidden>
+          {(["facilities", "it"] as TicketTeam[]).map((t) => (
+            <Choice key={t} type="radio" name="team" value={t} checked={team === t} onChange={() => setTeam(t)} required label={<strong>{TEAM_CHOICE[t].label}</strong>} hint={TEAM_CHOICE[t].hint} />
+          ))}
+        </Choices>
       </Panel>
 
       <Panel title="Where and what">
@@ -76,7 +58,7 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
           <Field label="What do you need, in a few words?" required>
             <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={TITLE_MAX} required placeholder={team === "it" ? "Projector in Room 240 shows no picture" : "Faucet in the wudu area keeps dripping"} />
           </Field>
-          <div className={styles.grid2}>
+          <div className="grid">
             <Field label="Where is it?" required>
               <select name="room" value={room} onChange={(e) => setRoom(e.target.value)} required>
                 <option value="" disabled>
@@ -104,21 +86,14 @@ export default function TicketForm({ action, locations }: { action: (prev: Ticke
       </Panel>
 
       <Panel title="How urgent is it?">
-        <fieldset className={styles.section}>
-          <legend className="sr-only">How urgent is it?</legend>
-          <div className={styles.choices}>
+        <div className="stack">
+          <Choices legend="How urgent is it?" legendHidden>
             {URGENCIES.map((u) => (
-              <label key={u} className={styles.choice}>
-                <input type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} />
-                <strong>{URGENCY[u].label}</strong>
-                <small>
-                  {URGENCY[u].hint} The team aims to pick it up {URGENCY[u].target}.
-                </small>
-              </label>
+              <Choice key={u} type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} label={<strong>{URGENCY[u].label}</strong>} hint={`${URGENCY[u].hint} The team aims to pick it up ${URGENCY[u].target}.`} />
             ))}
-          </div>
+          </Choices>
           {urgency === "urgent" && <Note tone="warn">If anyone is in danger (fire, gas, flooding near power), call 911 first, then tell the front office.</Note>}
-        </fieldset>
+        </div>
       </Panel>
 
       <FormActions>

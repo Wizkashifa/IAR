@@ -10,6 +10,7 @@ import { Field, FormActions } from "@/components/Field";
 import { Icon, ICON_NAMES } from "@/components/Icon";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { Widgets } from "./Widgets";
+import { Pieces } from "./Pieces";
 import { RequestExamples } from "./RequestExamples";
 import styles from "./styles.module.css";
 
@@ -160,6 +161,8 @@ export default function StylesPage() {
           </FormActions>
         </form>
       </Panel>
+
+      <Pieces />
 
       <Widgets />
 

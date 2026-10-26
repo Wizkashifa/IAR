@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { emailsIn } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";
@@ -13,8 +13,11 @@ import { requireViewer } from "@/lib/viewer";
 import { ticketActor } from "@/lib/tickets/context";
 import { TEAM_LABEL, type TicketTeam } from "@/lib/tickets/types";
 import { type TicketCard, canImportJira, isOverdue, isTicketCard, isWatching, teamsOf, withTeam } from "@/lib/tickets/workflow";
-import { TicketBoard, TicketFlash } from "./ui";
+import { TicketBoard, FLASH } from "./ui";
+import { FlashNote } from "@/components/FlashNote";
 import styles from "./tickets.module.css";
+import { Chips } from "@/components/Chips";
+import { Pill } from "@/components/Pill";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "IT & Maintenance" };
@@ -77,7 +80,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         }
       />
       <HelpBox module="it-maintenance" />
-      <TicketFlash ok={sp.ok} error={sp.error} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
 
       {worker && (
         <nav className={styles.tabs} aria-label="Show">
@@ -86,7 +89,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           </Link>
           <Link href="/it-maintenance?view=team" className={onTeamTab ? `${styles.tab} ${styles.on}` : styles.tab} aria-current={onTeamTab ? "page" : undefined}>
             {team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`}
-            {teamNew > 0 && <span className={styles.badge}>{teamNew} new</span>}
+            {teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill>}
           </Link>
           <span className={styles.spacer} />
           <Link href="/it-maintenance/schedules" className={styles.quiet}>
@@ -104,29 +107,11 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         <div className="stack">
           <div className={styles.filterBar}>
             {teams.length > 1 && (
-              <div className={styles.chips} role="group" aria-label="Team">
-                {(["all", ...teams] as const).map((t) => (
-                  <Link key={t} href={qs({ team: t })} className={t === team ? `${styles.chip} ${styles.chipOn}` : styles.chip} aria-current={t === team ? "true" : undefined}>
-                    {t === "all" ? "Both teams" : TEAM_LABEL[t]}
-                  </Link>
-                ))}
-              </div>
+              <Chips label="Team" chips={(["all", ...teams] as const).map((t) => ({ label: t === "all" ? "Both teams" : TEAM_LABEL[t], href: qs({ team: t }), on: t === team }))} />
             )}
-            <div className={styles.chips} role="group" aria-label="Layout">
-              {(["board", "list"] as const).map((v) => (
-                <Link key={v} href={qs({ layout: v })} className={v === layout ? `${styles.chip} ${styles.chipOn}` : styles.chip} aria-current={v === layout ? "true" : undefined}>
-                  {v === "board" ? "Board" : "List"}
-                </Link>
-              ))}
-            </div>
+            <Chips label="Layout" chips={(["board", "list"] as const).map((v) => ({ label: v === "board" ? "Board" : "List", href: qs({ layout: v }), on: v === layout }))} />
           </div>
-          <div className={styles.chips} role="group" aria-label="Filter">
-            {FILTERS.map((f) => (
-              <Link key={f.id} href={qs({ f: f.id })} className={f.id === filter.id ? `${styles.chip} ${styles.chipOn}` : styles.chip} aria-current={f.id === filter.id ? "true" : undefined}>
-                {f.label} <span className={styles.n}>{queue.filter((c) => f.test(c, actor.email, now, today)).length}</span>
-              </Link>
-            ))}
-          </div>
+          <Chips label="Filter" chips={FILTERS.map((f) => ({ label: f.label, href: qs({ f: f.id }), on: f.id === filter.id, count: queue.filter((c) => f.test(c, actor.email, now, today)).length }))} />
           {layout === "board" ? (
             <TicketBoard cards={shown} showTeam={team === "all"} names={names} />
           ) : (

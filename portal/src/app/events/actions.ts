@@ -2,26 +2,28 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cardStore, ConflictError } from "@/lib/cards";
-import { checkComment, withComment } from "@/lib/comments";
 import { deliver } from "@/lib/notifications";
 import { internalPath } from "@/lib/links";
-import type { Notice } from "@/lib/purchases/notices";
+import type { Notice } from "@/lib/notices";
 import { requireViewer, type Viewer } from "@/lib/viewer";
-import { type EventContext, busyFor, committeesFor, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
+import { type EventContext, busyFor, committeesFor, eventAccess, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
 import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
 import { roomById } from "@/lib/events/rooms";
 import { taskUnlockNotices } from "@/lib/events/tasks";
 import { type Clash, eventChecks } from "@/lib/events/rules";
-import { addDays } from "@/lib/events/series";
+import { addDays } from "@/lib/dates";
 import * as sr from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import type { Check, EventInput } from "@/lib/events/types";
 import * as wf from "@/lib/events/workflow";
 import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
+import { lc } from "@/lib/text";
+import { WorkflowError } from "@/lib/workflow-core";
+import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type EventFormState = { errors: string[] };
 
 /** A clash, as the form shows it: whether its holder can be asked, and if not, why. */
 export type ClashView = { key: string; label: string; roomName: string; start: string; end: string; dates: string[]; kind: Clash["kind"]; askable: boolean; why?: string };
@@ -29,7 +31,6 @@ export type TimelineView = { roomName: string; date: string; items: { start: str
 export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timeline: TimelineView | null };
 
 const nowIso = () => new Date().toISOString();
-const lc = (s: string) => s.trim().toLowerCase();
 
 async function checksFor(ctx: EventContext, viewer: Viewer, input: EventInput, editing?: wf.EventCard) {
   const busy = await busyFor(ctx, input);
@@ -116,7 +117,7 @@ function calendarTrouble(card: wf.EventCard, error: string | undefined): { card:
 }
 
 /** Create or resubmit an event request, optionally asking for a booked time. `editing`: the card being resubmitted. */
-export async function submitEvent(editing: string | null, _prev: EventFormState, form: FormData): Promise<EventFormState> {
+export async function submitEvent(editing: string | null, _prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
   let raw: EventFormInput & { ask?: { key?: string; reason?: string }; renews?: string };
@@ -213,48 +214,37 @@ export async function submitEvent(editing: string | null, _prev: EventFormState,
   redirect(`/events/${card.id}?sent=1`);
 }
 
+const events = { path: "/events", is: wf.isEventCard, canOpen: async (card: wf.EventCard, viewer: Viewer) => (await eventAccess(card, viewer)).open };
+
 /** Approve, send back, deny or cancel. */
 export async function actOnEvent(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
-  const id = String(form.get("id") ?? "");
-  const action = String(form.get("action") ?? "") as wf.EventAction;
   const note = String(form.get("note") ?? "").slice(0, 1000);
-  const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isEventCard(card)) redirect("/events");
-  if (String(form.get("expected") ?? "") !== card.updatedAt) redirect(`/events/${id}?error=${encodeURIComponent("This request changed while you were looking at it. Check it again before acting.")}`);
   const ctx = await eventContext();
-  const directors = ctx.directorsOf(card.event.committeeGroup);
-  const now = nowIso();
-  let error: string | null = null;
-  try {
-    let next: wf.EventCard;
-    if (action === "approve") {
-      // Check the calendar again: something may have been booked since it was submitted.
-      const live = (await checksFor(ctx, viewer, card.event, card)).clashes.filter((c) => c.kind !== "pending");
-      if (live.length) throw new wf.EventError(`It now clashes with ${live.map((c) => c.label).join(", ")} on the room calendar. Send it back so the requester can pick another time.`);
-      next = wf.approve(card, actor, directors, now, note || undefined);
-    } else if (action === "return") next = wf.returnForChanges(card, actor, directors, now, note);
-    else if (action === "deny") next = wf.deny(card, actor, directors, now, note);
-    else if (action === "cancel") next = wf.cancel(card, actor, directors, now);
-    else throw new wf.EventError("Unknown action.");
-    const synced = await syncHolds(next, ctx);
-    const trouble = calendarTrouble(synced.card, synced.error);
-    await store.save(trouble.card, card.updatedAt);
-    const notices = [...eventNotices(card, trouble.card, actor, directors), ...taskUnlockNotices(card, trouble.card), ...trouble.notices];
-    if (action === "cancel") notices.push(...(await withdrawOpenAsks(card.id, actor, now)));
-    await deliver(notices, actor.email);
-  } catch (err) {
-    if (err instanceof wf.EventError || err instanceof ConflictError) error = err.message;
-    else {
-      console.error("event action failed", err);
-      error = "Something went wrong. Nothing was changed.";
-    }
-  }
-  revalidatePath("/events");
-  revalidatePath(`/events/${id}`);
-  redirect(error ? `/events/${id}?error=${encodeURIComponent(error)}` : `/events/${id}?ok=${action}`);
+  await actOnCard(form, viewer, {
+    ...events,
+    async act(card, action, now) {
+      const directors = ctx.directorsOf(card.event.committeeGroup);
+      let next: wf.EventCard;
+      if (action === "approve") {
+        // Check the calendar again: something may have been booked since it was submitted.
+        const live = (await checksFor(ctx, viewer, card.event, card)).clashes.filter((c) => c.kind !== "pending");
+        if (live.length) throw new WorkflowError(`It now clashes with ${live.map((c) => c.label).join(", ")} on the room calendar. Send it back so the requester can pick another time.`);
+        next = wf.approve(card, actor, directors, now, note || undefined);
+      } else if (action === "return") next = wf.returnForChanges(card, actor, directors, now, note);
+      else if (action === "deny") next = wf.deny(card, actor, directors, now, note);
+      else if (action === "cancel") next = wf.cancel(card, actor, directors, now);
+      else return unknownAction();
+      const synced = await syncHolds(next, ctx);
+      const trouble = calendarTrouble(synced.card, synced.error);
+      return {
+        next: trouble.card,
+        notices: [...eventNotices(card, trouble.card, actor, directors), ...taskUnlockNotices(card, trouble.card), ...trouble.notices],
+        after: action === "cancel" ? () => withdrawOpenAsks(card.id, actor, now) : undefined,
+      };
+    },
+  });
 }
 
 export async function actOnEventWith(action: wf.EventAction, form: FormData): Promise<void> {
@@ -370,29 +360,6 @@ export async function withdrawAsk(form: FormData): Promise<void> {
 export async function commentOnEvent(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
-  const id = String(form.get("id") ?? "");
-  const store = await cardStore();
-  const check = checkComment(form.get("text"));
-  let error: string | null = check.ok ? null : check.error;
-  if (check.ok) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const card = await store.get(id);
-      if (!wf.isEventCard(card)) redirect("/events");
-      const next = withComment(card, { at: nowIso(), by: actor.email, name: viewer.name, text: check.text });
-      try {
-        await store.save(next, card.updatedAt);
-        const ctx = await eventContext();
-        await deliver(eventCommentNotices(next, actor, check.text, ctx.directorsOf(card.event.committeeGroup)), actor.email);
-        error = null;
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) {
-          if (!(err instanceof ConflictError)) console.error("comment failed", err);
-          error = "Your comment couldn't be saved. Try again.";
-        }
-      }
-    }
-  }
-  revalidatePath(`/events/${id}`);
-  redirect(error ? `/events/${id}?error=${encodeURIComponent(error)}#comments` : `/events/${id}?ok=commented#comments`);
+  const ctx = await eventContext();
+  await commentOnCard(form, viewer, { ...events, notices: (card, text) => eventCommentNotices(card, actor, text, ctx.directorsOf(card.event.committeeGroup)) });
 }

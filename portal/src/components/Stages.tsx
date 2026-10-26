@@ -1,4 +1,4 @@
-import type { Step, StepFlag } from "@/lib/next-step";
+import type { Step, StepFlag } from "@/lib/steps";
 import { Pill } from "./Pill";
 import styles from "./Stages.module.css";
 

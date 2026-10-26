@@ -1,0 +1,4 @@
+@layer components {
+  .form { display: flex; gap: var(--s-2); max-width: 720px; }
+  .form input { flex: 1; min-width: 0; }
+}

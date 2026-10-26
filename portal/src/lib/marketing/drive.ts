@@ -1,16 +1,14 @@
 import "server-only";
 import { isDevAuth } from "../dev";
 import { uploadToYearFolder } from "../drive";
-import { portalSettings } from "../portal-settings";
 import { MARKETING_TYPES } from "./forms";
 import type { MarketingFile, MarketingKind } from "./types";
 
 /**
- * Marketing request files go to the marketing Shared Drive folder an admin
- * picks in Portal Settings, one folder per year and one per request
+ * Marketing request files go to the "Marketing Files" Shared Drive go-live
+ * makes (MARKETING_DRIVE_FOLDER_ID), one folder per year and one per request
  * ("2026 / MK-1004 · Graphic design"). The portal's runtime service account
- * must be a Content manager on that Shared Drive, and the marketing team's
- * Google Group needs at least Viewer access to open the links.
+ * and the marketing team's Google Group are Content managers on it.
  *
  * Until the folder is set, the forms still work: people share a Google Drive
  * link instead. In dev mode files aren't kept, only their names and sizes.
@@ -20,7 +18,7 @@ import type { MarketingFile, MarketingKind } from "./types";
 /** The folder files go in, or null when uploads aren't set up (dev mode always takes them). */
 export async function marketingFolder(): Promise<string | null> {
   if (isDevAuth()) return "dev";
-  return (await portalSettings()).marketingDriveFolder || null;
+  return process.env.MARKETING_DRIVE_FOLDER_ID || null;
 }
 
 export const NOT_SET_UP = "File uploads for marketing aren't set up yet. Share your files with a Google Drive link instead.";

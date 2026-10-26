@@ -1,19 +1,23 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { Button, buttonClass } from "@/components/Button";
+import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Field } from "@/components/Field";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelNote } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { cardStore, type Vendor } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { shortFund } from "@/lib/purchases/accounts";
 import { visibleVendors, w9IsOld } from "@/lib/purchases/vendors";
-import { Flash, fmtDate } from "../ui";
+import { FlashNote } from "@/components/FlashNote";
+import { OK_TEXT, fmtDate } from "../ui";
 import { mergeVendor, updateVendor } from "./actions";
 import styles from "../purchases.module.css";
+import { DataTable, cell } from "@/components/DataTable";
+import { Disclosure } from "@/components/Disclosure";
+import { SearchForm } from "@/components/SearchForm";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -33,9 +37,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb">
-        <Link href="/purchases">Purchase Requests</Link> / Saved vendors
-      </nav>
+      <Crumb trail={[{ href: "/purchases", label: "Purchase Requests" }]} here="Saved vendors" />
       <ModuleHead
         title="Saved vendors"
         lead="Every committee shares this list. Once a vendor is paid, the next request to them fills in their address and W-9 status. A W-9 is needed only for labor, and only once."
@@ -46,18 +48,8 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         }
       />
       <div className={`stack ${styles.body}`}>
-        <Flash ok={ok} error={error} />
-        <form action="/purchases/vendors" className={`${styles.actRow} ${styles.search}`} role="search">
-          <input name="q" defaultValue={q} placeholder="Search by name or address" aria-label="Search vendors" />
-          <Button type="submit" icon="search">
-            Search
-          </Button>
-          {q && (
-            <Link href="/purchases/vendors" className={buttonClass({ variant: "quiet" })}>
-              Clear
-            </Link>
-          )}
-        </form>
+        <FlashNote ok={ok} error={error} messages={OK_TEXT} />
+        <SearchForm action="/purchases/vendors" label="Search vendors" value={q} placeholder="Search by name or address" clear />
 
         <Panel title="Vendors" right={`${shared.filter(match).length}`} flush>
           <VendorTable list={shared.filter(match)} finance={finance} />
@@ -65,7 +57,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
         {restricted.length > 0 && (
           <Panel title="Social & Welfare payees" right={<Pill tone="bad">Restricted</Pill>} flush>
-            <p className={styles.panelNote}>Only Social &amp; Welfare and the finance office see these. They&apos;re never offered on other committees&apos; requests, so nobody can find out who received help.</p>
+            <PanelNote>Only Social &amp; Welfare and the finance office see these. They&apos;re never offered on other committees&apos; requests, so nobody can find out who received help.</PanelNote>
             <VendorTable list={restricted.filter(match)} finance={finance} />
           </Panel>
         )}
@@ -73,8 +65,8 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         {finance && (shared.length > 1 || restricted.length > 1) && (
           <Panel title="Merge duplicates">
             <form action={mergeVendor} className="stack">
-              <p className={styles.why}>Same vendor typed two ways? Keep one record; its committees, payment count and W-9 are combined.</p>
-              <div className={styles.actGrid}>
+              <p className="hint">Same vendor typed two ways? Keep one record; its committees, payment count and W-9 are combined.</p>
+              <div className="grid">
                 <Field label="Keep">
                   <VendorSelect name="keep" shared={shared} restricted={restricted} />
                 </Field>
@@ -119,14 +111,14 @@ function VendorSelect({ name, shared, restricted }: { name: string; shared: Vend
 function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
   if (list.length === 0) return <EmptyState icon="search">No saved vendors match.</EmptyState>;
   return (
-    <table className={styles.table}>
+    <DataTable>
       <thead>
         <tr>
           <th>Vendor</th>
           <th>Used by</th>
           <th>W-9</th>
           <th>Last paid</th>
-          <th className={styles.num}>Times paid</th>
+          <th className={cell.num}>Times paid</th>
         </tr>
       </thead>
       <tbody>
@@ -134,11 +126,10 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
           <tr key={v.id}>
             <td data-label="Vendor">
               <strong>{v.name}</strong>
-              {v.address && <span className={`${styles.sub} ${styles.said}`}>{v.address}</span>}
-              {finance && v.contact && <span className={styles.sub}>{v.contact}</span>}
+              {v.address && <span className={`${cell.sub} ${styles.said}`}>{v.address}</span>}
+              {finance && v.contact && <span className={cell.sub}>{v.contact}</span>}
               {finance && (
-                <details>
-                  <summary className={buttonClass({ variant: "quiet", size: "small" })}>Edit</summary>
+                <Disclosure summary="Edit" button="quiet">
                   <form action={updateVendor} className="stack">
                     <input type="hidden" name="id" value={v.id} />
                     <Field label="Name" required>
@@ -156,10 +147,10 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                       </Button>
                     </div>
                   </form>
-                </details>
+                </Disclosure>
               )}
             </td>
-            <td data-label="Used by" className={styles.when}>
+            <td data-label="Used by" className="hint">
               {(v.funds ?? []).map(shortFund).join(", ") || "—"}
             </td>
             <td data-label="W-9">
@@ -172,22 +163,22 @@ function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
                 <Pill>None on file</Pill>
               )}
               {finance && v.w9FileId && (
-                <span className={styles.sub}>
+                <span className={cell.sub}>
                   <a href={`https://drive.google.com/file/d/${v.w9FileId}/view`} target="_blank" rel="noreferrer">
                     Open W-9
                   </a>
                 </span>
               )}
             </td>
-            <td data-label="Last paid" className={`${styles.when} ${styles.nowrap}`}>
+            <td data-label="Last paid" className={`hint ${cell.nowrap}`}>
               {v.lastPaidAt ? fmtDate(v.lastPaidAt) : "—"}
             </td>
-            <td data-label="Times paid" className={styles.num}>
+            <td data-label="Times paid" className={cell.num}>
               {v.timesPaid ?? 0}
             </td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </DataTable>
   );
 }

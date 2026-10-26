@@ -3,22 +3,17 @@ import { useActionState } from "react";
 import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { Field, FormActions } from "@/components/Field";
-import { Note } from "@/components/Note";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import type { Away } from "@/lib/away";
-import { saveAway, type AwayFormState } from "./actions";
-import styles from "./away.module.css";
+import { saveAway } from "./actions";
+import { FormErrors, type FormState } from "@/components/FormErrors";
 
 export function AwayForm({ current, today, people }: { current: Away | null; today: string; people: PersonOption[] }) {
-  const [state, action, pending] = useActionState<AwayFormState, FormData>(saveAway, { errors: [] });
+  const [state, action, pending] = useActionState<FormState, FormData>(saveAway, { errors: [] });
   return (
     <form action={action} className="stack">
-      {state.errors.length > 0 && (
-        <Note tone="bad">
-          {state.errors.length === 1 ? state.errors[0] : <ul className={styles.errors}>{state.errors.map((e) => <li key={e}>{e}</li>)}</ul>}
-        </Note>
-      )}
-      <div className={styles.dates}>
+      <FormErrors errors={state.errors} />
+      <div className="grid two">
         <DateField name="from" label="First day away" defaultValue={current?.from ?? today} required />
         <DateField name="until" label="Last day away" min={today} defaultValue={current?.until ?? null} required />
       </div>

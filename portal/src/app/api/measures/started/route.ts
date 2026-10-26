@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { formStartStore } from "@/lib/form-starts";
 import { isFormName } from "@/lib/measures";
 import { getViewer } from "@/lib/viewer";

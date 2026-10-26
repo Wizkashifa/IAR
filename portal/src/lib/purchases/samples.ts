@@ -47,7 +47,7 @@ export async function samplePurchases(): Promise<Card[]> {
   const make = (owner: wf.Actor, input: Omit<PurchaseInput, "attestationName">, daysAgo: number, files: string[] = []) => {
     const cards = [
       { last4: "2093", fund: "Imam's Office Fund Expenses" },
-      { last4: "8890", fund: "Cleaning Committee Expenses" },
+      { last4: "1003", fund: "Cleaning Committee Expenses" },
       { last4: "4120", fund: "Youth Expenses" },
     ];
     const r = parsePurchaseInput({ ...input, attestationName: owner.name }, { requesterName: owner.name, cards, vendors });

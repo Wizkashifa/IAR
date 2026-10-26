@@ -70,9 +70,6 @@ export function checkFiles(files: { name: string; size: number }[], already = 0)
 }
 
 /** "1.2 MB" or "240 KB". */
-export function sizeText(bytes: number): string {
-  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
 
 /** The files on a request, oldest first (older requests have none). */
 export const filesOf = (m: { files?: MarketingFile[] }): MarketingFile[] => m.files ?? [];

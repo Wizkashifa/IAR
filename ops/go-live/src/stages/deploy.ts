@@ -36,6 +36,7 @@ export function desiredEnv(ctx: Ctx, url: string, strict = false): Record<string
     PO_DRIVE_FOLDER_ID: folder("po"),
     W9_DRIVE_FOLDER_ID: folder("w9"),
     MAINTENANCE_DRIVE_FOLDER_ID: folder("photos"),
+    MARKETING_DRIVE_FOLDER_ID: folder("marketing"),
     PORTAL_MAIL_FROM: mailbox(d),
     PORTAL_CALENDAR_SUBJECT: mailbox(d),
     PORTAL_CHAT: "on",
@@ -128,6 +129,7 @@ export const deploy: Stage = {
       out.push({
         kind: "manual",
         text: `Prove to Google that you manage ${opt.domain}, so Cloud Run can serve ${host}`,
+        ask: "later",
         detail: [`Run this in a terminal: gcloud domains verify ${opt.domain}`, `It opens Google Search Console (${console_.searchConsole}). ${opt.domain} is usually verified already through Workspace; if so, it just confirms.`],
         run: (c) =>
           byHand(c, "domain-verify", [`Run: gcloud domains verify ${opt.domain}`, "and finish the steps in Search Console."], async () =>
@@ -135,13 +137,23 @@ export const deploy: Stage = {
           ),
       });
     const mapping = svc ? await g.getDomainMapping(p, opt.region, host) : null;
-    if (!mapping) out.push({ kind: "create", text: `Map ${host} to the portal (Google then says which DNS records to add)`, run: (c) => c.g.createDomainMapping(p, opt.region, host, SERVICE).then(() => undefined) });
+    // portal.<domain> can wait: the beta can start on the Cloud Run address, so each of these can be put off.
+    const unverified = async (c: Ctx) => !(await c.g.verifiedDomains()).includes(opt.domain) && (c.log(`  Skipped: ${opt.domain} isn't verified yet. Run go-live again once it is.`), true);
+    if (!mapping)
+      out.push({
+        kind: "create",
+        text: `Map ${host} to the portal (Google then says which DNS records to add)`,
+        ask: "later",
+        run: async (c) => void ((await unverified(c)) || (await c.g.createDomainMapping(p, opt.region, host, SERVICE))),
+      });
     // Once written, the draft is the admin's: it may have been sent, so it's never written again.
     if (!state.dnsDraftId && !(mapping && (await ready(ctx, mapping))))
       out.push({
         kind: "create",
         text: `Write a Gmail draft (not sent) in your mailbox to IAR's DNS manager with the exact records for ${host}; you read it and send it`,
+        ask: mapping ? undefined : "later",
         run: async (c) => {
+          if (await unverified(c)) return;
           const m = await c.g.getDomainMapping(p, opt.region, host);
           if (!m?.records.length) throw new Stop(`Google hasn't said which DNS records ${host} needs yet. Run go-live again in a few minutes.`);
           const to = c.state.dnsManagerEmail ?? (c.state.dnsManagerEmail = await askText(c, "  The DNS manager's email address (kept only in .state.json on this computer):"));

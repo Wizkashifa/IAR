@@ -10,7 +10,7 @@ import { Pill } from "@/components/Pill";
 import { FEEDBACK_KIND_LABEL, feedbackStore } from "@/lib/feedback";
 import { internalPath } from "@/lib/links";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDateTime } from "../ui";
+import { fmtDateTime } from "@/lib/format";
 import { FeedbackForm } from "./FeedbackForm";
 import { setFeedbackStatus } from "./actions";
 import styles from "./feedback.module.css";

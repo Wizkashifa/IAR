@@ -13,12 +13,14 @@
  */
 import { withComment } from "../comments";
 import type { Role } from "../org";
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { AV_KINDS } from "./input";
 import { isAfterHours } from "./rules";
 import { dayText } from "./series";
-import type { EventDetails, EventHistoryEntry, EventTask, TaskStatus, TaskTeam } from "./types";
+import type { EventDetails, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
+import { lc } from "../text";
+import { historyEntry } from "../workflow-core";
 
 export const TASK_TEAMS: TaskTeam[] = ["marketing", "av", "security"];
 
@@ -28,8 +30,6 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = { locked: "Unlocks 
 
 export class TaskError extends Error {}
 
-const lc = (s: string) => s.trim().toLowerCase();
-const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 const short = (s: string, max = 70) => {
   const t = s.replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
@@ -69,7 +69,7 @@ export function syncTasks(existing: EventTask[] | undefined, planned: EventTask[
   return planned.map((p) => {
     const t = have.get(p.id);
     if (t) return { ...t, title: p.title, dueDate: p.dueDate, ...(p.date ? { date: p.date } : {}), status: t.status === "locked" ? "todo" : t.status };
-    return { ...p, status: "todo", history: [entry("portal", now, "Unlocked when the event was approved")] };
+    return { ...p, status: "todo", history: [historyEntry("portal", now, "Unlocked when the event was approved")] };
   });
 }
 
@@ -132,9 +132,9 @@ export function taskPermission(card: EventCard, taskId: string, actor: EventActo
 
 /** The card with one task changed, written to the task's and the event's history. */
 function withTask(card: EventCard, task: EventTask, now: string, by: string, action: string, note?: string): EventCard {
-  const t: EventTask = { ...task, history: [...task.history, entry(by, now, action, note)] };
+  const t: EventTask = { ...task, history: [...task.history, historyEntry(by, now, action, note)] };
   const tasks = (card.event.tasks ?? []).map((x) => (x.id === t.id ? t : x));
-  const history = [...card.event.history, entry(by, now, `${TEAM_NAME[t.team]} task: ${action.charAt(0).toLowerCase()}${action.slice(1)} (${t.title})`, note)];
+  const history = [...card.event.history, historyEntry(by, now, `${TEAM_NAME[t.team]} task: ${action.charAt(0).toLowerCase()}${action.slice(1)} (${t.title})`, note)];
   return { ...card, event: { ...card.event, tasks, history }, updatedAt: now };
 }
 

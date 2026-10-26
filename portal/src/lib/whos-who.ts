@@ -5,6 +5,7 @@
  * come from Google at runtime, never from this file.
  */
 import { groupSlug, teamPeople, type Directory } from "./teams";
+import { lc } from "./text";
 
 /** What a team's chair or an admin writes about the team (Portal Settings → teamInfo). */
 export type TeamInfo = { description?: string; chatUrl?: string };
@@ -23,8 +24,6 @@ export type TeamEntry = {
 };
 
 export type PillarGroup = { name: string; teams: TeamEntry[] };
-
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** Every team, with its leaders and what it handles. */
 export function teamEntries(dir: Directory, info: Record<string, TeamInfo> = {}): TeamEntry[] {

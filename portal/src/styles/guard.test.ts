@@ -71,3 +71,30 @@ test("no inline styles: use the layout classes in base.css or a CSS module", () 
     });
   assert.deepEqual(offenders, [], "Move the style into the component's .module.css (or a layout class), using tokens.");
 });
+
+/**
+ * Global class names (className="stack row") must exist in base.css, the one
+ * global stylesheet besides tokens.css. Anything page- or component-specific
+ * belongs in a co-located .module.css, so a typo or a leftover class from an
+ * old page can't quietly do nothing.
+ */
+test("global class names are defined in base.css", () => {
+  const css = readFileSync(join(SRC, "styles/base.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const defined = new Set([...css.matchAll(/\.([a-zA-Z_][\w-]*)/g)].map((m) => m[1]));
+  const bad: string[] = [];
+  for (const p of files(SRC, [".tsx"])) {
+    const text = readFileSync(p, "utf8");
+    for (const m of text.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)) {
+      const literal = (m[1] ?? m[2] ?? "").replace(/\$\{[^}]*\}/g, " ");
+      for (const name of literal.split(/\s+/).filter(Boolean)) {
+        if (!defined.has(name)) bad.push(`${rel(p)}: ${name}`);
+      }
+    }
+  }
+  assert.deepEqual(bad, [], "Use a class from src/styles/base.css, or a co-located .module.css class.");
+});
+
+test("the only global stylesheets are tokens.css and base.css", () => {
+  const sheets = files(join(SRC, "styles"), [".css"]).map(rel).sort();
+  assert.deepEqual(sheets, ["styles/base.css", "styles/tokens.css"], "Put page styles in a co-located .module.css.");
+});

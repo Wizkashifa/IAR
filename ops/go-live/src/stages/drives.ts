@@ -1,5 +1,5 @@
 /**
- * Step 7. The three Shared Drives the portal files things in, who can open
+ * Step 7. The four Shared Drives the portal files things in, who can open
  * each (groups, never individuals), and a top folder in each whose ID the
  * portal is deployed with.
  */
@@ -10,7 +10,7 @@ import { runtimeSa } from "./cloud";
 
 export const drives: Stage = {
   id: "drives",
-  title: "Shared Drives for receipts, W-9s and maintenance photos",
+  title: "Shared Drives for receipts, W-9s, maintenance photos and marketing files",
   async plan(ctx) {
     const { g, state, opt } = ctx;
     const out: Change[] = [];

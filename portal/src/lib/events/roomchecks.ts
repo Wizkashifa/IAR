@@ -5,16 +5,16 @@
  * the IAR office; an OK room tells nobody. Recording the check also moves
  * that date's security task along. Plain functions so they can be tested.
  */
-import type { Notice } from "../purchases/notices";
+import type { Notice } from "../notices";
 import { dayText } from "./series";
 import { TaskError, worksTeam } from "./tasks";
-import type { EventHistoryEntry, EventTask, RoomCheck } from "./types";
+import type { EventTask, RoomCheck } from "./types";
 import type { EventActor, EventCard } from "./workflow";
+import { lc } from "../text";
+import { historyEntry } from "../workflow-core";
 
 export const WHEN_LABEL: Record<RoomCheck["when"], string> = { before: "Before", after: "After" };
 
-const lc = (s: string) => s.trim().toLowerCase();
-const entry = (by: string, at: string, action: string, note?: string): EventHistoryEntry => (note ? { at, by: lc(by), action, note } : { at, by: lc(by), action });
 
 /** Security records room checks; the office can too, when security asks them to. */
 export const mayCheckRooms = (actor: Pick<EventActor, "roles">) => worksTeam("security", actor.roles);
@@ -43,11 +43,11 @@ export function recordRoomCheck(card: EventCard, actor: EventActor, now: string,
     if (t.team !== "security" || t.date !== input.date || t.status === "locked") return t;
     const status = input.when === "after" ? "done" : t.status === "todo" ? "doing" : t.status;
     if (status === t.status) return t;
-    return { ...t, status, assignee: t.assignee ?? lc(actor.email), ...(status === "done" ? { note: input.ok ? "Room OK after the event" : `Problem after the event: ${note}` } : {}), history: [...t.history, entry(actor.email, now, status === "done" ? "Done (room check after)" : "Started (room check before)")] };
+    return { ...t, status, assignee: t.assignee ?? lc(actor.email), ...(status === "done" ? { note: input.ok ? "Room OK after the event" : `Problem after the event: ${note}` } : {}), history: [...t.history, historyEntry(actor.email, now, status === "done" ? "Done (room check after)" : "Started (room check before)")] };
   });
   return {
     ...card,
-    event: { ...card.event, roomChecks, ...(card.event.tasks ? { tasks } : {}), history: [...card.event.history, entry(actor.email, now, what, note || undefined)] },
+    event: { ...card.event, roomChecks, ...(card.event.tasks ? { tasks } : {}), history: [...card.event.history, historyEntry(actor.email, now, what, note || undefined)] },
     updatedAt: now,
   };
 }

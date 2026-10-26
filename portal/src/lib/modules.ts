@@ -221,11 +221,6 @@ export function visibleModules(roles: Role[]): PortalModule[] {
   return MODULES.filter((m) => m.visibleTo.some((r) => roles.includes(r)));
 }
 
-/** Top-menu links: live modules this person can see. */
-export function navModules(roles: Role[]): PortalModule[] {
-  return visibleModules(roles).filter((m) => m.status === "live" && m.nav);
-}
-
 export function findModule(id: string): PortalModule | undefined {
   return MODULES.find((m) => m.id === id);
 }

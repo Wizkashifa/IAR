@@ -6,16 +6,12 @@
  */
 import type { CardType } from "./cards";
 import { FEEDBACK_KIND_LABEL, type FeedbackKind } from "./feedback-kinds";
+import { kindOf } from "./kinds";
 
 /** The four request kinds the beta measures. */
 export type MeasuredType = Extract<CardType, "event" | "purchase" | "marketing" | "ticket">;
 export const MEASURED: MeasuredType[] = ["event", "purchase", "marketing", "ticket"];
-export const MEASURED_LABEL: Record<MeasuredType, string> = {
-  event: "Events",
-  purchase: "Purchases",
-  marketing: "Marketing",
-  ticket: "AV/IT/Maintenance",
-};
+export const MEASURED_LABEL = Object.fromEntries(MEASURED.map((t) => [t, kindOf(t)!.many])) as Record<MeasuredType, string>;
 
 /** The forms that count "started". The same names as MeasuredType. */
 export type FormName = MeasuredType;

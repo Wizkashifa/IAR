@@ -3,6 +3,7 @@
  * module says the same thing. Request pages, lists and "What happens next"
  * (next-step.ts) read from here. Plain data, no I/O.
  */
+import type { CardStatus } from "./cards";
 
 /** Buttons and the history: what people do to a request. */
 export const VERB = {
@@ -54,3 +55,17 @@ export const FLAG = {
 
 /** The line under a request that tells the requester they'll hear back. */
 export const NOTIFIED = "You'll get a notification when it's done.";
+
+/** The shared statuses every request has, in words. */
+export const STATUS_LABEL: Record<CardStatus, string> = {
+  draft: "Draft",
+  submitted: "Submitted",
+  in_review: "In review",
+  changes_requested: "Changes requested",
+  approved: "Approved",
+  denied: "Denied",
+  cancelled: "Cancelled",
+  paid: "Paid",
+  close_out: "Close-out",
+  closed: "Closed",
+};

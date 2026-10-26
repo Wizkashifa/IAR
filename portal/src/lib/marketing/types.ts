@@ -4,6 +4,7 @@
  * graphics, signs, announcements, highlights, webpages, redirects, badges.
  * Event marketing is part of the event request.
  */
+import type { HistoryEntry } from "../workflow-core";
 
 /** The request types, as on today's Marketing/AV Google Form (see forms.ts for their questions). */
 export const MARKETING_KINDS = ["graphic", "signage", "announce", "highlight", "webpage", "webedit", "redirect", "badge", "custom"] as const;
@@ -29,7 +30,6 @@ export const STAGE_LABEL: Record<MarketingStage, string> = {
   cancelled: "Cancelled",
 };
 
-export type HistoryEntry = { at: string; by: string; action: string; note?: string };
 
 /** A file someone added to a request: logos, photos, wording, artwork. */
 export type MarketingFile = {

@@ -15,7 +15,7 @@ function steps(ctx: Ctx): string[] {
   const p = ctx.opt.project, d = ctx.opt.domain, base = portalBase(ctx);
   return [
     `1. Open ${console_.chatConfig(p)} (Google Chat API → Configuration).`,
-    '   App name: IAR Portal. Avatar URL: ' + `${base}/iar-logo-white.png` + '. Description: "Alerts and approvals from the IAR Portal".',
+    '   App name: IAR Portal. Avatar URL: ' + `${base}/brand/iar-logo-green.png` + '. Description: "Alerts and approvals from the IAR Portal".',
     "   Interactive features: on. Functionality: tick both \"Receive 1:1 messages\" and \"Join spaces and group conversations\".",
     "   If asked, don't build it as a Google Workspace add-on: choose the plain Chat app.",
     `   Connection settings: HTTP endpoint URL: ${base}/api/chat. Authentication audience: HTTP endpoint URL.`,
@@ -23,11 +23,11 @@ function steps(ctx: Ctx): string[] {
     `   Visibility: "Make this Chat app available to specific people and groups in ${d}", and enter ${role("beta", d)} and ${role("admins", d)}.`,
     "   Make sure you're in one of those two groups yourself, or go-live can't add the app to the spaces. Save.",
     `2. Open ${console_.marketplaceSdk(p)} (Google Workspace Marketplace SDK → App configuration).`,
-    "   App visibility: Private (only people in your domain). Installation settings: Admin only install.",
+    "   App visibility: Private (only people in your domain). Installation settings: Individual + Admin Install (Chat apps can't be admin-only; the Chat visibility above still limits who sees it).",
     "   App integrations: tick Chat app (it uses the configuration from 1). Fill in the developer details with IAR's office address, save.",
-    "   Store listing: app name IAR Portal, short description, the logo above, category Productivity; then Publish (Private listings aren't reviewed by Google).",
-    `3. Install it for the beta group: Admin console → Apps → Google Workspace Marketplace apps (${console_.marketplaceApps}) → Add app → search "IAR Portal" →`,
-    `   Admin install → for ${role("beta", d)} and ${role("admins", d)}. When the beta ends, install it for everyone.`,
+    "   Store listing: app name IAR Portal, short description, the logo above, any category that fits (Admin is fine); then Publish (Private listings aren't reviewed by Google).",
+    `3. Install it for the beta group: open the Google Workspace Marketplace (${console_.marketplace}), search "IAR Portal" (only ${d} sees it) →`,
+    `   Admin install → certain groups: ${role("beta", d)} and ${role("admins", d)}. When the beta ends, install it for everyone.`,
   ];
 }
 

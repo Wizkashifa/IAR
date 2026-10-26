@@ -5,7 +5,7 @@ import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
-import { todayLocal } from "@/lib/away";
+import { todayLocal } from "@/lib/dates";
 import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
@@ -22,15 +22,17 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
-import { ToastOnLoad } from "@/components/toast";
-import { fmtDate, fmtDay } from "../../ui";
+import { fmtDate, fmtDay } from "@/lib/format";
 import { FileDrop } from "@/components/FileDrop";
-import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf, sizeText } from "@/lib/marketing/files";
+import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf } from "@/lib/marketing/files";
 import { marketingFolder } from "@/lib/marketing/drive";
 import { actOnMarketing, addMarketingFiles, commentOnMarketing } from "../actions";
-import { CommentsPanel, HistoryPanel } from "../Activity";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
+import { FileList } from "@/components/FileList";
+import { same } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +74,7 @@ export default async function MarketingDetail({
 
   const notes = (
     <>
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={OK_MESSAGES} />
       {m.stage === "question" && m.question && (
         <Note tone="warn">
           <strong>Marketing asked:</strong> <span className="pre">{m.question}</span>
@@ -116,7 +118,7 @@ export default async function MarketingDetail({
             ]}
           />
           {own && can("edit") && m.stage === "review" && (
-            <p className={styles.sideNote}>
+            <p className="hint">
               Need to change something? <Link href={`/marketing/${mc.id}/edit`}>Edit the request</Link> until marketing schedules it.
             </p>
           )}
@@ -147,7 +149,6 @@ export default async function MarketingDetail({
 
   return (
     <>
-      <ToastOnLoad message={ok ? OK_MESSAGES[ok] : undefined} />
       <RequestPage
         crumb={{ href: "/marketing", label: "Marketing Requests" }}
         id={mc.id}
@@ -176,26 +177,7 @@ export default async function MarketingDetail({
     return (
       <Panel title="Files" right={files.length ? `${files.length}` : undefined} id="files">
         <div className="stack">
-          {files.length === 0 ? (
-            <p className={styles.quiet}>No files yet.{m.driveLink ? " The requester shared a Google Drive link above." : ""}</p>
-          ) : (
-            <ul className={styles.files}>
-              {files.map((f, i) => (
-                <li key={`${f.name}-${i}`}>
-                  {f.url ? (
-                    <a href={f.url} target="_blank" rel="noreferrer">
-                      {f.name}
-                    </a>
-                  ) : (
-                    <span>{f.name}</span>
-                  )}
-                  <span className={styles.when}>
-                    {sizeText(f.size)} · {f.by.toLowerCase() === viewer.email.toLowerCase() ? "you" : names(f.by)}, {fmtDate(f.at)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <FileList files={files.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty={`No files yet.${m.driveLink ? " The requester shared a Google Drive link above." : ""}`} />
           {canAdd &&
             (uploads ? (
               <form action={addMarketingFiles} className="stack">
@@ -206,7 +188,7 @@ export default async function MarketingDetail({
                 </div>
               </form>
             ) : (
-              <p className={styles.sideNote}>File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
+              <p className="hint">File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
             ))}
         </div>
       </Panel>
@@ -243,7 +225,7 @@ export default async function MarketingDetail({
             </Button>
             <Button href={`/marketing/${mc.id}/edit`}>Edit the request too</Button>
             {can("cancel") && (
-              <span className={styles.push}>
+              <span className="push">
                 <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                   Cancel request
                 </ConfirmButton>
@@ -267,7 +249,7 @@ export default async function MarketingDetail({
             </Button>
             {declineButton}
           </div>
-          <div className={styles.actFields}>
+          <div className="grid split">
             <DateField name="doneBy" label="Done by (when scheduling)" defaultValue={suggestedDoneBy(mc, today)} min={today} />
             <Field label="Note, question or reason" hint="Optional when scheduling. Sent to the requester.">
               <input name="note" maxLength={2000} placeholder="e.g. Which size: banner or poster?" />
@@ -299,7 +281,7 @@ export default async function MarketingDetail({
             )}
             {declineButton}
           </div>
-          <div className={styles.actFields}>
+          <div className="grid split">
             {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
             <Field label={m.stage === "doing" ? "Link to the finished work, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
               <input name="note" maxLength={2000} />
@@ -329,7 +311,7 @@ export default async function MarketingDetail({
           {base}
           {can("edit") && <Button href={`/marketing/${mc.id}/edit`}>Edit the request</Button>}
           {can("cancel") && (
-            <span className={styles.push}>
+            <span className="push">
               <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                 Cancel request
               </ConfirmButton>

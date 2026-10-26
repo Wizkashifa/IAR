@@ -30,7 +30,7 @@ export const WORKSPACE_APIS = [
 /** Everything the portal and its running costs need. Cloud Run and Build need billing. */
 export const CLOUD_APIS = [
   "run.googleapis.com", "cloudbuild.googleapis.com", "artifactregistry.googleapis.com", "firestore.googleapis.com", "secretmanager.googleapis.com",
-  "iamcredentials.googleapis.com", "admin.googleapis.com", "drive.googleapis.com", "gmail.googleapis.com", "calendar-json.googleapis.com",
+  "iam.googleapis.com", "iamcredentials.googleapis.com", "admin.googleapis.com", "drive.googleapis.com", "gmail.googleapis.com", "calendar-json.googleapis.com",
   "chat.googleapis.com", "cloudscheduler.googleapis.com", "monitoring.googleapis.com", "groupssettings.googleapis.com", "sheets.googleapis.com",
   "billingbudgets.googleapis.com", "licensing.googleapis.com", "appsmarket-component.googleapis.com", "storage.googleapis.com",
 ];
@@ -118,6 +118,13 @@ export const DRIVES: DriveDef[] = [
       { email: sa, type: "user", role: DRIVE_ROLE.contributor },
     ],
   },
+  {
+    key: "marketing", name: "Marketing Files", env: "MARKETING_DRIVE_FOLDER_ID", why: "logos, photos and wording attached to marketing requests",
+    access: (d, sa) => [
+      { email: sa, type: "user", role: DRIVE_ROLE.contentManager },
+      { email: teamGroup("Marketing", d), type: "group", role: DRIVE_ROLE.contentManager },
+    ],
+  },
 ];
 
 export const console_ = {
@@ -125,7 +132,7 @@ export const console_ = {
   roles: "https://admin.google.com/ac/roles",
   resources: "https://admin.google.com/ac/calendarresources",
   subscriptions: "https://admin.google.com/ac/billing/subscriptions",
-  marketplaceApps: "https://admin.google.com/ac/apps/gmail/marketplace",
+  marketplace: "https://workspace.google.com/marketplace",
   consent: (p: string) => `https://console.cloud.google.com/apis/credentials/consent?project=${p}`,
   credentials: (p: string) => `https://console.cloud.google.com/apis/credentials?project=${p}`,
   client: (p: string, id: string) => `https://console.cloud.google.com/apis/credentials/oauthclient/${id}?project=${p}`,

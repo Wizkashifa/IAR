@@ -8,6 +8,8 @@ import type { Card } from "../cards";
 import type { TicketSchedule } from "./schedules";
 import type { Urgency } from "./types";
 import { type TicketActor, type TicketCard, isOverdue, isTicketCard, teamsOf, withTeam } from "./workflow";
+import { same } from "../text";
+import { addDays } from "../dates";
 
 export type WorkToday = {
   /** Assigned to me: urgent and late first, then due today, then the rest. */
@@ -24,14 +26,6 @@ export type WorkToday = {
 export const WEEK_DAYS = 7;
 
 const URGENCY_ORDER: Urgency[] = ["urgent", "high", "normal", "low"];
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-
-/** YYYY-MM-DD plus n days. */
-export function addDays(ymd: string, n: number): string {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
 /** 0: urgent or late; 1: due today; 2: the rest. */
 function band(c: TicketCard, now: Date, today: string): number {

@@ -10,13 +10,14 @@ import { DELEGATION, SETTINGS_DOC, SPACES, scopeCount } from "./config";
 import { dnsEmail } from "./email";
 import { fieldPath, fromFields, toFields } from "./firestore-values";
 import { FakeGoogle } from "./google-fake";
+import { GcloudError, absent } from "./google-real";
 import { DEFAULTS, goLive } from "./go-live";
 import { LAUNCH_TEAMS } from "./launch";
 import { TAB, templateTabs } from "./sheet";
 import { parseArgs } from "./main";
 import { readerPrivileges } from "./stages/accounts";
 import { sheetIdOf } from "./stages/sheet";
-import { matchRooms } from "./stages/rooms";
+import { matchRooms, pickRooms } from "./stages/rooms";
 import { mergeSettings, spacesByRole } from "./stages/settings";
 import type { Ask, Options, State } from "./types";
 
@@ -53,9 +54,10 @@ function setup(o: { ready?: boolean; sheet?: Record<string, string[][]>; freeLic
     users: PEOPLE,
     freeLicenses: o.freeLicenses,
     resources: [
-      { name: "Main Prayer Hall", email: "c_hall@resource.calendar.google.com" },
-      { name: "Room 240 - conference room", email: "c_240@resource.calendar.google.com" },
-      { name: "Basement storage", email: "c_store@resource.calendar.google.com" },
+      { id: "r-hall", name: "Main Prayer Hall", email: "c_hall@resource.calendar.google.com" },
+      { id: "r-240", name: "Room 240 - conference room", email: "c_240@resource.calendar.google.com" },
+      { id: "r-store", name: "Basement storage", email: "c_store@resource.calendar.google.com" },
+      { id: "r-flex", name: "Flex Room A", email: "c_flex@resource.calendar.google.com" },
     ],
   });
   fake.events.set("c_hall@resource.calendar.google.com", [{ summary: "Jumuah prayer", recurring: true }]);
@@ -77,6 +79,7 @@ function prompter(fake: FakeGoogle, a: Answers = {}) {
     if (/Billing account ID/.test(q.question)) return fake.billingAccounts[0].id;
     if (/Client ID/.test(q.question)) return fake.webClientId;
     if (/calendar's ID/.test(q.question)) return "events@group.calendar.google.com";
+    if (/Rooms people can't book/.test(q.question)) return "basement STORAGE";
     if (/DNS manager's email/.test(q.question)) return "dns@elsewhere.org";
     if (/first name/.test(q.question)) return "DNS Manager";
     throw new Error(`unexpected question: ${q.question}`);
@@ -169,13 +172,15 @@ test("apply from nothing creates everything, then a second run plans no changes"
   ]);
   assert.equal(fake.spaces.size, SPACES.length);
   for (const s of fake.spaces.values()) assert.deepEqual(s.members.map((m) => m.type).sort(), ["BOT", "GROUP", "HUMAN"]);
-  assert.equal(fake.drives.size, 3);
+  assert.equal(fake.drives.size, 4);
   const w9 = [...fake.drives.values()].find((d) => d.name === "W-9s")!;
   assert.deepEqual(w9.perms.map((p) => `${p.email}:${p.role}`).sort(), [`portal-role-finance@x.org:organizer`, `${run_}:writer`]);
   assert.ok(fake.acl.get("c_hall@resource.calendar.google.com")?.some((a) => a.email === "portal@x.org" && a.role === "writer"));
   assert.ok(fake.acl.get("events@group.calendar.google.com")?.some((a) => a.email === "portal@x.org"));
-  assert.ok(!fake.acl.has("c_store@resource.calendar.google.com"), "rooms not on the Sheet are left alone");
-  assert.match(r.out, /Warning: "Room 240 – conference room" has no recurring hold/);
+  assert.ok(!fake.acl.has("c_store@resource.calendar.google.com"), "a room left out isn't shared");
+  assert.ok(fake.acl.get("c_flex@resource.calendar.google.com")?.some((a) => a.email === "portal@x.org"), "a room not on the Sheet and not left out is shared");
+  assert.deepEqual(Object.keys((fake.docs.get(SETTINGS_DOC)?.rooms as Record<string, unknown>) ?? {}).sort(), ["r-240", "r-flex", "r-hall"]);
+  assert.match(r.out, /Warning: "Room 240 - conference room" has no recurring hold/);
 
   // Deploy
   const env = fake.service!.env;
@@ -293,6 +298,25 @@ test("testers are added only in the last step, and only after their own yes", as
   assert.deepEqual(fake.members.get("portal-role-beta@x.org")?.map((m) => m.email), ["tester1@x.org", "tester2@x.org"]);
 });
 
+test("on a new project, a lookup through an API that isn't on yet means nothing exists yet", () => {
+  const off = new GcloudError(["firestore", "databases", "describe"], "ERROR: (gcloud.firestore.databases.describe) PERMISSION_DENIED: Cloud Firestore API has not been used in project iar-portal before or it is disabled.\n  reason: SERVICE_DISABLED");
+  assert.equal(absent(off), true);
+  assert.equal(absent(new GcloudError(["run"], "NOT_FOUND: Resource 'x' was not found")), true);
+  assert.equal(absent(new GcloudError(["run", "services", "describe"], "ERROR: (gcloud.run.services.describe) Cannot find service [iar-portal]")), true);
+  assert.equal(absent(new GcloudError(["run"], "PERMISSION_DENIED: Permission 'run.services.get' denied")), false);
+  assert.equal(absent(new Error("SERVICE_DISABLED")), false);
+});
+
+test("portal.<domain> can wait: saying no to it doesn't stop the run", async () => {
+  const fake = setup();
+  fake.verified = [];
+  const r = await run(fake, startState(fake), { apply: true }, { no: [/can wait/] });
+  assert.equal(r.stopped, undefined, r.out);
+  assert.equal(fake.domainMapping, null);
+  assert.ok(!fake.calls.includes("createDraft"));
+  assert.ok(fake.service, "the portal is still deployed");
+});
+
 test("Gmail is only ever a draft", async () => {
   const fake = setup({ ready: false });
   await fullApply(fake);
@@ -405,6 +429,16 @@ test("rooms: names match despite dash styles; missing, extra and undecided are r
   assert.deepEqual(m.missing, ["Gym"]);
   assert.deepEqual(m.extra, ["Storage"]);
   assert.deepEqual(m.undecided, ["Fire Pit Area"]);
+});
+
+test("rooms: Google's list, with the Sheet's Yes or No, and the rooms left out", () => {
+  const res = [{ name: "MPH-A", email: "a" }, { name: "Dummy", email: "d" }, { name: "Math Classroom", email: "m" }, { name: "Glass Room 230A", email: "g" }];
+  const sheet = [{ name: "Glass Room 230A", bookable: false }, { name: "MPH A – half gym", bookable: null }];
+  const asked = pickRooms(sheet, res, undefined);
+  assert.deepEqual(asked.undecided.map((r) => r.email), ["a", "d", "m"]);
+  assert.deepEqual(asked.bookable, [], "nothing is bookable until the admin answers");
+  assert.deepEqual(pickRooms(sheet, res, ["dummy", "Math  Classroom"]).bookable.map((r) => r.email), ["a"]);
+  assert.deepEqual(pickRooms(sheet, res, []).bookable.map((r) => r.email), ["a", "d", "m"]);
 });
 
 test("Firestore values: Portal Settings round-trips through the REST format", () => {

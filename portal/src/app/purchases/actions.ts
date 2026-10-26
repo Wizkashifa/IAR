@@ -5,7 +5,6 @@ import { cardStore, ConflictError } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
-import { checkComment, withComment } from "@/lib/comments";
 import { purchaseCommentNotices, purchaseNotices } from "@/lib/purchases/notices";
 import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/purchases/drive";
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
@@ -16,8 +15,10 @@ import { linkableEventsFor } from "@/lib/events/context";
 import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
 import type { PurchaseDetails } from "@/lib/purchases/types";
 import * as wf from "@/lib/purchases/workflow";
+import { WorkflowError } from "@/lib/workflow-core";
+import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import type { FormState } from "@/components/FormErrors";
 
-export type FormState = { errors: string[] };
 
 const nowIso = () => new Date().toISOString();
 const directorsFor = (ctx: PurchaseContext, c: wf.PurchaseCard) => {
@@ -142,111 +143,68 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
     await store.save(next, card.updatedAt);
     await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
   } catch (err) {
-    return { errors: [err instanceof ConflictError || err instanceof wf.WorkflowError ? err.message : "Something went wrong saving the request."] };
+    return { errors: [err instanceof ConflictError || err instanceof WorkflowError ? err.message : "Something went wrong saving the request."] };
   }
   revalidatePath("/purchases");
   redirect(`/purchases/${id}?sent=1`);
 }
 
+const purchases = { path: "/purchases", is: wf.isPurchaseCard };
+
 /** Approve, return, reject, pay, book, resolve a refund/repayment, or cancel. */
 export async function actOnPurchase(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
-  const id = String(form.get("id") ?? "");
-  const action = String(form.get("action") ?? "") as wf.Action;
   const note = String(form.get("note") ?? "").slice(0, 1000);
   const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isPurchaseCard(card)) redirect("/purchases");
-  if (String(form.get("expected") ?? "") !== card.updatedAt) {
-    redirect(`/purchases/${id}?error=${encodeURIComponent("This request changed while you were looking at it. Check it again before acting.")}`);
-  }
-
   const ctx = await purchaseContext();
   const s = ctx.routing;
-  const now = nowIso();
-  let error: string | null = null;
-  let ok = action as string;
-  try {
-    let next: wf.PurchaseCard;
-    switch (action) {
-      case "approve": {
-        const w9Received = form.get("w9Received") === "on";
-        next = wf.approve(card, actor, s, now, { note: note || undefined, w9Received });
-        const v = w9Received && card.purchase.w9Required ? vendorWithW9(await store.listVendors(), card.purchase, now) : null;
-        if (v) await store.saveVendor(v);
-        break;
+  await actOnCard(form, viewer, {
+    ...purchases,
+    async act(card, action, now) {
+      let next: wf.PurchaseCard;
+      let after: (() => Promise<void>) | undefined;
+      switch (action as wf.Action) {
+        case "approve": {
+          const w9Received = form.get("w9Received") === "on";
+          next = wf.approve(card, actor, s, now, { note: note || undefined, w9Received });
+          const v = w9Received && card.purchase.w9Required ? vendorWithW9(await store.listVendors(), card.purchase, now) : null;
+          if (v) await store.saveVendor(v);
+          break;
+        }
+        case "return":
+          next = wf.returnForChanges(card, actor, now, note, String(form.get("returnTo") ?? "requester") as wf.ReturnTarget);
+          break;
+        case "reject":
+          next = wf.reject(card, actor, now, note);
+          break;
+        case "pay":
+          next = wf.recordPayment(card, actor, now, String(form.get("method") ?? ""), String(form.get("reference") ?? ""));
+          // Paying a vendor saves them (address, fund, count) for every committee; S&W payees on their own restricted record.
+          after = async () => {
+            const v = vendorAfterPayment(await store.listVendors(), card.purchase, now);
+            if (v) await store.saveVendor(v);
+          };
+          break;
+        case "books":
+          next = wf.recordBooks(card, actor, now);
+          break;
+        case "resolve":
+          next = wf.resolveLine(card, actor, now, String(form.get("line") ?? ""));
+          break;
+        case "cancel":
+          next = wf.cancel(card, actor, now);
+          break;
+        default:
+          return unknownAction();
       }
-      case "return": {
-        const to = String(form.get("returnTo") ?? "requester") as wf.ReturnTarget;
-        next = wf.returnForChanges(card, actor, now, note, to);
-        break;
-      }
-      case "reject":
-        next = wf.reject(card, actor, now, note);
-        break;
-      case "pay":
-        next = wf.recordPayment(card, actor, now, String(form.get("method") ?? ""), String(form.get("reference") ?? ""));
-        break;
-      case "books":
-        next = wf.recordBooks(card, actor, now);
-        break;
-      case "resolve":
-        next = wf.resolveLine(card, actor, now, String(form.get("line") ?? ""));
-        break;
-      case "cancel":
-        next = wf.cancel(card, actor, now);
-        break;
-      default:
-        throw new wf.WorkflowError("Unknown action.");
-    }
-    await store.save(next, card.updatedAt);
-    await deliver(purchaseNotices(card, next, actor, directorsFor(ctx, next)), actor.email);
-    // Paying a vendor saves them (address, fund, count) for every committee; S&W payees on their own restricted record.
-    if (action === "pay") {
-      const v = vendorAfterPayment(await store.listVendors(), card.purchase, now);
-      if (v) await store.saveVendor(v);
-    }
-  } catch (err) {
-    if (err instanceof wf.WorkflowError || err instanceof ConflictError) error = err.message;
-    else {
-      console.error("purchase action failed", err);
-      error = "Something went wrong. Nothing was changed.";
-    }
-    ok = "";
-  }
-  revalidatePath("/purchases");
-  revalidatePath(`/purchases/${id}`);
-  redirect(error ? `/purchases/${id}?error=${encodeURIComponent(error)}` : `/purchases/${id}?ok=${ok}`);
+      return { next, notices: purchaseNotices(card, next, actor, directorsFor(ctx, next)), after };
+    },
+  });
 }
 
-/** A comment from anyone who can open the request. Never changes its stage. */
 export async function commentOnPurchase(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
-  const id = String(form.get("id") ?? "");
-  const store = await cardStore();
-  const check = checkComment(form.get("text"));
-  let error: string | null = check.ok ? null : check.error;
-  if (check.ok) {
-    // Retry once if someone else saved the request at the same moment: a comment never needs to wait.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const card = await store.get(id);
-      if (!wf.isPurchaseCard(card) || !wf.canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) redirect("/purchases");
-      const next = withComment(card, { at: nowIso(), by: actor.email, name: viewer.name, text: check.text });
-      try {
-        await store.save(next, card.updatedAt);
-        await deliver(purchaseCommentNotices(next, actor, check.text), actor.email);
-        error = null;
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) {
-          if (!(err instanceof ConflictError)) console.error("comment failed", err);
-          error = "Your comment couldn't be saved. Try again.";
-        }
-      }
-    }
-  }
-  revalidatePath(`/purchases/${id}`);
-  redirect(error ? `/purchases/${id}?error=${encodeURIComponent(error)}#comments` : `/purchases/${id}?ok=commented#comments`);
+  await commentOnCard(form, viewer, { ...purchases, notices: (card, text) => purchaseCommentNotices(card, actor, text) });
 }

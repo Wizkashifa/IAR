@@ -24,20 +24,10 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG, roleMailbox, type Role } from "../org";
 import { type Directory, type Membership, groupSlug } from "../teams";
-import {
-  type TicketDetails,
-  type TicketHistoryEntry,
-  type TicketLinkKind,
-  type TicketKind,
-  type TicketPhoto,
-  type TicketStatus,
-  type TicketTeam,
-  type Urgency,
-  LINK_LABEL,
-  TEAM_LABEL,
-  TEAM_NAME,
-  URGENCY,
-} from "./types";
+import { type TicketDetails, type TicketLinkKind, type TicketKind, type TicketPhoto, type TicketStatus, type TicketTeam, type Urgency, LINK_LABEL, TEAM_LABEL, TEAM_NAME, URGENCY } from "./types";
+import { lc, same } from "../text";
+import { daysBetween } from "../dates";
+import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 /**
  * Who is acting. `roles` must be the person's own group roles, never the
@@ -48,10 +38,6 @@ export type TicketActor = { email: string; name: string; roles: Role[]; leads?: 
 
 export type TicketCard = Card & { type: "ticket"; ticket: TicketDetails };
 
-export class WorkflowError extends Error {}
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-const lc = (s: string) => s.trim().toLowerCase();
 
 /** Writes history entries for things the portal does by itself (the daily job). */
 export const SYSTEM = "IAR Portal";
@@ -167,10 +153,6 @@ function withStatus(card: TicketCard, t: TicketDetails, now: string): TicketCard
   return next;
 }
 
-function entry(by: string, now: string, action: string, note?: string): TicketHistoryEntry {
-  return note ? { at: now, by, action, note } : { at: now, by, action };
-}
-
 const addWatcher = (ws: string[], email?: string) => (email && !ws.some((w) => same(w, email)) ? [...ws, email.toLowerCase()] : ws);
 
 // ---- New tickets -------------------------------------------------------------
@@ -199,7 +181,7 @@ export function newTicket(input: NewTicketInput, reporter: { email: string; name
     reporterName: reporter.name,
     photos: [],
     watchers: [reporter.email.toLowerCase()],
-    history: [entry(reporter.email.toLowerCase(), now, `Reported to the ${TEAM_LABEL[input.team]} team`, `Urgency: ${URGENCY[input.urgency].label}`)],
+    history: [historyEntry(reporter.email.toLowerCase(), now, `Reported to the ${TEAM_LABEL[input.team]} team`, `Urgency: ${URGENCY[input.urgency].label}`)],
   };
   const card: TicketCard = {
     id: "",
@@ -275,9 +257,8 @@ export function permission(card: TicketCard, actor: TicketActor, action: Action)
   return no("Unknown action.");
 }
 
-function must(card: TicketCard, actor: TicketActor, action: Action) {
-  const r = permission(card, actor, action);
-  if (!r.ok) throw new WorkflowError(r.reason);
+function mustDo(card: TicketCard, actor: TicketActor, action: Action) {
+  must(permission(card, actor, action));
 }
 
 /** Someone other than the reporter answering counts as the first response. */
@@ -295,7 +276,7 @@ function responded(t: TicketDetails, card: TicketCard, actor: TicketActor, now: 
  * already being worked on keeps its status with the new person.
  */
 export function assign(card: TicketCard, actor: TicketActor, now: string, to: string, members: string[]): TicketCard {
-  must(card, actor, "assign");
+  mustDo(card, actor, "assign");
   const email = lc(to);
   const t = card.ticket;
   if (!email) throw new WorkflowError("Choose who should take it.");
@@ -311,22 +292,22 @@ export function assign(card: TicketCard, actor: TicketActor, now: string, to: st
     statusSince: status === t.status ? t.statusSince : now,
     assigneeEmail: email,
     watchers: addWatcher(t.watchers, email),
-    history: [...t.history, entry(actor.email, now, action)],
+    history: [...t.history, historyEntry(actor.email, now, action)],
   };
   return withStatus(card, next, now);
 }
 
 /** Start work (or carry on once parts arrive). Unassigned: it's assigned to whoever starts it. */
 export function start(card: TicketCard, actor: TicketActor, now: string): TicketCard {
-  must(card, actor, "start");
+  mustDo(card, actor, "start");
   const t = card.ticket;
   const history = [...t.history];
   let assigneeEmail = t.assigneeEmail;
   if (!assigneeEmail) {
     assigneeEmail = actor.email.toLowerCase();
-    history.push(entry(actor.email, now, "Picked it up"));
+    history.push(historyEntry(actor.email, now, "Picked it up"));
   }
-  history.push(entry(actor.email, now, t.status === "waiting_parts" ? "Parts are in; back to work" : "Started work"));
+  history.push(historyEntry(actor.email, now, t.status === "waiting_parts" ? "Parts are in; back to work" : "Started work"));
   const next: TicketDetails = {
     ...t,
     ...responded(t, card, actor, now),
@@ -341,7 +322,7 @@ export function start(card: TicketCard, actor: TicketActor, now: string): Ticket
 
 /** Waiting on parts or a vendor. The note (what's on order, when it's due) goes to the reporter too. */
 export function waitForParts(card: TicketCard, actor: TicketActor, now: string, note?: string): TicketCard {
-  must(card, actor, "wait");
+  mustDo(card, actor, "wait");
   const t = card.ticket;
   const next: TicketDetails = {
     ...t,
@@ -350,14 +331,14 @@ export function waitForParts(card: TicketCard, actor: TicketActor, now: string, 
     statusSince: now,
     assigneeEmail: t.assigneeEmail ?? actor.email.toLowerCase(),
     watchers: addWatcher(t.watchers, t.assigneeEmail ?? actor.email),
-    history: [...t.history, entry(actor.email, now, "Waiting on parts", note?.trim() || undefined)],
+    history: [...t.history, historyEntry(actor.email, now, "Waiting on parts", note?.trim() || undefined)],
   };
   return withStatus(card, next, now);
 }
 
 /** Mark it fixed with a note saying what was done. Preventive tickets close; others wait for the reporter. */
 export function resolve(card: TicketCard, actor: TicketActor, now: string, note: string): TicketCard {
-  must(card, actor, "resolve");
+  mustDo(card, actor, "resolve");
   if (!note.trim()) throw new WorkflowError("Say what was done, so the reporter knows what to check.");
   const t = card.ticket;
   const preventive = t.kind === "preventive";
@@ -371,22 +352,22 @@ export function resolve(card: TicketCard, actor: TicketActor, now: string, note:
     resolutionNote: note.trim(),
     resolvedAt: now,
     closedAt: preventive ? now : undefined,
-    history: [...t.history, entry(actor.email, now, preventive ? "Done" : "Marked fixed", note.trim())],
+    history: [...t.history, historyEntry(actor.email, now, preventive ? "Done" : "Marked fixed", note.trim())],
   };
   return withStatus(card, next, now);
 }
 
 /** The reporter confirms it's fixed. */
 export function confirm(card: TicketCard, actor: TicketActor, now: string): TicketCard {
-  must(card, actor, "confirm");
+  mustDo(card, actor, "confirm");
   const t = card.ticket;
-  const next: TicketDetails = { ...t, status: "closed", statusSince: now, closedAt: now, history: [...t.history, entry(actor.email, now, "Reporter confirmed it's fixed")] };
+  const next: TicketDetails = { ...t, status: "closed", statusSince: now, closedAt: now, history: [...t.history, historyEntry(actor.email, now, "Reporter confirmed it's fixed")] };
   return withStatus(card, next, now);
 }
 
 /** The reporter says it isn't fixed: back to the team, with the assignee kept. */
 export function reopen(card: TicketCard, actor: TicketActor, now: string, note: string): TicketCard {
-  must(card, actor, "reopen");
+  mustDo(card, actor, "reopen");
   if (!note.trim()) throw new WorkflowError("Say what's still wrong, so the team knows what to look at.");
   const t = card.ticket;
   const next: TicketDetails = {
@@ -396,39 +377,39 @@ export function reopen(card: TicketCard, actor: TicketActor, now: string, note: 
     reopenNote: note.trim(),
     resolvedAt: undefined,
     remindedAt: undefined,
-    history: [...t.history, entry(actor.email, now, "Reopened: not fixed", note.trim())],
+    history: [...t.history, historyEntry(actor.email, now, "Reopened: not fixed", note.trim())],
   };
   return withStatus(card, next, now);
 }
 
 /** The reporter withdraws it before anyone has picked it up. */
 export function cancel(card: TicketCard, actor: TicketActor, now: string): TicketCard {
-  must(card, actor, "cancel");
+  mustDo(card, actor, "cancel");
   const t = card.ticket;
-  const next: TicketDetails = { ...t, status: "cancelled", statusSince: now, history: [...t.history, entry(actor.email, now, "Cancelled by the reporter")] };
+  const next: TicketDetails = { ...t, status: "cancelled", statusSince: now, history: [...t.history, historyEntry(actor.email, now, "Cancelled by the reporter")] };
   return withStatus(card, next, now);
 }
 
 /** Set or clear the team's target date (YYYY-MM-DD). */
 export function setDueDate(card: TicketCard, actor: TicketActor, now: string, date: string | undefined): TicketCard {
-  must(card, actor, "due");
+  mustDo(card, actor, "due");
   const t = card.ticket;
   const d = date?.trim() || undefined;
   if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new WorkflowError("Pick a date.");
   if (d === t.dueDate) throw new WorkflowError(d ? "That's already the target date." : "There's no target date to clear.");
-  const next: TicketDetails = { ...t, dueDate: d, history: [...t.history, entry(actor.email, now, d ? `Target date set to ${d}` : "Target date cleared")] };
+  const next: TicketDetails = { ...t, dueDate: d, history: [...t.history, historyEntry(actor.email, now, d ? `Target date set to ${d}` : "Target date cleared")] };
   return withStatus(card, next, now);
 }
 
 /** Photos the reporter or the team added after reporting. */
 export function addPhotos(card: TicketCard, actor: TicketActor, now: string, photos: TicketPhoto[]): TicketCard {
-  must(card, actor, "photos");
+  mustDo(card, actor, "photos");
   if (photos.length === 0) throw new WorkflowError("Choose a photo first.");
   const t = card.ticket;
   const next: TicketDetails = {
     ...t,
     photos: [...t.photos, ...photos],
-    history: [...t.history, entry(actor.email, now, `Added ${photos.length} photo${photos.length === 1 ? "" : "s"}`)],
+    history: [...t.history, historyEntry(actor.email, now, `Added ${photos.length} photo${photos.length === 1 ? "" : "s"}`)],
   };
   return withStatus(card, next, now);
 }
@@ -465,7 +446,7 @@ export const LINK_INVERSE: Record<TicketLinkKind, TicketLinkKind> = { relates: "
  * of an old problem). Returns both cards; the caller saves both.
  */
 export function linkTickets(card: TicketCard, other: TicketCard, actor: TicketActor, now: string, kind: TicketLinkKind): [TicketCard, TicketCard] {
-  must(card, actor, "link");
+  mustDo(card, actor, "link");
   if (!LINK_INVERSE[kind]) throw new WorkflowError("Choose how they're linked.");
   if (card.id === other.id) throw new WorkflowError("A ticket can't be linked to itself.");
   if ((card.ticket.links ?? []).some((l) => l.id === other.id)) throw new WorkflowError(`It's already linked to ${other.id}.`);
@@ -473,27 +454,27 @@ export function linkTickets(card: TicketCard, other: TicketCard, actor: TicketAc
   const a: TicketDetails = {
     ...card.ticket,
     links: [...(card.ticket.links ?? []), { kind, id: other.id }],
-    history: [...card.ticket.history, entry(actor.email, now, `Linked: ${LINK_LABEL[kind].toLowerCase()} ${other.id}`)],
+    history: [...card.ticket.history, historyEntry(actor.email, now, `Linked: ${LINK_LABEL[kind].toLowerCase()} ${other.id}`)],
   };
   const b: TicketDetails = {
     ...other.ticket,
     links: [...(other.ticket.links ?? []).filter((l) => l.id !== card.id), { kind: back, id: card.id }],
-    history: [...other.ticket.history, entry(actor.email, now, `Linked: ${LINK_LABEL[back].toLowerCase()} ${card.id}`)],
+    history: [...other.ticket.history, historyEntry(actor.email, now, `Linked: ${LINK_LABEL[back].toLowerCase()} ${card.id}`)],
   };
   return [withStatus(card, a, now), withStatus(other, b, now)];
 }
 
 /** Remove the link between two tickets, from both sides. `other` is null if it no longer exists. */
 export function unlinkTickets(card: TicketCard, other: TicketCard | null, otherId: string, actor: TicketActor, now: string): [TicketCard, TicketCard | null] {
-  must(card, actor, "link");
+  mustDo(card, actor, "link");
   if (!(card.ticket.links ?? []).some((l) => l.id === otherId)) throw new WorkflowError(`It isn't linked to ${otherId}.`);
   const a: TicketDetails = {
     ...card.ticket,
     links: (card.ticket.links ?? []).filter((l) => l.id !== otherId),
-    history: [...card.ticket.history, entry(actor.email, now, `Unlinked ${otherId}`)],
+    history: [...card.ticket.history, historyEntry(actor.email, now, `Unlinked ${otherId}`)],
   };
   if (!other) return [withStatus(card, a, now), null];
-  const b: TicketDetails = { ...other.ticket, links: (other.ticket.links ?? []).filter((l) => l.id !== card.id), history: [...other.ticket.history, entry(actor.email, now, `Unlinked ${card.id}`)] };
+  const b: TicketDetails = { ...other.ticket, links: (other.ticket.links ?? []).filter((l) => l.id !== card.id), history: [...other.ticket.history, historyEntry(actor.email, now, `Unlinked ${card.id}`)] };
   return [withStatus(card, a, now), withStatus(other, b, now)];
 }
 
@@ -516,13 +497,13 @@ export function autoClose(card: TicketCard, now: Date): TicketCard {
     status: "closed",
     statusSince: at,
     closedAt: at,
-    history: [...t.history, entry(SYSTEM, at, "Closed", `Marked fixed ${AUTO_CLOSE_DAYS} days ago and the reporter didn't reopen it.`)],
+    history: [...t.history, historyEntry(SYSTEM, at, "Closed", `Marked fixed ${AUTO_CLOSE_DAYS} days ago and the reporter didn't reopen it.`)],
   };
   return withStatus(card, next, at);
 }
 
 /** Hours since the ticket landed with the team without anyone starting it, or null once work started. */
-export function hoursUntouched(t: TicketDetails, now: Date): number | null {
+function hoursUntouched(t: TicketDetails, now: Date): number | null {
   if (t.status !== "new" && t.status !== "assigned" && t.status !== "reopened") return null;
   return (now.getTime() - Date.parse(t.statusSince)) / 36e5;
 }
@@ -548,7 +529,7 @@ export function markReminded(card: TicketCard, now: Date): TicketCard {
   const at = now.toISOString();
   const t = card.ticket;
   const who = t.assigneeEmail ?? `the ${TEAM_LABEL[t.team]} team`;
-  const next: TicketDetails = { ...t, remindedAt: at, history: [...t.history, entry(SYSTEM, at, `Reminded ${who}`, `Not started ${URGENCY[t.urgency].target} of reaching the team.`)] };
+  const next: TicketDetails = { ...t, remindedAt: at, history: [...t.history, historyEntry(SYSTEM, at, `Reminded ${who}`, `Not started ${URGENCY[t.urgency].target} of reaching the team.`)] };
   return withStatus(card, next, at);
 }
 
@@ -560,7 +541,6 @@ export function isOverdue(card: TicketCard, now: Date, today: string): boolean {
 }
 
 /** Whole days from one YYYY-MM-DD to another. */
-const daysFrom = (from: string, to: string) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 864e5);
 
 /**
  * How late an open ticket is, in words ("3 days late", "Not started for
@@ -570,7 +550,7 @@ export function lateText(card: TicketCard, now: Date, today: string): string | n
   const t = card.ticket;
   if (!withTeam(t)) return null;
   if (t.dueDate && t.dueDate < today) {
-    const d = daysFrom(t.dueDate, today);
+    const d = daysBetween(t.dueDate, today);
     return `${d} day${d === 1 ? "" : "s"} late`;
   }
   if (pastResponseTarget(t, now)) {

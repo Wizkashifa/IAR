@@ -1,7 +1,8 @@
 /**
  * Purchase Requests: the fields a purchase card carries on top of the shared
- * Card (see lib/cards.ts). Design: docs/purchase-requests-plan.md.
+ * Card (see lib/cards.ts).
  */
+import type { HistoryEntry } from "../workflow-core";
 
 /** Pay a vendor or person, reimburse the requester, or IAR credit card receipts. */
 export type PurchaseKind = "pay" | "reimburse" | "card";
@@ -49,7 +50,6 @@ export type Attachment = {
   url?: string;
 };
 
-export type HistoryEntry = { at: string; by: string; action: string; note?: string };
 
 /**
  * `onBehalfOf`: the away approver whose step this was, when someone covering approved it.

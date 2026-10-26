@@ -7,40 +7,44 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, FormActions } from "@/components/Field";
 import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
-import { Panel } from "@/components/Panel";
+import { Panel, PanelFoot } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
-import { cardStore, STATUS_LABEL } from "@/lib/cards";
+import { cardStore } from "@/lib/cards";
+import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
-import { actorFor } from "@/lib/people";
 import { statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
-import { busyFor, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
+import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
 import { eventChecks, missionReasons, windowText } from "@/lib/events/rules";
-import { dayText, daysBetween, longDate, recurText, timeText } from "@/lib/events/series";
+import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
-import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
 import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { tasksFor } from "@/lib/events/tasks";
 import { purchaseTotal } from "@/lib/purchases/types";
-import { fmtDateTime, fmtMoney } from "../../ui";
+import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
 import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
 import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
+import { daysBetween } from "@/lib/dates";
+import { Checkbox } from "@/components/Choices";
+import { Disclosure } from "@/components/Disclosure";
 
 export const dynamic = "force-dynamic";
 
@@ -64,16 +68,10 @@ const MESSAGES: Record<string, string> = {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const card = await (await cardStore()).get(id);
-  return { title: isEventCard(card) ? card.title : "Event" };
+  if (!isEventCard(card) || !(await eventAccess(card, await requireViewer())).open) return { title: "Event" };
+  return { title: card.title };
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 
 export default async function EventDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
@@ -81,13 +79,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const store = await cardStore();
   const card = await store.get(id);
   if (!isEventCard(card)) notFound();
-  const slots = await slotRequestStore();
-  const [actor, ctx, fromAsks, onAsks] = await Promise.all([actorFor(viewer), eventContext(), slots.listFromCard(id), slots.listForHold(`card:${id}`)]);
-  const ev = eventActor(viewer);
-  const asks: SlotRequest[] = [...onAsks, ...fromAsks.filter((a) => !onAsks.some((o) => o.id === a.id))];
-  const deciding = asks.some((a) => canDecide(a, ev));
-  // A request someone can't open looks the same as one that doesn't exist. Whoever is asked for their time can open the asking request.
-  if (!canOpenCard(card, { ...actor, seeAll: viewer.roles.includes("admins") }) && !deciding) notFound();
+  const [{ actor, ev, asks, open }, ctx] = await Promise.all([eventAccess(card, viewer), eventContext()]);
+  // A request someone can't open looks the same as one that doesn't exist.
+  if (!open) notFound();
 
   const ec = card;
   const e = card.event;
@@ -132,8 +126,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   const notes = (
     <>
-      {ok && MESSAGES[ok] && <Note tone="ok">{MESSAGES[ok]}</Note>}
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={MESSAGES} />
       {card.status === "changes_requested" && (
         <Note tone="warn">
           <strong>{e.releasedFor ? "You gave up this time:" : "Sent back for changes:"}</strong> {e.returnNote}
@@ -176,7 +169,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         <>
           <Panel title="About the event">
             <p className={styles.about}>{e.description}</p>
-            {e.setupNotes && <p className={styles.muted}>Setup plan: {e.setupNotes}</p>}
+            {e.setupNotes && <p className="hint">Setup plan: {e.setupNotes}</p>}
           </Panel>
 
           {e.isPublic && e.brief && (
@@ -217,29 +210,33 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {tasks.length > 0 && (
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
-              <ul className={styles.lines}>
+              <Rows>
                 {tasks.map((t) => (
                   <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} />
                 ))}
-              </ul>
-              {tasks.every((t) => t.status === "locked") && <div className={styles.foot}>Each team gets its task in Team Queues once the event is approved.</div>}
+              </Rows>
+              {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
             </Panel>
           )}
 
           {checkDates.length > 0 && (
             <Panel title="Room checks" flush id="roomchecks">
-              <ul className={styles.lines}>
+              <Rows>
                 {checkDates.map((d) => (
-                  <li key={d} className={styles.line}>
-                    <div className={styles.lineTitle}>{dayText(d)}</div>
-                    <div className={styles.cells}>
-                      <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                      <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                    </div>
-                  </li>
+                  <ItemRow
+                    key={d}
+                    state="plain"
+                    title={dayText(d)}
+                    right={
+                      <div className={styles.cells}>
+                        <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
+                        <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
+                      </div>
+                    }
+                  />
                 ))}
-              </ul>
-              <div className={styles.foot}>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</div>
+              </Rows>
+              <PanelFoot>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</PanelFoot>
             </Panel>
           )}
 
@@ -248,23 +245,17 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               {linked.length === 0 ? (
                 <EmptyState icon="receipt">None linked yet. When you send a purchase request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
-                <ul className={styles.lines}>
+                <Rows>
                   {linkedVisible.map((p) => (
-                    <li key={p.id} className={styles.line}>
-                      <div>
-                        <Link href={`/purchases/${p.id}`} className={styles.lineTitle}>{p.title}</Link>
-                        <div className={styles.lineSub}>{p.id} · {statusText(p)}</div>
-                      </div>
-                      <div className={styles.lineSide}>{fmtMoney(p.purchase ? purchaseTotal(p.purchase) : 0)}</div>
-                    </li>
+                    <ItemRow key={p.id} state="plain" href={`/purchases/${p.id}`} title={p.title} id={p.id} sub={statusText(p)} right={fmtMoney(p.purchase ? purchaseTotal(p.purchase) : 0)} />
                   ))}
-                  {linked.length > linkedVisible.length && <li className={`${styles.line} ${styles.lineSub}`}>{linked.length - linkedVisible.length} more you can&apos;t open (restricted)</li>}
-                </ul>
+                  {linked.length > linkedVisible.length && <ItemRow state="plain" title={`${linked.length - linkedVisible.length} more you can't open`} sub="Restricted" />}
+                </Rows>
               )}
-              <div className={styles.foot}>
+              <PanelFoot>
                 Spent so far: <strong>{spendText(spent, e.budget)}</strong>
                 {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New purchase request</Link></> : null}
-              </div>
+              </PanelFoot>
             </Panel>
           )}
 
@@ -276,48 +267,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </section>
           )}
 
-          <Panel title={`Comments ${(card.comments ?? []).length}`} id="comments">
-            <form action={commentOnEvent} className="stack">
-              <input type="hidden" name="id" value={card.id} />
-              <Field label="Add a comment" hint="Ask a question or add context. Everyone who can open this request sees it.">
-                <textarea name="text" rows={3} maxLength={COMMENT_MAX} required />
-              </Field>
-              <div className="row end">
-                <Button type="submit">Comment</Button>
-              </div>
-            </form>
-            {(card.comments ?? []).length === 0 ? (
-              <p className={styles.muted}>No comments yet.</p>
-            ) : (
-              <ol className={styles.comments}>
-                {(card.comments ?? []).map((c) => (
-                  <li key={c.id} className={styles.comment}>
-                    <div>
-                      <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
-                    </div>
-                    <div className="pre">{c.text}</div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
-
-          <Panel title="History">
-            <ol className={styles.history}>
-              {[...e.history].reverse().map((h, i) => {
-                const who = h.by.includes("@") ? names(h.by) : h.by === "portal" ? "Portal" : h.by;
-                return (
-                  <li key={i}>
-                    <span className={styles.av} aria-hidden="true">{initials(who)}</span>
-                    <div>
-                      <strong>{who}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
-                      {h.note && <div className={`pre ${styles.note}`}>{h.note}</div>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </Panel>
+          <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnEvent} />
+          <HistoryPanel entries={e.history} names={names} />
         </>
       }
       side={
@@ -333,7 +284,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   value: e.recur ? (
                     <>
                       {recurText(e.date, e.recur)}
-                      <div className="sub">{longDate(e.date)} to {longDate(e.recur.until)}</div>
+                      <div className="hint">{longDate(e.date)} to {longDate(e.recur.until)}</div>
                     </>
                   ) : (
                     dayText(e.date)
@@ -359,8 +310,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             return s ? <Pill tone={s.tone}>{s.label}</Pill> : undefined;
           })()}>
             <ChecksList checks={live ? live.checks : e.checks} empty="No checks were saved with this request." />
-            {live && live.clashes.some((c) => c.kind !== "pending") && <p className={styles.muted}>Something was booked in this room since it was sent. Send it back so the requester can pick another time.</p>}
-            {!live && e.checks.length > 0 && <p className={styles.muted}>As checked when it was sent.</p>}
+            {live && live.clashes.some((c) => c.kind !== "pending") && <p className="hint">Something was booked in this room since it was sent. Send it back so the requester can pick another time.</p>}
+            {!live && e.checks.length > 0 && <p className="hint">As checked when it was sent.</p>}
           </Panel>
 
           {calRoom && (
@@ -384,17 +335,17 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       const why = permission(ec, ev, "approve", directors);
       if (why.ok) return null;
       const who = e.stage === "director" ? reviewersFor(ec.ownerEmail, directors).map(names) : [];
-      return <p className={styles.muted}>{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
+      return <p className="hint">{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
     }
     return (
-      <form action={actOnEvent} className={styles.actionForm}>
+      <form action={actOnEvent} className="stack">
         {base}
         {reviewing && (
           <Field label={`${STAGE_LABEL[e.stage]}: note`} hint="Required to send it back or decline it. The requester sees it.">
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
         )}
-        <div className={styles.actionRow}>
+        <div className="row">
           {reviewing && (
             <>
               <Button variant="primary" icon="check" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
@@ -405,7 +356,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {addPurchase && <Button href="/purchases/new" icon="receipt">Add a purchase request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
-          {(reviewing || resubmit || addPurchase || renew || again) && <span className={styles.grow} />}
+          {(reviewing || resubmit || addPurchase || renew || again) && <span className="grow" />}
           {reviewing && (
             <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
@@ -428,16 +379,16 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         <div className="stack">
           <div>
             {recurText(e.date, r)}. {ctx.today > r.until ? `Ended ${longDate(r.until)}.` : `Ends ${longDate(r.until)} (${daysBetween(ctx.today, r.until)} days left).`}
-            {e.renews && <div className="sub">Renews <Link href={`/events/${e.renews}`}>{e.renews}</Link>.</div>}
+            {e.renews && <div className="hint">Renews <Link href={`/events/${e.renews}`}>{e.renews}</Link>.</div>}
           </div>
           {isEventCard(renewal) && renewal.status !== "denied" && renewal.status !== "cancelled" ? (
             <div>
               Next period requested: <Link href={`/events/${renewal.id}`}>{renewal.id}</Link> <Pill tone="info">{STATUS_LABEL[renewal.status]}</Pill>
             </div>
           ) : ec.status === "approved" && ctx.today <= r.until && !renewing?.can ? (
-            <p className={styles.muted}>{ctx.today < renewalOpens(r) ? `Renewal opens ${longDate(renewalOpens(r))}, ${RENEW_DAYS} days before the series ends.` : renewing && !renewing.can ? renewing.why : ""}</p>
+            <p className="hint">{ctx.today < renewalOpens(r) ? `Renewal opens ${longDate(renewalOpens(r))}, ${RENEW_DAYS} days before the series ends.` : renewing && !renewing.can ? renewing.why : ""}</p>
           ) : renewing?.can ? (
-            <p className={styles.muted}>Renewal is open. It goes through the same checks and approval.</p>
+            <p className="hint">Renewal is open. It goes through the same checks and approval.</p>
           ) : null}
         </div>
       </Panel>
@@ -448,15 +399,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const c = e.closeOut;
     const checks = e.roomChecks ?? [];
     const checkSummary = checks.length ? (
-      <ul className="plain">
+      <Rows>
         {checks.map((r) => (
           <li key={`${r.date}-${r.when}`}>
             {dayText(r.date)}, {r.when}: <CheckResult check={r} />
           </li>
         ))}
-      </ul>
+      </Rows>
     ) : (
-      <span className="sub">No room checks recorded.</span>
+      <span className="hint">No room checks recorded.</span>
     );
     if (ec.status === "closed" && c) {
       return (
@@ -464,8 +415,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <KeyValue
             items={[
               { label: "Attendance", value: c.attendance !== undefined ? `${c.attendance} (expected ${e.attendance})` : "Not given" },
-              { label: "Spent", value: <>{spendText(c.spent, e.budget)}{c.costsConfirmed ? <div className="sub">Final costs confirmed</div> : null}</> },
-              { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="sub">{fmtDateTime(c.at)}</div></> },
+              { label: "Spent", value: <>{spendText(c.spent, e.budget)}{c.costsConfirmed ? <div className="hint">Final costs confirmed</div> : null}</> },
+              { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="hint">{fmtDateTime(c.at)}</div></> },
               { label: "Deposit", value: c.depositRefund ? "Refund needed (finance was told)" : null },
               { label: "How it went", value: c.notes && <span className="pre">{c.notes}</span> },
               { label: "Room checks", value: checkSummary },
@@ -478,35 +429,31 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     return (
       <Panel title="Close out this event" id="closeout">
         {!may ? (
-          <p className={styles.muted}>The event is over. It&apos;s waiting on {names(ec.ownerEmail)} for the attendance and final costs.</p>
+          <p className="hint">The event is over. It&apos;s waiting on {names(ec.ownerEmail)} for the attendance and final costs.</p>
         ) : (
           <form action={closeOutEvent} className={styles.closeout}>
             {base}
-            <p className={styles.muted}>{own ? "The event is over. Tell us how it went and confirm the final costs. It takes a minute." : "You can close this out for the requester. Attendance and costs are optional for the office."}</p>
-            <div className={styles.two}>
+            <p className="hint">{own ? "The event is over. Tell us how it went and confirm the final costs. It takes a minute." : "You can close this out for the requester. Attendance and costs are optional for the office."}</p>
+            <div className="grid two">
               <Field label="About how many people came?" hint={`You expected ${e.attendance}.`} required={own}>
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />
               </Field>
               <div>
-                <div className="sub">Actual spend (from the purchases linked to this event)</div>
+                <div className="hint">Actual spend (from the purchases linked to this event)</div>
                 <strong>{spendText(spent, e.budget)}</strong>
-                <div className="sub">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
+                <div className="hint">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
             </div>
             <div>
-              <div className="sub">Room condition (from security)</div>
+              <div className="hint">Room condition (from security)</div>
               {checkSummary}
             </div>
             <Field label="How did it go? What would you change next time?">
               <textarea name="notes" rows={3} maxLength={2000} placeholder="e.g. Good turnout. Order less pizza next time." />
             </Field>
-            <label className={styles.agree}>
-              <input type="checkbox" name="costsConfirmed" required={own} /> These are all the costs for this event{own ? "" : " (the requester confirmed them)"}
-            </label>
+            <Checkbox name="costsConfirmed" required={own}>These are all the costs for this event{own ? "" : " (the requester confirmed them)"}</Checkbox>
             {office && (
-              <label className={styles.agree}>
-                <input type="checkbox" name="depositRefund" /> A deposit should be refunded (MPH community events). The finance office is told.
-              </label>
+              <Checkbox name="depositRefund">A deposit should be refunded (MPH community events). The finance office is told.</Checkbox>
             )}
             <FormActions>
               <Button variant="primary" type="submit">{own ? "Close out the event" : "Close it out for them"}</Button>
@@ -544,7 +491,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               <Field label={`Note for ${a.requesterName} (optional)`}>
                 <input name="note" maxLength={1000} placeholder="e.g. We can move to the following week" />
               </Field>
-              <div className={styles.actionRow}>
+              <div className="row">
                 {a.hold.cardId && <Button variant="primary" type="submit" formAction={decideAskWith.bind(null, "release_move")}>Give it up and move {a.hold.ownerEmail === viewer.email.toLowerCase() ? "my" : "the"} event</Button>}
                 <Button variant={a.hold.cardId ? "default" : "primary"} type="submit" formAction={decideAskWith.bind(null, "release_cancel")}>Give it up and cancel {a.dates.length > 1 ? "those dates" : "it"}</Button>
                 <Button type="submit" formAction={decideAskWith.bind(null, "keep")}>Keep it</Button>
@@ -558,17 +505,16 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               <Button variant="quiet" size="small" type="submit">Withdraw the ask</Button>
             </form>
           )}
-          <details>
-            <summary className="sub">History of this ask</summary>
+          <Disclosure summary="History of this ask">
             <ol className={styles.history}>
               {a.history.map((h, i) => (
                 <li key={i}>
                   <span />
-                  <div className="sub">{h.text}</div>
+                  <div className="hint">{h.text}</div>
                 </li>
               ))}
             </ol>
-          </details>
+          </Disclosure>
         </div>
       </Panel>
     );

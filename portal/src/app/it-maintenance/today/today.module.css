@@ -20,12 +20,10 @@
   /* Big tap targets: the buttons fill the card on a phone, sit side by side when there's room. */
   .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-2); margin-top: var(--s-1); }
   .actions > form > button, .actions > form > a { min-height: 48px; font-size: var(--t-base); }
-  .more { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: var(--s-2); }
-  .summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; color: var(--accent-text); font-weight: 700; list-style: none; }
-  .summary::-webkit-details-marker { display: none; }
-  .summary::before { content: "▸"; margin-right: var(--s-2); color: var(--ink-3); }
-  .more[open] > .summary::before { content: "▾"; }
-  .more button { min-height: 48px; }
+  /* Folded steps span the card, with phone-sized buttons and summary. */
+  .tap { grid-column: 1 / -1; }
+  .tap > summary { min-height: 44px; }
+  .tap button { min-height: 48px; }
 
   .upcoming { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); }
 }

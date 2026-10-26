@@ -20,24 +20,23 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
-import { LEAD_DAYS, MARKETING_TYPES, addDays, daysBetween, isDate, neededBy, titleFor, type ParsedMarketing } from "./forms";
+import { LEAD_DAYS, MARKETING_TYPES, neededBy, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
-import { type HistoryEntry, type MarketingDetails, type MarketingFile, type MarketingStage, STAGE_LABEL } from "./types";
+import { type MarketingDetails, type MarketingFile, type MarketingStage } from "./types";
+import { same } from "../text";
+import { addDays, daysBetween, isDate, todayLocal } from "../dates";
+import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 export type { Actor };
 
 export type MarketingCard = Card & { type: "marketing"; marketing: MarketingDetails };
 
-export class WorkflowError extends Error {}
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 
 export function isMarketingCard(c: Card | null | undefined): c is MarketingCard {
   return Boolean(c && c.type === "marketing" && c.marketing);
 }
 
 /** Today in Raleigh (YYYY-MM-DD) for an ISO time. */
-const dayOf = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
 /** "Nov 4" for a YYYY-MM-DD day. */
 export const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -67,7 +66,6 @@ export function statusForStage(stage: MarketingStage): CardStatus {
 
 /** Open stages: still waiting on someone. */
 export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled", "doing"];
-export const isOpen = (c: MarketingCard) => OPEN_STAGES.includes(c.marketing.stage);
 
 /** What the card is waiting on, in words, for My Requests and the lists. */
 export function waitingOnFor(card: MarketingCard): string | undefined {
@@ -113,8 +111,6 @@ export function isTight(card: MarketingCard, today: string): boolean {
 
 export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel" | "files";
 
-/** The actions the marketing team takes; the others are the requester's. */
-export const TEAM_ACTIONS: Action[] = ["schedule", "ask", "decline", "start", "finish", "reschedule"];
 /** Review decisions, which nobody makes on their own request. */
 const REVIEW_ACTIONS: Action[] = ["schedule", "ask", "decline"];
 
@@ -160,14 +156,8 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
   return no("Unknown action.");
 }
 
-function must(card: MarketingCard, actor: Actor, action: Action) {
-  const r = permission(card, actor, action);
-  if (!r.ok) throw new WorkflowError(r.reason);
-}
-
-/** The team actions `actor` can take on this request now. */
-export function teamActionsFor(card: MarketingCard, actor: Actor): Action[] {
-  return TEAM_ACTIONS.filter((a) => permission(card, actor, a).ok);
+function mustDo(card: MarketingCard, actor: Actor, action: Action) {
+  must(permission(card, actor, action));
 }
 
 /** Requests waiting for the weekly review that `actor` can review (not their own). */
@@ -177,11 +167,6 @@ export function reviewableBy(cards: MarketingCard[], actor: Actor): MarketingCar
 
 // ---- Transitions ---------------------------------------------------------
 // Each returns a new card; the caller saves it.
-
-function entry(actor: Actor | string, now: string, action: string, note?: string): HistoryEntry {
-  const by = typeof actor === "string" ? actor : actor.email;
-  return note ? { at: now, by, action, note } : { at: now, by, action };
-}
 
 function withStage(card: MarketingCard, m: MarketingDetails, now: string): MarketingCard {
   const next: MarketingCard = { ...card, marketing: m, status: statusForStage(m.stage), updatedAt: now };
@@ -196,7 +181,7 @@ const moved = (m: MarketingDetails, stage: MarketingStage, now: string): Marketi
 function checkDoneBy(doneBy: string, now: string): string {
   const d = doneBy.trim();
   if (!isDate(d)) throw new WorkflowError("Pick the date marketing aims to finish by.");
-  if (d < dayOf(now)) throw new WorkflowError("The done-by date has already passed.");
+  if (d < todayLocal(new Date(now))) throw new WorkflowError("The done-by date has already passed.");
   return d;
 }
 
@@ -204,7 +189,7 @@ function checkDoneBy(doneBy: string, now: string): string {
 function tightNote(answers: Record<string, string>, now: string): string | undefined {
   const due = neededBy(answers);
   if (!due) return undefined;
-  const days = daysBetween(dayOf(now), due);
+  const days = daysBetween(todayLocal(new Date(now)), due);
   if (days >= LEAD_DAYS) return undefined;
   return `Needed in ${days} day${days === 1 ? "" : "s"}. Marketing usually takes 1–2 weeks, so this may not be ready in time.`;
 }
@@ -219,10 +204,10 @@ export function newMarketing(details: ParsedMarketing, owner: Actor, now: string
     ...(details.notes ? { notes: details.notes } : {}),
     stage: "review",
     stageSince: now,
-    history: [entry(owner, now, "Submitted")],
+    history: [historyEntry(owner.email, now, "Submitted")],
   };
   const tight = tightNote(details.answers, now);
-  if (tight) m.history.push(entry("Portal", now, "Short notice", tight));
+  if (tight) m.history.push(historyEntry("Portal", now, "Short notice", tight));
   const card: MarketingCard = {
     id: "",
     orgId: ORG.id,
@@ -240,23 +225,23 @@ export function newMarketing(details: ParsedMarketing, owner: Actor, now: string
 
 /** Accept it at the weekly review, with the date marketing aims to finish by. */
 export function schedule(card: MarketingCard, actor: Actor, now: string, doneBy: string, note?: string): MarketingCard {
-  must(card, actor, "schedule");
+  mustDo(card, actor, "schedule");
   const d = checkDoneBy(doneBy, now);
   const m: MarketingDetails = {
     ...moved(card.marketing, "scheduled", now),
     doneBy: d,
     remindedFor: undefined,
-    history: [...card.marketing.history, entry(actor, now, `Scheduled, to finish by ${longDay(d)}`, note?.trim() || undefined)],
+    history: [...card.marketing.history, historyEntry(actor.email, now, `Scheduled, to finish by ${longDay(d)}`, note?.trim() || undefined)],
   };
   return withStage(card, m, now);
 }
 
 /** Ask the requester something. It comes back to the weekly review when they answer. */
 export function ask(card: MarketingCard, actor: Actor, now: string, question: string): MarketingCard {
-  must(card, actor, "ask");
+  mustDo(card, actor, "ask");
   const q = question.trim();
   if (!q) throw new WorkflowError("Write your question for the requester.");
-  const m: MarketingDetails = { ...moved(card.marketing, "question", now), question: q, history: [...card.marketing.history, entry(actor, now, "Asked a question", q)] };
+  const m: MarketingDetails = { ...moved(card.marketing, "question", now), question: q, history: [...card.marketing.history, historyEntry(actor.email, now, "Asked a question", q)] };
   return withStage(card, m, now);
 }
 
@@ -286,74 +271,74 @@ function applyEdit(card: MarketingCard, edited: MarketingEdit | undefined): { ca
 
 /** The requester answers marketing's question (and may edit the request too); it goes back to the weekly review. */
 export function answer(card: MarketingCard, actor: Actor, now: string, text: string, edited?: MarketingEdit): MarketingCard {
-  must(card, actor, "answer");
+  mustDo(card, actor, "answer");
   const a = text.trim();
   if (!a) throw new WorkflowError("Write your answer to marketing's question.");
   const { card: base, changed } = applyEdit(card, edited);
-  const history = [...base.marketing.history, entry(actor, now, "Answered marketing's question", a)];
-  if (changed) history.push(entry(actor, now, "Edited the request"));
+  const history = [...base.marketing.history, historyEntry(actor.email, now, "Answered marketing's question", a)];
+  if (changed) history.push(historyEntry(actor.email, now, "Edited the request"));
   const m: MarketingDetails = { ...moved(base.marketing, "review", now), question: undefined, history };
   return withStage(base, m, now);
 }
 
 /** The requester changes the request before it's scheduled. It stays where it is. */
 export function edit(card: MarketingCard, actor: Actor, now: string, edited: MarketingEdit): MarketingCard {
-  must(card, actor, "edit");
+  mustDo(card, actor, "edit");
   const { card: base, changed } = applyEdit(card, edited);
   if (!changed) throw new WorkflowError("Nothing changed.");
-  const m: MarketingDetails = { ...base.marketing, history: [...base.marketing.history, entry(actor, now, "Edited the request")] };
+  const m: MarketingDetails = { ...base.marketing, history: [...base.marketing.history, historyEntry(actor.email, now, "Edited the request")] };
   return withStage(base, m, now);
 }
 
 /** Someone on the team starts the work; they're recorded as working on it. */
 export function start(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
-  must(card, actor, "start");
+  mustDo(card, actor, "start");
   const m: MarketingDetails = {
     ...moved(card.marketing, "doing", now),
     assignee: actor.email.toLowerCase(),
-    history: [...card.marketing.history, entry(actor, now, "Started", note?.trim() || undefined)],
+    history: [...card.marketing.history, historyEntry(actor.email, now, "Started", note?.trim() || undefined)],
   };
   return withStage(card, m, now);
 }
 
 /** Change the done-by date of scheduled or in-progress work. A new date can get its own reminder. */
 export function reschedule(card: MarketingCard, actor: Actor, now: string, doneBy: string, note?: string): MarketingCard {
-  must(card, actor, "reschedule");
+  mustDo(card, actor, "reschedule");
   const d = checkDoneBy(doneBy, now);
   if (d === card.marketing.doneBy) throw new WorkflowError("That's already the done-by date.");
   const m: MarketingDetails = {
     ...card.marketing,
     doneBy: d,
     remindedFor: undefined,
-    history: [...card.marketing.history, entry(actor, now, `Done-by date changed to ${longDay(d)}`, note?.trim() || undefined)],
+    history: [...card.marketing.history, historyEntry(actor.email, now, `Done-by date changed to ${longDay(d)}`, note?.trim() || undefined)],
   };
   return withStage(card, m, now);
 }
 
 /** The work is finished. `note` can link the finished work. */
 export function finish(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
-  must(card, actor, "finish");
+  mustDo(card, actor, "finish");
   const n = note?.trim() || undefined;
   const m: MarketingDetails = {
     ...moved(card.marketing, "done", now),
     doneNote: n,
     assignee: card.marketing.assignee ?? actor.email.toLowerCase(),
-    history: [...card.marketing.history, entry(actor, now, "Done", n)],
+    history: [...card.marketing.history, historyEntry(actor.email, now, "Done", n)],
   };
   return withStage(card, m, now);
 }
 
 export function decline(card: MarketingCard, actor: Actor, now: string, reason: string): MarketingCard {
-  must(card, actor, "decline");
+  mustDo(card, actor, "decline");
   const r = reason.trim();
   if (!r) throw new WorkflowError("Say why marketing can't take this on.");
-  const m: MarketingDetails = { ...moved(card.marketing, "declined", now), declineReason: r, question: undefined, history: [...card.marketing.history, entry(actor, now, "Declined", r)] };
+  const m: MarketingDetails = { ...moved(card.marketing, "declined", now), declineReason: r, question: undefined, history: [...card.marketing.history, historyEntry(actor.email, now, "Declined", r)] };
   return withStage(card, m, now);
 }
 
 /** The requester or the marketing team adds files (already uploaded and checked with checkFiles). The stage doesn't change. */
 export function addFiles(card: MarketingCard, actor: Actor, now: string, files: Omit<MarketingFile, "at" | "by">[]): MarketingCard {
-  must(card, actor, "files");
+  mustDo(card, actor, "files");
   if (files.length === 0) throw new WorkflowError("Choose a file first.");
   const had = filesOf(card.marketing);
   if (had.length + files.length > MAX_PER_REQUEST) throw new WorkflowError(`A request can have up to ${MAX_PER_REQUEST} files. For more, share a Google Drive folder instead.`);
@@ -362,14 +347,14 @@ export function addFiles(card: MarketingCard, actor: Actor, now: string, files: 
   const m: MarketingDetails = {
     ...card.marketing,
     files: [...had, ...added],
-    history: [...card.marketing.history, entry(actor, now, `Added ${files.length} file${files.length === 1 ? "" : "s"}`, files.map((f) => f.name).join(", "))],
+    history: [...card.marketing.history, historyEntry(actor.email, now, `Added ${files.length} file${files.length === 1 ? "" : "s"}`, files.map((f) => f.name).join(", "))],
   };
   return withStage(card, m, now);
 }
 
 export function cancel(card: MarketingCard, actor: Actor, now: string): MarketingCard {
-  must(card, actor, "cancel");
-  const m: MarketingDetails = { ...moved(card.marketing, "cancelled", now), question: undefined, history: [...card.marketing.history, entry(actor, now, "Cancelled by requester")] };
+  mustDo(card, actor, "cancel");
+  const m: MarketingDetails = { ...moved(card.marketing, "cancelled", now), question: undefined, history: [...card.marketing.history, historyEntry(actor.email, now, "Cancelled by requester")] };
   return withStage(card, m, now);
 }
 
@@ -379,4 +364,3 @@ export function suggestedDoneBy(card: MarketingCard, today: string): string {
   return due && due >= today ? due : addDays(today, LEAD_DAYS);
 }
 
-export { STAGE_LABEL };

@@ -1,0 +1,20 @@
+@layer components {
+  /* Comments and history on a request page, as in the demo. */
+  .acts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+  .act { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t-md); }
+  .ab { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+  .av {
+    display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent-text); font-size: 10px; font-weight: 700;
+  }
+  .when { color: var(--ink-3); font-size: var(--t-sm); }
+  .note { color: var(--ink-2); margin-top: 2px; }
+  .quiet { margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+  .box { width: 100%; }
+
+  /* Ready-made replies above the comment box. */
+  .replies { display: flex; flex-wrap: wrap; gap: 6px; }
+  .reply { min-height: 28px; padding: 0 10px; border: 1px dashed var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--t-sm); cursor: pointer; text-align: left; }
+  .reply:hover { border-color: var(--ink-3); color: var(--ink); }
+  .reply:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+}

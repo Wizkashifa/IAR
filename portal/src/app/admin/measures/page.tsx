@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Panel } from "@/components/Panel";
-import { todayLocal } from "@/lib/away";
+import { Panel, PanelFoot } from "@/components/Panel";
+import { todayLocal } from "@/lib/dates";
 import { cardStore, type Card } from "@/lib/cards";
 import { feedbackStore } from "@/lib/feedback";
 import { formStartStore } from "@/lib/form-starts";
@@ -21,6 +21,8 @@ import {
 } from "@/lib/measures";
 import { requireViewer } from "@/lib/viewer";
 import styles from "./measures.module.css";
+import { historyOf } from "@/lib/kinds";
+import { DataTable, cell } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Beta measures" };
@@ -30,7 +32,6 @@ const WEEKS = 6;
 /** The most recent requests read for the step times and sent-back counts. */
 const RECENT = 2000;
 
-const historyOf = (c: Card) => c.purchase?.history ?? c.event?.history ?? c.marketing?.history ?? c.ticket?.history ?? [];
 const toMeasure = (c: Card): MeasureCard => ({ type: c.type, createdAt: c.createdAt, updatedAt: c.updatedAt, history: historyOf(c) });
 const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const pct = (n: number, of: number) => (of ? Math.round((n / of) * 100) : 0);
@@ -79,18 +80,17 @@ export default async function MeasuresPage() {
       />
 
       <Panel title="Requests sent each week" right={`Last ${WEEKS} weeks`} flush className={styles.first}>
-        <div className="tablewrap">
-          <table className={styles.table}>
+          <DataTable>
             <caption className="sr-only">Requests sent each week, by kind</caption>
             <thead>
               <tr>
                 <th scope="col">Week starting</th>
                 {MEASURED.map((t) => (
-                  <th key={t} scope="col" className={`${styles.num} ${styles.wideOnly}`}>
+                  <th key={t} scope="col" className={`${cell.num} ${styles.wideOnly}`}>
                     {MEASURED_LABEL[t]}
                   </th>
                 ))}
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   All
                 </th>
                 <th scope="col" className={styles.barCol}>
@@ -103,19 +103,18 @@ export default async function MeasuresPage() {
                 <tr key={w.weekStart}>
                   <th scope="row">{shortDay(w.weekStart)}</th>
                   {MEASURED.map((t) => (
-                    <td key={t} className={`${styles.num} ${styles.wideOnly}`}>
+                    <td key={t} className={`${cell.num} ${styles.wideOnly}`}>
                       {w.counts[t]}
                     </td>
                   ))}
-                  <td className={`${styles.num} ${styles.total}`}>{weekTotal(w)}</td>
+                  <td className={`${cell.num} ${styles.total}`}>{weekTotal(w)}</td>
                   <td className={styles.barCol}>
                     <Bar value={weekTotal(w)} of={busiest} label={`${weekTotal(w)} requests in the week starting ${shortDay(w.weekStart)}`} />
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </DataTable>
       </Panel>
 
       <h2>How long requests wait at each step</h2>
@@ -132,12 +131,12 @@ export default async function MeasuresPage() {
               {steps.length === 0 ? (
                 <EmptyState icon="clock">No finished steps yet.</EmptyState>
               ) : (
-                <table className={styles.table}>
+                <DataTable>
                   <caption className="sr-only">Time at each step for {MEASURED_LABEL[type]}</caption>
                   <thead>
                     <tr>
                       <th scope="col">Step</th>
-                      <th scope="col" className={styles.num}>
+                      <th scope="col" className={cell.num}>
                         Times
                       </th>
                       <th scope="col">Usually</th>
@@ -148,18 +147,18 @@ export default async function MeasuresPage() {
                     {steps.map((s) => (
                       <tr key={s.step}>
                         <th scope="row">{s.step}</th>
-                        <td className={styles.num}>{s.times}</td>
+                        <td className={cell.num}>{s.times}</td>
                         <td>
                           <div className={styles.wait}>
                             <span>{fmtWait(s.medianMs)}</span>
                             <Bar value={s.medianMs} of={longest} label={`${s.step}: usually ${fmtWait(s.medianMs)}`} />
                           </div>
                         </td>
-                        <td className={styles.muted}>{fmtWait(s.longestMs)}</td>
+                        <td className="hint">{fmtWait(s.longestMs)}</td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </DataTable>
               )}
             </Panel>
           );
@@ -168,18 +167,18 @@ export default async function MeasuresPage() {
 
       <div className={styles.grid}>
         <Panel title="Sent back to the requester" level={2} flush>
-          <table className={styles.table}>
+          <DataTable>
             <caption className="sr-only">Requests sent back for changes, or with a question from marketing</caption>
             <thead>
               <tr>
                 <th scope="col">Kind</th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Requests
                 </th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Sent back
                 </th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Times
                 </th>
               </tr>
@@ -188,31 +187,31 @@ export default async function MeasuresPage() {
               {back.map((b) => (
                 <tr key={b.type}>
                   <th scope="row">{MEASURED_LABEL[b.type]}</th>
-                  <td className={styles.num}>{b.requests}</td>
-                  <td className={styles.num}>
-                    {b.sentBack} <span className={styles.muted}>({pct(b.sentBack, b.requests)}%)</span>
+                  <td className={cell.num}>{b.requests}</td>
+                  <td className={cell.num}>
+                    {b.sentBack} <span className="hint">({pct(b.sentBack, b.requests)}%)</span>
                   </td>
-                  <td className={styles.num}>{b.times}</td>
+                  <td className={cell.num}>{b.times}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          <p className={styles.foot}>For changes, or with a question from the marketing team. From the {cards.length} most recent requests.</p>
+          </DataTable>
+          <PanelFoot>For changes, or with a question from the marketing team. From the {cards.length} most recent requests.</PanelFoot>
         </Panel>
 
         <Panel title="Forms started but not sent" right={`Since ${shortDay(since)}`} flush>
-          <table className={styles.table}>
+          <DataTable>
             <caption className="sr-only">Request forms someone started typing in, against requests sent</caption>
             <thead>
               <tr>
                 <th scope="col">Form</th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Started
                 </th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Sent
                 </th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Not sent
                 </th>
               </tr>
@@ -221,29 +220,29 @@ export default async function MeasuresPage() {
               {forms.map((f) => (
                 <tr key={f.form}>
                   <th scope="row">{MEASURED_LABEL[f.form]}</th>
-                  <td className={styles.num}>{f.started}</td>
-                  <td className={styles.num}>{f.sent}</td>
-                  <td className={`${styles.num} ${f.notSent ? styles.total : ""}`}>{f.notSent}</td>
+                  <td className={cell.num}>{f.started}</td>
+                  <td className={cell.num}>{f.sent}</td>
+                  <td className={`${cell.num} ${f.notSent ? styles.total : ""}`}>{f.notSent}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          <p className={styles.foot}>
+          </DataTable>
+          <PanelFoot>
             A form counts as started the first time someone types in it; only the form&apos;s name and the day are kept. Requests opened another way (a Jira import, a
             preventive schedule) count as sent without a start.
-          </p>
+          </PanelFoot>
         </Panel>
 
         <Panel title="Beta feedback" right={<Link href="/feedback">See the feedback</Link>} flush>
-          <table className={styles.table}>
+          <DataTable>
             <caption className="sr-only">Feedback received, by kind</caption>
             <thead>
               <tr>
                 <th scope="col">Kind</th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Received
                 </th>
-                <th scope="col" className={styles.num}>
+                <th scope="col" className={cell.num}>
                   Still open
                 </th>
               </tr>
@@ -252,12 +251,12 @@ export default async function MeasuresPage() {
               {fb.map((f) => (
                 <tr key={f.kind}>
                   <th scope="row">{f.label}</th>
-                  <td className={styles.num}>{f.count}</td>
-                  <td className={styles.num}>{f.open}</td>
+                  <td className={cell.num}>{f.count}</td>
+                  <td className={cell.num}>{f.open}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         </Panel>
       </div>
     </>

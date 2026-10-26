@@ -4,8 +4,9 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { requireViewer } from "@/lib/viewer";
 import { WHATS_NEW, type WhatsNew } from "@/lib/whats-new";
-import { fmtDay } from "../../ui";
+import { fmtDay } from "@/lib/format";
 import styles from "../help.module.css";
+import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "What's new" };
@@ -19,9 +20,7 @@ export default async function WhatsNewPage() {
 
   return (
     <>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link href="/help">Help</Link> / What&apos;s new
-      </nav>
+      <Crumb trail={[{ href: "/help", label: "Help" }]} here="What's new" />
       <ModuleHead title="What's new" lead="Changes to the portal you'll notice, newest first." />
       <div className={styles.stack}>
         {ordered.map(([date, items]) => (

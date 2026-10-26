@@ -22,14 +22,18 @@ type Mem = { items: Map<string, TicketSchedule>; seq: number; seeded: boolean };
 const g = globalThis as unknown as { __iarTicketSchedules?: Mem };
 const mem: Mem = (g.__iarTicketSchedules ??= { items: new Map(), seq: 0, seeded: false });
 
+// One shared promise, so requests that arrive together don't seed twice.
+let seeding: Promise<void> | null = null;
 async function seed() {
   if (mem.seeded) return;
-  mem.seeded = true;
-  const { sampleSchedules } = await import("./samples");
-  for (const s of sampleSchedules()) {
-    mem.items.set(s.id, s);
-    mem.seq = Math.max(mem.seq, Number(s.id.replace(/\D/g, "")) || 0);
-  }
+  seeding ??= import("./samples").then(({ sampleSchedules }) => {
+    for (const s of sampleSchedules()) {
+      mem.items.set(s.id, s);
+      mem.seq = Math.max(mem.seq, Number(s.id.replace(/\D/g, "")) || 0);
+    }
+    mem.seeded = true;
+  });
+  return seeding;
 }
 
 const memoryStore: ScheduleStore = {

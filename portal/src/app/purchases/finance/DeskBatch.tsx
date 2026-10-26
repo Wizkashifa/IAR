@@ -8,6 +8,7 @@ import { ItemRow } from "@/components/ItemRow";
 import { Panel } from "@/components/Panel";
 import type { DeskTab } from "@/lib/purchases/finance-desk";
 import styles from "./finance.module.css";
+import { Checkbox } from "@/components/Choices";
 
 /** One row on the desk, prepared on the server (names, amounts and dates already in words). */
 export type DeskRow = {
@@ -56,10 +57,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
         title={title}
         right={
           rows.length > 0 ? (
-            <label className={styles.all}>
-              <input type="checkbox" checked={all} onChange={() => setPicked(all ? new Set() : new Set(rows.map((r) => r.key)))} />
-              Select all {rows.length}
-            </label>
+            <Checkbox checked={all} onChange={() => setPicked(all ? new Set() : new Set(rows.map((r) => r.key)))} quiet>Select all {rows.length}</Checkbox>
           ) : undefined
         }
         flush
@@ -88,12 +86,12 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
       {rows.length > 0 && (
         <Panel title={on.length ? `${on.length} selected · ${money(total)}` : "Nothing selected yet"} level={3}>
           {on.length === 0 ? (
-            <p className={styles.hint}>Tick the requests above, or Select all, then choose what to do with them.</p>
+            <p className="hint">Tick the requests above, or Select all, then choose what to do with them.</p>
           ) : (
             <div className="stack">
               {tab === "pay" && (
                 <>
-                  <div className={styles.payGrid}>
+                  <div className="grid split">
                     <Field label="How they were paid" htmlFor="desk-method">
                       <select id="desk-method" name="method" defaultValue={on.every((r) => r.method === "ACH") ? "ACH" : "Check"}>
                         <option>Check</option>

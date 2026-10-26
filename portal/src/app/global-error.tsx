@@ -1,6 +1,7 @@
 "use client";
 
 import "./globals.css";
+import { Button } from "@/components/Button";
 
 /** When even the portal's frame fails to load. Plain on purpose: nothing here depends on the parts that may have broken. */
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -11,9 +12,9 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           <h1>The portal didn&apos;t load</h1>
           <p className="lead">Please try again in a moment. If it keeps happening, tell the portal admins.</p>
           <p>
-            <button type="button" className="button" onClick={reset}>
+            <Button variant="primary" onClick={reset}>
               Try again
-            </button>
+            </Button>
           </p>
         </main>
       </body>

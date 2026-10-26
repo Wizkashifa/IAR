@@ -16,10 +16,11 @@ import type { IconName } from "@/components/Icon";
 import { getViewer } from "@/lib/viewer";
 import { ORG } from "@/lib/org";
 import { unreadCount } from "@/lib/notifications";
-import { isActive, todayLocal } from "@/lib/away";
+import { isActive } from "@/lib/away";
 import { peopleStore } from "@/lib/people";
 import { visibleModules } from "@/lib/modules";
 import { teamsOf } from "@/lib/tickets/workflow";
+import { todayLocal } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: { template: `%s · ${ORG.shortName} Portal`, default: `${ORG.shortName} Portal` },

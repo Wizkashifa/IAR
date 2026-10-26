@@ -8,23 +8,29 @@ import { KeyValue } from "@/components/KeyValue";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
+import { CommentsPanel, HistoryPanel } from "@/components/Activity";
+import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
-import { COMMENT_MAX } from "@/lib/comments";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor, peopleStore } from "@/lib/people";
-import { isActive, todayLocal } from "@/lib/away";
+import { isActive } from "@/lib/away";
 import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
 import { purchaseContext } from "@/lib/purchases/settings";
 import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
 import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, isPurchaseCard, permission, returnTargets, type Action, type PurchaseCard } from "@/lib/purchases/workflow";
 import { actOnPurchase, commentOnPurchase } from "../actions";
-import { Flash, WaitingPill, fmtDate, fmtDateTime, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
+import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
 import styles from "../purchases.module.css";
+import { todayLocal } from "@/lib/dates";
+import { Checkbox } from "@/components/Choices";
+import { DataTable, cell } from "@/components/DataTable";
+import { Disclosure } from "@/components/Disclosure";
+import { FileList } from "@/components/FileList";
 
 export const dynamic = "force-dynamic";
 
@@ -39,13 +45,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: `${card.title} · ${card.id}` };
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
 
 export default async function PurchaseDetail({ params, searchParams }: Params & { searchParams: Promise<{ ok?: string; error?: string; sent?: string }> }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
@@ -89,7 +88,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
 
   const notes = (
     <>
-      <Flash ok={ok} error={error} />
+      <FlashNote ok={ok} error={error} messages={OK_TEXT} />
       {p.relatedParty && <Note tone="warn">The requester says the payee is a Shura or committee member, a relative of one, or a business one owns. Review it with that in mind.</Note>}
       {p.w9Required && (
         <Note tone="warn">
@@ -149,12 +148,12 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const main = (
     <>
       <Panel title={isCard ? "Charges" : "Line items"} right={<strong>{fmtMoney(total)}</strong>} flush>
-        <table className={`${styles.table} ${styles.compact}`}>
+        <DataTable compact>
           <thead>
             <tr>
               {isCard && <th>Date</th>}
               <th>{isCard ? "Merchant and sub-account" : "Sub-account"}</th>
-              <th className={styles.num}>Amount</th>
+              <th className={cell.num}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -163,17 +162,17 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               return (
                 <tr key={l.id}>
                   {isCard && (
-                    <td data-label="Date" className={`${styles.nowrap} ${styles.date}`}>
+                    <td data-label="Date" className={`${cell.nowrap} ${cell.date}`}>
                       {l.date && fmtDate(`${l.date}T12:00:00Z`)}
                     </td>
                   )}
                   <td data-label={isCard ? "Charge" : "Sub-account"}>
                     {isCard && <strong>{l.merchant}</strong>}
-                    <span className={isCard ? styles.sub : undefined}>
+                    <span className={isCard ? cell.sub : undefined}>
                       {accountLabel(acct)}
                       {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
                     </span>
-                    {l.note && <span className={styles.sub}>{l.note}</span>}
+                    {l.note && <span className={cell.sub}>{l.note}</span>}
                     {(!l.hasReceipt || l.flag) && (
                       <span className={styles.tags}>
                         {!l.hasReceipt && <Pill tone="warn">No receipt</Pill>}
@@ -192,7 +191,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                       </span>
                     )}
                   </td>
-                  <td data-label="Amount" className={styles.num}>
+                  <td data-label="Amount" className={cell.num}>
                     {fmtMoney(l.amount)}
                   </td>
                 </tr>
@@ -204,79 +203,20 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               {isCard && <td />}
               <td>
                 Total
-                {owed.length > 0 && <span className={styles.sub}>{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</span>}
+                {owed.length > 0 && <span className={cell.sub}>{fmtMoney(owed.reduce((s, l) => s + l.amount, 0))} expected back</span>}
               </td>
-              <td className={styles.num}>{fmtMoney(total)}</td>
+              <td className={cell.num}>{fmtMoney(total)}</td>
             </tr>
           </tfoot>
-        </table>
+        </DataTable>
       </Panel>
 
       <Panel title="Receipts and files" right={`${p.attachments.length}`}>
-        {p.attachments.length === 0 ? (
-          <p className={styles.why}>No files attached.</p>
-        ) : (
-          <ul className={styles.files}>
-            {p.attachments.map((a, i) => (
-              <li key={`${a.name}-${i}`}>
-                {a.url ? (
-                  <a href={a.url} target="_blank" rel="noreferrer">
-                    {a.name}
-                  </a>
-                ) : (
-                  a.name
-                )}
-                <span className={styles.when}>{Math.ceil(a.size / 1024)} KB</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <FileList files={p.attachments} empty="No files attached." />
       </Panel>
 
-      <Panel title="Comments" right={`${(card.comments ?? []).length}`} id="comments">
-        {(card.comments ?? []).length === 0 ? (
-          <p className={styles.why}>No comments yet. Ask a question or add context; everyone who can open this request sees it.</p>
-        ) : (
-          <ol className={styles.feed}>
-            {(card.comments ?? []).map((c) => (
-              <li key={c.id}>
-                <span className={styles.av} aria-hidden="true">
-                  {initials(c.name)}
-                </span>
-                <div>
-                  <strong>{c.name}</strong> <span className={styles.when}>{fmtDateTime(c.at)}</span>
-                  <div className={styles.said}>{c.text}</div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-        <form action={commentOnPurchase} className={styles.commentForm}>
-          {hidden("id", card.id)}
-          <Field label="Add a comment">
-            <textarea name="text" rows={3} maxLength={COMMENT_MAX} required placeholder="Ask a question or add context." />
-          </Field>
-          <div>
-            <Button type="submit">Comment</Button>
-          </div>
-        </form>
-      </Panel>
-
-      <Panel title="History">
-        <ol className={styles.feed}>
-          {[...p.history].reverse().map((h, i) => (
-            <li key={i}>
-              <span className={styles.av} aria-hidden="true">
-                {initials(names(h.by))}
-              </span>
-              <div>
-                <strong>{names(h.by)}</strong> {h.action} <span className={styles.when}>{fmtDateTime(h.at)}</span>
-                {h.note && <div className={styles.said}>{h.note}</div>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Panel>
+      <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />
+      <HistoryPanel entries={p.history} names={names} />
     </>
   );
 
@@ -295,7 +235,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             value: p.delivery && (
               <>
                 {paymentLabel(p.delivery)}
-                {p.mailingAddress && <span className={`${styles.sub} ${styles.said}`}>{p.mailingAddress}</span>}
+                {p.mailingAddress && <span className={`${cell.sub} ${styles.said}`}>{p.mailingAddress}</span>}
               </>
             ),
           },
@@ -305,7 +245,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             value: p.eventCardId && (
               <>
                 <Link href={`/events/${p.eventCardId}`}>{linkedEvent?.title ?? p.eventCardId}</Link>
-                <span className={styles.sub}>
+                <span className={cell.sub}>
                   {p.eventCardId}
                   {linkedEvent?.eventDate ? ` · ${fmtDate(`${linkedEvent.eventDate}T12:00:00Z`)}` : ""}
                 </span>
@@ -365,7 +305,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </Field>
     );
     const again = canRequestAgain(pc, viewer, todayLocal()) && (
-      <div className={styles.actRow}>
+      <div className="row">
         <Button href={`/purchases/new?from=${pc.id}`} icon="repeat" variant="quiet">
           Request this again
         </Button>
@@ -374,26 +314,24 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
     if (!approve && !pay && !books && !cancel && !sendBack) {
       if (again) return again;
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
-      return why && !why.ok ? <p className={styles.why}>{why.reason}</p> : null;
+      return why && !why.ok ? <p className="hint">{why.reason}</p> : null;
     }
     const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
     return (
-      <div className={styles.actForm}>
+      <div className="stack">
         {approve && (
-          <form action={actOnPurchase} className={styles.actForm}>
+          <form action={actOnPurchase} className="stack">
             {base}
-            <div className={styles.actGrid}>
+            <div className="grid">
               <Field label="Note" hint="Needed to send it back or decline it. Everyone on the request sees it.">
                 <textarea name="note" rows={2} maxLength={1000} />
               </Field>
               {returnTo}
             </div>
             {p.stage === "finance" && p.w9Required && (
-              <label className={styles.check}>
-                <input type="checkbox" name="w9Received" /> The W-9 is on file in the restricted W-9 drive
-              </label>
+              <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
             )}
-            <div className={styles.actRow}>
+            <div className="row">
               <Button type="submit" name="action" value="approve" variant="primary" icon="check">
                 {approveLabel}
               </Button>
@@ -408,7 +346,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {pay && (
-          <form action={actOnPurchase} className={styles.actForm}>
+          <form action={actOnPurchase} className="stack">
             {base}
             <h2 className={styles.actHead}>Record the payment</h2>
             {p.payment && (
@@ -416,7 +354,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                 It was already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.
               </Note>
             )}
-            <div className={styles.actGrid}>
+            <div className="grid">
               <Field label="How it was paid">
                 <select name="method" defaultValue={p.delivery === "ach" ? "ACH" : "Check"}>
                   <option>Check</option>
@@ -428,7 +366,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                 <input name="reference" required maxLength={60} />
               </Field>
             </div>
-            <div className={styles.actRow}>
+            <div className="row">
               <ConfirmButton variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
                 Record payment
               </ConfirmButton>
@@ -437,26 +375,25 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {sendBack && !approve && (
-          <details className={styles.more} open={!pay && !books}>
-            <summary>Something wrong? Send it back</summary>
-            <form action={actOnPurchase} className={styles.actForm}>
+          <Disclosure summary="Something wrong? Send it back" open={!pay && !books}>
+            <form action={actOnPurchase} className="stack">
               {base}
               {hidden("action", "return")}
-              <div className={styles.actGrid}>
+              <div className="grid">
                 <Field label="What needs fixing" required>
                   <textarea name="note" rows={2} maxLength={1000} required />
                 </Field>
                 {returnTo}
               </div>
-              <div className={styles.actRow}>
+              <div className="row">
                 <Button type="submit">Send back</Button>
               </div>
             </form>
-          </details>
+          </Disclosure>
         )}
 
         {books && (
-          <form action={actOnPurchase} className={styles.actRow}>
+          <form action={actOnPurchase} className="row">
             {base}
             {hidden("action", "books")}
             <Button type="submit" variant="primary" icon="check">
@@ -466,7 +403,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {cancel && (
-          <form action={actOnPurchase} className={styles.actRow}>
+          <form action={actOnPurchase} className="row">
             {base}
             <ConfirmButton variant="danger" name="action" value="cancel" danger title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
               Cancel this request

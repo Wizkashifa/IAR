@@ -10,6 +10,8 @@
  * the same time, so approvals never bounce from one away person to another.
  */
 
+import { daysBetween, isDate } from "./dates";
+
 export type Away = {
   /** Lowercased @domain email of the person who is away. */
   email: string;
@@ -26,16 +28,7 @@ export type Away = {
 /** Longest single absence, so a forgotten status doesn't hand off approvals forever. */
 export const MAX_AWAY_DAYS = 120;
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL = /^[^\s@<>(),;:"\\]+@[^\s@<>(),;:"\\]+$/;
-
-/** Today's date in Raleigh, as YYYY-MM-DD. */
-export function todayLocal(now: Date = new Date()): string {
-  return now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-}
-
-const isDate = (s: string) => DATE.test(s) && !Number.isNaN(Date.parse(`${s}T12:00:00Z`)) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
-const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 864e5);
 
 export function isActive(a: Away, today: string): boolean {
   return a.from <= today && today <= a.until;

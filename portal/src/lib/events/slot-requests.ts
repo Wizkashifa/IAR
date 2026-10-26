@@ -22,8 +22,9 @@
  * - Every step is written to the request's history.
  */
 import { ORG, type Role } from "../org";
-import type { Notice, Recipient } from "../purchases/notices";
+import type { Notice, Recipient } from "../notices";
 import { type Directory, teamPeople } from "../teams";
+import { lc, same } from "../text";
 
 /** What the requester's room check clashed with. */
 export type Hold = {
@@ -104,8 +105,6 @@ export const CHOICE_LABEL: Record<SlotChoice, string> = {
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
-const lc = (s: string) => s.trim().toLowerCase();
-const same = (a?: string, b?: string) => Boolean(a && b && lc(a) === lc(b));
 const OPEN: SlotStatus[] = ["open", "escalated"];
 export const isOpenAsk = (r: SlotRequest) => OPEN.includes(r.status);
 
@@ -134,7 +133,7 @@ export function datesText(dates: string[]): string {
 }
 
 /** Who the ask goes to: the card's owner and their committee's chairs, the calendar entry's maker, or the office. */
-export function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[] {
+function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[] {
   const out = new Set<string>();
   if (hold.cardId && hold.ownerEmail) {
     out.add(lc(hold.ownerEmail));

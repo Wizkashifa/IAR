@@ -9,29 +9,21 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { canOpenCard } from "@/lib/access";
-import { hrefOf } from "@/lib/card-links";
+import { KINDS, hrefOf, kindOf } from "@/lib/kinds";
 import { ROW_TONE, type RowState } from "@/lib/card-row";
-import { cardStore, type Card, type CardType } from "@/lib/cards";
+import { cardStore, type Card } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";
 import { actorFor } from "@/lib/people";
 import { AGE_LABEL, ageGroup, canRemind, groupByAge, lastReminder, mayOpenStuck, reminderLabel, stuckItems, whoWaiting, type AgeGroup, type StuckItem } from "@/lib/stuck";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
-import { fmtDateTime } from "../ui";
+import { fmtDateTime } from "@/lib/format";
 import { sendReminder } from "./actions";
 import styles from "./stuck.module.css";
+import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "What's stuck" };
-
-/** The module filter: chip label for each kind of request. */
-const KINDS: { kind: CardType; label: string }[] = [
-  { kind: "event", label: "Events" },
-  { kind: "purchase", label: "Purchases" },
-  { kind: "marketing", label: "Marketing" },
-  { kind: "ticket", label: "AV/IT/Maintenance" },
-];
-const KIND_NAME: Partial<Record<CardType, string>> = { event: "Event", purchase: "Purchase", marketing: "Marketing", ticket: "AV/IT/Maintenance" };
 
 /** The edge and the days pill: red over a week, gold 3–7 days, blue under 3. */
 const AGE_STATE: Record<AgeGroup, RowState> = { week: "bad", days: "act", recent: "wait" };
@@ -57,7 +49,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
   const now = new Date().toISOString();
   const all = stuckItems([...purchases, ...events, ...marketing, ...tickets], now, ctx);
 
-  const kind = KINDS.find((k) => k.kind === sp.kind)?.kind;
+  const kind = KINDS.find((k) => k.type === sp.kind)?.type;
   const ofKind = kind ? all.filter((i) => i.card.type === kind) : all;
   const committees = [...new Set(ofKind.map((i) => committeeOf(i.card)))].sort((a, b) => a.localeCompare(b));
   const committee = sp.committee && committees.includes(sp.committee) ? sp.committee : undefined;
@@ -89,7 +81,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
         key={card.id}
         title={link ? <Link href={link}>{title}</Link> : title}
         id={card.id}
-        sub={`${KIND_NAME[card.type] ?? card.type} · ${committeeOf(card)} · ${holder.step}`}
+        sub={`${kindOf(card.type)?.one ?? card.type} · ${committeeOf(card)} · ${holder.step}`}
         who={holder.to.length ? `Waiting on ${who}` : "The daily job follows this one up"}
         state={state}
         right={
@@ -131,27 +123,9 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
       {sp.sent && !sp.error && <Note tone="ok">Reminder sent for {sp.sent}. It&apos;s in the request&apos;s history.</Note>}
 
       <div className={styles.filters}>
-        <nav className={styles.chips} aria-label="Kind of request">
-          <Link href={href({ committee })} className={!kind ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={!kind ? "page" : undefined}>
-            All <span>{all.length}</span>
-          </Link>
-          {KINDS.map((k) => (
-            <Link key={k.kind} href={href({ kind: k.kind })} className={kind === k.kind ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={kind === k.kind ? "page" : undefined}>
-              {k.label} <span>{all.filter((i) => i.card.type === k.kind).length}</span>
-            </Link>
-          ))}
-        </nav>
+        <Chips label="Kind of request" chips={[{ label: "All", href: href({ committee }), on: !kind, count: all.length }, ...KINDS.map((k) => ({ label: k.many, href: href({ kind: k.type }), on: kind === k.type, count: all.filter((i) => i.card.type === k.type).length }))]} />
         {committees.length > 1 && (
-          <nav className={styles.chips} aria-label="Committee">
-            <Link href={href({ kind })} className={!committee ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={!committee ? "page" : undefined}>
-              Every committee
-            </Link>
-            {committees.map((c) => (
-              <Link key={c} href={href({ kind, committee: c })} className={committee === c ? `${styles.chip} ${styles.on}` : styles.chip} aria-current={committee === c ? "page" : undefined}>
-                {c}
-              </Link>
-            ))}
-          </nav>
+          <Chips label="Committee" chips={[{ label: "Every committee", href: href({ kind }), on: !committee }, ...committees.map((c) => ({ label: c, href: href({ kind, committee: c }), on: committee === c }))]} />
         )}
       </div>
 
@@ -171,7 +145,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
             ))
         )}
       </Panel>
-      <p className="note">The daily job already reminds people after 3 days and goes to the director after 5. A reminder from here is for when a nudge from the office helps.</p>
+      <p className="hint">The daily job already reminds people after 3 days and goes to the director after 5. A reminder from here is for when a nudge from the office helps.</p>
     </div>
   );
 }

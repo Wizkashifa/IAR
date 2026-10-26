@@ -1,18 +1,19 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { checkAway, todayLocal } from "@/lib/away";
+import { checkAway } from "@/lib/away";
 import { deliver } from "@/lib/notifications";
 import { DEV_DOMAIN } from "@/lib/dev";
 import { ORG } from "@/lib/org";
 import { peopleStore } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
+import { todayLocal } from "@/lib/dates";
+import type { FormState } from "@/components/FormErrors";
 
-export type AwayFormState = { errors: string[] };
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
-export async function saveAway(_prev: AwayFormState, form: FormData): Promise<AwayFormState> {
+export async function saveAway(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const people = await peopleStore();
   const delegate = String(form.get("delegate") ?? "").trim().toLowerCase();

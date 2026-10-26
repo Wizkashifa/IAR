@@ -15,13 +15,13 @@ import {
   fundsFor,
   membershipsOf,
   requestableFunds,
-  slugOf,
   suggestFund,
   TEAM_SLUGS,
   teamGroupEmail,
   teamSlug,
   teamPeople,
   teamRoles,
+  groupDisplayName,
 } from "./teams";
 
 const NAMES = [
@@ -168,4 +168,12 @@ test("settings: cards keep only the last four digits and a domain holder; team f
   assert.ok(checkTeamFund("portal-team-youth@x.org", "", t).ok);
   assert.equal(checkTeamFund("portal-team-gone@x.org", "Youth Expenses", t).ok, false);
   assert.equal(checkTeamFund("portal-team-youth@x.org", "Made Up", t).ok, false);
+});
+
+test("group names: a leading \"Portal:\" (used to find groups in the Admin console) isn't shown", () => {
+  assert.equal(groupDisplayName("Portal: Youth"), "Youth");
+  assert.equal(groupDisplayName("portal - Women's Committee"), "Women's Committee");
+  assert.equal(groupDisplayName("Youth"), "Youth");
+  assert.equal(groupDisplayName("Portal Road Crew"), "Portal Road Crew");
+  assert.equal(groupDisplayName("Portal:"), "Portal:");
 });

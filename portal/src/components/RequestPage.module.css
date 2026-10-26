@@ -1,7 +1,5 @@
 @layer components {
   .page { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
-  .crumb { font-size: var(--t-sm); color: var(--ink-2); }
-  .crumb a { color: var(--accent-text); }
   .id { font-variant-numeric: tabular-nums; }
   .head { min-width: 0; }
   .head :global(.lead) { margin-bottom: 0; }
@@ -13,6 +11,8 @@
   .next.alone { margin-top: 0; padding-top: 0; border-top: 0; }
   .next > :first-child { color: var(--gold); margin-top: 2px; flex: none; }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-2); }
+  /* A form or group of actions laid out as a stack takes the whole row. */
+  .actions > :global(.stack) { flex: 1 1 100%; min-width: 0; }
   /* The main column and a 340px side column, as in the demo; one column on narrow screens, details after the request. */
   .issue { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
   .main, .side { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }

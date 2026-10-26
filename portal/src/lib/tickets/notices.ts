@@ -11,12 +11,10 @@
  * comments) is a notice in the portal only. People following the ticket hear
  * what the reporter hears, without alerts. Plain functions so they can be tested.
  */
-import { commenters, preview } from "../comments";
-import type { Notice, Recipient } from "../purchases/notices";
+import { type Notice, type Recipient, collector, commentNotices } from "../notices";
 import { TEAM_LABEL, URGENCY } from "./types";
 import { type TicketActor, type TicketCard, TEAM_ROLE, withTeam } from "./workflow";
-
-const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+import { same } from "../text";
 
 /** ": “note”" to end a sentence with what someone wrote, or just the full stop. */
 const said = (note?: string) => (note ? `: “${note}”` : ".");
@@ -24,16 +22,8 @@ const said = (note?: string) => (note ? `: “${note}”` : ".");
 const label = (c: TicketCard) => `${c.id} “${c.title}” (${c.ticket.room})`;
 const href = (c: TicketCard) => `/it-maintenance/${c.id}`;
 
-function collector(after: TicketCard, actor: Pick<TicketActor, "email">, link = href(after)) {
-  const out: Notice[] = [];
-  const seen = new Set<string>();
-  const add = (to: Recipient, text: string, alert: boolean) => {
-    const key = "email" in to ? to.email.toLowerCase() : `role:${to.role}`;
-    if (("email" in to && same(to.email, actor.email)) || seen.has(key)) return;
-    seen.add(key);
-    out.push({ to, cardId: after.id, href: link, text, alert, delegable: false });
-  };
-  return { out, add };
+function ticketCollector(after: TicketCard, actor: Pick<TicketActor, "email">) {
+  return collector(after.id, actor.email, href(after));
 }
 
 /** The reporter and everyone following, except whoever is doing the work. */
@@ -50,7 +40,7 @@ const holder = (c: TicketCard): Recipient => (c.ticket.assigneeEmail ? { email: 
  * after. The actor never notifies themselves.
  */
 export function ticketNotices(before: TicketCard | null, after: TicketCard, actor: Pick<TicketActor, "email">): Notice[] {
-  const { out, add } = collector(after, actor);
+  const { out, add } = ticketCollector(after, actor);
   const t = after.ticket;
   const what = label(after);
   const urgent = t.urgency === "urgent";
@@ -103,7 +93,7 @@ export function ticketNotices(before: TicketCard | null, after: TicketCard, acto
 
 /** The daily job's reminder: a high or urgent ticket nobody has started in its target time. */
 export function reminderNotices(card: TicketCard, actor: Pick<TicketActor, "email">): Notice[] {
-  const { out, add } = collector(card, actor);
+  const { out, add } = ticketCollector(card, actor);
   const t = card.ticket;
   add(holder(card), `Still waiting: ${label(card)} is ${URGENCY[t.urgency].label.toLowerCase()} urgency and hasn't been started. The aim is ${URGENCY[t.urgency].target}.`, true);
   return out;
@@ -115,11 +105,8 @@ export function reminderNotices(card: TicketCard, actor: Pick<TicketActor, "emai
  * portal. No alert: a comment asks nothing of anyone by itself.
  */
 export function ticketCommentNotices(card: TicketCard, by: Pick<TicketActor, "email" | "name">, text: string): Notice[] {
-  const { out, add } = collector(card, by, `${href(card)}#comments`);
-  const msg = `${by.name} commented on ${label(card)}: “${preview(text)}”`;
   const t = card.ticket;
-  const to: Recipient[] = [{ email: card.ownerEmail }, ...t.watchers.map((email) => ({ email })), ...commenters(card).map((email) => ({ email }))];
-  if (withTeam(t) || t.status === "resolved") to.push(holder(card));
-  for (const r of to) add(r, msg, false);
-  return out;
+  const also: Recipient[] = t.watchers.map((email) => ({ email }));
+  if (withTeam(t) || t.status === "resolved") also.push(holder(card));
+  return commentNotices(card, by, text, { href: href(card), what: label(card), also });
 }

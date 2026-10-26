@@ -9,7 +9,7 @@ import { Pill } from "@/components/Pill";
 import type { IconName } from "@/components/Icon";
 import { agendaBetween, type AgendaItem } from "@/lib/agenda";
 import { rangeText } from "@/lib/agenda-core";
-import { isActive, isCurrentOrUpcoming, todayLocal } from "@/lib/away";
+import { isActive, isCurrentOrUpcoming } from "@/lib/away";
 import { emailsIn, type RowData } from "@/lib/card-row";
 import { datesText, SLOT_STATUS_LABEL } from "@/lib/events/slot-requests";
 import { visibleModules } from "@/lib/modules";
@@ -21,6 +21,8 @@ import { requireViewer } from "@/lib/viewer";
 import { waitingFor } from "@/lib/waiting";
 import { WhatsNewNote } from "@/components/WhatsNewNote";
 import styles from "./home.module.css";
+import { todayLocal } from "@/lib/dates";
+import { ItemRow, Rows } from "@/components/ItemRow";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Home" };
@@ -134,32 +136,30 @@ export default async function Home() {
         ) : agenda.length === 0 ? (
           <EmptyState icon="calendar">Nothing booked at IAR today.</EmptyState>
         ) : (
-          <ul className={styles.agenda}>
+          <Rows>
             {agenda.map((a) => (
-              <li key={a.key}>
-                <div className={styles.what}>
-                  {a.title}
-                  {a.pending && <Pill tone="info">Waiting for approval</Pill>}
-                </div>
-                <div className={styles.when}>
-                  {rangeText(a.start, a.end)} · {roomsText(a.rooms)} · {a.committee ?? SOURCE[a.source]}
-                </div>
-              </li>
+              <ItemRow
+                key={a.key}
+                state="plain"
+                title={
+                  <>
+                    {a.title} {a.pending && <Pill tone="info">Waiting for approval</Pill>}
+                  </>
+                }
+                sub={`${rangeText(a.start, a.end)} · ${roomsText(a.rooms)} · ${a.committee ?? SOURCE[a.source]}`}
+              />
             ))}
-          </ul>
+          </Rows>
         )}
       </Panel>
 
       {later.length > 0 && (
-        <Panel title="Coming later" level={2}>
-          <ul className={styles.later}>
+        <Panel title="Coming later" level={2} flush>
+          <Rows>
             {later.map((m) => (
-              <li key={m.id}>
-                <Link href={m.href}>{m.name}</Link>
-                <span>{m.summary}</span>
-              </li>
+              <ItemRow key={m.id} state="plain" title={m.name} href={m.href} sub={m.summary} />
             ))}
-          </ul>
+          </Rows>
         </Panel>
       )}
     </div>

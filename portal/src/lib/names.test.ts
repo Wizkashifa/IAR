@@ -10,7 +10,7 @@ import { NameCache, makeNameResolver, prettifyEmail } from "./name-cache";
 
 test("names: an address alone becomes a readable name", () => {
   assert.equal(prettifyEmail("fatima.ahmed@islam1.org"), "Fatima Ahmed");
-  assert.equal(prettifyEmail(" Kashif.412.Osman@x.org "), "Kashif Osman");
+  assert.equal(prettifyEmail(" Amina.412.Rahman@x.org "), "Amina Rahman");
   assert.equal(prettifyEmail("abu_bakr-siddiq@x.org"), "Abu Bakr Siddiq");
   assert.equal(prettifyEmail("portal-team-social-welfare@x.org"), "Social Welfare");
   assert.equal(prettifyEmail("portal-role-finance@x.org"), "Finance");

@@ -9,13 +9,14 @@ import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions } from "@/components/Field";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import type { FormState } from "./actions";
+import type { MarketingFormState } from "./actions";
 import styles from "./marketing.module.css";
+import { FormErrors } from "@/components/FormErrors";
+import { Choice, Choices } from "@/components/Choices";
 
 export type MarketingFormProps = {
-  action: (prev: FormState, form: FormData) => Promise<FormState>;
+  action: (prev: MarketingFormState, form: FormData) => Promise<MarketingFormState>;
   kind: MarketingKind;
   /** Committees and teams this person may request for. */
   committees: string[];
@@ -27,8 +28,8 @@ export type MarketingFormProps = {
   cancelHref: string;
   submitLabel: string;
   /**
-   * New requests only: whether files can be uploaded (a marketing folder is set
-   * in Portal Settings). Left out on the edit page, where files are added on
+   * New requests only: whether files can be uploaded (go-live has made the
+   * Marketing Files drive). Left out on the edit page, where files are added on
    * the request page instead.
    */
   uploads?: boolean;
@@ -46,18 +47,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
     <form key={state.n} action={formAction} className={`stack loose ${styles.form}`}>
       <input type="hidden" name="kind" value={kind} />
       <FormStarted form="marketing" />
-      {state.errors.length > 0 && (
-        <div role="alert" className={styles.errors}>
-          <Note tone="bad">
-            <strong>Please fix:</strong>
-            <ul>
-              {state.errors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </Note>
-        </div>
-      )}
+      <FormErrors errors={state.errors} />
 
       {question !== undefined && (
         <Panel title="Marketing's question">
@@ -133,17 +123,11 @@ function Question({ f, value, today }: { f: MarketingField; value?: string; toda
   const wide = f.half || f.kind === "date" ? undefined : "wide";
   if (f.kind === "radio") {
     return (
-      <fieldset className={[styles.group, "wide"].join(" ")}>
-        <legend className={styles.groupLabel}>{legend}</legend>
-        <div className={styles.choices}>
-          {f.options?.map((o) => (
-            <label key={o.value} className={styles.choice}>
-              <input type="radio" name={name} value={o.value} defaultChecked={value === o.value} required={f.required} /> {o.label}
-            </label>
-          ))}
-        </div>
-        {f.hint && <p className="sub">{f.hint}</p>}
-      </fieldset>
+      <Choices legend={legend} plain hint={f.hint} className="wide">
+        {f.options?.map((o) => (
+          <Choice key={o.value} type="radio" name={name} value={o.value} defaultChecked={value === o.value} required={f.required} label={o.label} />
+        ))}
+      </Choices>
     );
   }
   if (f.kind === "date") {
