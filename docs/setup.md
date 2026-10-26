@@ -58,7 +58,7 @@ gcloud firestore indexes composite create --collection-group=notifications \
 
 Turn on point-in-time recovery: `gcloud firestore databases update --database='(default)' --enable-pitr`.
 
-Cards (purchases `PO-12001`…, events `EV-1101`…, marketing `MK-1001`…, IT & maintenance `TK-1001`…) are stored at `orgs/iar/cards/{cardId}`, preventive maintenance schedules at `orgs/iar/ticketSchedules/{id}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, each person's notification settings at `orgs/iar/notifyPrefs/{email}`, alerts held overnight (quiet hours) at `orgs/iar/heldAlerts`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback at `orgs/iar/feedback`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Cards (purchases `PO-12001`…, events `EV-1101`…, marketing `MK-1001`…, IT & maintenance `TK-1001`…) are stored at `orgs/iar/cards/{cardId}`, preventive maintenance schedules at `orgs/iar/ticketSchedules/{id}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, each person's notification settings at `orgs/iar/notifyPrefs/{email}`, alerts held overnight (quiet hours) at `orgs/iar/heldAlerts`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback (with replies) at `orgs/iar/feedback`, the log of portal admins signing in as someone to troubleshoot (Portal Settings → Sign in as someone) at `orgs/iar/audit`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -216,6 +216,8 @@ gcloud run deploy iar-portal --source portal --region us-east1 \
 ```
 
 Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. If the organization's "Domain restricted sharing" policy blocks it, override that policy for this project only. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL and deploy again.
+
+**Later changes deploy themselves** once go-live's extra step is run (`npm --prefix ops/go-live start -- --only autodeploy --apply`): a Cloud Build trigger in this project deploys each change to `portal/` merged into `main`, after its tests pass (`portal/cloudbuild.yaml`), as `portal-deployer@`, which can only push the image and add a revision. See "Deploying changes" in `ops/go-live/README.md`.
 
 Add the portal to the **Google app launcher** (the 9-dot menu in Gmail and Drive): Admin console → Apps → Web and mobile apps → Add custom app (a bookmark to the portal's address), for everyone.
 

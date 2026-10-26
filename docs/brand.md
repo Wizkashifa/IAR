@@ -17,7 +17,7 @@ These are the stacked mark with "IAR", trimmed, on a transparent background. The
 | Use | Font |
 |---|---|
 | Page titles | Montserrat Bold |
-| Home greeting | Montserrat Black |
+| Home greeting | Fraunces Italic (a portal choice beyond the guide: a warmer welcome) |
 | Section titles, panel titles, subheadings | Montserrat Semibold |
 | Body text, forms, lists | Lato Regular (Bold for emphasis) |
 

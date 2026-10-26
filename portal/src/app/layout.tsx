@@ -10,6 +10,8 @@ import "./globals.css";
 import { fontVariables } from "./fonts";
 import { AppFrame, PublicFrame, type NavGroup, type NavLink } from "@/components/AppNav";
 import { AppNavCount } from "@/components/AppNavCount";
+import { Button } from "@/components/Button";
+import { Note } from "@/components/Note";
 import { Providers } from "@/components/Providers";
 import { Search, type SearchPlace } from "@/components/Search";
 import type { IconName } from "@/components/Icon";
@@ -21,6 +23,7 @@ import { peopleStore } from "@/lib/people";
 import { visibleModules } from "@/lib/modules";
 import { teamsOf } from "@/lib/tickets/workflow";
 import { todayLocal } from "@/lib/dates";
+import { stopActingAs } from "./admin/actions";
 
 export const metadata: Metadata = {
   title: { template: `%s · ${ORG.shortName} Portal`, default: `${ORG.shortName} Portal` },
@@ -33,13 +36,13 @@ export const viewport: Viewport = { themeColor: "#0b3a24" };
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {
   events: { group: "request", label: "Events & Rooms", icon: "calendar" },
-  calendar: { group: "request", label: "Calendar", icon: "calendar" },
   "purchase-requests": { group: "request", label: "Purchase Requests", icon: "receipt" },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: "megaphone" },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
-  "run-sheet": { group: "team", label: "Daily Run Sheet", icon: "book" },
   "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
+  calendar: { group: "iar", label: "Calendar", icon: "calendar" },
+  "run-sheet": { group: "iar", label: "Daily Run Sheet", icon: "book" },
   "whos-who": { group: "iar", label: "Who's who", icon: "building" },
   library: { group: "files", label: "Library", icon: "folder" },
   "finance-desk": { group: "team", label: "Finance desk", icon: "receipt" },
@@ -99,7 +102,7 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
     ...groups.flatMap((g) => g.links.map((l) => ({ label: l.label, href: l.href, icon: l.icon }))),
     { label: "Notifications", href: "/notifications", icon: "bell" },
   ];
-  const account = { name: viewer.name, email: viewer.email, away: Boolean(away && isActive(away, todayLocal())), dev: viewer.dev };
+  const account = { name: viewer.name, email: viewer.email, away: Boolean(away && isActive(away, todayLocal())), dev: viewer.dev, supportAdmin: viewer.supportAdmin?.name };
   return (
     <AppFrame
       org={ORG}
@@ -109,7 +112,23 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
       unread={unread}
       account={account}
     >
-      {children}
+      {viewer.supportAdmin ? (
+        <div className="stack loose">
+          <Note tone="warn">
+            <form action={stopActingAs} className="row">
+              <span>
+                You&apos;re signed in as <strong>{viewer.name}</strong> to troubleshoot. Anything you save is marked as done by you ({viewer.supportAdmin.name}) on their behalf.
+              </span>
+              <Button type="submit" size="small">
+                Stop and go back to you
+              </Button>
+            </form>
+          </Note>
+          <div>{children}</div>
+        </div>
+      ) : (
+        children
+      )}
     </AppFrame>
   );
 }

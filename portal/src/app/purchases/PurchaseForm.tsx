@@ -3,7 +3,7 @@ import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountLabel, accountsForFund, findAccount, isLaborAccount, shortFund } from "@/lib/purchases/accounts";
-import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, PAYMENT_METHOD_LABEL, type DeliveryMethod, type PaymentMethod, type PurchaseKind } from "@/lib/purchases/types";
+import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, type DeliveryMethod, type PurchaseKind } from "@/lib/purchases/types";
 import type { VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { EventChoice } from "@/lib/events/link";
@@ -88,8 +88,8 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
   const [description, setDescription] = useState(initial?.description ?? "");
   const [payee, setPayee] = useState(initial?.payee ?? "");
   const [invoiceNumber, setInvoiceNumber] = useState(initial?.invoiceNumber ?? "");
+  // Requests are paid by check. An older request sent by ACH starts with nothing picked, so the requester chooses how the check goes.
   const initialDelivery = (initial?.delivery as DeliveryMethod | undefined) ?? "";
-  const [method, setMethod] = useState<PaymentMethod | "">(initialDelivery === "ach" ? "ach" : initialDelivery ? "check" : "");
   const [checkTo, setCheckTo] = useState<DeliveryMethod | "">(initialDelivery && initialDelivery !== "ach" ? initialDelivery : "");
   const [mailingAddress, setMailingAddress] = useState(initial?.mailingAddress ?? "");
   const [isLabor, setIsLabor] = useState(Boolean(initial?.isLabor));
@@ -103,7 +103,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
   const chargeFund = card ? cards.find((c) => c.last4 === cardLast4)?.fund ?? "" : fund;
   const accountChoices = useMemo(() => (allFunds || !chargeFund ? ACCOUNTS : accountsForFund(chargeFund)), [allFunds, chargeFund]);
   const total = lines.reduce((s, l) => s + toNum(l.amount), 0);
-  const delivery: DeliveryMethod | "" = method === "ach" ? "ach" : method === "check" ? checkTo : "";
+  const delivery: DeliveryMethod | "" = checkTo;
   // S&W requests match only S&W payees; everything else only the shared list. The two never mix.
   const vendorList = chargeFund === SOCIAL_WELFARE_FUND ? restrictedVendors : vendors;
   const findVendor = (name: string) => vendorList.find((v) => v.name.toLowerCase() === name.trim().toLowerCase());
@@ -119,8 +119,6 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
   };
   const chooseKind = (k: PurchaseKind) => {
     setKind(k);
-    // Reimbursements are paid by check unless the requester asks for ACH.
-    if (k === "reimburse" && !method) setMethod("check");
     if (k === "reimburse" && !mailingAddress.trim() && lastAddress) setMailingAddress(lastAddress);
   };
 
@@ -132,9 +130,9 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
     description,
     payee: kind === "reimburse" ? requesterName : payee,
     invoiceNumber,
-    paymentMethod: method,
+    paymentMethod: "check",
     delivery,
-    mailingAddress: method === "check" ? mailingAddress : "",
+    mailingAddress,
     isLabor,
     relatedParty,
     cardLast4: card ? cardLast4 : undefined,
@@ -251,29 +249,21 @@ export default function PurchaseForm({ action, initial, requesterName, cards, fu
                 </Field>
               )}
             </div>
-            <Choices legend="How should it be paid?" legendHidden>
-              {(["check", "ach"] as PaymentMethod[]).map((m) => (
-                <Choice key={m} type="radio" name="paymentMethod" value={m} checked={method === m} onChange={() => setMethod(m)} required label={PAYMENT_METHOD_LABEL[m]} />
-              ))}
-            </Choices>
-            {method === "ach" && <Note>The finance office gets the bank details from {kind === "reimburse" ? "you" : "the payee"} directly. Don&apos;t type bank details here.</Note>}
-            {method === "check" && (
-              <div className="grid">
-                <Field label="Where should the check go?" required>
-                  <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
-                    <option value="">Choose…</option>
-                    {CHECK_DELIVERIES.map((d) => (
-                      <option key={d} value={d}>
-                        {DELIVERY_LABEL[d]}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person.">
-                  <textarea value={mailingAddress} onChange={(e) => setMailingAddress(e.target.value)} rows={2} maxLength={300} placeholder="Street, city, state, ZIP" required />
-                </Field>
-              </div>
-            )}
+            <div className="grid">
+              <Field label="How should we send the check?" required>
+                <select value={checkTo} onChange={(e) => setCheckTo(e.target.value as DeliveryMethod)} required>
+                  <option value="">Choose…</option>
+                  {CHECK_DELIVERIES.map((d) => (
+                    <option key={d} value={d}>
+                      {DELIVERY_LABEL[d]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person.">
+                <textarea value={mailingAddress} onChange={(e) => setMailingAddress(e.target.value)} rows={2} maxLength={300} placeholder="Street, city, state, ZIP" required />
+              </Field>
+            </div>
             {kind === "pay" && (
               <div className="stack tight">
                 <Checkbox checked={labor} disabled={laborLine} onChange={(e) => setIsLabor(e.target.checked)}>

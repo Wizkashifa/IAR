@@ -1,0 +1,31 @@
+# Deploys the portal each time a change to portal/ is merged into main.
+# Run by the Cloud Build trigger that go-live's "autodeploy" step sets up
+# (npm --prefix ops/go-live start -- --only autodeploy --apply), as the
+# portal-deployer service account. It tests, builds the image, and gives
+# the running Cloud Run service a new revision: the service keeps its own
+# settings, secrets and service account, which go-live manages.
+steps:
+  - id: test
+    name: node:22
+    dir: portal
+    entrypoint: bash
+    args: ["-c", "npm ci --no-audit --no-fund && npm test && npm run typecheck"]
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}:${SHORT_SHA}", "portal"]
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}:${SHORT_SHA}"]
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args: ["run", "deploy", "${_SERVICE}", "--image=${_IMAGE}:${SHORT_SHA}", "--region=${_REGION}", "--quiet"]
+substitutions:
+  _SERVICE: iar-portal
+  _REGION: us-east1
+  _IMAGE: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE}
+options:
+  dynamicSubstitutions: true
+  # Needed when a trigger runs as its own service account.
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s

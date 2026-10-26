@@ -37,6 +37,7 @@ Other options:
 | `--only <step>` | Run one step (plus sign-in, and reading the Sheet if the step needs it). Steps: `preflight`, `sheet`, `cloud`, `accounts`, `delegation`, `groups`, `chat`, `drives`, `rooms`, `deploy`, `settings`, `safety`, `check`, `beta` |
 | `--sync` | Also list people in the portal groups who aren't on the Sheet, and remove them after a separate yes. Without it, go-live only adds |
 | `--redeploy` | Rebuild and deploy the current portal code |
+| `--only autodeploy` | Extra step, not part of a full run: deploy the portal automatically each time a change is merged (see "Deploying changes" below) |
 | `--production` | End the beta: open the portal to every islam1.org account (asks first) |
 | `--project <id>` | Cloud project (default `iar-portal`) |
 | `--region <region>` | Cloud region (default `us-east1`, closest to Raleigh) |
@@ -68,7 +69,23 @@ Google has no API for these, so go-live prints the exact steps (with the console
 - **Step 4: the domain-wide delegation entry**, in the Admin console. Checked: for a minute you get permission to sign test tokens as the portal's service account, go-live gets a token for each scope exactly as the portal will, and the permission is removed again.
 - **Step 6: the Chat app configuration, its private Marketplace listing, and installing it for the beta group.** Checked: go-live adds the app to the Chat spaces, which fails if it isn't set up and visible to you.
 - **Step 9: the redirect URI** on the Web client (once for the Cloud Run address, again for portal.islam1.org). Checked: Google accepts the address for that client.
+- **Extra step autodeploy: installing the Cloud Build app on GitHub**, on the portal's repository only. Checked: Cloud Build reports the GitHub link as complete.
 - **Step 9: proving IAR manages islam1.org** to Google, if gcloud doesn't already show it as verified: `gcloud domains verify islam1.org`.
+
+## Deploying changes
+
+Once the portal is running, set it to deploy itself whenever a change is merged:
+
+```
+npm --prefix ops/go-live start -- --only autodeploy            # show what it would do
+npm --prefix ops/go-live start -- --only autodeploy --apply    # do it, asking before each change
+```
+
+It creates `portal-deployer@`, a service account that can only push the portal's image and give the running service a new revision; links Cloud Build to GitHub (you install the Cloud Build app on the portal's repository, *by hand*, once); and adds the trigger `portal-deploy-on-merge`. From then on, each change to `portal/` merged into `main` runs `portal/cloudbuild.yaml`: tests and typecheck, then build, then deploy, in about 8 minutes. If a test fails, nothing is deployed and the running portal stays as it was. Changes to the docs or to go-live don't redeploy. The service keeps its settings and secrets, which go-live still manages. Watch the builds in the Cloud console under Cloud Build → History.
+
+If the repository moves (to IAR's own GitHub organization), delete the trigger and the `iar-portal` repository link in Cloud Build, install the Cloud Build app on the new repository, remove `autodeployRepo` from `.state.json`, and run `--only autodeploy --apply` again.
+
+Without it, deploy by hand from the repo root, on the code you want live: `gcloud run deploy iar-portal --source portal --region us-east1 --project iar-portal` (keeps the service's settings), or `--only deploy --redeploy --apply`.
 
 ## Running it again
 

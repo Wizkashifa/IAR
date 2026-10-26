@@ -8,7 +8,9 @@ import type { MembersPlan } from "./sheet";
 export const STAGE_IDS = [
   "preflight", "sheet", "cloud", "accounts", "delegation", "groups", "chat", "drives", "rooms", "deploy", "settings", "safety", "check", "beta",
 ] as const;
-export type StageId = (typeof STAGE_IDS)[number];
+/** Steps outside the numbered run, done only when asked for with --only. */
+export const EXTRA_STAGE_IDS = ["autodeploy"] as const;
+export type StageId = (typeof STAGE_IDS)[number] | (typeof EXTRA_STAGE_IDS)[number];
 
 export type Options = {
   apply: boolean;
@@ -62,6 +64,8 @@ export type State = {
   settingsWrittenAt?: string;
   testersAddedAt?: string;
   production?: boolean;
+  /** The portal's GitHub repository, which merged changes deploy from (--only autodeploy). */
+  autodeployRepo?: string;
 };
 
 export type ChangeKind = "create" | "update" | "remove" | "manual" | "check";

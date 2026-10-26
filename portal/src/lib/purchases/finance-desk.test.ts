@@ -49,7 +49,9 @@ test("desk tabs: to pay, to enter in QuickBooks, refunds owed; oldest first; sen
 
 test("desk filters: fund, month (paid date, statement month, or sent date) and payment type", () => {
   const check = toPay();
-  const ach = toPay({ paymentMethod: "ach", delivery: "ach", fund: "Women Expenses" });
+  // New requests are always checks; an older one sent by ACH still shows and filters as ACH.
+  const older = toPay({ fund: "Women Expenses" });
+  const ach = { ...older, purchase: { ...older.purchase, delivery: "ach" as const } };
   const card = purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: "2026-08", lines: [{ accountId: "a76", amount: "9.57", date: "2026-08-02", merchant: "USPS" }] });
   assert.equal(payTypeOf(check), "check");
   assert.equal(payTypeOf(ach), "ach");

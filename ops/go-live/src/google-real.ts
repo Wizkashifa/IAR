@@ -27,7 +27,7 @@ import { type FsValue, fieldPath, fromFields, toFields } from "./firestore-value
 import {
   type AdminRole, type AlertPolicy, type Bucket, type Budget, type ClientFile, type CloudService, type DeployRequest, type DnsRecord, type DomainMapping,
   type DrivePermission, type Google, type License, type Member, type MemberRole, NoFreeLicense, type Privilege, type SchedulerJob, type UptimeCheck,
-  type LogMetric,
+  type LogMetric, type BuildConnection, type BuildTrigger,
 } from "./google";
 import type { FirestoreIndex } from "./indexes";
 import type { Tab } from "./sheet";
@@ -824,4 +824,47 @@ export class RealGoogle implements Google {
     ];
     await withFile("cleanup.json", JSON.stringify(policy), (f) => gcloud(["artifacts", "repositories", "set-cleanup-policies", repo, `--location=${region}`, `--project=${project}`, `--policy=${f}`, "--no-dry-run"]));
   }
+  async getBuildConnection(project: string, region: string, name: string): Promise<BuildConnection | null> {
+    type C = { installationState?: { stage?: string; actionUri?: string } };
+    const c = await orNull(gjson<C>(["builds", "connections", "describe", name, `--region=${region}`, `--project=${project}`]));
+    if (!c) return null;
+    return { ready: c.installationState?.stage === "COMPLETE", actionUri: c.installationState?.actionUri };
+  }
+  async createBuildConnection(project: string, region: string, name: string) {
+    await gcloud(["builds", "connections", "create", "github", name, `--region=${region}`, `--project=${project}`]);
+    const c = await this.getBuildConnection(project, region, name);
+    if (!c) throw new Error("The GitHub connection was created, but Cloud Build doesn't list it.");
+    return c;
+  }
+  async getBuildRepository(project: string, region: string, connection: string, name: string) {
+    const r = await orNull(gjson<{ remoteUri?: string }>(["builds", "repositories", "describe", name, `--connection=${connection}`, `--region=${region}`, `--project=${project}`]));
+    return r?.remoteUri ?? null;
+  }
+  async createBuildRepository(project: string, region: string, connection: string, name: string, remoteUri: string) {
+    await gcloud(["builds", "repositories", "create", name, `--remote-uri=${remoteUri}`, `--connection=${connection}`, `--region=${region}`, `--project=${project}`]);
+  }
+  async getBuildTrigger(project: string, region: string, name: string): Promise<BuildTrigger | null> {
+    type T = { name: string; filename?: string; serviceAccount?: string; includedFiles?: string[]; substitutions?: Record<string, string>; repositoryEventConfig?: { repository?: string; push?: { branch?: string } } };
+    const t = await orNull(gjson<T>(["builds", "triggers", "describe", name, `--region=${region}`, `--project=${project}`]));
+    if (!t) return null;
+    return {
+      name: t.name,
+      repository: t.repositoryEventConfig?.repository ?? "",
+      branch: t.repositoryEventConfig?.push?.branch ?? "",
+      buildConfig: t.filename ?? "",
+      // Stored as projects/<p>/serviceAccounts/<email>.
+      serviceAccount: (t.serviceAccount ?? "").split("/").pop() ?? "",
+      includedFiles: t.includedFiles ?? [],
+      substitutions: t.substitutions ?? {},
+    };
+  }
+  async createBuildTrigger(project: string, region: string, t: BuildTrigger) {
+    const subs = Object.entries(t.substitutions).map(([k, v]) => `${k}=${v}`).join(",");
+    await gcloud([
+      "builds", "triggers", "create", "github", `--name=${t.name}`, `--region=${region}`, `--project=${project}`, `--repository=${t.repository}`,
+      `--branch-pattern=${t.branch}`, `--build-config=${t.buildConfig}`, `--service-account=projects/${project}/serviceAccounts/${t.serviceAccount}`,
+      ...(t.includedFiles.length ? [`--included-files=${t.includedFiles.join(",")}`] : []), ...(subs ? [`--substitutions=${subs}`] : []),
+    ]);
+  }
+
 }

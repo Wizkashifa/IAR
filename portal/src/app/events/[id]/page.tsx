@@ -26,7 +26,7 @@ import { requireViewer } from "@/lib/viewer";
 import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
-import { eventChecks, missionReasons, windowText } from "@/lib/events/rules";
+import { eventChecks, eventFlags, missionReasons, windowText } from "@/lib/events/rules";
 import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
 import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
@@ -158,7 +158,14 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       crumb={{ href: "/events", label: "Events & Rooms" }}
       id={card.id}
       title={card.title}
-      pills={<Pill tone={tone} dot>{statusText(card)}</Pill>}
+      pills={
+        <>
+          <Pill tone={tone} dot>{statusText(card)}</Pill>
+          {eventFlags(e).map((f) => (
+            <Pill key={f} tone="gold">{f}</Pill>
+          ))}
+        </>
+      }
       lead={["Event", e.committeeName, `from ${own ? "you" : names(card.ownerEmail)}`, e.recur ? `${recurText(e.date, e.recur)}, ${e.dates.length} dates` : dayText(e.date), `${timeText(e.start)}–${timeText(e.end)}`, roomNames.join(", ") || "Off-site"]}
       steps={steps}
       next={next}
@@ -297,10 +304,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 { label: "Given up", value: (e.released ?? []).length ? (e.released ?? []).map(dayText).join(", ") : null },
                 { label: "Expected", value: `${e.attendance} people` },
                 { label: "Budget", value: e.budget ? fmtMoney(e.budget) : null },
-                { label: "Food", value: e.food ? "Yes" : "No" },
                 { label: "Public", value: e.isPublic ? "Yes" : "No" },
                 { label: "Registration", value: e.registration ? "Yes" : "No" },
-                { label: "Also", value: [e.outsideSpeaker && "Outside speaker or guest", e.newProgram && "New program", e.fundraiser && "Fundraiser"].filter(Boolean).join(", ") },
               ]}
             />
           </Panel>

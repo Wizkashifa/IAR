@@ -17,6 +17,7 @@ import { TAB, templateTabs } from "./sheet";
 import { parseArgs } from "./main";
 import { readerPrivileges } from "./stages/accounts";
 import { sheetIdOf } from "./stages/sheet";
+import { githubRemote } from "./stages/autodeploy";
 import { matchRooms, pickRooms } from "./stages/rooms";
 import { mergeSettings, spacesByRole } from "./stages/settings";
 import type { Ask, Options, State } from "./types";
@@ -82,6 +83,7 @@ function prompter(fake: FakeGoogle, a: Answers = {}) {
     if (/Rooms people can't book/.test(q.question)) return "basement STORAGE";
     if (/DNS manager's email/.test(q.question)) return "dns@elsewhere.org";
     if (/first name/.test(q.question)) return "DNS Manager";
+    if (/GitHub repository/.test(q.question)) return "https://github.com/iar/portal";
     throw new Error(`unexpected question: ${q.question}`);
   };
   return Object.assign(fn, { asked });
@@ -356,6 +358,40 @@ test("mergeSettings: only fills gaps, and writes nothing when there are none", (
   assert.deepEqual(m.fields, {});
   assert.equal(m.kept.length, 1);
   assert.deepEqual(spacesByRole({ it: "spaces/X", admins: "spaces/A" }), { it: "spaces/X", av: "spaces/X", admins: "spaces/A" });
+});
+
+test("deploy on merge: only with --only autodeploy; a trigger as its own narrow account, linked to GitHub by hand; a second run plans nothing", async () => {
+  const fake = setup({ ready: false });
+  const { r: full, state } = await fullApply(fake);
+  assert.ok(!full.out.includes("portal-deploy-on-merge"), "a full run leaves it out");
+  assert.equal(fake.buildTriggers.size, 0);
+
+  const r = await run(fake, structuredClone(state), { apply: true, only: "autodeploy" });
+  assert.equal(r.stopped, undefined, r.out);
+  const dep = `portal-deployer@${P}.iam.gserviceaccount.com`;
+  assert.ok(fake.serviceAccounts.has(dep));
+  for (const role of ["roles/run.developer", "roles/artifactregistry.writer", "roles/logging.logWriter"]) assert.ok(fake.projectBindingSet.has(`serviceAccount:${dep}|${role}`), role);
+  assert.ok(![...fake.projectBindingSet].some((b) => b.startsWith(`serviceAccount:${dep}|`) && /owner|editor|run\.admin/.test(b)), "never a broad role");
+  assert.ok(fake.saBindings.get(`portal-runtime@${P}.iam.gserviceaccount.com`)?.has(`serviceAccount:${dep}|roles/iam.serviceAccountUser`));
+  assert.ok(r.asked.some((q) => q.step === "github-connect"), "the admin installs the GitHub app by hand");
+  assert.equal(fake.buildRepos.get("iar-github/iar-portal"), r.saved()?.autodeployRepo);
+  const t = fake.buildTriggers.get("portal-deploy-on-merge")!;
+  assert.equal(t.branch, "^main$");
+  assert.equal(t.buildConfig, "portal/cloudbuild.yaml");
+  assert.equal(t.serviceAccount, dep);
+  assert.deepEqual(t.includedFiles, ["portal/**"]);
+  assert.deepEqual(t.substitutions, { _SERVICE: "iar-portal", _REGION: "us-east1" });
+  assert.ok(readFileSync(join(REPO, t.buildConfig), "utf8").includes("npm test"), "the build runs the tests before deploying");
+
+  const again = await run(fake, structuredClone(r.saved()!), { apply: true, only: "autodeploy" });
+  assert.equal(changesPlanned(again), 0, again.out);
+});
+
+test("deploy on merge: GitHub addresses are read in every form git writes them", () => {
+  assert.equal(githubRemote("git@github.com:Wizkashifa/IAR.git\n"), "https://github.com/Wizkashifa/IAR.git");
+  assert.equal(githubRemote("https://github.com/iar/portal"), "https://github.com/iar/portal.git");
+  assert.equal(githubRemote("ssh://git@github.com/iar/portal.git"), "https://github.com/iar/portal.git");
+  assert.equal(githubRemote("http://127.0.0.1/git/iar/portal"), null);
 });
 
 test("once DNS works, a later run switches the portal to portal.<domain> and moves the daily job with it", async () => {

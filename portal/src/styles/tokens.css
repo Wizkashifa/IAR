@@ -58,7 +58,7 @@
     /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
     --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-head: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
-    --font-display: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+    --font-display: var(--font-display-face), Georgia, "Times New Roman", serif;
 
     /* Text sizes */
     --t-xs: 11.5px;

@@ -21,6 +21,8 @@ export type ItemRowProps = {
   who?: ReactNode;
   /** More under the supporting line: a description, reasons, notes. */
   extra?: ReactNode;
+  /** Things to notice, as gold pills under the title (an event's food, outside speaker, …). */
+  flags?: string[];
   /** The status in words, as a pill in the row's tone. */
   status?: string;
   /** Anything else on the right, instead of or after the status. */
@@ -37,7 +39,7 @@ export type ItemRowProps = {
  * act. The whole row opens what it's about. Requests, files, teams, rooms and
  * notifications all use it, so every list in the portal reads the same.
  */
-export function ItemRow({ title, id, href, external, submit, icon, sub, who, extra, status, right, state = "wait", lead }: ItemRowProps) {
+export function ItemRow({ title, id, href, external, submit, icon, sub, who, extra, flags, status, right, state = "wait", lead }: ItemRowProps) {
   const body = (
     <>
       {icon && <Icon name={icon} className={styles.icon} />}
@@ -55,6 +57,15 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
           </div>
         )}
         {extra && <div className={styles.extra}>{extra}</div>}
+        {flags && flags.length > 0 && (
+          <div className={styles.flags}>
+            {flags.map((f) => (
+              <Pill key={f} tone="gold" small>
+                {f}
+              </Pill>
+            ))}
+          </div>
+        )}
       </div>
       {(status || right) && (
         <div className={styles.r}>
@@ -71,7 +82,7 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
   const opens = Boolean(href || submit);
   const linkCls = [styles.link, icon && styles.withIcon, !opens && styles.still].filter(Boolean).join(" ");
   const chev = <Icon name="chevR" className={styles.chev} />;
-  const cls = [styles.item, state !== "plain" && styles[state], lead && styles.withLead].filter(Boolean).join(" ");
+  const cls = [styles.item, opens && styles.opens, state !== "plain" && styles[state], lead && styles.withLead].filter(Boolean).join(" ");
   return (
     <li className={cls}>
       {lead && <div className={styles.lead}>{lead}</div>}
@@ -113,5 +124,5 @@ export function Rows({ children, label }: { children: ReactNode; label?: string 
 
 /** An ItemRow from lib/card-row.ts `cardRow`. */
 export function CardRow({ row, lead }: { row: RowData; lead?: ReactNode }) {
-  return <ItemRow title={row.title} id={row.id} href={row.href} sub={row.sub} who={row.who} status={row.status} state={row.state} lead={lead} />;
+  return <ItemRow title={row.title} id={row.id} href={row.href} sub={row.sub} who={row.who} status={row.status} state={row.state} flags={row.flags} lead={lead} />;
 }

@@ -39,6 +39,9 @@ export type UptimeCheck = { id: string; displayName: string; host: string; path:
 export type AlertPolicy = { id: string; displayName: string; channelEmails: string[] };
 /** A log-based metric: counts the log lines that match a filter. */
 export type LogMetric = { name: string; description: string; filter: string };
+/** Cloud Build's link to GitHub. `ready` once the Cloud Build app is authorized and installed; until then `actionUri` is where to do that. */
+export type BuildConnection = { ready: boolean; actionUri?: string };
+export type BuildTrigger = { name: string; repository: string; branch: string; buildConfig: string; serviceAccount: string; includedFiles: string[]; substitutions: Record<string, string> };
 export type Budget = { id: string; displayName: string; amountUsd: number; projects: string[] };
 
 export type DeployRequest = {
@@ -182,4 +185,12 @@ export interface Google {
   /** The number of images the cleanup policy keeps, or null when there's none (or no repository yet). */
   imageCleanupKeeps(project: string, region: string, repo: string): Promise<number | null | "no-repo">;
   setImageCleanup(project: string, region: string, repo: string, keep: number): Promise<void>;
+  getBuildConnection(project: string, region: string, name: string): Promise<BuildConnection | null>;
+  /** Starts the GitHub link; the admin then finishes it at the returned connection's `actionUri`. */
+  createBuildConnection(project: string, region: string, name: string): Promise<BuildConnection>;
+  /** The GitHub address of a repository linked through the connection, or null. */
+  getBuildRepository(project: string, region: string, connection: string, name: string): Promise<string | null>;
+  createBuildRepository(project: string, region: string, connection: string, name: string, remoteUri: string): Promise<void>;
+  getBuildTrigger(project: string, region: string, name: string): Promise<BuildTrigger | null>;
+  createBuildTrigger(project: string, region: string, t: BuildTrigger): Promise<void>;
 }

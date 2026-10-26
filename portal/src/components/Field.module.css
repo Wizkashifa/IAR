@@ -1,6 +1,8 @@
 @layer components {
   .field { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
   .label { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); }
+  /* A field whose control has its own id (DateField): its label line is the same height as the others'. */
+  .field > label[for] { font-size: var(--t-sm); }
   .req { color: var(--bad); margin-left: 2px; }
   .hint { font-size: 12px; color: var(--ink-3); }
   .error { display: flex; gap: 6px; align-items: flex-start; font-size: var(--t-sm); color: var(--bad); font-weight: 600; }
@@ -9,11 +11,13 @@
 
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea):not([class*="mantine-"]) {
     width: 100%; min-width: 0; min-height: var(--control-h); padding: 6px 10px;
-    background: var(--surface); color: var(--ink);
+    background-color: var(--surface); color: var(--ink);
     border: 1px solid var(--line); border-radius: var(--r-sm);
     transition: border-color var(--speed), box-shadow var(--speed);
   }
   .field textarea { min-height: 72px; resize: vertical; }
+  /* Room for the dropdown arrow (base.css). Same selector weight as the rule above. */
+  .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select):is(select):not([class*="mantine-"], [multiple]) { padding-right: 30px; }
   .field :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
 
   /* The Send row: on phones it stays at the bottom of the screen while a long form scrolls. */

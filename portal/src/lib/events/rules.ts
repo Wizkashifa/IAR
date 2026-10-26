@@ -77,6 +77,16 @@ export function findClashes(input: EventInput, rooms: Room[], busy: BusyItem[], 
   return [...out.values()].map((c) => ({ ...c, dates: c.dates.sort() }));
 }
 
+/** The flags a requester ticked that everyone should notice, shown as pills on the event and in lists. */
+export function eventFlags(e: Pick<EventInput, "food" | "outsideSpeaker" | "newProgram" | "fundraiser">): string[] {
+  const f: string[] = [];
+  if (e.food) f.push("Food served");
+  if (e.outsideSpeaker) f.push("Outside speaker");
+  if (e.newProgram) f.push("New program");
+  if (e.fundraiser) f.push("Fundraiser");
+  return f;
+}
+
 /** Reasons mission review should look closely, from the plan. */
 export function missionReasons(e: Pick<EventInput, "newProgram" | "outsideSpeaker" | "fundraiser" | "attendance" | "budget">): string[] {
   const r: string[] = [];

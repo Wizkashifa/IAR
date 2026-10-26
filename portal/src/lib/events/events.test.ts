@@ -8,7 +8,7 @@ import { canOpenEvent, canViewEvent } from "./access";
 import { parseEventInput } from "./input";
 import { eventCommentNotices, eventNotices } from "./notices";
 import { type GoogleRoom, mergeRooms, roomsOverlap, roomsToCheck } from "./rooms";
-import { type BusyItem, eventChecks, findClashes, isStandingTitle, missionReasons } from "./rules";
+import { type BusyItem, eventChecks, eventFlags, findClashes, isStandingTitle, missionReasons } from "./rules";
 import { occurrences, rrule, seriesMaxEnd } from "./series";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
@@ -133,6 +133,11 @@ test("checks: standing holds are recognised by their names; mission reasons are 
   assert.equal(isStandingTitle("Youth Halaqa"), false);
   assert.deepEqual(missionReasons(base({ newProgram: true, attendance: 200, budget: 3000 })), ["new program", "200 expected", "budget $3,000"]);
 });
+test("flags: food, outside speaker, new program and fundraiser show as pills, in that order", () => {
+  assert.deepEqual(eventFlags(base({})), []);
+  assert.deepEqual(eventFlags(base({ fundraiser: true, food: true, newProgram: true, outsideSpeaker: true })), ["Food served", "Outside speaker", "New program", "Fundraiser"]);
+});
+
 
 test("input: the form is checked and only allowed committees and rooms are accepted", () => {
   const c = { committees: [{ group: `portal-team-youth@${D}`, name: "Youth" }], roomIds: ["r250", "mphA"] };

@@ -5,7 +5,7 @@
  */
 import { FUNDS, findAccount, isLaborAccount } from "./accounts";
 import {
-  DELIVERY_LABEL,
+  CHECK_DELIVERIES,
   type DeliveryMethod,
   type LineItem,
   type PurchaseDetails,
@@ -29,7 +29,7 @@ export type PurchaseInput = {
   description: string;
   payee?: string;
   invoiceNumber?: string;
-  /** "check" or "ach"; with a check, `delivery` says where it goes. */
+  /** Always "check" from the form; `delivery` says how the check goes. */
   paymentMethod?: string;
   delivery?: string;
   mailingAddress?: string;
@@ -59,7 +59,6 @@ export type InputContext = {
 export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments"> } | { ok: false; errors: string[] };
 
 const KINDS: PurchaseKind[] = ["pay", "reimburse", "card"];
-const DELIVERIES = Object.keys(DELIVERY_LABEL) as DeliveryMethod[];
 const str = (v: unknown, max = 500) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 /** Dollars from "1,180.00", "$90" or 90; NaN if it isn't a usable amount. */
@@ -99,10 +98,11 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
     payee = kind === "reimburse" ? ctx.requesterName : str(raw.payee, 120);
     if (!payee) errors.push("Who should be paid?");
     delivery = str(raw.delivery, 40) as DeliveryMethod;
-    if (!DELIVERIES.includes(delivery)) {
-      errors.push(str(raw.paymentMethod, 10) === "check" ? "Choose where the check should go." : "Choose check or ACH.");
+    // Requests are paid by check (finance can still record an ACH payment on the desk).
+    if (!CHECK_DELIVERIES.includes(delivery as (typeof CHECK_DELIVERIES)[number])) {
+      errors.push("Choose how we should send the check.");
       delivery = undefined;
-    } else if (delivery !== "ach") {
+    } else {
       // Every check, wherever it goes: IAR records the payee's address.
       mailingAddress = str(raw.mailingAddress, 300);
       if (mailingAddress.length < 8) errors.push(kind === "reimburse" ? "Enter your mailing address. IAR records it for every check." : "Enter the payee's mailing address. IAR records it for every check.");

@@ -107,7 +107,7 @@ export const MODULES: PortalModule[] = [
     nav: "Run sheet",
     name: "Daily Run Sheet",
     summary: "One printable page of what's happening where, per day and campus.",
-    visibleTo: ["office", "facilities", "security"],
+    visibleTo: ["member"],
     phase: 2,
     status: "live",
     href: "/run-sheet",

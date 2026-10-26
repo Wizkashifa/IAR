@@ -1,4 +1,6 @@
 import "server-only";
+import { type ActAs, tagOnBehalf } from "./act-as";
+import { audit } from "./audit";
 import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import type { Comment } from "./comments";
@@ -315,5 +317,35 @@ function withIndexFields(card: Card): Card {
 }
 
 export async function cardStore(): Promise<CardStore> {
-  return isDevAuth() ? memoryStore : getFirestoreStore();
+  if (isDevAuth()) return memoryStore;
+  const store = await getFirestoreStore();
+  // An admin signed in as someone: what they save says so (lib/act-as.ts). Outside a request (the daily jobs) there's no one signed in.
+  const { currentActAs } = await import("./viewer");
+  const as = await currentActAs().catch(() => null);
+  return as ? onBehalfStore(store, as) : store;
+}
+
+/** The store, marking each request saved as done by the admin on the person's behalf, and noting it in the audit log. */
+function onBehalfStore(store: CardStore, as: ActAs): CardStore {
+  const note = (action: string) => audit({ admin: as.admin, target: as.target, action });
+  return {
+    ...store,
+    async create(card, prefix) {
+      const saved = await store.create(tagOnBehalf(null, card as Card, as), prefix);
+      await note(`Created ${saved.id}`);
+      return saved;
+    },
+    async save(card, expectedUpdatedAt) {
+      await store.save(tagOnBehalf(await store.get(card.id), card, as), expectedUpdatedAt);
+      await note(`Saved ${card.id}`);
+    },
+    async saveVendor(v) {
+      await store.saveVendor(v);
+      await note(`Saved vendor ${v.name}`);
+    },
+    async deleteVendor(id) {
+      await store.deleteVendor(id);
+      await note(`Removed vendor ${id}`);
+    },
+  };
 }
