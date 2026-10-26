@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
+import { Section } from "@/components/Section";
 import { directory } from "@/lib/groups";
 import { ORG } from "@/lib/org";
 import { portalSettings } from "@/lib/portal-settings";
@@ -12,7 +13,7 @@ import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, saveMarketingSettings, savePoliciesDrive, saveRoom, saveTeamFund } from "./actions";
+import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund } from "./actions";
 import { libraryReader, policiesLibrary } from "@/lib/library";
 import { googleRooms } from "@/lib/rooms-google";
 import { mergeRooms } from "@/lib/events/rooms";
@@ -35,8 +36,8 @@ const ROLE_LABEL: Record<string, string> = {
   admins: "Sees everything and this page; never approves or pays",
 };
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  const { ok, error } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; open?: string }> }) {
+  const { ok, error, open } = await searchParams;
   const viewer = await requireViewer();
   if (!viewer.actingRoles.includes("admins")) redirect("/");
   const [dir, settings, google, library, reader] = await Promise.all([directory(), portalSettings(), googleRooms(), policiesLibrary(), libraryReader()]);
@@ -65,7 +66,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {ok && <Note tone="ok">{ok}</Note>}
       {error && <Note tone="bad">{error}</Note>}
 
-      <h2>Committees and teams ({teams.length})</h2>
+      <Section open={open === "teams"} title={<>Committees and teams ({teams.length})</>}>
       <p className="hint">
         Each is a group named <code>portal-team-…@{ORG.domain}</code>. In the group, the Owner is the chair, a Manager is the vice chair (the backup
         approver), and Members are members. {gaps ? `${gaps} need a chair or a fund.` : "Every team has a chair and a fund."}
@@ -124,8 +125,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </tbody>
           </DataTable>
       )}
+      </Section>
 
-      <h2>Directors</h2>
+      <Section title="Directors">
       <p className="hint">
         Each pillar is a group named <code>portal-pillar-…@{ORG.domain}</code>. Its Owner is the director, and its members are the team groups they
         oversee. A director sees those committees&apos; requests and can approve them alongside the chair, except Social &amp; Welfare.
@@ -157,8 +159,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </tbody>
           </DataTable>
       )}
+      </Section>
 
-      <h2>Role groups</h2>
+      <Section title="Role groups">
       <p className="hint">Portal-wide jobs. Add people as members in Google Admin.</p>
       <DataTable framed>
           <tbody>
@@ -176,8 +179,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             )}
           </tbody>
         </DataTable>
+      </Section>
 
-      <h2>Rooms ({rooms.filter((r) => r.bookable).length} of {rooms.length} bookable)</h2>
+      <Section open={open === "rooms"} title={<>Rooms ({rooms.filter((r) => r.bookable).length} of {rooms.length} bookable)</>}>
       <p className="hint">
         Rooms come from Google (Admin console → Buildings and resources), each with its own calendar. Add or rename rooms there. Here you choose which ones
         can be booked through the portal and set what Google doesn&apos;t know: food, rooms that share a space (the full gym and its halves), and who may book.
@@ -227,8 +231,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </tbody>
           </DataTable>
       )}
+      </Section>
 
-      <h2>Event rules</h2>
+      <Section open={open === "rules"} title="Event rules">
       <p className="hint">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
       <Panel>
         <form action={saveEventRules} className="stack">
@@ -253,19 +258,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div><Button type="submit">Save rules</Button></div>
       </form>
       </Panel>
+      </Section>
 
-      <h2>Marketing files</h2>
-      <p className="hint">Files people add to marketing requests (logos, photos, wording) go to this Shared Drive folder, one folder per year and per request. Until it&apos;s set, people share Google Drive links instead.</p>
-      <Panel>
-        <form action={saveMarketingSettings} className="stack">
-        <Field label="Marketing Shared Drive folder" hint={<>Paste the folder&apos;s link. The portal&apos;s service account must be a Content manager on the Shared Drive, and the marketing team&apos;s Google Group needs at least Viewer access. Leave empty to turn uploads off.</>}>
-          <input name="marketingDriveFolder" defaultValue={settings.marketingDriveFolder ? `https://drive.google.com/drive/folders/${settings.marketingDriveFolder}` : ""} placeholder="https://drive.google.com/drive/folders/…" maxLength={500} />
-        </Field>
-        <div><Button type="submit">Save folder</Button></div>
-      </form>
-      </Panel>
-
-      <h2 id="library">Library: the Policies drive</h2>
+      <Section open={open === "library"} id="library" title="Library: the Policies drive">
       <p className="hint">
         The Library lists IAR&apos;s Policies Shared Drive for everyone at IAR, read-only; files open in Google Drive. To connect it, add{" "}
         {reader ? <code>{reader}</code> : "the portal's service account"} to the drive as a <strong>Viewer</strong> (Drive → the drive&apos;s name → Manage members), then paste the drive&apos;s address here.
@@ -282,8 +277,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div><Button type="submit">Save</Button></div>
       </form>
       </Panel>
+      </Section>
 
-      <h2>Google Chat spaces</h2>
+      <Section title="Google Chat spaces">
       <p className="hint">Alerts for a role or team are posted in its Chat space. go-live creates the spaces and fills these in.</p>
       <DataTable framed>
           <tbody>
@@ -299,8 +295,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             )}
           </tbody>
         </DataTable>
+      </Section>
 
-      <h2>IAR cards</h2>
+      <Section open={open === "cards"} title="IAR cards">
       <p className="hint">Only the last four digits are stored. The cardholder can submit receipts for the card each month.</p>
       {settings.cards.length > 0 && (
         <DataTable framed>
@@ -356,6 +353,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </form>
       </Panel>
       {settings.updatedAt && <p className="hint">Last changed {fmtDateTime(settings.updatedAt)} by {settings.updatedBy}.</p>}
+      </Section>
     </>
   );
 }

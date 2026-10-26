@@ -2,7 +2,7 @@ import "server-only";
 import { devDirectory, isDevAuth } from "./dev";
 import { delegatedToken } from "./google";
 import { reportFailure, reportOk } from "./health";
-import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, TEAM_PREFIX } from "./teams";
+import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, TEAM_PREFIX, groupDisplayName } from "./teams";
 
 /**
  * Look up a user's Google Groups through the Admin SDK Directory API,
@@ -67,7 +67,7 @@ async function groupsWithPrefix(token: string, prefix: string): Promise<Director
       const members = (await listAll<ApiMember>(token, m, "members"))
         .filter((x) => x.email && (x.type === "USER" || x.type === "GROUP"))
         .map((x) => ({ email: x.email!.toLowerCase(), role: (x.role === "OWNER" || x.role === "MANAGER" ? x.role : "MEMBER") as GroupMember["role"], type: x.type as GroupMember["type"] }));
-      return { email: g.email.toLowerCase(), name: g.name?.trim() || g.email, members };
+      return { email: g.email.toLowerCase(), name: groupDisplayName(g.name ?? "") || g.email, members };
     }),
   );
 }

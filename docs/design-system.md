@@ -1,4 +1,6 @@
-# Design system: what makes the demo look right, and how the portal keeps it
+# Design system: what makes the portal look right, and how it stays that way
+
+> The demo (`demo/index.html`) was the reference while the portal was built. It's retired now: the live portal is the reference, and a new screen follows the screens around it. The choices below still hold.
 
 The demo (`demo/index.html`) looks professional because of a small set of disciplined choices, not decoration. The portal is built on the same choices. This page lists them and the rules that keep the portal styled with web standards only, so it will still be easy to change in a year.
 
@@ -67,9 +69,9 @@ The aim is something a volunteer developer can open in six months and change con
     - No `@mantine/*` imports outside `src/components/` and the root layout.
     - No inline styles, except the swatches on `/dev/styles`.
 
-    Two scripts check what tests can't, against a running dev server: `npm run a11y` (page titles, one h1, heading levels, labels, image alt text, link and button names, tap targets and sideways scroll on phones, text contrast in light and dark) and `npm run shots` (every screen next to its demo screen at desktop and phone width, light and dark, in `portal/.shots/report.html`). Both read the screen list in `portal/scripts/screens.cjs`.
+    Two scripts check what tests can't, against a running dev server: `npm run a11y` (page titles, one h1, heading levels, labels, image alt text, link and button names, tap targets and sideways scroll on phones, text contrast in light and dark) and `npm run shots` (every screen at desktop and phone width, light and dark side by side, in `portal/.shots/report.html`). Both read the screen list in `portal/scripts/screens.cjs`.
 11. **Keep dependencies few and current.** The portal has seven runtime dependencies besides Mantine's packages (`portal/package.json`), and nothing else gets added without a reason written in the pull request. Dependabot (`.github/dependabot.yml`) opens one grouped pull request a month per folder for minor and patch updates, and a separate one per major version, so updates arrive small and often instead of as a painful jump later. CI (`.github/workflows/ci.yml`) already runs tests, typecheck and build on every pull request.
-12. **Write it down:** a short "Styling" section in `CLAUDE.md` that points here. Rules: use tokens, use components, no raw colours, and change the demo first if a screen needs to look different.
+12. **Write it down:** a short "Styling" section in `CLAUDE.md` that points here. Rules: use tokens, use components, no raw colours, and a new screen follows the screens around it (the live portal is the reference).
 
 ### File layout
 

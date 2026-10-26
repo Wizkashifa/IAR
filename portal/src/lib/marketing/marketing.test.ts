@@ -14,7 +14,6 @@ import { marketingCommentNotices, marketingNotices } from "./notices";
 import { isMonday, planDaily } from "./reminders";
 import * as wf from "./workflow";
 import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf } from "./files";
-import { checkDriveFolder } from "../settings-rules";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const mk: wf.Actor = { email: "mk@x.org", name: "Mark Eting", roles: ["member", "marketing"] };
@@ -477,12 +476,3 @@ test("files: the requester and the marketing team add files; nobody adds to a cl
   assert.throws(() => wf.addFiles(full, mk, T(2), [{ name: "one-more.png", size: 1 }]), /up to 20 files/);
 });
 
-test("files: the marketing folder setting takes a Drive folder link or ID", () => {
-  assert.deepEqual(checkDriveFolder("https://drive.google.com/drive/folders/1AbC_def-GHIjklMNOP"), { ok: true, id: "1AbC_def-GHIjklMNOP" });
-  assert.deepEqual(checkDriveFolder("https://drive.google.com/drive/u/0/folders/1AbC_def-GHIjklMNOP?usp=sharing"), { ok: true, id: "1AbC_def-GHIjklMNOP" });
-  assert.deepEqual(checkDriveFolder(" 1AbC_def-GHIjklMNOP "), { ok: true, id: "1AbC_def-GHIjklMNOP" });
-  assert.deepEqual(checkDriveFolder(""), { ok: true, id: "" });
-  assert.equal(checkDriveFolder("https://example.com/folders/1AbC_def-GHIjklMNOP").ok, false);
-  assert.equal(checkDriveFolder("https://drive.google.com/file/d/1AbC_def-GHIjklMNOP/view").ok, false);
-  assert.equal(checkDriveFolder("my folder").ok, false);
-});

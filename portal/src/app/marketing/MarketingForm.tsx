@@ -28,8 +28,8 @@ export type MarketingFormProps = {
   cancelHref: string;
   submitLabel: string;
   /**
-   * New requests only: whether files can be uploaded (a marketing folder is set
-   * in Portal Settings). Left out on the edit page, where files are added on
+   * New requests only: whether files can be uploaded (go-live has made the
+   * Marketing Files drive). Left out on the edit page, where files are added on
    * the request page instead.
    */
   uploads?: boolean;

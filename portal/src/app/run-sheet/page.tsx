@@ -92,7 +92,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                     {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
-                    <Link href={`/events/${r.cardId}`} className={styles.lineTitle}>{r.title}</Link>
+                    <Link href={`/events/${r.cardId}`} className={styles.program}>{r.title}</Link>
                     <div className="hint">{r.rooms.join(", ")} · {r.committee} · {r.cardId}{r.series ? " · series" : ""}{r.closeOut ? " · closing out" : ""}</div>
                     <div className="hint">Contact: {names(r.contact)} · {r.attendance} people</div>
                   </div>
@@ -115,7 +115,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                     {r.afterHours && <Pill tone="warn" small>After hours</Pill>}
                   </div>
                   <div>
-                    <div>{r.title}</div>
+                    <div className={styles.program}>{r.title}</div>
                     <div className="hint">{r.rooms.join(", ")} · {r.entry === "standing" ? "Standing hold (room policy)" : "Calendar entry"}</div>
                   </div>
                   <div className="hint">On the IAR calendar, not booked through the portal.</div>

@@ -47,6 +47,10 @@ export type State = {
   chatSpaces?: Record<string, string>;
   drives?: Record<string, { driveId: string; folderId: string }>;
   eventsCalendarId?: string;
+  /** Room resource names the admin left out when step 8 asked which rooms people can book (room names, not people). */
+  roomsLeftOut?: string[];
+  /** Calendar IDs of the rooms people can book, as decided in step 8. Step 10 turns them on in Portal Settings. */
+  bookableRooms?: string[];
   serviceUrl?: string;
   /** The address people use: the Cloud Run URL, then the custom domain once it works. */
   portalUrl?: string;
@@ -62,8 +66,8 @@ export type State = {
 
 export type ChangeKind = "create" | "update" | "remove" | "manual" | "check";
 
-/** Changes that need their own yes, because they cost money, email people, widen access or remove something. */
-export type AskKind = "billing" | "license" | "access" | "email" | "budget" | "remove";
+/** Changes that need their own yes, because they cost money, email people, widen access or remove something, or can wait for a later run. */
+export type AskKind = "billing" | "license" | "access" | "email" | "budget" | "remove" | "later";
 
 export const ASK_LABEL: Record<AskKind, string> = {
   billing: "costs money",
@@ -72,6 +76,7 @@ export const ASK_LABEL: Record<AskKind, string> = {
   email: "may email people",
   budget: "billing setting",
   remove: "removes something",
+  later: "can wait: say no to do it on a later run",
 };
 
 export type Change = {

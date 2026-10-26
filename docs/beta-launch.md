@@ -36,12 +36,11 @@ Social & Welfare aid goes through Purchase Requests, restricted to S&W and finan
 | The **room list** checked against IAR's room resources, and interim answers on the room-policy gaps (committee room 240 or 280, lead times, which rooms can be booked) | Office | Go in the Sheet's Rooms tab |
 | The facilities lead's **Jira CSV export** of open issues, and a one-hour **session with the facilities team** using the questions in [facilities-move.md](facilities-move.md) | Facilities lead, super admin | The export is imported after deploy; the session decides what else they need before Jira is retired |
 | The **Policies Shared Drive**, with the room reservation policy in it | Office, Shura secretary | The Library lists it read-only. Put "Review by YYYY-MM-DD" in a file's Drive description to show its review date |
-| A **marketing folder** in a Shared Drive for files people add to marketing requests | Marketing lead | Can be a folder in an existing Shared Drive |
 | **Five volunteers** for a usability session in the first beta week, not all of them testers | Super admin | 30 minutes each; see "During the beta" |
 
 ## Steps
 
-0. **Check the code going out.** CI is green on the commit being deployed (tests, typecheck, build and the style rules). With `npm --prefix portal run dev` running, `npm --prefix portal run a11y -- --strict` passes on every screen. Look over `npm --prefix portal run shots` (each screen next to the demo, in `portal/.shots/report.html`) for anything that looks wrong.
+0. **Check the code going out.** CI is green on the commit being deployed (tests, typecheck, build and the style rules). With `npm --prefix portal run dev` running, `npm --prefix portal run a11y -- --strict` passes on every screen. Look over `npm --prefix portal run shots` (each screen in light and dark, desktop and phone, in `portal/.shots/report.html`) for anything that looks wrong.
 1. **Make the Sheet and send it to the office.** `npm --prefix ops/go-live install`, then `npm --prefix ops/go-live start -- --template --apply`. Share the Sheet with the office admins (email A in the plan).
 2. **Look first.** `npm --prefix ops/go-live start -- --sheet <Sheet link>` lists every change and makes none. If the Sheet has problems (an address that doesn't exist, a committee name changed), it lists them all; fix them in the Sheet and run again.
 3. **Apply.** `npm --prefix ops/go-live start -- --apply`. Say yes step by step. The steps done by hand (about 20 minutes), each with exact instructions and a check afterwards:
@@ -50,13 +49,10 @@ Social & Welfare aid goes through Purchase Requests, restricted to S&W and finan
    - the Chat app's configuration, its private Marketplace listing, and installing it for the beta group;
    - the sign-in address on the Web client.
 4. **Send the DNS email.** go-live saves a Gmail draft to IAR's DNS manager with the exact records for `portal.islam1.org`. Read it and send it. The beta can start on the Cloud Run address meanwhile; run go-live again later and it switches over once DNS and the certificate work (then update the Chat app's endpoint, which it reminds you of).
-5. **Two Shared Drives by hand** (go-live doesn't make these; see [setup.md](setup.md) §7):
-   - **Policies drive:** add the portal's runtime service account as a **Viewer**. Portal Settings shows the account's address.
-   - **Marketing folder:** add the runtime service account as a **Content manager** and `portal-team-marketing@` as at least a Viewer.
+5. **The Policies drive by hand** (go-live doesn't make it; it makes the receipts, W-9, maintenance photos and marketing drives itself; see [setup.md](setup.md) §7): add the portal's runtime service account as a **Viewer**. Portal Settings shows the account's address.
 6. **Portal Settings** (signed in as a portal admin, at `/admin`):
    - check every team has a fund, check the cards, turn on the rooms people can book and set food, shared space (the full gym and its halves) and restricted rooms, and check the Chat spaces are listed;
    - **Library:** paste the Policies drive's address under "Library: the Policies drive", and check it says it's connected;
-   - **Marketing files:** paste the marketing folder's link;
    - **Event rules:** pick the room reservation policy from the Library (or paste its link), so the event form links it next to "I've read the room reservation policy".
 7. **Who's who.** Ask each chair to open their team's page in Who's who and add a line on what the team handles and its Google Chat space link. Until they do, the page shows its chair and vice chair only.
 8. **Import Jira.** The facilities lead or an admin uploads the CSV at `/it-maintenance/import`, checks the preview, and imports.
@@ -101,7 +97,7 @@ Use testers in these roles: A (a committee member), B (that committee's chair), 
 - [ ] The approved event shows on the Calendar's week view for its room and committee.
 
 **Marketing Requests**
-- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the marketing folder under `<year> / MK-… · Graphic design`. M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
+- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `<year> / MK-… · Graphic design`. M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
 
 **IT & Maintenance**
 - [ ] A reports a leak with a photo. The Facilities space gets a post; the photo is in the Maintenance Photos drive.
@@ -134,5 +130,5 @@ To pause the beta, remove the testers from `portal-role-beta@`; they lose access
 ## After the beta
 
 - **Production:** `go-live --production` opens the portal to every islam1.org account (it asks first). Install the Chat app for everyone in the Admin console.
-- **Facilities off Jira:** run IT & Maintenance and Jira side by side for two weeks, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next (the demo shows them).
+- **Facilities off Jira:** run IT & Maintenance and Jira side by side for two weeks, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next.
 - **People:** Google Groups is the record. A Members page in the portal, where chairs manage their own committee, is the planned next step, so nobody needs the Admin console for it.
