@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { DEFAULTS, goLive } from "./go-live";
 import { RealGoogle } from "./google-real";
-import { STAGE_IDS, type Options, type Prompt, type StageId, type State } from "./types";
+import { EXTRA_STAGE_IDS, STAGE_IDS, type Options, type Prompt, type StageId, type State } from "./types";
 
 const PKG = join(__dirname, "..", "..", "..", "..");
 const REPO = join(PKG, "..", "..");
@@ -26,6 +26,8 @@ const HELP = `go-live: set up Google for the IAR Portal and deploy it.
   --sheet <link>      The filled-in members Sheet (remembered after the first run).
   --only <step>       Run one step (plus the sign-in, and the Sheet if it needs it).
                       Steps: ${STAGE_IDS.join(", ")}
+                      Extra steps, only with --only: ${EXTRA_STAGE_IDS.join(", ")}
+                      (autodeploy: deploy the portal each time a change is merged)
   --sync              Also list people in the portal groups who aren't on the Sheet,
                       and remove them after a separate yes.
   --redeploy          Rebuild and deploy the current portal code.
@@ -60,7 +62,8 @@ export function parseArgs(argv: string[]): Options {
       case "--client": o.client = take(); break;
       case "--only": {
         const s = take() as StageId;
-        if (!STAGE_IDS.includes(s)) throw new Error(`--only takes one of: ${STAGE_IDS.join(", ")}`);
+        const all: readonly string[] = [...STAGE_IDS, ...EXTRA_STAGE_IDS];
+        if (!all.includes(s)) throw new Error(`--only takes one of: ${all.join(", ")}`);
         o.only = s;
         break;
       }

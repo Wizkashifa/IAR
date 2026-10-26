@@ -56,7 +56,8 @@ export async function runStages(ctx: Ctx, stages: Stage[]): Promise<{ results: S
   const results: StageResult[] = [];
   for (const stage of stages) {
     ctx.log("");
-    ctx.log(`Step ${STAGE_IDS.indexOf(stage.id)} of ${STAGE_IDS.length - 1}: ${stage.title}`);
+    const n = (STAGE_IDS as readonly string[]).indexOf(stage.id);
+    ctx.log(n >= 0 ? `Step ${n} of ${STAGE_IDS.length - 1}: ${stage.title}` : `Extra step (${stage.id}): ${stage.title}`);
     let planned: Change[];
     try {
       planned = await stage.plan(ctx);

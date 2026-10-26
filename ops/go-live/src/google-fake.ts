@@ -11,7 +11,7 @@ import {
   type AclRule, type AdminRole, type BillingAccount, type Bucket, type Budget, type CalendarEvent, type CalendarResource, type ChatMembership, type ClientFile,
   type CloudService, type DeployRequest, type DnsRecord, type DomainMapping, type DrivePermission, type FirestoreDb, type Google, type Group, type GroupSettings,
   type License, type Member, type MemberRole, NoFreeLicense, type Privilege, type Project, type SchedulerJob, type ServiceAccount, type UptimeCheck, type User, type AlertPolicy,
-  type LogMetric,
+  type LogMetric, type BuildConnection, type BuildTrigger,
 } from "./google";
 
 export const MUTATING = /^(create|add|update|remove|assign|link|enable|deploy|put|set|merge|rename|append)(?=[A-Z])|^deploy$/;
@@ -120,6 +120,8 @@ export class FakeGoogle implements Google {
 
   /** The admin does a step by hand. */
   byHand(step?: string) {
+    // The admin authorizes and installs the Cloud Build app on GitHub.
+    if (step === "github-connect") for (const c of this.buildConnections.values()) Object.assign(c, { ready: true, actionUri: undefined });
     if (step === "oauth-clients") this.clientFile = { path: "client_secret.json", clientId: "123456789012-desk.apps.googleusercontent.com", clientSecret: "x", projectId: this.project, desktop: true };
     if (step === "delegation") {
       const sa = [...this.serviceAccounts.values()].find((s) => s.email.startsWith("portal-runtime@"));
@@ -504,5 +506,29 @@ export class FakeGoogle implements Google {
   }
   async setImageCleanup(_p: string, _r: string, _repo: string, keep: number) {
     this.cleanupKeep = keep;
+  }
+  buildConnections = new Map<string, BuildConnection>();
+  buildRepos = new Map<string, string>();
+  buildTriggers = new Map<string, BuildTrigger>();
+  async getBuildConnection(_p: string, _r: string, name: string) {
+    return this.buildConnections.get(name) ?? null;
+  }
+  async createBuildConnection(_p: string, _r: string, name: string) {
+    const c = { ready: false, actionUri: "https://github.com/apps/google-cloud-build/installations/new" };
+    this.buildConnections.set(name, c);
+    return c;
+  }
+  async getBuildRepository(_p: string, _r: string, connection: string, name: string) {
+    return this.buildRepos.get(`${connection}/${name}`) ?? null;
+  }
+  async createBuildRepository(_p: string, _r: string, connection: string, name: string, remoteUri: string) {
+    if (!this.buildConnections.get(connection)?.ready) throw new Error("connection not ready");
+    this.buildRepos.set(`${connection}/${name}`, remoteUri);
+  }
+  async getBuildTrigger(_p: string, _r: string, name: string) {
+    return this.buildTriggers.get(name) ?? null;
+  }
+  async createBuildTrigger(_p: string, _r: string, t: BuildTrigger) {
+    this.buildTriggers.set(t.name, structuredClone(t));
   }
 }

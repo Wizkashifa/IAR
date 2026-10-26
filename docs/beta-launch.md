@@ -121,7 +121,7 @@ Delete the test requests' Drive files afterwards; the requests themselves stay a
 - **Watch five people use it** in the first week, 30 minutes each, on their own phone or computer. Give each the same five tasks, without help: request an event, get reimbursed for a receipt, report a broken light, approve a request as a chair, and find a free room for Saturday evening. Write down where they hesitate or ask a question, and fix those first.
 - **Every week:** read the feedback at `/feedback` and the counts at `/admin/measures`: where requests wait longest, how often they're sent back, and which forms people start but don't send. Check What's stuck for anything over a week.
 - **Facilities:** after the session with the facilities team, run IT & Maintenance and Jira side by side for two weeks, with My work today on their phones.
-- **Changes during the beta:** add a line to What's new (`portal/src/lib/whats-new.ts`) so testers know what to try, and run `npm run a11y` and `npm run shots` before each deploy.
+- **Changes during the beta:** add a line to What's new (`portal/src/lib/whats-new.ts`) so testers know what to try, and run `npm run a11y` and `npm run shots` before each deploy. With deploy on merge set up (`--only autodeploy`, see `ops/go-live/README.md`), merging the pull request is the deploy.
 
 ## Turning it off
 
