@@ -131,7 +131,7 @@ function Section({ title, cards, ctx, empty }: { title: string; cards: TicketCar
   return (
     <Panel title={title} right={<span>{cards.length}</span>}>
       {cards.length === 0 ? (
-        <p className="note">{empty}</p>
+        <p className="hint">{empty}</p>
       ) : (
         <ul className={styles.list}>
           {cards.map((c) => (
@@ -183,7 +183,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
         }
       />
       <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
-      {nothing && <p className="note">Nothing waiting. Quiet day, alhamdulillah.</p>}
+      {nothing && <p className="hint">Nothing waiting. Quiet day, alhamdulillah.</p>}
       <Section title="Assigned to you" cards={work.mine} ctx={ctx} empty="Nothing assigned to you right now." />
       <Section title="Nobody has taken these yet" cards={work.untaken} ctx={ctx} empty="Every request has someone on it." />
       <Section title="Preventive work this week" cards={work.preventive} ctx={ctx} empty="No preventive work due this week." />

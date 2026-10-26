@@ -28,6 +28,6 @@
   .tick input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
   .tick a { font-weight: 700; }
   .tick small { color: var(--ink-2); }
-  .quiet { align-items: center; min-height: 0; font-size: var(--t-sm); color: var(--ink-2); }
+  .quiet { align-items: center; min-height: 24px; font-size: var(--t-sm); color: var(--ink-2); }
   .quiet input { margin: 0; }
 }

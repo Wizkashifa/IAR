@@ -51,7 +51,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                       </Link>{" "}
                       {c.title}
                     </td>
-                    <td className="sub">{c.key}</td>
+                    <td className="hint">{c.key}</td>
                   </tr>
                 ))}
               </tbody>
@@ -90,14 +90,14 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
               ))}
             </ul>
           )}
-          {p.alreadyImported.length > 0 && <p className="sub">{p.alreadyImported.length} already imported earlier: skipped ({p.alreadyImported.map((x) => x.key).join(", ")}).</p>}
-          {p.skippedDone.length > 0 && <p className="sub">{p.skippedDone.length} already done in Jira: skipped{state.includeDone ? "" : " (tick “Also bring over done issues” to keep them as closed tickets)"}.</p>}
+          {p.alreadyImported.length > 0 && <p className="hint">{p.alreadyImported.length} already imported earlier: skipped ({p.alreadyImported.map((x) => x.key).join(", ")}).</p>}
+          {p.skippedDone.length > 0 && <p className="hint">{p.skippedDone.length} already done in Jira: skipped{state.includeDone ? "" : " (tick “Also bring over done issues” to keep them as closed tickets)"}.</p>}
         </Panel>
 
         {p.problems.length > 0 && (
           <>
             <h2>Rows that can&apos;t come over ({p.problems.length})</h2>
-            <p className="note">Fix these in Jira and export again, or add them by hand with “AV/IT/Maintenance request”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
+            <p className="hint">Fix these in Jira and export again, or add them by hand with “AV/IT/Maintenance request”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
             <DataTable framed>
                 <thead>
                   <tr>
@@ -109,7 +109,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                 <tbody>
                   {p.problems.map((x) => (
                     <tr key={`${x.row}-${x.key}`}>
-                      <td className="sub">{x.row}</td>
+                      <td className="hint">{x.row}</td>
                       <td>{x.key ?? "—"}</td>
                       <td>{x.reason}</td>
                     </tr>
@@ -140,15 +140,15 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
                 <tbody>
                   {p.ready.map((r) => (
                     <tr key={r.key}>
-                      <td className="sub">{r.key}</td>
+                      <td className="hint">{r.key}</td>
                       <td>
                         <strong>{r.title}</strong>
-                        <div className="sub">
+                        <div className="hint">
                           {TEAM_LABEL[r.team]} · {r.room} · {URGENCY[r.urgency].label} urgency
                         </div>
                       </td>
                       <td>{STATUS_LABEL[r.status]}</td>
-                      <td className="sub">{r.assignee ?? "Nobody yet"}</td>
+                      <td className="hint">{r.assignee ?? "Nobody yet"}</td>
                     </tr>
                   ))}
                 </tbody>

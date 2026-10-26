@@ -162,7 +162,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
             <Button type="submit">Assign</Button>
           </form>
         ) : (
-          members.length === 0 && <p className="note">Nobody is in the {TEAM_NAME[t.team]} Google Group yet. Ask a portal admin to add the team.</p>
+          members.length === 0 && <p className="hint">Nobody is in the {TEAM_NAME[t.team]} Google Group yet. Ask a portal admin to add the team.</p>
         )}
       </div>
     ),
@@ -338,7 +338,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <form action={watchTicket} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="on" value={isWatching(card, actor.email) ? "0" : "1"} />
-            <p className="note">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
+            <p className="hint">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
             <div>
               <Button type="submit" icon={isWatching(card, actor.email) ? "x" : "bell"}>
                 {isWatching(card, actor.email) ? "Stop following" : "Follow this ticket"}

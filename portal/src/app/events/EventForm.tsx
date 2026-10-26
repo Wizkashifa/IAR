@@ -427,11 +427,11 @@ export default function EventForm(p: EventFormProps) {
                   ) : (
                     <div>
                       <Button size="small" onClick={() => setAsk({ key: c.key, reason: "" })} disabled={result.clashes.length > 1 || !clashOnly}>Ask to use this time</Button>
-                      {result.clashes.length > 1 && <div className="sub">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
+                      {result.clashes.length > 1 && <div className="hint">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
                     </div>
                   )
                 ) : (
-                  <div className="sub">{c.why}</div>
+                  <div className="hint">{c.why}</div>
                 )}
                 {ask?.key === c.key && (
                   <div>

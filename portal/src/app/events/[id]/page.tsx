@@ -284,7 +284,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   value: e.recur ? (
                     <>
                       {recurText(e.date, e.recur)}
-                      <div className="sub">{longDate(e.date)} to {longDate(e.recur.until)}</div>
+                      <div className="hint">{longDate(e.date)} to {longDate(e.recur.until)}</div>
                     </>
                   ) : (
                     dayText(e.date)
@@ -379,7 +379,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         <div className="stack">
           <div>
             {recurText(e.date, r)}. {ctx.today > r.until ? `Ended ${longDate(r.until)}.` : `Ends ${longDate(r.until)} (${daysBetween(ctx.today, r.until)} days left).`}
-            {e.renews && <div className="sub">Renews <Link href={`/events/${e.renews}`}>{e.renews}</Link>.</div>}
+            {e.renews && <div className="hint">Renews <Link href={`/events/${e.renews}`}>{e.renews}</Link>.</div>}
           </div>
           {isEventCard(renewal) && renewal.status !== "denied" && renewal.status !== "cancelled" ? (
             <div>
@@ -399,15 +399,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const c = e.closeOut;
     const checks = e.roomChecks ?? [];
     const checkSummary = checks.length ? (
-      <ul className="plain">
+      <Rows>
         {checks.map((r) => (
           <li key={`${r.date}-${r.when}`}>
             {dayText(r.date)}, {r.when}: <CheckResult check={r} />
           </li>
         ))}
-      </ul>
+      </Rows>
     ) : (
-      <span className="sub">No room checks recorded.</span>
+      <span className="hint">No room checks recorded.</span>
     );
     if (ec.status === "closed" && c) {
       return (
@@ -415,8 +415,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <KeyValue
             items={[
               { label: "Attendance", value: c.attendance !== undefined ? `${c.attendance} (expected ${e.attendance})` : "Not given" },
-              { label: "Spent", value: <>{spendText(c.spent, e.budget)}{c.costsConfirmed ? <div className="sub">Final costs confirmed</div> : null}</> },
-              { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="sub">{fmtDateTime(c.at)}</div></> },
+              { label: "Spent", value: <>{spendText(c.spent, e.budget)}{c.costsConfirmed ? <div className="hint">Final costs confirmed</div> : null}</> },
+              { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="hint">{fmtDateTime(c.at)}</div></> },
               { label: "Deposit", value: c.depositRefund ? "Refund needed (finance was told)" : null },
               { label: "How it went", value: c.notes && <span className="pre">{c.notes}</span> },
               { label: "Room checks", value: checkSummary },
@@ -439,13 +439,13 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />
               </Field>
               <div>
-                <div className="sub">Actual spend (from the purchases linked to this event)</div>
+                <div className="hint">Actual spend (from the purchases linked to this event)</div>
                 <strong>{spendText(spent, e.budget)}</strong>
-                <div className="sub">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
+                <div className="hint">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
             </div>
             <div>
-              <div className="sub">Room condition (from security)</div>
+              <div className="hint">Room condition (from security)</div>
               {checkSummary}
             </div>
             <Field label="How did it go? What would you change next time?">
@@ -510,7 +510,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               {a.history.map((h, i) => (
                 <li key={i}>
                   <span />
-                  <div className="sub">{h.text}</div>
+                  <div className="hint">{h.text}</div>
                 </li>
               ))}
             </ol>

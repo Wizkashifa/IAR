@@ -11,6 +11,8 @@ import type { EventCard } from "@/lib/events/workflow";
 import { saveRoomCheck, workOnTask } from "./ops-actions";
 import { ItemRow } from "@/components/ItemRow";
 import { Disclosure } from "@/components/Disclosure";
+import { Field } from "@/components/Field";
+import { Choice, Choices } from "@/components/Choices";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
@@ -36,7 +38,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
   );
   const mine = task.assignee?.toLowerCase() === email.toLowerCase();
   return (
-    <div className="taskacts noprint">
+    <div className="row end noprint">
       {/* One form per button: each carries its own step. */}
       {task.status !== "done" && !task.assignee && (
         <form action={workOnTask}>
@@ -57,10 +59,9 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
           <form action={workOnTask} className="stack">
             {base}
             <input type="hidden" name="step" value="done" />
-            <label className="field">
-              <span>Note for the requester (optional)</span>
+            <Field label="Note for the requester (optional)">
               <input name="note" maxLength={1000} placeholder={task.team === "marketing" ? "e.g. Flyer posted; link to the listing" : "e.g. Set up and tested"} />
-            </label>
+        </Field>
             <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
         </Disclosure>
@@ -69,10 +70,9 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
         <form action={workOnTask} className="stack">
           {base}
           <input type="hidden" name="step" value="ask" />
-          <label className="field">
-            <span>Your question (added as a comment on the event; the requester gets an alert)</span>
+          <Field label="Your question (added as a comment on the event; the requester gets an alert)">
             <textarea name="note" rows={2} maxLength={1000} required />
-          </label>
+        </Field>
           <div><Button size="small" type="submit">Send question</Button></div>
         </form>
       </Disclosure>
@@ -100,12 +100,12 @@ export function TaskLine({ card, task, roles, email, back, today, names }: { car
 }
 
 export function CheckResult({ check }: { check?: RoomCheck }) {
-  if (!check) return <span className="sub">Not recorded</span>;
+  if (!check) return <span className="hint">Not recorded</span>;
   return (
     <span>
       <Pill tone={check.ok ? "ok" : "bad"}>{check.ok ? "OK" : "Problem"}</Pill>
       {check.note ? ` ${check.note}` : ""}
-      <span className="sub"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
+      <span className="hint"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
     </span>
   );
 }
@@ -114,7 +114,7 @@ export function CheckResult({ check }: { check?: RoomCheck }) {
 export function RoomCheckCell({ card, date, when, check, roles, back }: { card: EventCard; date: string; when: RoomCheck["when"]; check?: RoomCheck; roles: Role[]; back: string }) {
   const can = mayCheckRooms({ roles }) && card.event.rooms.length > 0;
   return (
-    <div className="roomcheck">
+    <div className="stack tight">
       <div><strong>{WHEN_LABEL[when]}:</strong> <CheckResult check={check} /></div>
       {can && (
         <Disclosure summary={check ? "Change" : "Record"} button="quiet" className="noprint">
@@ -123,14 +123,13 @@ export function RoomCheckCell({ card, date, when, check, roles, back }: { card: 
             <input type="hidden" name="date" value={date} />
             <input type="hidden" name="when" value={when} />
             <input type="hidden" name="back" value={back} />
-            <div className="row">
-              <label className="inline"><input type="radio" name="result" value="ok" defaultChecked={check?.ok !== false} required /> Room OK</label>
-              <label className="inline"><input type="radio" name="result" value="problem" defaultChecked={check?.ok === false} /> Problem</label>
-            </div>
-            <label className="field">
-              <span>Note (say what&apos;s wrong if there&apos;s a problem)</span>
+            <Choices legend="How was the room?" legendHidden>
+              <Choice type="radio" name="result" value="ok" defaultChecked={check?.ok !== false} required label="Room OK" />
+              <Choice type="radio" name="result" value="problem" defaultChecked={check?.ok === false} label="Problem" />
+            </Choices>
+            <Field label={<>Note (say what&apos;s wrong if there&apos;s a problem)</>}>
               <input name="note" maxLength={1000} defaultValue={check?.note ?? ""} placeholder="e.g. Chairs left out, spill by the door" />
-            </label>
+        </Field>
             <div><Button size="small" type="submit">Save check</Button></div>
           </form>
         </Disclosure>

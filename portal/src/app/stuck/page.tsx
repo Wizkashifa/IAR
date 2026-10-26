@@ -145,7 +145,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
             ))
         )}
       </Panel>
-      <p className="note">The daily job already reminds people after 3 days and goes to the director after 5. A reminder from here is for when a nudge from the office helps.</p>
+      <p className="hint">The daily job already reminds people after 3 days and goes to the director after 5. A reminder from here is for when a nudge from the office helps.</p>
     </div>
   );
 }

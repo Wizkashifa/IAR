@@ -123,12 +123,12 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       </Panel>
 
       {later > 0 && (
-        <p className="note">
+        <p className="hint">
           {later} more for later dates of a series. <Link href={`/queues?team=${team}&all=1`}>Show all</Link>
         </p>
       )}
       {locked > 0 && (
-        <p className="note">
+        <p className="hint">
           {locked} more {TEAM_NAME[team]} task{locked === 1 ? " is" : "s are"} waiting on events still in review, and will show up here once they&apos;re approved.
         </p>
       )}

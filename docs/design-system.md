@@ -77,7 +77,9 @@ The aim is something a volunteer developer can open in six months and change con
 portal/src/
   styles/
     tokens.css        colours (light and dark), type, spacing, radius, shadow, ring
-    base.css          reset, body, headings, links, focus, layout classes (stack, row, grid)
+    base.css          reset, body, headings, links, focus, form controls, and the only global
+                      classes: stack, row, grid (two, split), grow, push, hint, muted, small, pre
+                      (a guard test fails on any other global class name)
   app/
     fonts.ts          next/font: Lato, Montserrat (brand.md)
     globals.css       @layer order, then @imports the two files above; nothing else
@@ -93,7 +95,13 @@ portal/src/
     theme.ts          Mantine theme, pointing at the CSS variables in tokens.css
     RequestPage.tsx   RequestPage.module.css   (one layout for every request page)
     Activity.tsx      comments and history on every request page (CommentForm.tsx: the box, with ready-made replies)
-    Chips.tsx, Crumb.tsx, FlashNote.tsx, FormErrors.tsx   filter chips, breadcrumb, ?ok=/?error= messages, a form's errors
+    ItemRow.tsx       every list row: requests, files, teams, rooms, tasks, notifications (Rows: the list)
+    Choices.tsx       radio/checkbox cards (Choices, Choice) and a plain tick box (Checkbox)
+    DataTable.tsx     tables, with the phone card layout
+    Disclosure.tsx    "More…" and other folded-away actions
+    SearchForm.tsx, Chips.tsx, Crumb.tsx, LinkCard.tsx, FileList.tsx
+    FlashNote.tsx, FormErrors.tsx   ?ok=/?error= messages, a form's errors
+    Panel.tsx         also PanelNote and PanelFoot, the lines above and below a list
 ```
 
 ## Decided (Oct 25, 2026)
