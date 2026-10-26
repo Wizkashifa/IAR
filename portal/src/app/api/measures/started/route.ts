@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Someone started typing in a request form (components/useFormStarted.ts).
- * Counts it for the beta measures: the form's name and today's date only,
+ * Counts it for the portal measures: the form's name and today's date only,
  * never who it was or what they typed. Signed-in people only.
  */
 export async function POST(req: Request) {

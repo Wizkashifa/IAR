@@ -1,10 +1,11 @@
 /**
- * Beta measures: requests per week, time at each step, sent back, forms
- * started but not sent, feedback by kind. Run with `npm test`.
+ * Portal measures: the range looked at, requests per week or month, time at
+ * each step, sent back, forms started but not sent, feedback by kind. Run with
+ * `npm test`.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { feedbackByKind, fmtWait, median, requestsPerWeek, sentBack, startedVsSent, stepOf, stepTimes, type MeasureCard } from "./measures";
+import { feedbackByKind, fmtWait, median, periodsFor, rangeOf, requestsPer, requestsPerWeek, sentBack, sentSince, startedVsSent, stepOf, stepTimes, type MeasureCard } from "./measures";
 import { parsePurchaseInput } from "./purchases/input";
 import * as pw from "./purchases/workflow";
 
@@ -33,6 +34,37 @@ test("requests per week: the last six weeks, newest last, by kind", () => {
   assert.deepEqual(w[4].counts, { event: 1, purchase: 0, marketing: 0, ticket: 0 });
   assert.equal(w.reduce((a, x) => a + x.counts.purchase, 0), 1);
   assert.ok(w[0].weekStart < w[5].weekStart);
+});
+
+test("ranges: 6 weeks by default, 13 weeks for 3 months, calendar months for 12 months", () => {
+  assert.equal(rangeOf(undefined), "6w");
+  assert.equal(rangeOf("nonsense"), "6w");
+  const now = new Date(Date.UTC(2026, 9, 26, 15));
+  const six = periodsFor("6w", now);
+  assert.equal(six.by, "week");
+  assert.equal(six.periods.length, 6);
+  assert.equal(six.periods[5].end, now.getTime());
+  assert.equal(six.start, now.getTime() - 42 * DAY);
+  const three = periodsFor("3m", now);
+  assert.equal(three.periods.length, 13);
+  const year = periodsFor("12m", now);
+  assert.equal(year.by, "month");
+  assert.deepEqual([year.periods[0].day, year.periods[11].day], ["2025-11-01", "2026-10-01"]);
+  assert.equal(year.periods[11].end, now.getTime());
+  // Each month ends where the next begins.
+  for (let i = 1; i < 12; i++) assert.equal(year.periods[i - 1].end, year.periods[i].start);
+});
+
+test("requests per month: a request on the first of a month counts in that month", () => {
+  const now = new Date(Date.UTC(2026, 9, 26, 15));
+  const sent = (iso: string): MeasureCard => ({ type: "purchase", createdAt: iso, updatedAt: iso, history: [] });
+  const { periods, start } = periodsFor("12m", now);
+  const rows = requestsPer([sent("2026-10-01T00:00:00Z"), sent("2026-09-30T23:59:59Z"), sent("2024-01-01T00:00:00Z")], periods);
+  assert.equal(rows[11].counts.purchase, 1, "October");
+  assert.equal(rows[10].counts.purchase, 1, "September");
+  assert.equal(rows.reduce((a, r) => a + r.counts.purchase, 0), 2, "older than the range: left out");
+  assert.equal(sentSince(sent("2024-01-01T00:00:00Z"), start), false);
+  assert.equal(sentSince(sent("2026-10-01T00:00:00Z"), start), true);
 });
 
 test("step names come from the history actions; other entries don't move the clock", () => {

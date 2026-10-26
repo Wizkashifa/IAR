@@ -20,7 +20,7 @@ How to put the portal on IAR's Google Cloud for a small group of testers. One co
 | Marketing Requests with file uploads, Team Queues, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
 | IT & Maintenance, with the open Jira issues imported, and My work today for the facilities and IT teams | |
 | Who's who, the Library (IAR's policies), What's stuck (office and executives), "Request this again" | |
-| Beta measures for the portal admins (counts only) | |
+| Portal measures for the portal admins (counts only) | |
 
 Social & Welfare aid goes through Purchase Requests, restricted to S&W and finance; there's no separate module. People show by their names from IAR's Workspace directory, never by email address.
 
@@ -110,7 +110,7 @@ Use testers in these roles: A (a committee member), B (that committee's chair), 
 - [ ] O sees a request waiting over a week in What's stuck, sends a reminder, and the person it waits on gets a Chat message.
 - [ ] Who's who lists every committee with its chair; the Library lists the policies, and searching the Library for a word from inside one finds it.
 - [ ] A tester sets updates to "In the morning digest" in Notification settings; the next morning's digest includes them.
-- [ ] Beta measures (`/admin/measures`) shows the test requests in this week's counts.
+- [ ] Portal measures (`/admin/measures`) shows the test requests in this week's counts.
 - [ ] The daily job ran this morning (`gcloud scheduler jobs describe portal-daily --location us-east1` shows a recent success).
 - [ ] Cloud Run logs (`gcloud run services logs read iar-portal --region us-east1`) show no "failed" lines.
 

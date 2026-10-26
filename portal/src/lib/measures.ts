@@ -1,5 +1,5 @@
 /**
- * Beta measures: how the portal is being used, counted from the portal's own
+ * Portal measures: how the portal is being used, counted from the portal's own
  * requests and feedback. No outside analytics, and nothing about who did what:
  * only counts and times. Plain functions; the admin page (app/admin/measures)
  * reads the stores and passes the data in.
@@ -8,7 +8,7 @@ import type { CardType } from "./cards";
 import { FEEDBACK_KIND_LABEL, type FeedbackKind } from "./feedback-kinds";
 import { kindOf } from "./kinds";
 
-/** The four request kinds the beta measures. */
+/** The four request kinds the page measures. */
 export type MeasuredType = Extract<CardType, "event" | "purchase" | "marketing" | "ticket">;
 export const MEASURED: MeasuredType[] = ["event", "purchase", "marketing", "ticket"];
 export const MEASURED_LABEL = Object.fromEntries(MEASURED.map((t) => [t, kindOf(t)!.many])) as Record<MeasuredType, string>;
@@ -26,7 +26,61 @@ const WEEK = 7 * DAY;
 /** When a card was sent: its createdAt, or failing that its first history entry. */
 const sentAt = (c: MeasureCard) => c.createdAt ?? c.history[0]?.at ?? c.updatedAt;
 
-/* ---- Requests per week ------------------------------------------------ */
+/* ---- The range looked at ---------------------------------------------- */
+
+/** How far back the page looks: the last 6 weeks, 3 months or 12 months. */
+export type MeasureRange = "6w" | "3m" | "12m";
+export const RANGES: { id: MeasureRange; label: string }[] = [
+  { id: "6w", label: "Last 6 weeks" },
+  { id: "3m", label: "Last 3 months" },
+  { id: "12m", label: "Last 12 months" },
+];
+export const rangeOf = (x: unknown): MeasureRange => RANGES.find((r) => r.id === x)?.id ?? "6w";
+
+/** One row of the requests table: from `start` (inclusive) to `end` (exclusive), in ms. `day` is the start as YYYY-MM-DD. */
+export type Period = { start: number; end: number; day: string };
+
+/**
+ * The rows for a range, oldest first, and where the range starts. Weeks are
+ * the seven days ending at `now`, then the seven before that; 3 months is 13
+ * of them. 12 months is calendar months (UTC), the current one ending at `now`.
+ */
+export function periodsFor(range: MeasureRange, now: Date): { by: "week" | "month"; periods: Period[]; start: number } {
+  const end = now.getTime();
+  if (range === "12m") {
+    const y = now.getUTCFullYear(), m = now.getUTCMonth();
+    const periods = Array.from({ length: 12 }, (_, i) => {
+      const start = Date.UTC(y, m - 11 + i, 1);
+      return { start, end: i === 11 ? end : Date.UTC(y, m - 10 + i, 1), day: new Date(start).toISOString().slice(0, 10) };
+    });
+    return { by: "month", periods, start: periods[0].start };
+  }
+  const weeks = range === "3m" ? 13 : 6;
+  const periods = Array.from({ length: weeks }, (_, i) => {
+    const start = end - (weeks - i) * WEEK;
+    return { start, end: start + WEEK, day: new Date(start).toISOString().slice(0, 10) };
+  });
+  return { by: "week", periods, start: periods[0].start };
+}
+
+/** Whether a request was sent at or after `start` (ms). */
+export const sentSince = (c: MeasureCard, start: number) => Date.parse(sentAt(c)) >= start;
+
+/* ---- Requests per week or month ---------------------------------------- */
+
+export type PeriodCounts = { day: string; counts: Record<MeasuredType, number> };
+
+/** Requests sent in each period, by kind. */
+export function requestsPer(cards: MeasureCard[], periods: Period[]): PeriodCounts[] {
+  const out: PeriodCounts[] = periods.map((p) => ({ day: p.day, counts: { event: 0, purchase: 0, marketing: 0, ticket: 0 } }));
+  for (const c of cards) {
+    if (!(MEASURED as string[]).includes(c.type)) continue;
+    const at = Date.parse(sentAt(c));
+    const i = periods.findIndex((p) => at >= p.start && at < p.end);
+    if (i >= 0) out[i].counts[c.type as MeasuredType]++;
+  }
+  return out;
+}
 
 export type WeekCounts = { weekStart: string; counts: Record<MeasuredType, number> };
 
@@ -36,17 +90,11 @@ export type WeekCounts = { weekStart: string; counts: Record<MeasuredType, numbe
  */
 export function requestsPerWeek(cards: MeasureCard[], now: Date, weeks = 6): WeekCounts[] {
   const end = now.getTime();
-  const out: WeekCounts[] = Array.from({ length: weeks }, (_, i) => ({
-    weekStart: new Date(end - (weeks - i) * WEEK).toISOString().slice(0, 10),
-    counts: { event: 0, purchase: 0, marketing: 0, ticket: 0 },
-  }));
-  for (const c of cards) {
-    if (!(MEASURED as string[]).includes(c.type)) continue;
-    const ago = end - Date.parse(sentAt(c));
-    if (!(ago >= 0) || ago >= weeks * WEEK) continue;
-    out[weeks - 1 - Math.floor(ago / WEEK)].counts[c.type as MeasuredType]++;
-  }
-  return out;
+  const periods = Array.from({ length: weeks }, (_, i) => {
+    const start = end - (weeks - i) * WEEK;
+    return { start, end: start + WEEK, day: new Date(start).toISOString().slice(0, 10) };
+  });
+  return requestsPer(cards, periods).map((p) => ({ weekStart: p.day, counts: p.counts }));
 }
 
 /* ---- Time at each step ------------------------------------------------ */
@@ -219,7 +267,7 @@ export function startedVsSent(started: StartedCount[], cards: MeasureCard[], sin
 
 export type FeedbackCount = { kind: FeedbackKind; label: string; count: number; open: number };
 
-/** Beta feedback by kind, with how many are still open. */
+/** Feedback by kind, with how many are still open. */
 export function feedbackByKind(items: { kind: FeedbackKind; status: "new" | "done" }[]): FeedbackCount[] {
   return (Object.keys(FEEDBACK_KIND_LABEL) as FeedbackKind[]).map((kind) => {
     const mine = items.filter((f) => f.kind === kind);
