@@ -33,7 +33,7 @@ export default async function FeedbackItemPage({ params, searchParams }: { param
   const names = await nameResolver([f.by, ...(f.replies ?? []).map((r) => r.by)]);
 
   return (
-    <>
+    <div className="stack">
       <Crumb trail={[{ href: "/feedback", label: "Feedback" }]} here={FEEDBACK_KIND_LABEL[f.kind]} />
       <ModuleHead
         title={mine ? "Your feedback" : `Feedback from ${f.name}`}
@@ -49,24 +49,22 @@ export default async function FeedbackItemPage({ params, searchParams }: { param
           )
         }
       />
-      <div className="stack">
-        <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
-        <Panel title={FEEDBACK_KIND_LABEL[f.kind]} right={<Pill tone={f.status === "done" ? "ok" : "warn"} dot>{f.status === "done" ? "Done" : "Open"}</Pill>}>
-          <div className="stack">
-            <p className={styles.message}>{f.message}</p>
-            <KeyValue
-              items={[
-                { label: "From", value: `${f.name} (${f.by})` },
-                { label: "Page", value: internalPath(f.page) ? <Link href={f.page}>{f.page}</Link> : f.page },
-                { label: "Sent", value: fmtDateTime(f.at) },
-                { label: "Done by", value: f.status === "done" && f.doneBy ? names(f.doneBy) : null },
-                { label: "Browser", value: admin ? f.userAgent : null },
-              ]}
-            />
-          </div>
-        </Panel>
-        <CommentsPanel id={f.id} comments={f.replies} names={names} action={replyToFeedback} noun="feedback" />
-      </div>
-    </>
+      <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
+      <Panel title={FEEDBACK_KIND_LABEL[f.kind]} right={<Pill tone={f.status === "done" ? "ok" : "warn"} dot>{f.status === "done" ? "Done" : "Open"}</Pill>}>
+        <div className="stack">
+          <p className={styles.message}>{f.message}</p>
+          <KeyValue
+            items={[
+              { label: "From", value: `${f.name} (${f.by})` },
+              { label: "Page", value: internalPath(f.page) ? <Link href={f.page}>{f.page}</Link> : f.page },
+              { label: "Sent", value: fmtDateTime(f.at) },
+              { label: "Done by", value: f.status === "done" && f.doneBy ? names(f.doneBy) : null },
+              { label: "Browser", value: admin ? f.userAgent : null },
+            ]}
+          />
+        </div>
+      </Panel>
+      <CommentsPanel id={f.id} comments={f.replies} names={names} action={replyToFeedback} noun="feedback" />
+    </div>
   );
 }

@@ -70,6 +70,13 @@
     border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
   }
   :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  /* Our own arrow, so a dropdown is the same height as the inputs beside it in every browser (Safari ignores a native one's height). */
+  select:not([class*="mantine-"], [multiple]) {
+    appearance: none; height: var(--control-h); padding-right: 30px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
+    background-size: 5px 5px; background-repeat: no-repeat;
+  }
 
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }

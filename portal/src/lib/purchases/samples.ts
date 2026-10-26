@@ -50,10 +50,13 @@ export async function samplePurchases(): Promise<Card[]> {
       { last4: "1003", fund: "Cleaning Committee Expenses" },
       { last4: "4120", fund: "Youth Expenses" },
     ];
-    const r = parsePurchaseInput({ ...input, attestationName: owner.name }, { requesterName: owner.name, cards, vendors });
+    // "ach" samples stand for older requests: new ones are always paid by check.
+    const ach = input.delivery === "ach";
+    const r = parsePurchaseInput({ ...input, ...(ach ? { delivery: "mail", mailingAddress: "Sample address, Raleigh, NC" } : {}), attestationName: owner.name }, { requesterName: owner.name, cards, vendors });
     if (!r.ok) throw new Error(`Bad sample: ${r.errors.join("; ")}`);
+    const details = ach ? { ...r.details, delivery: "ach" as const, mailingAddress: undefined } : r.details;
     const at = t(daysAgo);
-    const draft = wf.newPurchase(r.details, owner.email, at, files.map((name) => ({ name, size: 180_000 })));
+    const draft = wf.newPurchase(details, owner.email, at, files.map((name) => ({ name, size: 180_000 })));
     draft.id = `PO-${n++}`;
     return wf.submit(draft, owner, s, at);
   };

@@ -16,6 +16,18 @@ export type WhatsNew = {
 
 export const WHATS_NEW: WhatsNew[] = [
   {
+    date: "2026-10-26",
+    title: "Calendar and the Daily Run Sheet, for everyone",
+    text: "Both are now under IAR in the menu, open to everyone, so anyone can see what's happening where today.",
+    href: "/run-sheet",
+  },
+  {
+    date: "2026-10-26",
+    title: "Replies to your feedback",
+    text: "When the portal admins reply to feedback you sent, you hear about it in the portal and in Google Chat, and can answer back. Help is now in the top bar too.",
+    href: "/feedback",
+  },
+  {
     date: "2026-10-25",
     title: "A new look in IAR's colours",
     text: "The portal now uses IAR's new logo, colours and fonts, with a menu down the side on larger screens and a dark mode. Pick light, dark or match your device in your account menu.",
