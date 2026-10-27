@@ -2,15 +2,13 @@
  * Step 9. Build and deploy the portal to Cloud Run with everything it needs
  * in its settings, add its sign-in address to the Web client (by hand,
  * checked), and give it its own address, portal.<domain>: go-live maps the
- * domain, then writes a Gmail draft (never sent) to IAR's DNS manager with
- * the exact records. On later runs it checks DNS and the certificate, and
- * switches the portal over once both work.
+ * domain and shows the DNS record to add. On later runs it checks DNS and
+ * the certificate, and switches the portal over once both work.
  */
 import { join } from "node:path";
 import { SERVICE, console_, customHost, directoryUser, mailbox, role, runUrl } from "../config";
-import { dnsEmail } from "../email";
 import type { DomainMapping } from "../google";
-import { askText, byHand } from "../run";
+import { byHand } from "../run";
 import { type Change, type Ctx, type Stage, Stop } from "../types";
 import { ensureBuilder, runtimeSa, schedulerSa } from "./cloud";
 
@@ -66,6 +64,15 @@ function redirectChange(ctx: Ctx, base: () => string): Change {
       (c.state.redirectsVerified ??= []).push(uri);
     },
   };
+}
+
+/** The DNS record(s) to add for the portal's address, as go-live shows them. */
+function dnsLines(m: DomainMapping, domain: string): string[] {
+  return [
+    ...(m.records.length ? [`Add this to the DNS for ${domain}:`, ...m.records.map((r) => `  ${r.type}  ${r.name}  ${r.value}`)] : ["Google hasn't said which DNS record to add yet. Run go-live again in a few minutes."]),
+    "On Cloudflare, set it to DNS only (grey cloud), not proxied.",
+    `If ${domain} has CAA records, allow pki.goog and letsencrypt.org.`,
+  ];
 }
 
 const ready = async (ctx: Ctx, m: DomainMapping) => m.ready && m.certificateReady && (await Promise.all(m.records.map((r) => ctx.g.dnsMatches(customHost(ctx.opt.domain), r)))).every(Boolean);
@@ -142,26 +149,12 @@ export const deploy: Stage = {
     if (!mapping)
       out.push({
         kind: "create",
-        text: `Map ${host} to the portal (Google then says which DNS records to add)`,
+        text: `Map ${host} to the portal; go-live then shows the DNS record to add`,
         ask: "later",
-        run: async (c) => void ((await unverified(c)) || (await c.g.createDomainMapping(p, opt.region, host, SERVICE))),
-      });
-    // Once written, the draft is the admin's: it may have been sent, so it's never written again.
-    if (!state.dnsDraftId && !(mapping && (await ready(ctx, mapping))))
-      out.push({
-        kind: "create",
-        text: `Write a Gmail draft (not sent) in your mailbox to IAR's DNS manager with the exact records for ${host}; you read it and send it`,
-        ask: mapping ? undefined : "later",
         run: async (c) => {
           if (await unverified(c)) return;
-          const m = await c.g.getDomainMapping(p, opt.region, host);
-          if (!m?.records.length) throw new Stop(`Google hasn't said which DNS records ${host} needs yet. Run go-live again in a few minutes.`);
-          const to = c.state.dnsManagerEmail ?? (c.state.dnsManagerEmail = await askText(c, "  The DNS manager's email address (kept only in .state.json on this computer):"));
-          const name = await askText(c, "  Their first name, for the greeting (not saved):");
-          const e = dnsEmail({ host, domain: opt.domain, records: m.records, managerName: name, adminName: c.admin?.name ?? "" });
-          const d = await c.g.createDraft({ to, subject: e.subject, text: e.text, html: e.html });
-          c.state.dnsDraftId = d.id;
-          c.log(`  Draft saved in your Gmail, not sent: ${d.url}`);
+          const m = await c.g.createDomainMapping(p, opt.region, host, SERVICE);
+          for (const l of dnsLines(m, opt.domain)) c.log(`  ${l}`);
         },
       });
     if (mapping) {
@@ -178,7 +171,12 @@ export const deploy: Stage = {
             c.log(`  Also change the Chat app's HTTP endpoint (Google Chat API → Configuration) to ${custom}/api/chat, so the app keeps answering.`);
           },
         });
-      } else out.push({ kind: "check", text: `Waiting for ${host}: ${mapping.message ?? "the DNS records aren't in yet, or the certificate isn't ready"}. Run go-live again later; it switches over once both work.` });
+      } else
+        out.push({
+          kind: "check",
+          text: `Waiting for ${host}: ${mapping.message ?? "the DNS records aren't in yet, or the certificate isn't ready"}. Run go-live again later; it switches over once both work.`,
+          detail: dnsLines(mapping, opt.domain),
+        });
     }
     return out;
   },

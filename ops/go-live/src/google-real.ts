@@ -1,12 +1,12 @@
 /**
  * The real Google. Workspace APIs (Directory, Groups Settings, Licensing,
- * Drive, Sheets, Calendar, Chat, Gmail) through the googleapis package with
+ * Drive, Sheets, Calendar, Chat) through the googleapis package with
  * the admin's own browser sign-in, kept in memory. Cloud through the gcloud
  * CLI the admin is signed in to, and a few Cloud REST APIs (Firestore
  * documents, Monitoring, Budgets) with gcloud's access token.
  *
- * Never: service account keys (the portal signs its own tokens), sending
- * email (Gmail drafts only), or anything outside the IAR project and domain.
+ * Never: service account keys (the portal signs its own tokens), Gmail, or
+ * anything outside the IAR project and domain.
  */
 import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -18,7 +18,6 @@ import { admin, type admin_directory_v1 } from "googleapis/build/src/apis/admin"
 import { calendar } from "googleapis/build/src/apis/calendar";
 import { chat } from "googleapis/build/src/apis/chat";
 import { drive } from "googleapis/build/src/apis/drive";
-import { gmail } from "googleapis/build/src/apis/gmail";
 import { groupssettings } from "googleapis/build/src/apis/groupssettings";
 import { licensing } from "googleapis/build/src/apis/licensing";
 import { sheets } from "googleapis/build/src/apis/sheets";
@@ -443,29 +442,6 @@ export class RealGoogle implements Google {
   }
   async addSpaceApp(space: string) {
     await this.ch().spaces.members.create({ parent: space, requestBody: { member: { name: "users/app", type: "BOT" } } });
-  }
-  async createDraft(m: { to: string; subject: string; text: string; html?: string }) {
-    const boundary = `go-live-${Date.now()}`;
-    const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64").replace(/.{76}/g, "$&\r\n");
-    const subject = /^[\x20-\x7e]*$/.test(m.subject) ? m.subject : `=?UTF-8?B?${Buffer.from(m.subject, "utf8").toString("base64")}?=`;
-    const mime = [
-      `To: ${m.to}`,
-      `Subject: ${subject}`,
-      "MIME-Version: 1.0",
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
-      "",
-      `--${boundary}`,
-      "Content-Type: text/plain; charset=UTF-8",
-      "Content-Transfer-Encoding: base64",
-      "",
-      b64(m.text),
-      ...(m.html ? [`--${boundary}`, "Content-Type: text/html; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64(m.html)] : []),
-      `--${boundary}--`,
-      "",
-    ].join("\r\n");
-    // drafts.create only: go-live never sends mail. The admin reads the draft and sends it.
-    const { data } = await gmail({ version: "v1", auth: this.a }).users.drafts.create({ userId: "me", requestBody: { message: { raw: Buffer.from(mime, "utf8").toString("base64url") } } });
-    return { id: data.id!, url: `https://mail.google.com/mail/u/0/#drafts?compose=${data.message?.id ?? ""}` };
   }
 
   // ---- Cloud REST with gcloud's token ---------------------------------------------

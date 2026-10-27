@@ -238,7 +238,7 @@ IAR's rooms are resources in Google Workspace (Admin console → Directory → B
 
 ### 12. The address: portal.islam1.org
 
-Map the domain with `gcloud beta run domain-mappings create --service iar-portal --domain portal.islam1.org --region us-east1` (Google may first ask you to prove IAR manages islam1.org: `gcloud domains verify islam1.org`). It prints the DNS records to add (a CNAME `portal` → `ghs.googlehosted.com.`); go-live writes them into a Gmail draft for IAR's DNS manager. Once DNS and the certificate are ready, set `NEXTAUTH_URL=https://portal.islam1.org`, add `https://portal.islam1.org/api/auth/callback/google` to the Web client's redirect URIs, change the Chat app's endpoint and the daily job's URL and audience, and deploy again.
+Map the domain with `gcloud beta run domain-mappings create --service iar-portal --domain portal.islam1.org --region us-east1` (Google may first ask you to prove IAR manages islam1.org: `gcloud domains verify islam1.org`). It prints the DNS records to add (a CNAME `portal` → `ghs.googlehosted.com.`), and go-live shows them too. On Cloudflare, set the record to DNS only. Once DNS and the certificate are ready, set `NEXTAUTH_URL=https://portal.islam1.org`, add `https://portal.islam1.org/api/auth/callback/google` to the Web client's redirect URIs, change the Chat app's endpoint and the daily job's URL and audience, and deploy again.
 
 ## Who owns what
 

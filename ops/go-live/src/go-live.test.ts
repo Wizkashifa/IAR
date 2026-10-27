@@ -6,8 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { DELEGATION, SETTINGS_DOC, SPACES, scopeCount } from "./config";
-import { dnsEmail } from "./email";
+import { ADMIN_SCOPES, DELEGATION, SETTINGS_DOC, SPACES, scopeCount } from "./config";
 import { fieldPath, fromFields, toFields } from "./firestore-values";
 import { FakeGoogle } from "./google-fake";
 import { GcloudError, absent } from "./google-real";
@@ -81,8 +80,6 @@ function prompter(fake: FakeGoogle, a: Answers = {}) {
     if (/Client ID/.test(q.question)) return fake.webClientId;
     if (/calendar's ID/.test(q.question)) return "events@group.calendar.google.com";
     if (/Rooms people can't book/.test(q.question)) return "basement STORAGE";
-    if (/DNS manager's email/.test(q.question)) return "dns@elsewhere.org";
-    if (/first name/.test(q.question)) return "DNS Manager";
     if (/GitHub repository/.test(q.question)) return "https://github.com/iar/portal";
     throw new Error(`unexpected question: ${q.question}`);
   };
@@ -193,10 +190,7 @@ test("apply from nothing creates everything, then a second run plans no changes"
   assert.equal(env.PORTAL_CHAT, "on");
   assert.equal(env.GOOGLE_CLIENT_ID, fake.webClientId);
   assert.equal(env.PO_EXECUTIVE_THRESHOLD, undefined);
-  assert.equal(fake.drafts.length, 1);
-  assert.equal(fake.drafts[0].to, "dns@elsewhere.org");
-  assert.match(fake.drafts[0].text, /^Assalamu alaikum DNS Manager,/);
-  assert.match(fake.drafts[0].text, /CNAME\s+portal\s+ghs\.googlehosted\.com\./);
+  assert.match(r.out, /CNAME\s+portal\s+ghs\.googlehosted\.com\./, "shows the DNS record to add");
 
   // Settings
   const doc = fake.docs.get(SETTINGS_DOC)!;
@@ -315,19 +309,15 @@ test("portal.<domain> can wait: saying no to it doesn't stop the run", async () 
   const r = await run(fake, startState(fake), { apply: true }, { no: [/can wait/] });
   assert.equal(r.stopped, undefined, r.out);
   assert.equal(fake.domainMapping, null);
-  assert.ok(!fake.calls.includes("createDraft"));
   assert.ok(fake.service, "the portal is still deployed");
 });
 
-test("Gmail is only ever a draft", async () => {
-  const fake = setup({ ready: false });
-  await fullApply(fake);
-  assert.equal(fake.calls.filter((c) => c === "createDraft").length, 1);
-  assert.deepEqual(fake.calls.filter((c) => /send/i.test(c)), []);
+test("go-live never uses Gmail", async () => {
   const real = readFileSync(join(PKG, "src", "google-real.ts"), "utf8");
-  assert.match(real, /drafts\.create/);
-  assert.doesNotMatch(real, /messages\.send|drafts\.send/);
+  assert.doesNotMatch(real, /gmail\(|apis\/gmail/);
+  assert.ok(!ADMIN_SCOPES.some((x) => x.includes("gmail")), "the admin's sign-in doesn't ask for Gmail");
 });
+
 
 test("settings merge keeps what's already in Portal Settings", async () => {
   const fake = setup();
@@ -406,7 +396,6 @@ test("once DNS works, a later run switches the portal to portal.<domain> and mov
   assert.equal(fake.jobs.get("portal-daily")?.uri, "https://portal.x.org/api/daily");
   assert.equal(fake.jobs.get("portal-daily")?.audience, "https://portal.x.org/api/daily");
   assert.equal(fake.uptime.at(-1)?.host, "portal.x.org");
-  assert.equal(fake.drafts.length, 1, "the DNS draft isn't written again");
 });
 
 test("--production opens the portal to everyone after its own yes, and later runs keep it open", async () => {
@@ -500,15 +489,6 @@ test("command line: show-only by default; flags and their values", () => {
   assert.throws(() => parseArgs(["--project"]), /--project needs a value/);
 });
 
-test("the DNS email has the plan's wording and the exact records", () => {
-  const e = dnsEmail({ host: "portal.islam1.org", domain: "islam1.org", records: [{ type: "CNAME", name: "portal", value: "ghs.googlehosted.com.", ttl: "3600" }], managerName: "DNS Manager", adminName: "Portal Admin" });
-  assert.equal(e.subject, "DNS records for portal.islam1.org (new IAR Portal)");
-  assert.match(e.text, /Could you add the following to the islam1.org DNS zone\?/);
-  assert.match(e.text, /Type\s+Name\s+Value\s+TTL\n\s+CNAME\s+portal\s+ghs\.googlehosted\.com\.\s+3600/);
-  assert.match(e.text, /pki\.goog and letsencrypt\.org/);
-  assert.match(e.text, /JazakAllahu khairan\.\n\nPortal Admin$/);
-  assert.match(e.html, /<td[^>]*>ghs\.googlehosted\.com\.<\/td>/);
-});
 
 test("delegation: names come from the public directory, read-only, as the directory user", () => {
   const names = DELEGATION.find((d) => d.scope.endsWith("/admin.directory.user.readonly"));

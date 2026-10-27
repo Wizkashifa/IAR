@@ -58,7 +58,6 @@ export class FakeGoogle implements Google {
   acl = new Map<string, AclRule[]>();
   events = new Map<string, CalendarEvent[]>();
   spaces = new Map<string, { displayName: string; members: ChatMembership[] }>();
-  drafts: { id: string; to: string; subject: string; text: string }[] = [];
   docs = new Map<string, Record<string, unknown>>();
 
   orgId = "555";
@@ -325,11 +324,6 @@ export class FakeGoogle implements Google {
   async addSpaceApp(space: string) {
     if (!this.chatAppConfigured) throw new Error("The Chat app isn't configured");
     this.spaces.get(space)!.members.push({ member: "users/app", type: "BOT" });
-  }
-  async createDraft(m: { to: string; subject: string; text: string }) {
-    const id = this.id("r-draft");
-    this.drafts.push({ id, ...m });
-    return { id, url: `https://mail.google.com/mail/u/0/#drafts?compose=${id}` };
   }
 
   // ---- Firestore -------------------------------------------------------------

@@ -48,7 +48,7 @@ Social & Welfare aid goes through Purchase Requests, restricted to S&W and finan
    - the domain-wide delegation entry for the portal's service account. Its scope list now includes the read-only directory view of people's names (`admin.directory.user.readonly`), so the portal shows names instead of email addresses;
    - the Chat app's configuration, its private Marketplace listing, and installing it for the beta group;
    - the sign-in address on the Web client.
-4. **Send the DNS email.** go-live saves a Gmail draft to IAR's DNS manager with the exact records for `portal.islam1.org`. Read it and send it. The beta can start on the Cloud Run address meanwhile; run go-live again later and it switches over once DNS and the certificate work (then update the Chat app's endpoint, which it reminds you of).
+4. **Add the DNS record.** go-live shows the record for `portal.islam1.org` (a CNAME `portal` → `ghs.googlehosted.com`). Add it in islam1.org's DNS, or ask IAR's web admin to; on Cloudflare, set it to DNS only (grey cloud). The beta can start on the Cloud Run address meanwhile; run go-live again later and it switches over once DNS and the certificate work (then update the Chat app's endpoint, which it reminds you of).
 5. **The Policies drive by hand** (go-live doesn't make it; it makes the receipts, W-9, maintenance photos and marketing drives itself; see [setup.md](setup.md) §7): add the portal's runtime service account as a **Viewer**. Portal Settings shows the account's address.
 6. **Portal Settings** (signed in as a portal admin, at `/admin`):
    - check every team has a fund, check the cards, turn on the rooms people can book and set food, shared space (the full gym and its halves) and restricted rooms, and check the Chat spaces are listed;
