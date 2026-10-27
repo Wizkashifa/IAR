@@ -33,7 +33,7 @@ function purchase(over: Partial<PurchaseInput> = {}, statement?: ReturnType<type
     attestationName: vol.name,
     ...over,
   };
-  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }], statement });
+  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }], statement });
   if (!r.ok) throw new Error(r.errors.join("; "));
   const c = pw.newPurchase(r.details, vol.email, T(0));
   c.id = `PO-${++seq}`;
@@ -138,8 +138,12 @@ test("QuickBooks CSV: an aid request shows no payee or line notes; card rows use
   const card = cardReceipts("2026-09", [
     { date: "2026-09-02", description: "USPS.COM CLICKNSHIP  800-555-0100 DC", amount: 9.57, line: { accountId: "a76", note: "Mailing certificates" } },
     { date: "2026-09-05", description: "AMAZON MKTPLACE PMTS  Amzn.com/billWA", amount: -12.3, line: { accountId: "a76" } },
+    { date: "2026-09-06", description: "COSTCO WHSE #0002  APEX  NC", amount: 40, line: { accountId: "a38" } },
   ]);
-  const [cr, credit] = qbRows([card]);
+  const [cr, credit, youth] = qbRows([card]);
+  // Each card line is classed by its own sub-account's fund.
+  assert.equal(cr[4], "Imam's Office");
+  assert.equal(youth[4], "Youth");
   assert.equal(cr[0], "2026-09-02");
   assert.equal(cr[3], "IAR card ···2093 · USPS");
   assert.equal(cr[7], "Youth night supplies · Mailing certificates · USPS.COM CLICKNSHIP  800-555-0100 DC");

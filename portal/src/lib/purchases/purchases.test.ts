@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { ACCOUNTS, FUNDS, isLaborAccount } from "./accounts";
 import { mergeVendors, vendorAfterPayment, vendorWithW9, vendorsForFund, visibleVendors } from "./vendors";
 import type { Vendor } from "../cards";
-import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
+import { fundsOf, mainFund, parseAmount, parsePurchaseInput, receiptsError, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
 import { purchaseCommentNotices, purchaseNotices } from "./notices";
 import { testCharges } from "./statement-sample";
@@ -27,7 +27,7 @@ const settings: wf.RoutingSettings = {
   approversFor: (fund) => (fund === "Women Expenses" ? {} : { chairs: [chair.email], backups: [backup.email] }),
   executiveThreshold: 2500,
 };
-const ctx = { requesterName: volunteer.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }, { name: "No W9 Co", w9OnFile: false }] };
+const ctx = { requesterName: volunteer.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }, { name: "No W9 Co", w9OnFile: false }] };
 
 const T = (n: number) => new Date(Date.UTC(2026, 9, 1 + n, 14)).toISOString();
 
@@ -131,12 +131,39 @@ test("input: requests are paid by check, so they say how the check goes; ACH isn
   assert.ok(!ach.ok && ach.errors.includes("Choose how we should send the check."));
 });
 
-test("input: someone can only submit receipts for a card they hold, and the fund follows the card", () => {
+test("input: someone can only submit receipts for a card they hold; the request is filed under the fund its charges went to", () => {
   const { statement, lines } = usps();
   const notMine = parsePurchaseInput(cardInput(lines, { cardLast4: "9999" }), { ...ctx, statement });
   assert.equal(notMine.ok, false);
-  const mine = parsePurchaseInput(cardInput(lines, { fund: "Youth Expenses" }), { ...ctx, statement });
+  // Whatever fund the browser sends, and even one this person isn't on: a card isn't tied to a committee.
+  const mine = parsePurchaseInput(cardInput(lines, { fund: "Youth Expenses" }), { ...ctx, funds: ["Youth Expenses"], statement });
   assert.ok(mine.ok && mine.details.fund === "Imam's Office Fund Expenses");
+});
+
+test("card receipts: one card can pay for several committees; the main fund is where most of the money went", () => {
+  const { statement, lines } = testCharges([
+    { date: "2026-09-02", description: "COSTCO WHSE #0002  APEX  NC", amount: 90, line: { accountId: "a38" } },
+    { date: "2026-09-03", description: "THE HOME DEPOT #0001  CARY  NC", amount: 120, line: { accountId: "a19" } },
+    { date: "2026-09-04", description: "USPS.COM", amount: 9.57, line: { accountId: "a76" } },
+  ]);
+  const r = parsePurchaseInput(cardInput(lines), { ...ctx, funds: [], statement });
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.details.fund, "Facility Maintenance Expenses");
+  assert.deepEqual(fundsOf(r.details.lines), ["Facility Maintenance Expenses", "Youth Expenses", "Imam's Office Fund Expenses"]);
+  assert.equal(mainFund([{ accountId: "a38", amount: 10 }, { accountId: "a19", amount: -30 }]), "Facility Maintenance Expenses", "a credit counts by its size");
+  assert.equal(mainFund([{ accountId: "", amount: 10 }]), null);
+});
+
+test("receipts: every request needs at least one receipt or invoice, and lines never say they have none", () => {
+  assert.equal(receiptsError(0, 0), "Attach the receipts or invoices. Every request needs at least one.");
+  assert.equal(receiptsError(0, 1), null);
+  assert.equal(receiptsError(2, 0), null, "files already on a request being edited count");
+  const pay = parsePurchaseInput(input({ lines: [{ accountId: "a38", amount: "10", hasReceipt: false } as PurchaseInput["lines"][number]] }), ctx);
+  assert.ok(pay.ok && pay.details.lines[0].hasReceipt === true);
+  const { statement, lines } = usps();
+  const card = parsePurchaseInput(cardInput([{ ...lines[0], hasReceipt: false } as PurchaseInput["lines"][number]]), { ...ctx, statement });
+  assert.ok(card.ok && card.details.lines[0].hasReceipt === true);
 });
 
 test("labor sub-accounts: every temp labor, salary, payroll and honorarium line, nothing else", () => {
@@ -344,7 +371,7 @@ test("card receipts: finance review only, then QuickBooks; refunds and repayment
   const { statement, lines } = testCharges([
     { date: "2026-09-02", description: "SAMPLE BOOKS  LONDON", amount: 150, line: { accountId: "a76" } },
     { date: "2026-09-20", description: "SAMPLE CONFERENCE  VA", amount: 300, line: { accountId: "a75", flag: "repay", repayBy: "Da'wah Committee" } },
-    { date: "2026-09-22", description: "SAMPLE HOTEL  NY", amount: 134.99, line: { accountId: "a75", flag: "refund", hasReceipt: false } },
+    { date: "2026-09-22", description: "SAMPLE HOTEL  NY", amount: 134.99, line: { accountId: "a75", flag: "refund" } },
   ]);
   const r = parsePurchaseInput(cardInput(lines), { ...ctx, statement });
   assert.ok(r.ok);

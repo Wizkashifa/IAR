@@ -114,7 +114,6 @@ export function purchaseAgain(p: PurchaseDetails): PurchaseInput {
       note: l.note ?? "",
       date: "",
       merchant: l.merchant ?? "",
-      hasReceipt: true,
       flag: "",
       repayBy: "",
     })),

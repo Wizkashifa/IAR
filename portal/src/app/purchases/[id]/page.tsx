@@ -34,6 +34,7 @@ import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
 import { lineRows, merchantName } from "@/lib/purchases/statement";
+import { fundsOf } from "@/lib/purchases/input";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const can = (a: Action) => permission(pc, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const isCard = p.kind === "card";
+  // Card receipts can charge several funds: name them all.
+  const fundsLabel = isCard ? fundsOf(p.lines).map(shortFund).join(", ") || shortFund(p.fund) : shortFund(p.fund);
   const total = purchaseTotal(p);
   const owed = openExpectedReturns(p);
   const live = card.status === "in_review" || card.status === "approved" || card.status === "paid";
@@ -324,7 +327,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           <WaitingPill card={card} />
         </>
       }
-      lead={[KIND_LABEL[p.kind], shortFund(p.fund), `from ${names(card.ownerEmail)}`, fmtMoney(total)]}
+      lead={[KIND_LABEL[p.kind], fundsLabel, `from ${names(card.ownerEmail)}`, fmtMoney(total)]}
       steps={steps}
       next={next}
       sent={sent === "1"}

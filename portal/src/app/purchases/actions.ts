@@ -7,7 +7,7 @@ import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { purchaseCommentNotices, purchaseNotices } from "@/lib/purchases/notices";
 import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/purchases/drive";
-import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
+import { parsePurchaseInput, receiptsError, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
 import { receiptsSentFor, statementFor } from "@/lib/purchases/statement-context";
@@ -33,7 +33,7 @@ export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<st
 }
 
 /** `keep`: the fund and W-9 already on a request being edited; the W-9 needn't be uploaded again. */
-async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { id: string; fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string }) {
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { id: string; fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string; files: number }) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -50,7 +50,7 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
     { ...raw, w9Attached: w9Files.length > 0 || Boolean(keep?.w9) },
     {
       requesterName: viewer.name,
-      cards: cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund })),
+      cards: cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4 })),
       vendors,
       // Editing a returned request may keep its fund even if the person has since left that committee.
       funds: [...(await fundsFor(viewer, ctx)), ...(keep ? [keep.fund] : [])],
@@ -65,7 +65,8 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
     if (sent.length) return { ok: false as const, errors: [`Receipts for this card and month were already sent as ${sent[0].id}.`] };
   }
   const files = filesFrom(form, "attachments");
-  const fileErrors = [...checkFiles(files), ...checkW9(w9Files)];
+  const noReceipts = receiptsError(keep?.files ?? 0, files.length);
+  const fileErrors = [...checkFiles(files), ...checkW9(w9Files), ...(noReceipts ? [noReceipts] : [])];
   if (!parsed.ok || fileErrors.length) return { ok: false as const, errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors] };
   return { ok: true as const, details: parsed.details, files, w9File: parsed.details.w9Required ? w9Files[0] : undefined };
 }
@@ -128,7 +129,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   if (!allowed.ok) return { errors: [allowed.reason] };
 
   const ctx = await purchaseContext();
-  const r = await parseForm(viewer, form, ctx, { id: card.id, fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId });
+  const r = await parseForm(viewer, form, ctx, { id: card.id, fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId, files: card.purchase.attachments.length });
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
   const w9 = await storeW9(r.details.payee, r.w9File, now);

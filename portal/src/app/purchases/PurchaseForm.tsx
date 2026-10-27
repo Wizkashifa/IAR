@@ -27,7 +27,7 @@ export type FormProps = {
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   initial?: PurchaseInput;
   requesterName: string;
-  cards: { last4: string; fund: string }[];
+  cards: { last4: string }[];
   /** Card receipts: each imported month's charges on this person's cards, most recent first. */
   statements?: StatementChoice[];
   /** Open on card receipts for this card and month (the link in "your statement is in"). */
@@ -63,8 +63,8 @@ function chargeValues(choice: StatementChoice | undefined, initial?: LineInput[]
   for (const c of choice.charges) {
     const was = initial?.find((l) => l.ref === c.ref);
     values[c.ref] = was
-      ? { accountId: was.accountId, note: was.note ?? "", hasReceipt: was.hasReceipt !== false, flag: was.flag ?? "", repayBy: was.repayBy ?? "" }
-      : { accountId: choice.suggested[c.ref] ?? "", note: "", hasReceipt: true, flag: "", repayBy: "" };
+      ? { accountId: was.accountId, note: was.note ?? "", flag: was.flag ?? "", repayBy: was.repayBy ?? "" }
+      : { accountId: choice.suggested[c.ref] ?? "", note: "", flag: "", repayBy: "" };
   }
   const groups = groupCharges(choice.charges);
   const lumped = initial?.length ? [...new Set(initial.map((l) => l.group).filter((g): g is string => Boolean(g)))] : groups.filter((g) => g.lumpByDefault).map((g) => g.name);
@@ -72,7 +72,7 @@ function chargeValues(choice: StatementChoice | undefined, initial?: LineInput[]
 }
 
 let keySeq = 1;
-const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note: "", hasReceipt: true });
+const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note: "" });
 
 const fmtW9Date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
 
@@ -124,8 +124,10 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
   const [agreed, setAgreed] = useState(Boolean(initial));
 
   const card = kind === "card";
-  const chargeFund = card ? cards.find((c) => c.last4 === cardLast4)?.fund ?? "" : fund;
-  const accountChoices = useMemo(() => (allFunds || !chargeFund ? ACCOUNTS : accountsForFund(chargeFund)), [allFunds, chargeFund]);
+  // A card isn't tied to a fund: its charges can go to any fund's sub-accounts. The server files the request under the main one.
+  const chargeFund = card ? "" : fund;
+  const showAllFunds = card || allFunds;
+  const accountChoices = useMemo(() => (showAllFunds || !chargeFund ? ACCOUNTS : accountsForFund(chargeFund)), [showAllFunds, chargeFund]);
   const total = card ? (choice?.charges ?? []).reduce((s, c) => s + c.amount, 0) : lines.reduce((s, l) => s + toNum(l.amount), 0);
   const groups = useMemo(() => groupCharges(choice?.charges ?? []), [choice]);
   const delivery: DeliveryMethod | "" = checkTo;
@@ -173,7 +175,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
   const cardLinesOut: LineInput[] = (choice?.charges ?? []).map((ch) => {
     const v = charges.values[ch.ref];
     const g = groups.find((x) => x.refs.includes(ch.ref));
-    return { ref: ch.ref, amount: ch.amount, accountId: v?.accountId ?? "", note: v?.note ?? "", hasReceipt: v?.hasReceipt !== false, flag: v?.flag ?? "", repayBy: v?.repayBy ?? "", group: g && charges.lumped.includes(g.name) ? g.name : "" };
+    return { ref: ch.ref, amount: ch.amount, accountId: v?.accountId ?? "", note: v?.note ?? "", flag: v?.flag ?? "", repayBy: v?.repayBy ?? "", group: g && charges.lumped.includes(g.name) ? g.name : "" };
   });
 
   const payload: PurchaseInput = {
@@ -218,7 +220,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                   <select value={cardLast4} onChange={(e) => chooseStatement(e.target.value, firstMonth(e.target.value))}>
                     {cards.map((c) => (
                       <option key={c.last4} value={c.last4}>
-                        ···{c.last4} · {shortFund(c.fund)}
+                        Card ending {c.last4}
                       </option>
                     ))}
                   </select>
@@ -366,7 +368,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               ? "These are the charges on the statement. For each one, choose its sub-account and say why it was bought. Charges from the same store can be lumped together, so one receipt covers them."
               : "Split the total across as many sub-accounts as it really covers."}
           </p>
-          <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>
+          {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
           {card ? (
             choice && (
               <CardCharges
@@ -375,8 +377,8 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                 values={charges.values}
                 lumped={charges.lumped}
                 accounts={accountChoices}
-                allFunds={allFunds}
-                placeholder={chargeFund || allFunds ? "Choose…" : "Choose a fund first"}
+                allFunds
+                placeholder="Choose…"
                 onCharge={setCharge}
                 onGroup={setGroup}
                 onLump={lump}
@@ -430,11 +432,16 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
           {existingFiles.length > 0 && <Note>Already attached: {existingFiles.join(", ")}</Note>}
           <FileDrop
             name="attachments"
-            label="Add receipts and invoices"
+            label={existingFiles.length > 0 ? "Add more receipts and invoices" : "Receipts and invoices"}
+            required={existingFiles.length === 0}
             camera
             maxFiles={10}
             accept={RECEIPT_TYPES}
-            hint="Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
+            hint={
+              card
+                ? "Every charge needs its receipt or invoice. One file can cover several charges, such as your Amazon order history for the month. Photos or PDFs, up to 10 files."
+                : "Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
+            }
           />
         </div>
       </Panel>

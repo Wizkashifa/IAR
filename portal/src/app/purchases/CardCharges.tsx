@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/Button";
-import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { Field } from "@/components/Field";
@@ -11,7 +10,7 @@ import { merchantName, type ChargeGroup, type StatementCharge } from "@/lib/purc
 import styles from "./purchases.module.css";
 
 /** What the cardholder fills in for a charge. */
-export type ChargeInput = { accountId: string; note: string; hasReceipt: boolean; flag: "" | "refund" | "repay"; repayBy: string };
+export type ChargeInput = { accountId: string; note: string; flag: "" | "refund" | "repay"; repayBy: string };
 
 
 type Props = {
@@ -42,8 +41,8 @@ export function AccountOptions({ accounts, allFunds }: { accounts: Account[]; al
 /**
  * The charges on a card's statement, for card receipts. Date, merchant and
  * amount are the statement's and can't be changed; each charge (or each
- * lumped merchant, such as Amazon) gets a sub-account, why it was bought,
- * and whether there's a receipt.
+ * lumped merchant, such as Amazon) gets a sub-account from any fund and
+ * why it was bought. Every charge needs its receipt, attached below.
  */
 export function CardCharges({ charges, groups, values, lumped, accounts, allFunds, placeholder, onCharge, onGroup, onLump }: Props) {
   const groupOf = (c: StatementCharge) => groups.find((g) => g.refs.includes(c.ref));
@@ -106,9 +105,6 @@ export function CardCharges({ charges, groups, values, lumped, accounts, allFund
                 <div className={styles.lineFields}>
                   {accountSelect(first?.accountId ?? "", (v) => onGroup(g.name, { accountId: v }), label)}
                   {whyField(first?.note ?? "", (v) => onGroup(g.name, { note: v }), label, `e.g. supplies for the month's ${g.name === "Amazon" ? "programs" : "work"}`)}
-                  <Checkbox checked={first?.hasReceipt === false} onChange={(e) => onGroup(g.name, { hasReceipt: !e.target.checked })}>
-                    No receipt
-                  </Checkbox>
                 </div>
                 <p className="hint">One receipt can cover them all, such as your {g.name} order history for the month.</p>
               </div>
@@ -158,9 +154,6 @@ export function CardCharges({ charges, groups, values, lumped, accounts, allFund
                     <input value={v.repayBy} onChange={(e) => onCharge(c.ref, { repayBy: e.target.value })} maxLength={120} required aria-label={`Repaid by, ${label}`} />
                   </Field>
                 )}
-                <Checkbox checked={v?.hasReceipt === false} onChange={(e) => onCharge(c.ref, { hasReceipt: !e.target.checked })}>
-                  No receipt
-                </Checkbox>
               </div>
             </div>
             <div className={styles.lineRemove}>

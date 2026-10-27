@@ -48,7 +48,7 @@ const settings: pw.RoutingSettings = {
   approversFor: (fund) => (fund === "Women Expenses" ? {} : { chairs: [chair.email], backups: [backup.email] }),
   executiveThreshold: 2500,
 };
-const pctx = { requesterName: vol.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }] };
+const pctx = { requesterName: vol.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }] };
 
 function purchase(over: Partial<PurchaseInput> = {}, owner = vol, statement?: ReturnType<typeof testCharges>["statement"]): pw.PurchaseCard {
   const input: PurchaseInput = {

@@ -321,14 +321,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </Section>
 
       <Section open={open === "cards"} title="IAR cards">
-      <p className="hint">Only the last four digits are stored. The cardholder can submit receipts for the card each month.</p>
+      <p className="hint">Only the last four digits are stored. Each month the cardholder sends receipts for the card&apos;s charges, choosing a sub-account for each, so one card can pay for several committees.</p>
       {settings.cards.length > 0 && (
         <DataTable framed>
             <thead>
               <tr>
                 <th>Card</th>
                 <th>Cardholder</th>
-                <th>Fund</th>
                 <th></th>
               </tr>
             </thead>
@@ -337,7 +336,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <tr key={c.last4}>
                   <td data-label="Card">···{c.last4}</td>
                   <td data-label="Cardholder">{c.holderName}<div className="hint">{c.holderEmail}</div></td>
-                  <td data-label="Fund">{shortFund(c.fund)}</td>
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />
@@ -359,16 +357,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </Field>
         <Field label={<>Cardholder&apos;s email</>}>
           <input name="holderEmail" type="email" placeholder={`name@${ORG.domain}`} required />
-        </Field>
-        <Field label="Fund">
-          <select name="fund" required defaultValue="">
-            <option value="">Choose…</option>
-            {FUNDS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
         </Field>
         <div>
           <Button type="submit" variant="primary">Add card</Button>
