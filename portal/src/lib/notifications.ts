@@ -84,10 +84,14 @@ async function getFirestoreStore(): Promise<NotificationStore> {
       await batch.commit();
     },
     async removeForCard(cardId) {
-      const snap = await col.where("cardId", "==", cardId).limit(400).get();
-      const batch = db.batch();
-      for (const d of snap.docs) batch.delete(d.ref);
-      await batch.commit();
+      // In batches of 400 until none are left.
+      for (;;) {
+        const snap = await col.where("cardId", "==", cardId).limit(400).get();
+        if (snap.empty) return;
+        const batch = db.batch();
+        for (const d of snap.docs) batch.delete(d.ref);
+        await batch.commit();
+      }
     },
   };
   return fsStore;

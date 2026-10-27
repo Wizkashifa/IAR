@@ -224,8 +224,7 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
   revalidatePath("/events");
   if (images.length) {
     try {
-      const saved = await saveEventImages(input.title, input.date, images);
-      await store.save(addImages(trouble.card, actor, nowIso(), saved), trouble.card.updatedAt);
+      await attachImages(card.id, actor, await saveEventImages(input.title, input.date, images));
     } catch (err) {
       console.error("event image upload failed", err);
       redirect(`/events/${card.id}?sent=1&error=${encodeURIComponent("Your request was sent, but the images didn't upload. Try adding them again on this page.")}#images`);
@@ -233,6 +232,25 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
   }
   // The request page says "Sent." with what happens next (RequestPage `sent`).
   redirect(`/events/${card.id}?sent=1`);
+}
+
+/**
+ * Adds uploaded images to the latest copy of the request. Someone may have
+ * saved it while the images uploaded (a slow upload, an approval), so it
+ * tries once more on a fresh copy.
+ */
+async function attachImages(id: string, actor: wf.EventActor, saved: Awaited<ReturnType<typeof saveEventImages>>): Promise<void> {
+  const store = await cardStore();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const latest = await store.get(id);
+    if (!wf.isEventCard(latest)) throw new WorkflowError("That request no longer exists.");
+    try {
+      await store.save(addImages(latest, actor, nowIso(), saved), latest.updatedAt);
+      return;
+    } catch (err) {
+      if (!(err instanceof ConflictError) || attempt === 1) throw err;
+    }
+  }
 }
 
 /** Images for marketing, added from the request page by the requester or the marketing team. Never changes the stage. */
@@ -256,18 +274,7 @@ export async function addEventImages(form: FormData): Promise<void> {
 
   let error: string | null = null;
   try {
-    const saved = await saveEventImages(card.title, card.event.date, files);
-    // Someone may have saved the request while the images uploaded: add them to the latest copy.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const latest = attempt === 0 ? card : await store.get(id);
-      if (!wf.isEventCard(latest)) break;
-      try {
-        await store.save(addImages(latest, actor, nowIso(), saved), latest.updatedAt);
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) throw err;
-      }
-    }
+    await attachImages(id, actor, await saveEventImages(card.title, card.event.date, files));
   } catch (err) {
     if (err instanceof WorkflowError) error = err.message;
     else {

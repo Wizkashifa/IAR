@@ -152,6 +152,10 @@ test("images: the requester and marketing add images to a public event; its stag
   // A resubmitted request keeps its images.
   const kept = wf.resubmit(addImages(wf.returnForChanges(submitted(full()), exec, [], NOW, "Fix the time"), owner, NOW, [{ name: "a.jpg", size: 1 }]), full(), owner, [], NOW, []);
   assert.equal(kept.event.images?.length, 1);
+  // An older request's Drive link isn't on the form any more; resubmitting keeps it.
+  const old = wf.newEvent(full({ brief: { ...brief, files: "https://drive.google.com/old" } }), owner, NOW, []);
+  const sentBack = wf.returnForChanges(wf.submit({ ...old, id: "EV-9" }, owner, [], NOW), exec, [], NOW, "Fix the time");
+  assert.equal(wf.resubmit(sentBack, full(), owner, [], NOW, []).event.brief?.files, "https://drive.google.com/old");
 });
 
 test("tasks: re-approval after a move keeps work already done", () => {

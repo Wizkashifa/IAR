@@ -258,9 +258,12 @@ export function resubmit(card: EventCard, edited: EventInput, actor: EventActor,
   const released = card.event.releasedFor ? [] : card.event.released;
   const stage = firstStage(card.ownerEmail, directors, { waitingOnAsk: o.waitingOnAsk, releasedFor: card.event.releasedFor });
   const moved = Boolean(card.event.releasedFor);
+  // An older request's Drive link isn't on the form any more: keep it.
+  const oldLink = card.event.brief?.files;
   const e: EventDetails = {
     ...card.event,
     ...edited,
+    ...(edited.brief && oldLink && !edited.brief.files ? { brief: { ...edited.brief, files: oldLink } } : {}),
     dates: liveDates(edited, released),
     released,
     checks,
