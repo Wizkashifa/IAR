@@ -4,6 +4,7 @@
  * without a server (see purchases.test.ts).
  */
 import { FUNDS, findAccount, isLaborAccount } from "./accounts";
+import { merchantName, type StatementCard } from "./statement";
 import {
   CHECK_DELIVERIES,
   type DeliveryMethod,
@@ -21,6 +22,10 @@ export type LineInput = {
   hasReceipt?: boolean;
   flag?: "" | "refund" | "repay";
   repayBy?: string;
+  /** Card receipts: the statement charge this line is for. */
+  ref?: string;
+  /** Card receipts: lumped with the merchant's other charges under this name. */
+  group?: string;
 };
 
 export type PurchaseInput = {
@@ -54,11 +59,21 @@ export type InputContext = {
   funds?: string[];
   /** Event cards (EV-…) this person may link the purchase to. Unset: any (sample data). */
   events?: string[];
+  /**
+   * Card receipts: the chosen card's charges on the imported statement for
+   * the chosen month, loaded by the server. Null when that statement isn't
+   * in, or the card has no charges on it (`statementIn` says which).
+   */
+  statement?: StatementCard | null;
+  statementIn?: boolean;
 };
 
 export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments"> } | { ok: false; errors: string[] };
 
 const KINDS: PurchaseKind[] = ["pay", "reimburse", "card"];
+/** A card can have many charges in a month; other requests are split before this. */
+const MAX_LINES = 60;
+const MAX_CARD_LINES = 300;
 const str = (v: unknown, max = 500) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 /** Dollars from "1,180.00", "$90" or 90; NaN if it isn't a usable amount. */
@@ -85,6 +100,8 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
     else fund = held.fund;
     const month = str(raw.statementMonth, 7);
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) errors.push("Choose the statement month.");
+    else if (held && !ctx.statement)
+      errors.push(ctx.statementIn ? `Card ···${held.last4} has no charges on that month's statement, so there's nothing to send.` : `The statement for that month isn't in yet. The finance office uploads it each month.`);
     if (held) card = { last4: held.last4, statementMonth: month };
   }
   if (!FUNDS.includes(fund)) errors.push("Choose the fund or committee this is charged to.");
@@ -111,35 +128,7 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
 
   // Lines.
   const rawLines = Array.isArray(raw.lines) ? raw.lines : [];
-  if (rawLines.length === 0) errors.push("Add at least one line.");
-  if (rawLines.length > 60) errors.push("Split this into more than one request (60 lines at most).");
-  const lines: LineItem[] = [];
-  rawLines.slice(0, 60).forEach((l, i) => {
-    const n = i + 1;
-    const account = findAccount(str(l.accountId, 20));
-    if (!account) errors.push(`Line ${n}: choose a sub-account.`);
-    const amount = parseAmount(l.amount);
-    if (!(amount > 0) || amount > 1_000_000) errors.push(`Line ${n}: enter an amount over $0 with at most two decimals.`);
-    const line: LineItem = { id: `L${n}`, accountId: account?.id ?? "", amount: amount > 0 ? amount : 0, hasReceipt: l.hasReceipt !== false };
-    const note = str(l.note, 200);
-    if (note) line.note = note;
-    if (kind === "card") {
-      const date = str(l.date, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.push(`Line ${n}: enter the charge date.`);
-      else line.date = date;
-      const merchant = str(l.merchant, 120);
-      if (!merchant) errors.push(`Line ${n}: enter the merchant.`);
-      else line.merchant = merchant;
-      if (l.flag === "refund") line.flag = "refund";
-      if (l.flag === "repay") {
-        line.flag = "repay";
-        const who = str(l.repayBy, 120);
-        if (!who) errors.push(`Line ${n}: say who will repay it.`);
-        else line.repayBy = who;
-      }
-    }
-    lines.push(line);
-  });
+  const lines: LineItem[] = kind === "card" ? cardLines(rawLines, ctx.statement, errors) : otherLines(rawLines, errors);
 
   const attestation = str(raw.attestationName, 120);
   if (!attestation) errors.push("Type your name to sign the request.");
@@ -181,4 +170,68 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
       eventCardId,
     },
   };
+}
+
+/** Pay and reimburse: the lines as typed. */
+function otherLines(rawLines: LineInput[], errors: string[]): LineItem[] {
+  if (rawLines.length === 0) errors.push("Add at least one line.");
+  if (rawLines.length > MAX_LINES) errors.push(`Split this into more than one request (${MAX_LINES} lines at most).`);
+  return rawLines.slice(0, MAX_LINES).map((l, i) => {
+    const n = i + 1;
+    const account = findAccount(str(l.accountId, 20));
+    if (!account) errors.push(`Line ${n}: choose a sub-account.`);
+    const amount = parseAmount(l.amount);
+    if (!(amount > 0) || amount > 1_000_000) errors.push(`Line ${n}: enter an amount over $0 with at most two decimals.`);
+    const line: LineItem = { id: `L${n}`, accountId: account?.id ?? "", amount: amount > 0 ? amount : 0, hasReceipt: l.hasReceipt !== false };
+    const note = str(l.note, 200);
+    if (note) line.note = note;
+    return line;
+  });
+}
+
+/**
+ * Card receipts: one line per charge on the imported statement, in its
+ * order. Date, merchant and amount come from the statement, whatever the
+ * browser sent; the cardholder gives each charge its sub-account and why
+ * it was bought, and says what's coming back or has no receipt.
+ */
+function cardLines(rawLines: LineInput[], statement: StatementCard | null | undefined, errors: string[]): LineItem[] {
+  if (!statement) return [];
+  if (statement.charges.length > MAX_CARD_LINES) {
+    errors.push(`This card has more than ${MAX_CARD_LINES} charges this month. Ask the finance office to enter it.`);
+    return [];
+  }
+  const byRef = new Map<string, LineInput>();
+  for (const l of rawLines) {
+    const ref = str(l.ref, 40);
+    if (statement.charges.some((c) => c.ref === ref)) byRef.set(ref, l);
+  }
+  if (byRef.size < rawLines.length) errors.push("Some charges aren't on the statement. Reload the page and try again.");
+  return statement.charges.map((c, i) => {
+    const label = `${c.date.slice(5).replace("-", "/")} ${merchantName(c.description)}`;
+    const l = byRef.get(c.ref);
+    const line: LineItem = { id: `L${i + 1}`, accountId: "", amount: c.amount, date: c.date, merchant: c.description, ref: c.ref, hasReceipt: true };
+    if (!l) {
+      errors.push(`${label}: this charge is missing. Reload the page and try again.`);
+      return line;
+    }
+    const account = findAccount(str(l.accountId, 20));
+    if (!account) errors.push(`${label}: choose a sub-account.`);
+    else line.accountId = account.id;
+    const note = str(l.note, 200);
+    if (!note) errors.push(`${label}: say why it was bought.`);
+    else line.note = note;
+    line.hasReceipt = l.hasReceipt !== false;
+    const group = str(l.group, 120);
+    if (group && group === merchantName(c.description)) line.group = group;
+    if (line.group && l.flag) errors.push(`${label}: split up the ${line.group} charges to mark one as expected back.`);
+    else if (l.flag === "refund") line.flag = "refund";
+    else if (l.flag === "repay") {
+      line.flag = "repay";
+      const who = str(l.repayBy, 120);
+      if (!who) errors.push(`${label}: say who will repay it.`);
+      else line.repayBy = who;
+    }
+    return line;
+  });
 }

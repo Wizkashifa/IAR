@@ -6,6 +6,7 @@
  */
 import { findAccount, shortFund } from "./accounts";
 import { KIND_LABEL } from "./types";
+import { merchantName } from "./statement";
 import { deskDate, PAY_TYPE_LABEL, payTypeOf } from "./finance-desk";
 import type { PurchaseCard } from "./workflow";
 
@@ -14,16 +15,17 @@ export const QB_COLUMNS = ["Date", "Request", "Type", "Payee", "Fund (class)", "
 /** Quotes a cell when it needs it, and stops a spreadsheet reading text as a formula. */
 export function csvCell(v: string | number): string {
   let s = String(v);
-  if (/^[=+\-@\t\r]/.test(s) && typeof v === "string") s = `'${s}`;
+  // A plain number (a credit is "-87.46") is safe as it is.
+  if (/^[=+\-@\t\r]/.test(s) && typeof v === "string" && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 const HIDDEN = "Restricted (see the request)";
 
-function payeeOf(c: PurchaseCard, merchant?: string): string {
+function payeeOf(c: PurchaseCard, merchant?: string, fromStatement?: boolean): string {
   const p = c.purchase;
   if (p.restricted) return HIDDEN;
-  if (p.kind === "card") return [p.card ? `IAR card ···${p.card.last4}` : "IAR card", merchant].filter(Boolean).join(" · ");
+  if (p.kind === "card") return [p.card ? `IAR card ···${p.card.last4}` : "IAR card", merchant && (fromStatement ? merchantName(merchant) : merchant)].filter(Boolean).join(" · ");
   return p.payee ?? "";
 }
 
@@ -32,12 +34,13 @@ export function qbRows(cards: PurchaseCard[]): string[][] {
     const p = c.purchase;
     return p.lines.map((l) => {
       const a = findAccount(l.accountId);
-      const memo = p.restricted ? p.description : [p.description, l.note].filter(Boolean).join(" · ");
+      // Card receipts: the statement's own words too, so the line can be found on it.
+      const memo = p.restricted ? p.description : [p.description, l.note, l.ref ? l.merchant : ""].filter(Boolean).join(" · ");
       return [
         p.kind === "card" && l.date ? l.date : deskDate(c),
         c.id,
         KIND_LABEL[p.kind],
-        payeeOf(c, l.merchant),
+        payeeOf(c, l.merchant, Boolean(l.ref)),
         shortFund(p.fund),
         a?.code ?? "",
         a?.name ?? "Unknown account",

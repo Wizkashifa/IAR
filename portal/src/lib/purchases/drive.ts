@@ -1,6 +1,6 @@
 import "server-only";
 import { isDevAuth } from "../dev";
-import { driveToken, uploadFile, uploadToYearFolder } from "../drive";
+import { driveToken, uploadFile, uploadToFolder, uploadToYearFolder } from "../drive";
 import { shortFund } from "./accounts";
 import type { Attachment } from "./types";
 
@@ -69,4 +69,20 @@ export async function saveW9(payee: string, file: File, now: Date = new Date()):
   const renamed = new File([await file.arrayBuffer()], name, { type: file.type });
   const out = await uploadFile(token, root, renamed);
   return { name, driveFileId: out.driveFileId };
+}
+
+/**
+ * File a card statement in the PO records Shared Drive under "Card
+ * statements / 2026". Returns its Drive ID (none in dev); the statements
+ * page links the one that was imported.
+ */
+export async function saveStatementPdf(month: string, file: File): Promise<string | undefined> {
+  if (isDevAuth()) return undefined;
+  const root = process.env.PO_DRIVE_FOLDER_ID;
+  if (!root) throw new Error("Statement uploads aren't set up yet (PO_DRIVE_FOLDER_ID). See docs/setup.md.");
+  // Uploaded at preview; the time tells apart a file that was previewed again before being imported.
+  const at = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const renamed = new File([await file.arrayBuffer()], `Card statement ${month} (uploaded ${at} UTC).pdf`, { type: "application/pdf" });
+  const [out] = await uploadToFolder(root, ["Card statements", month.slice(0, 4)], [renamed]);
+  return out?.driveFileId;
 }

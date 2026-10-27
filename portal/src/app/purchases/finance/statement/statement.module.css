@@ -1,0 +1,5 @@
+/* Card statement import: only what the shared components don't cover. */
+@layer pages {
+  .steps { margin: 0; padding-left: var(--s-5); display: flex; flex-direction: column; gap: var(--s-1); }
+  .errors { margin: var(--s-1) 0 0; padding-left: var(--s-4); }
+}

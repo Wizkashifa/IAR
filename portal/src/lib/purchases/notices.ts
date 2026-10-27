@@ -11,6 +11,8 @@ import { STAGE_LABEL, purchaseTotal } from "./types";
 import type { Actor, PurchaseCard } from "./workflow";
 import { same } from "../text";
 import { type Notice, type Recipient, commentNotices } from "../notices";
+import { fmtMonth } from "../format";
+import type { Statement } from "./statement";
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -116,4 +118,26 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
 export function purchaseCommentNotices(card: PurchaseCard, by: Actor, text: string): Notice[] {
   const next = isOpen(card) ? nextActor(card) : null;
   return commentNotices(card, by, text, { href: `/purchases/${card.id}`, what: purchaseLabel(card), also: next ? [next] : [], quote: !card.purchase.restricted });
+}
+
+/**
+ * A statement is in: each cardholder with charges on it hears, with an
+ * alert, since they have receipts to send. `holders` are the cards in
+ * Portal Settings; a card nobody holds there tells nobody.
+ */
+export function statementNotices(s: Pick<Statement, "month" | "cards">, holders: { last4: string; holderEmail: string }[], actorEmail: string): Notice[] {
+  const out: Notice[] = [];
+  for (const c of s.cards) {
+    const h = holders.find((x) => x.last4 === c.last4);
+    if (!h || c.charges.length === 0 || same(h.holderEmail, actorEmail)) continue;
+    const n = c.charges.length;
+    out.push({
+      to: { email: h.holderEmail },
+      href: `/purchases/new?card=${c.last4}&month=${s.month}`,
+      text: `Your ${fmtMonth(s.month)} card statement is in: ${n} charge${n === 1 ? "" : "s"} on card ···${c.last4}, ${money(c.total)}. Add the receipts and say why each was bought.`,
+      alert: true,
+      delegable: false,
+    });
+  }
+  return out;
 }

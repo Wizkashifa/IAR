@@ -42,3 +42,18 @@ export async function purchaseAlertsFor(cardIds: string[]): Promise<(cardId: str
   }
   return (cardId) => (cardId.startsWith("PO-") ? (allowed.get(cardId) ?? false) : true);
 }
+
+/** Person → whether their payment alerts may be sent: everyone, or in demo mode only testers. */
+export async function purchaseAlertsForPeople(emails: string[]): Promise<(email: string) => boolean> {
+  if (!purchasesDemoOn(await portalSettings())) return () => true;
+  const allowed = new Map<string, boolean>();
+  for (const e of new Set(emails.map((x) => x.toLowerCase()))) {
+    try {
+      allowed.set(e, purchaseAlertsSend({ demo: true, ownerIsTester: await isTester(e) }));
+    } catch (err) {
+      console.error("demo tester lookup failed", err);
+      allowed.set(e, false);
+    }
+  }
+  return (email) => allowed.get(email.toLowerCase()) ?? false;
+}

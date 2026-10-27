@@ -164,7 +164,7 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   try {
     for (const n of notices) {
       // A demo payment request: on the bell only, never Chat or email.
-      const live = !n.cardId || sends(n.cardId);
+      const live = !n.bellOnly && (!n.cardId || sends(n.cardId));
       const alert = n.alert && live;
       const base = { cardId: n.cardId, href: n.href, at: now, by: actor, readBy: [] as string[] };
       if ("role" in n.to) {

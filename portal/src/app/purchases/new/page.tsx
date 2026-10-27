@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireViewer } from "@/lib/viewer";
 import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
+import { statementChoices } from "@/lib/purchases/statement-context";
 import { createPurchase, fundsFor } from "../actions";
 import PurchaseForm from "../PurchaseForm";
 import { vendorFormProps } from "../formData";
@@ -16,8 +17,8 @@ import { Crumb } from "@/components/Crumb";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New payment request" };
 
-export default async function NewPurchase({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
-  const { from } = await searchParams;
+export default async function NewPurchase({ searchParams }: { searchParams: Promise<{ from?: string; card?: string; month?: string }> }) {
+  const { from, card, month } = await searchParams;
   const viewer = await requireViewer();
   const ctx = await purchaseContext();
   const funds = await fundsFor(viewer, ctx);
@@ -26,7 +27,11 @@ export default async function NewPurchase({ searchParams }: { searchParams: Prom
   const copy = isPurchaseCard(source) && canRequestAgain(source, viewer, todayLocal()) ? purchaseAgain(source.purchase) : undefined;
   const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }));
   if (copy && !funds.includes(copy.fund)) copy.fund = "";
-  if (copy?.cardLast4 && !held.some((c) => c.last4 === copy.cardLast4)) copy.cardLast4 = undefined;
+  const statements = await statementChoices(viewer.email, held);
+  // From "your card statement is in": open on that card and month (or its latest statement not yet sent).
+  const forCard = statements.filter((s) => s.last4 === card);
+  const startMonth = forCard.find((s) => s.month === month)?.month ?? (forCard.find((s) => !s.sentAs) ?? forCard[0])?.month;
+  const start = !copy && card && startMonth ? { last4: card, month: startMonth } : undefined;
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here="New" />
@@ -37,6 +42,8 @@ export default async function NewPurchase({ searchParams }: { searchParams: Prom
         action={createPurchase}
         requesterName={viewer.name}
         cards={held}
+        statements={statements}
+        start={start}
         funds={funds}
         {...await vendorFormProps(viewer)}
         events={await linkableEventsFor(viewer)}

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { cardsHeldBy, purchaseContext } from "@/lib/purchases/settings";
+import { statementChoices } from "@/lib/purchases/statement-context";
 import { isPurchaseCard, permission } from "@/lib/purchases/workflow";
 import { fundsFor, resubmitPurchase } from "../../actions";
 import PurchaseForm from "../../PurchaseForm";
@@ -25,6 +26,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   if (!permission(card, { email: viewer.email, name: viewer.name, roles: viewer.actingRoles }, "resubmit").ok) redirect(`/purchases/${id}`);
   const p = card.purchase;
   const ctx = await purchaseContext();
+  const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }));
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: `/purchases/${id}`, label: id }]} here="Make changes" />
@@ -39,7 +41,8 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
       <PurchaseForm
         action={resubmitPurchase.bind(null, id)}
         requesterName={viewer.name}
-        cards={cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }))}
+        cards={held}
+        statements={await statementChoices(viewer.email, held, id)}
         funds={await fundsFor(viewer, ctx)}
         {...await vendorFormProps(viewer)}
         events={await linkableEventsFor(viewer)}
@@ -68,6 +71,8 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
             hasReceipt: l.hasReceipt,
             flag: l.flag ?? "",
             repayBy: l.repayBy ?? "",
+            ref: l.ref,
+            group: l.group,
           })),
           attestationName: p.attestation.name,
           eventCardId: p.eventCardId,

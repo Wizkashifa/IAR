@@ -26,6 +26,8 @@ const OVER = ["paid", "closed", "close_out", "denied", "cancelled"];
  */
 export function canRequestAgain(card: Card, viewer: { email: string; teams?: { group: string; name: string; role: string }[] }, today: string): boolean {
   if (card.type !== "event" && card.type !== "purchase" && card.type !== "marketing") return false;
+  // Card receipts come from each month's statement: there's nothing to copy.
+  if (card.purchase?.kind === "card") return false;
   const over =
     OVER.includes(card.status) ||
     (card.event != null && card.status === "approved" && lastDate(card.event) < today) ||
@@ -106,7 +108,6 @@ export function purchaseAgain(p: PurchaseDetails): PurchaseInput {
     mailingAddress: p.mailingAddress,
     isLabor: p.isLabor,
     relatedParty: p.relatedParty,
-    cardLast4: p.card?.last4,
     lines: p.lines.map((l) => ({
       accountId: l.accountId,
       amount: l.amount.toFixed(2),

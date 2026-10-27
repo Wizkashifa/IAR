@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
+import { lineRows, merchantName } from "@/lib/purchases/statement";
 
 export const dynamic = "force-dynamic";
 
@@ -159,7 +160,51 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
             </tr>
           </thead>
           <tbody>
-            {p.lines.map((l) => {
+            {lineRows(p.lines).map((row) => {
+              if ("group" in row) {
+                const acct = findAccount(row.lines[0].accountId);
+                const sum = Math.round(row.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100;
+                return (
+                  <tr key={`g-${row.group}`}>
+                    <td data-label="Date" className={`${cell.nowrap} ${cell.date}`}>
+                      {row.lines.length} charges
+                    </td>
+                    <td data-label="Charge">
+                      <strong>{row.group}</strong>
+                      <span className={cell.sub}>
+                        {accountLabel(acct)}
+                        {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
+                      </span>
+                      {row.lines[0].note && <span className={cell.sub}>{row.lines[0].note}</span>}
+                      {row.lines.some((l) => !l.hasReceipt) && (
+                        <span className={styles.tags}>
+                          <Pill tone="warn">No receipt</Pill>
+                        </span>
+                      )}
+                      <Disclosure summary={`See the ${row.lines.length} charges`}>
+                        <DataTable compact caption={`${row.group} charges`}>
+                          <tbody>
+                            {row.lines.map((l) => (
+                              <tr key={l.id}>
+                                <td data-label="Charge">
+                                  <span className={`${cell.nowrap} ${cell.date}`}>{l.date && fmtDate(`${l.date}T12:00:00Z`)}</span> {l.merchant}
+                                </td>
+                                <td data-label="Amount" className={cell.num}>
+                                  {fmtMoney(l.amount)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </DataTable>
+                      </Disclosure>
+                    </td>
+                    <td data-label="Amount" className={cell.num}>
+                      {fmtMoney(sum)}
+                    </td>
+                  </tr>
+                );
+              }
+              const l = row.line;
               const acct = findAccount(l.accountId);
               return (
                 <tr key={l.id}>
@@ -169,14 +214,16 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                     </td>
                   )}
                   <td data-label={isCard ? "Charge" : "Sub-account"}>
-                    {isCard && <strong>{l.merchant}</strong>}
+                    {isCard && <strong>{l.ref && l.merchant ? merchantName(l.merchant) : l.merchant}</strong>}
+                    {isCard && l.ref && <span className={cell.sub}>{l.merchant}</span>}
                     <span className={isCard ? cell.sub : undefined}>
                       {accountLabel(acct)}
                       {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
                     </span>
                     {l.note && <span className={cell.sub}>{l.note}</span>}
-                    {(!l.hasReceipt || l.flag) && (
+                    {(!l.hasReceipt || l.flag || l.amount < 0) && (
                       <span className={styles.tags}>
+                        {l.amount < 0 && <Pill tone="info">Credit</Pill>}
                         {!l.hasReceipt && <Pill tone="warn">No receipt</Pill>}
                         {l.flag === "refund" && <Pill tone={l.resolvedAt ? "ok" : "info"}>{l.resolvedAt ? "Refund received" : "Refund pending"}</Pill>}
                         {l.flag === "repay" && <Pill tone={l.resolvedAt ? "ok" : "info"}>{l.resolvedAt ? `Repaid by ${l.repayBy}` : `To be repaid by ${l.repayBy}`}</Pill>}

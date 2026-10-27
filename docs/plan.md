@@ -106,7 +106,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Module | Who sees it | What it does | Phase |
 | --- | --- | --- | --- |
 | My Requests | Everyone signed in | One list of the person's own cards (events, purchase requests, rentals they sponsor), with status and what is waiting on them | 1 |
-| Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card | 1 |
+| Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card. Card receipts come from the monthly card statement finance uploads (PDF): each cardholder's charges are filled in, they add the sub-account and why it was bought, and charges at one store (Amazon) can be lumped under one receipt | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
 | Team queues | Marketing, AV, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |

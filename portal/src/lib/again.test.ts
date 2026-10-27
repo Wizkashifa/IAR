@@ -102,7 +102,7 @@ test("a purchase again: payee, fund and lines with amounts; no receipts, invoice
   assert.equal(p.statementMonth, undefined);
   assert.equal(p.eventCardId, undefined);
   assert.equal(p.attestationName, "");
-  assert.equal(p.cardLast4, "4120");
+  assert.equal(p.cardLast4, undefined);
 });
 
 test("marketing again: same type and answers, dates already gone left empty", () => {
@@ -132,5 +132,7 @@ test("who may request again: the requester, or the committee's chair or vice cha
   assert.equal(canRequestAgain(card({ status: "approved", event: { ...event, recur: undefined } as EventDetails }), vol, today), true);
   // Purchases go by the committee's name; tickets aren't copied.
   assert.equal(canRequestAgain(card({ type: "purchase", status: "paid", event: undefined, purchase }), chair, today), true);
+  // Card receipts come from each month's statement, so they're never copied.
+  assert.equal(canRequestAgain(card({ type: "purchase", status: "closed", event: undefined, purchase: { ...purchase, kind: "card" } }), vol, today), false);
   assert.equal(canRequestAgain(card({ type: "ticket", event: undefined }), vol, today), false);
 });
