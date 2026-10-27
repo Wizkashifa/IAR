@@ -26,12 +26,17 @@ export type LineFlag = "refund" | "repay";
 export type LineItem = {
   id: string;
   accountId: string;
-  /** Dollars, positive, at most two decimals. */
+  /** Dollars, at most two decimals. Positive, except a credit on a card statement. */
   amount: number;
+  /** Card receipts: why it was bought (required). Other requests: what's on the receipt. */
   note?: string;
-  /** Card receipts only: charge date (YYYY-MM-DD) and merchant. */
+  /** Card receipts only: charge date (YYYY-MM-DD) and merchant, as on the statement. */
   date?: string;
   merchant?: string;
+  /** Card receipts only: the statement's reference number for the charge. Date, merchant and amount come from the statement and can't be changed. */
+  ref?: string;
+  /** Card receipts only: the merchant these charges were lumped under ("Amazon"), sharing one sub-account, note and receipt. */
+  group?: string;
   /** False when the requester says a receipt is missing for this line. */
   hasReceipt: boolean;
   /** A charge expected back: a refund from the merchant, or repayment by someone. */
@@ -80,7 +85,7 @@ export type PurchaseDetails = {
   /** Requester's disclosure: the payee is a Shura or committee member, or a business one controls. */
   relatedParty?: boolean;
 
-  /** Card receipts only. */
+  /** Card receipts only: the card and the imported statement (its closing month) the charges come from. */
   card?: { last4: string; statementMonth: string };
 
   lines: LineItem[];

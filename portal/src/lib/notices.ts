@@ -20,6 +20,8 @@ export type Notice = {
   alert: boolean;
   /** Pass to whoever covers for the recipient while they're away. */
   delegable: boolean;
+  /** On the bell only: never Chat or email (payment alerts in demo mode for anyone but testers). */
+  bellOnly?: boolean;
 };
 
 /** Collects notices for one card: each recipient once, and never the person who acted. */

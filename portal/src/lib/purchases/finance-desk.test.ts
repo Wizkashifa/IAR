@@ -5,6 +5,7 @@ import { parsePurchaseInput, type PurchaseInput } from "./input";
 import * as pw from "./workflow";
 import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey } from "./finance-desk";
 import { QB_COLUMNS, csvCell, qbCsv, qbRows } from "./qb-csv";
+import { testCharges } from "./statement-sample";
 
 const vol: pw.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const chair: pw.Actor = { email: "chair@x.org", name: "Chair", roles: ["member", "chairs"] };
@@ -13,7 +14,13 @@ const settings: pw.RoutingSettings = { approversFor: () => ({ chairs: [chair.ema
 const T = (n: number) => new Date(Date.UTC(2026, 9, 1 + n, 14)).toISOString();
 let seq = 0;
 
-function purchase(over: Partial<PurchaseInput> = {}): pw.PurchaseCard {
+/** Card receipts for card 2093 from a statement with these charges. */
+function cardReceipts(month: string, charges: Parameters<typeof testCharges>[0]): pw.PurchaseCard {
+  const t = testCharges(charges);
+  return purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: month, lines: t.lines }, t.statement);
+}
+
+function purchase(over: Partial<PurchaseInput> = {}, statement?: ReturnType<typeof testCharges>["statement"]): pw.PurchaseCard {
   const input: PurchaseInput = {
     kind: "pay",
     fund: "Youth Expenses",
@@ -26,7 +33,7 @@ function purchase(over: Partial<PurchaseInput> = {}): pw.PurchaseCard {
     attestationName: vol.name,
     ...over,
   };
-  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }] });
+  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }], statement });
   if (!r.ok) throw new Error(r.errors.join("; "));
   const c = pw.newPurchase(r.details, vol.email, T(0));
   c.id = `PO-${++seq}`;
@@ -52,7 +59,7 @@ test("desk filters: fund, month (paid date, statement month, or sent date) and p
   // New requests are always checks; an older one sent by ACH still shows and filters as ACH.
   const older = toPay({ fund: "Women Expenses" });
   const ach = { ...older, purchase: { ...older.purchase, delivery: "ach" as const } };
-  const card = purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: "2026-08", lines: [{ accountId: "a76", amount: "9.57", date: "2026-08-02", merchant: "USPS" }] });
+  const card = cardReceipts("2026-08", [{ date: "2026-08-02", description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } }]);
   assert.equal(payTypeOf(check), "check");
   assert.equal(payTypeOf(ach), "ach");
   assert.equal(payTypeOf(card), "card");
@@ -88,7 +95,10 @@ test("batch: each request goes through the workflow; refusals are listed with th
 });
 
 test("refunds owed: one entry per open line; keys carry the line", () => {
-  const c = purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57", date: "2026-09-02", merchant: "USPS", flag: "refund" }, { accountId: "a76", amount: "4", date: "2026-09-03", merchant: "Target" }] });
+  const c = cardReceipts("2026-09", [
+    { date: "2026-09-02", description: "USPS", amount: 9.57, line: { accountId: "a76", flag: "refund" } },
+    { date: "2026-09-03", description: "TARGET 00012345  CARY  NC", amount: 4, line: { accountId: "a76" } },
+  ]);
   const owed = openReturns([c]);
   assert.equal(owed.length, 1);
   assert.equal(owed[0].line.merchant, "USPS");
@@ -125,9 +135,16 @@ test("QuickBooks CSV: an aid request shows no payee or line notes; card rows use
   assert.equal(row[7], "Youth night supplies");
   assert.ok(!qbCsv([sw]).includes("A. Person"));
 
-  const card = purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57", date: "2026-09-02", merchant: "USPS" }] });
-  const [cr] = qbRows([card]);
+  const card = cardReceipts("2026-09", [
+    { date: "2026-09-02", description: "USPS.COM CLICKNSHIP  800-555-0100 DC", amount: 9.57, line: { accountId: "a76", note: "Mailing certificates" } },
+    { date: "2026-09-05", description: "AMAZON MKTPLACE PMTS  Amzn.com/billWA", amount: -12.3, line: { accountId: "a76" } },
+  ]);
+  const [cr, credit] = qbRows([card]);
   assert.equal(cr[0], "2026-09-02");
   assert.equal(cr[3], "IAR card ···2093 · USPS");
+  assert.equal(cr[7], "Youth night supplies · Mailing certificates · USPS.COM CLICKNSHIP  800-555-0100 DC");
   assert.equal(cr[9], "IAR card");
+  // A credit is a plain negative number, not text.
+  assert.equal(credit[8], "-12.30");
+  assert.ok(qbCsv([card]).includes(",-12.30,"));
 });

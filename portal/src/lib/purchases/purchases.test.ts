@@ -9,6 +9,7 @@ import type { Vendor } from "../cards";
 import { parseAmount, parsePurchaseInput, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
 import { purchaseCommentNotices, purchaseNotices } from "./notices";
+import { testCharges } from "./statement-sample";
 import * as wf from "./workflow";
 import { WorkflowError } from "../workflow-core";
 
@@ -67,14 +68,60 @@ test("amounts: commas and dollar signs are fine; three decimals or zero are not"
   assert.equal(r.ok, false);
 });
 
-test("input: every check needs an address, wherever it goes; card receipts need date and merchant per line", () => {
+test("input: every check needs an address, wherever it goes", () => {
   for (const delivery of ["mail", "committee_box", "office_pickup", "security"]) {
     assert.equal(parsePurchaseInput(input({ delivery, mailingAddress: "" }), ctx).ok, false, delivery);
     assert.equal(parsePurchaseInput(input({ kind: "reimburse", delivery, mailingAddress: "" }), ctx).ok, false, `reimburse ${delivery}`);
   }
-  const cardIn = parsePurchaseInput(input({ kind: "card", cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57" }] }), ctx);
-  assert.equal(cardIn.ok, false);
-  if (!cardIn.ok) assert.ok(cardIn.errors.some((e) => e.includes("charge date")));
+});
+
+const usps = () => testCharges([{ date: "2026-09-02", description: "USPS.COM CLICKNSHIP  800-555-0100 DC", amount: 9.57, line: { accountId: "a76" } }]);
+const cardInput = (lines: PurchaseInput["lines"], over: Partial<PurchaseInput> = {}) => input({ kind: "card", cardLast4: "2093", statementMonth: "2026-09", lines, ...over });
+
+test("card receipts: only once the statement is in, and only charges on it", () => {
+  const notIn = parsePurchaseInput(cardInput(usps().lines), { ...ctx, statement: null });
+  assert.ok(!notIn.ok && notIn.errors.some((e) => e.includes("isn't in yet")));
+  const noCharges = parsePurchaseInput(cardInput([]), { ...ctx, statement: null, statementIn: true });
+  assert.ok(!noCharges.ok && noCharges.errors.some((e) => e.includes("no charges")));
+  const { statement, lines } = usps();
+  const extra = parsePurchaseInput(cardInput([...lines, { ref: "MADE-UP", accountId: "a76", amount: "500", note: "x" }]), { ...ctx, statement });
+  assert.ok(!extra.ok && extra.errors.some((e) => e.includes("aren't on the statement")));
+  const missing = parsePurchaseInput(cardInput([]), { ...ctx, statement });
+  assert.ok(!missing.ok && missing.errors.some((e) => e.includes("missing")));
+});
+
+test("card receipts: date, merchant and amount are the statement's, whatever the browser sent", () => {
+  const { statement, lines } = usps();
+  const r = parsePurchaseInput(cardInput([{ ...lines[0], amount: "1.00", date: "2026-01-01", merchant: "Something else" }]), { ...ctx, statement });
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.deepEqual(
+    { amount: r.details.lines[0].amount, date: r.details.lines[0].date, merchant: r.details.lines[0].merchant, ref: r.details.lines[0].ref },
+    { amount: 9.57, date: "2026-09-02", merchant: "USPS.COM CLICKNSHIP  800-555-0100 DC", ref: statement.charges[0].ref },
+  );
+});
+
+test("card receipts: every charge needs a sub-account and why it was bought", () => {
+  const { statement, lines } = usps();
+  const r = parsePurchaseInput(cardInput([{ ...lines[0], accountId: "", note: " " }]), { ...ctx, statement });
+  assert.ok(!r.ok);
+  if (r.ok) return;
+  assert.ok(r.errors.some((e) => e === "09/02 USPS: choose a sub-account."));
+  assert.ok(r.errors.some((e) => e === "09/02 USPS: say why it was bought."));
+});
+
+test("card receipts: a credit stays negative; lumped charges keep their group and can't be marked expected back", () => {
+  const { statement, lines } = testCharges([
+    { date: "2026-09-03", description: "AMAZON MKTPL*AB12  Amzn.com/billWA", amount: 40, line: { accountId: "a78", group: "Amazon" } },
+    { date: "2026-09-09", description: "AMAZON MKTPLACE PMTS  Amzn.com/billWA", amount: -15.5, line: { accountId: "a78", group: "Amazon" } },
+    { date: "2026-09-10", description: "SAMPLE STORE  RALEIGH  NC", amount: 20, line: { accountId: "a76", group: "Not the merchant" } },
+  ]);
+  const r = parsePurchaseInput(cardInput(lines), { ...ctx, statement });
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.deepEqual(r.details.lines.map((l) => [l.amount, l.group]), [[40, "Amazon"], [-15.5, "Amazon"], [20, undefined]]);
+  const flagged = parsePurchaseInput(cardInput([{ ...lines[0], flag: "refund" }, ...lines.slice(1)]), { ...ctx, statement });
+  assert.ok(!flagged.ok && flagged.errors.some((e) => e.includes("split up the Amazon charges")));
 });
 
 test("input: requests are paid by check, so they say how the check goes; ACH isn't offered", () => {
@@ -85,9 +132,10 @@ test("input: requests are paid by check, so they say how the check goes; ACH isn
 });
 
 test("input: someone can only submit receipts for a card they hold, and the fund follows the card", () => {
-  const notMine = parsePurchaseInput(input({ kind: "card", cardLast4: "9999", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57", date: "2026-09-02", merchant: "USPS" }] }), ctx);
+  const { statement, lines } = usps();
+  const notMine = parsePurchaseInput(cardInput(lines, { cardLast4: "9999" }), { ...ctx, statement });
   assert.equal(notMine.ok, false);
-  const mine = parsePurchaseInput(input({ kind: "card", fund: "Youth Expenses", cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57", date: "2026-09-02", merchant: "USPS" }] }), ctx);
+  const mine = parsePurchaseInput(cardInput(lines, { fund: "Youth Expenses" }), { ...ctx, statement });
   assert.ok(mine.ok && mine.details.fund === "Imam's Office Fund Expenses");
 });
 
@@ -293,19 +341,12 @@ test("return needs a note; the requester edits and approval starts over", () => 
 });
 
 test("card receipts: finance review only, then QuickBooks; refunds and repayments tracked until received", () => {
-  const r = parsePurchaseInput(
-    input({
-      kind: "card",
-      cardLast4: "2093",
-      statementMonth: "2026-09",
-      lines: [
-        { accountId: "a76", amount: "150", date: "2026-09-02", merchant: "Baian" },
-        { accountId: "a75", amount: "300", date: "2026-09-20", merchant: "AMJA", flag: "repay", repayBy: "Da'wah Committee" },
-        { accountId: "a75", amount: "134.99", date: "2026-09-22", merchant: "Priceline", flag: "refund", hasReceipt: false },
-      ],
-    }),
-    ctx,
-  );
+  const { statement, lines } = testCharges([
+    { date: "2026-09-02", description: "SAMPLE BOOKS  LONDON", amount: 150, line: { accountId: "a76" } },
+    { date: "2026-09-20", description: "SAMPLE CONFERENCE  VA", amount: 300, line: { accountId: "a75", flag: "repay", repayBy: "Da'wah Committee" } },
+    { date: "2026-09-22", description: "SAMPLE HOTEL  NY", amount: 134.99, line: { accountId: "a75", flag: "refund", hasReceipt: false } },
+  ]);
+  const r = parsePurchaseInput(cardInput(lines), { ...ctx, statement });
   assert.ok(r.ok);
   if (!r.ok) return;
   let c = wf.submit(wf.newPurchase(r.details, volunteer.email, T(0)), volunteer, settings, T(0));

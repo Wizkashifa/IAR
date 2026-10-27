@@ -10,6 +10,7 @@ import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/p
 import { parsePurchaseInput, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
+import { receiptsSentFor, statementFor } from "@/lib/purchases/statement-context";
 import { requestableFunds } from "@/lib/teams";
 import { linkableEventsFor } from "@/lib/events/context";
 import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
@@ -32,7 +33,7 @@ export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<st
 }
 
 /** `keep`: the fund and W-9 already on a request being edited; the W-9 needn't be uploaded again. */
-async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string }) {
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { id: string; fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string }) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -43,6 +44,8 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
   // Only the list this person may see, and for S&W requests only S&W payees: the W-9 check matches what the form showed.
   const vendors = vendorsForFund(await store.listVendors(), viewer.actingRoles, String(raw.fund ?? ""));
   const w9Files = filesFrom(form, "w9");
+  // Card receipts: the charges come from the imported statement, never from the browser.
+  const card = raw.kind === "card" ? await statementFor(String(raw.cardLast4 ?? ""), String(raw.statementMonth ?? "")) : undefined;
   const parsed = parsePurchaseInput(
     { ...raw, w9Attached: w9Files.length > 0 || Boolean(keep?.w9) },
     {
@@ -53,8 +56,14 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
       funds: [...(await fundsFor(viewer, ctx)), ...(keep ? [keep.fund] : [])],
       // The events the form offered; a request being edited may keep the event it was linked to.
       events: [...(await linkableEventsFor(viewer)).map((e) => e.id), ...(keep?.eventCardId ? [keep.eventCardId] : [])],
+      ...card,
     },
   );
+  // One set of receipts per card and month.
+  if (parsed.ok && parsed.details.card) {
+    const sent = await receiptsSentFor(parsed.details.card.last4, parsed.details.card.statementMonth, keep?.id);
+    if (sent.length) return { ok: false as const, errors: [`Receipts for this card and month were already sent as ${sent[0].id}.`] };
+  }
   const files = filesFrom(form, "attachments");
   const fileErrors = [...checkFiles(files), ...checkW9(w9Files)];
   if (!parsed.ok || fileErrors.length) return { ok: false as const, errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors] };
@@ -119,7 +128,7 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   if (!allowed.ok) return { errors: [allowed.reason] };
 
   const ctx = await purchaseContext();
-  const r = await parseForm(viewer, form, ctx, { fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId });
+  const r = await parseForm(viewer, form, ctx, { id: card.id, fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId });
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
   const w9 = await storeW9(r.details.payee, r.w9File, now);

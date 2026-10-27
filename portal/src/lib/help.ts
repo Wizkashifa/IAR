@@ -136,9 +136,21 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Credit card receipts",
         steps: [
-          "If you hold an IAR card, choose IAR credit card receipts, pick the card and the statement month, and add each charge with its sub-account and receipt.",
-          "Mark any charge that a committee will repay, and any charge with no receipt.",
+          "Each month the finance office uploads IAR's card statement. If you hold an IAR card, you get a message when your charges are in.",
+          "Open the link, or choose IAR credit card receipts and pick your card and the statement. Your charges are already filled in, with the date, store and amount from the statement.",
+          "For each charge, choose its sub-account and say why it was bought. The portal suggests the sub-account you used last time at the same store.",
+          "Several charges from one store, such as Amazon, can be lumped together: one sub-account, one reason and one receipt (your order history for the month) cover them all. Click Split up to do them one by one.",
+          "Mark any charge that will be refunded or repaid, and any charge with no receipt.",
           "Card receipts go straight to the finance office.",
+        ],
+      },
+      {
+        heading: "Upload the card statement (finance office)",
+        steps: [
+          "On the finance desk, click Upload card statement and add the PDF from Truist.",
+          "The portal reads every card's charges and checks they add up to the statement's totals. If anything doesn't add up, nothing is imported.",
+          "Check the preview, then click Import and tell cardholders. Each cardholder gets a message to add their receipts.",
+          "A card on the statement that isn't in Portal Settings is flagged. Add it there and upload the statement again.",
         ],
       },
     ],

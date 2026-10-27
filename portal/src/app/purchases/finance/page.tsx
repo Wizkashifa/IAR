@@ -92,6 +92,7 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
         actions={
           <>
             <Button href="/purchases">All payment requests</Button>
+            <Button href="/purchases/finance/statement">Upload card statement</Button>
             {/* A plain link: the CSV is a download, not a page. */}
             <a href={csvHref} download className={buttonClass({ variant: "primary" })}>
               <Icon name="down" />

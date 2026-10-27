@@ -16,6 +16,8 @@ const SCREENS = [
   { name: "Purchase request", path: "/purchases/PO-12007", as: "chair" },
   { name: "Saved vendors", path: "/purchases/vendors", as: "chair" },
   { name: "Finance desk", path: "/purchases/finance", as: "finance" },
+  { name: "Card statement", path: "/purchases/finance/statement", as: "finance" },
+  { name: "Card receipts", path: "/purchases/new?card=4120", as: "chair" },
   { name: "Marketing", path: "/marketing", as: "marketing" },
   { name: "New marketing request", path: "/marketing/new", as: "member" },
   { name: "Marketing request", path: "/marketing/MK-1002", as: "chair" },

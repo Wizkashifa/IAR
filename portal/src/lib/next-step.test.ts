@@ -12,6 +12,7 @@ import { fallbackName, type Steps } from "./steps";
 import { groupForViewer, needsViewer } from "./needs-you";
 import { parsePurchaseInput, type PurchaseInput } from "./purchases/input";
 import * as pw from "./purchases/workflow";
+import { testCharges } from "./purchases/statement-sample";
 import type { EventInput } from "./events/types";
 import * as ew from "./events/workflow";
 import { startCloseOut } from "./events/closeout";
@@ -49,7 +50,7 @@ const settings: pw.RoutingSettings = {
 };
 const pctx = { requesterName: vol.name, cards: [{ last4: "2093", fund: "Imam's Office Fund Expenses" }], vendors: [{ name: "Known Vendor", w9OnFile: true }] };
 
-function purchase(over: Partial<PurchaseInput> = {}, owner = vol): pw.PurchaseCard {
+function purchase(over: Partial<PurchaseInput> = {}, owner = vol, statement?: ReturnType<typeof testCharges>["statement"]): pw.PurchaseCard {
   const input: PurchaseInput = {
     kind: "pay",
     fund: "Youth Expenses",
@@ -61,7 +62,7 @@ function purchase(over: Partial<PurchaseInput> = {}, owner = vol): pw.PurchaseCa
     attestationName: owner.name,
     ...over,
   };
-  const r = parsePurchaseInput(input, { ...pctx, requesterName: owner.name });
+  const r = parsePurchaseInput(input, { ...pctx, requesterName: owner.name, statement });
   if (!r.ok) throw new Error(r.errors.join("; "));
   const c = pw.newPurchase(r.details, owner.email, T(0));
   c.id = "PO-1";
@@ -93,7 +94,8 @@ test("purchase steps: straight to finance skips the chair; card receipts have th
   assert.equal(noChair.purchase.stage, "finance");
   assert.equal(states(stepsFor(noChair))["Chair approval"], "skip");
 
-  const card = purchase({ kind: "card", fund: "Youth Expenses", cardLast4: "2093", statementMonth: "2026-09", lines: [{ accountId: "a76", amount: "9.57", date: "2026-09-02", merchant: "USPS" }] });
+  const t = testCharges([{ date: "2026-09-02", description: "USPS", amount: 9.57, line: { accountId: "a76" } }]);
+  const card = purchase({ kind: "card", fund: "Youth Expenses", cardLast4: "2093", statementMonth: "2026-09", lines: t.lines }, vol, t.statement);
   assert.deepEqual(labels(stepsFor(card)), ["Submitted", "Finance review", "Entered in QuickBooks"]);
 });
 
