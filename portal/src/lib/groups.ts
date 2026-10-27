@@ -1,9 +1,9 @@
 import "server-only";
 import { DEV_PERSONAS, devDirectory, isDevAuth } from "./dev";
-import { ORG } from "./org";
+import { ORG, roleMailbox, type Role } from "./org";
 import { delegatedToken } from "./google";
 import { reportFailure, reportOk } from "./health";
-import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, ROLE_PREFIX, TEAM_PREFIX, groupDisplayName, portalPeopleFrom } from "./teams";
+import { type Directory, type DirectoryGroup, type GroupMember, EMPTY_DIRECTORY, PILLAR_PREFIX, ROLE_PREFIX, TEAM_PREFIX, groupDisplayName, groupUsers, portalPeopleFrom } from "./teams";
 
 /**
  * Look up a user's Google Groups through the Admin SDK Directory API,
@@ -124,4 +124,10 @@ export async function portalPeople(): Promise<string[]> {
   const people = portalPeopleFrom([...dir.teams, ...dir.pillars, ...roles], gate ? { group: gate, admins: String(ORG.roleGroups.admins) } : undefined);
   peopleCache.__iarPortalPeople = { at: Date.now(), people };
   return people;
+}
+
+/** Everyone in the team group behind a queue role (portal-team-marketing@ for "marketing"), by email: who its work can be handed to. */
+export async function queueTeamMembers(role: Role): Promise<string[]> {
+  const group = roleMailbox(role);
+  return group ? groupUsers(await directory(), group) : [];
 }

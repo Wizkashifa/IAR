@@ -13,6 +13,7 @@ import { ItemRow } from "@/components/ItemRow";
 import { Disclosure } from "@/components/Disclosure";
 import { Field } from "@/components/Field";
 import { Choice, Choices } from "@/components/Choices";
+import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 
 /** Pieces Team Queues, the run sheet and the event page share. */
 
@@ -26,8 +27,8 @@ export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean
   );
 }
 
-/** The buttons for one task, for someone on its team (or the office). */
-export function TaskButtons({ card, task, roles, email, back }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string }) {
+/** The buttons for one task, for someone on its team (or the office). `people`: who on its team it can be handed to. */
+export function TaskButtons({ card, task, roles, email, back, people = [] }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string; people?: PersonOption[] }) {
   if (!worksTeam(task.team, roles) || task.status === "locked" || (card.status !== "approved" && card.status !== "close_out")) return null;
   const base = (
     <>
@@ -66,6 +67,16 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
           </form>
         </Disclosure>
       )}
+      {task.status !== "done" && people.some((p) => p.email !== task.assignee?.toLowerCase()) && (
+        <Disclosure summary={task.assignee ? "Hand to someone else" : "Give to someone"} button="quiet">
+          <form action={workOnTask} className="stack">
+            {base}
+            <input type="hidden" name="step" value="assign" />
+            <PeoplePicker name="assignee" label={`Who on ${TEAM_NAME[task.team]} should have it`} required people={people.filter((p) => p.email !== task.assignee?.toLowerCase())} />
+            <div><Button size="small" type="submit">Hand it over</Button></div>
+          </form>
+        </Disclosure>
+      )}
       <Disclosure summary="Ask the requester" button="quiet">
         <form action={workOnTask} className="stack">
           {base}
@@ -81,7 +92,7 @@ export function TaskButtons({ card, task, roles, email, back }: { card: EventCar
 }
 
 /** One task, as a line on the event page. `names` shows who has it by name. */
-export function TaskLine({ card, task, roles, email, back, today, names }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string; today: string; names?: NameOf }) {
+export function TaskLine({ card, task, roles, email, back, today, names, people }: { card: EventCard; task: EventTask; roles: Role[]; email: string; back: string; today: string; names?: NameOf; people?: PersonOption[] }) {
   const overdue = (task.status === "todo" || task.status === "doing") && task.dueDate < today;
   const who = task.assignee ? (names ? names(task.assignee) : task.assignee) : "";
   return (
@@ -92,7 +103,7 @@ export function TaskLine({ card, task, roles, email, back, today, names }: { car
       right={
         <>
           <TaskPill task={task} overdue={overdue} />
-          <TaskButtons card={card} task={task} roles={roles} email={email} back={back} />
+          <TaskButtons card={card} task={task} roles={roles} email={email} back={back} people={people} />
         </>
       }
     />

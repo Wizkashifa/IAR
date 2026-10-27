@@ -14,7 +14,7 @@ import styles from "../../purchases.module.css";
 import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Make changes · Purchase request" };
+export const metadata: Metadata = { title: "Make changes · Payment request" };
 
 export default async function EditPurchase({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,7 +27,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   const ctx = await purchaseContext();
   return (
     <>
-      <Crumb trail={[{ href: "/purchases", label: "Purchase Requests" }, { href: `/purchases/${id}`, label: id }]} here="Make changes" />
+      <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: `/purchases/${id}`, label: id }]} here="Make changes" />
       <ModuleHead title="Make the changes and send it again" lead={card.title} />
       {p.returnNote && (
         <div className={styles.body}>

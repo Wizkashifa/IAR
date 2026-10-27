@@ -10,6 +10,8 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RoomPicker } from "@/components/RoomPicker";
+import { FileDrop } from "@/components/FileDrop";
+import { IMAGE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD } from "@/lib/marketing/files";
 import type { EventPrefill } from "@/lib/calendar-view";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText, SERIES_MAX_MONTHS } from "@/lib/events/series";
@@ -43,11 +45,13 @@ export type EventFormProps = {
   renews?: { id: string; until: string };
   today: string;
   submitLabel: string;
+  /** Whether images for marketing can be uploaded (go-live has made the Marketing Files drive). */
+  uploads?: boolean;
 };
 
 type Draft = Omit<EventInput, "recur" | "brief" | "avNeeds"> & { recurFreq: RecurFreq | "none"; recurUntil: string; brief: MarketingBrief; avNeeds: AvNeeds; agree: boolean };
 
-const blankBrief = (): MarketingBrief => ({ subtitle: "", text: "", flyer: "", regLink: "", payment: "", startOn: "", files: "", final: false });
+const blankBrief = (): MarketingBrief => ({ subtitle: "", text: "", flyer: "", regLink: "", payment: "", final: false });
 const blankAv = (): AvNeeds => ({ kinds: [], includes: [], ack: false });
 const ANNOUNCE_EXAMPLE = "Join us for a family game night with dinner, board games and a trivia round. All families are welcome.";
 
@@ -148,7 +152,7 @@ export default function EventForm(p: EventFormProps) {
   }, [d.recurFreq, d.date, d.recurUntil]);
 
   // The checks the reviewers will see, run against the room calendars as the requester types.
-  const checkKey = JSON.stringify([d.date, d.start, d.end, d.setup, d.teardown, d.recurFreq, d.recurUntil, d.rooms, d.attendance, d.budget, d.food, d.isPublic, d.registration, d.av, d.newProgram, d.outsideSpeaker, d.fundraiser, d.description.length > 199, Boolean(d.description), d.brief.subtitle, d.brief.text, d.brief.startOn, d.brief.regLink, d.avNeeds.kinds, d.committeeGroup]);
+  const checkKey = JSON.stringify([d.date, d.start, d.end, d.setup, d.teardown, d.recurFreq, d.recurUntil, d.rooms, d.attendance, d.budget, d.food, d.isPublic, d.registration, d.av, d.newProgram, d.outsideSpeaker, d.fundraiser, d.description.length > 199, Boolean(d.description), d.brief.subtitle, d.brief.text, d.brief.regLink, d.avNeeds.kinds, d.committeeGroup]);
   useEffect(() => {
     const n = ++seq.current;
     const t = setTimeout(() => {
@@ -172,7 +176,7 @@ export default function EventForm(p: EventFormProps) {
   const payload = useMemo(() => ({ ...d, ...(asking ? { ask } : {}), ...(p.renews ? { renews: p.renews.id } : {}) }), [d, ask, asking, p.renews]);
   const sections = [
     { id: "evSect", n: "Event and room", done: Boolean(d.title && d.description && d.date) },
-    ...(d.isPublic ? [{ id: "briefSect", n: "Marketing", done: Boolean(d.brief.subtitle && d.brief.text && d.brief.startOn) }] : []),
+    ...(d.isPublic ? [{ id: "briefSect", n: "Marketing", done: Boolean(d.brief.subtitle && d.brief.text) }] : []),
     ...(d.av ? [{ id: "avSect", n: "A/V", done: d.avNeeds.kinds.length > 0 }] : []),
     { id: "confirmSect", n: "Confirm", done: d.agree && (!d.av || d.avNeeds.ack) && (!d.isPublic || d.brief.final) },
   ];
@@ -335,12 +339,19 @@ export default function EventForm(p: EventFormProps) {
               <Field label="Payment info and instructions (if any)">
                 <textarea rows={2} value={d.brief.payment} onChange={(e) => setBrief("payment", e.target.value)} placeholder="Cost, how to pay, deadlines" maxLength={1000} />
               </Field>
-              <div className="grid two">
-                <DateField label="Start marketing on" hint="At least 2 weeks before the event." value={d.brief.startOn || null} min={p.today} max={d.date} onChange={(v) => setBrief("startOn", v ?? "")} />
-                <Field label="Google Drive link to files (optional)" hint="Logos, photos, speaker bios. Share with everyone at IAR.">
-                  <input type="url" value={d.brief.files} onChange={(e) => setBrief("files", e.target.value)} placeholder="https://drive.google.com/…" maxLength={500} />
-                </Field>
-              </div>
+              {p.uploads ? (
+                <FileDrop
+                  name="images"
+                  label="Images for marketing (optional)"
+                  hint={`Logos, photos of speakers or past events, artwork. Image files only (JPG, PNG, HEIC), no PDFs or Word documents. Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each; you can add more on the request page.`}
+                  accept={IMAGE_ACCEPT}
+                  maxFiles={MAX_PER_UPLOAD}
+                  maxSizeMb={MAX_FILE_MB}
+                  camera
+                />
+              ) : (
+                <p className="hint">Image uploads for marketing aren&apos;t set up yet. After you send the request, share a Google Drive link in a comment on it.</p>
+              )}
             </div>
           </fieldset>
         )}

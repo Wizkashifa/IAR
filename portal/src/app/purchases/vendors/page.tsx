@@ -37,7 +37,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <Crumb trail={[{ href: "/purchases", label: "Purchase Requests" }]} here="Saved vendors" />
+      <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here="Saved vendors" />
       <ModuleHead
         title="Saved vendors"
         lead="Every committee shares this list. Once a vendor is paid, the next request to them fills in their address and W-9 status. A W-9 is needed only for labor, and only once."

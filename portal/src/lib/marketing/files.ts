@@ -56,13 +56,23 @@ export const FILE_ACCEPT = [
   ".heic",
 ];
 
-/** Problems with files about to be added to a request that already has `already` files. */
-export function checkFiles(files: { name: string; size: number }[], already = 0): string[] {
+/** Images only, for an event request's marketing: photos and graphics, no PDFs or documents. */
+const IMAGES = /\.(png|jpe?g|heic|heif|webp|gif|svg|tiff?)$/i;
+
+/** For the image picker. */
+export const IMAGE_ACCEPT = ["image/png", "image/jpeg", "image/heic", "image/heif", "image/webp", "image/gif", "image/svg+xml", "image/tiff", ".heic", ".heif"];
+
+/**
+ * Problems with files about to be added to a request that already has
+ * `already` files. `imagesOnly`: an event request's marketing images.
+ */
+export function checkFiles(files: { name: string; size: number }[], already = 0, o: { imagesOnly?: boolean } = {}): string[] {
   const errors: string[] = [];
   if (files.length > MAX_PER_UPLOAD) errors.push(`Add at most ${MAX_PER_UPLOAD} files at a time. For more, share a Google Drive folder instead.`);
   else if (already + files.length > MAX_PER_REQUEST) errors.push(`A request can have up to ${MAX_PER_REQUEST} files. For more, share a Google Drive folder instead.`);
   for (const f of files) {
-    if (!ALLOWED.test(f.name)) errors.push(`${f.name}: use an image, PDF, Word, PowerPoint, Excel, Illustrator or Photoshop file.`);
+    if (o.imagesOnly && !IMAGES.test(f.name)) errors.push(`${f.name}: only images can be added here (JPG, PNG, HEIC, WebP, GIF or SVG), not PDFs or Word documents.`);
+    else if (!o.imagesOnly && !ALLOWED.test(f.name)) errors.push(`${f.name}: use an image, PDF, Word, PowerPoint, Excel, Illustrator or Photoshop file.`);
     else if (f.size > MAX_FILE_BYTES) errors.push(`${f.name} is over ${MAX_FILE_MB} MB. Share it with a Google Drive link instead.`);
   }
   if (files.reduce((n, f) => n + f.size, 0) > MAX_UPLOAD_BYTES) errors.push("These files are over 25 MB together. Add them a few at a time, or share a Google Drive link.");

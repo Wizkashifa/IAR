@@ -71,12 +71,15 @@ export async function uploadFile(token: string, folder: string, file: File): Pro
   return { name: file.name, size: file.size, driveFileId: out.id, url: out.webViewLink };
 }
 
-/** Upload files into `root / <year> / <folder>`, creating the folders as needed. */
-export async function uploadToYearFolder(root: string, folder: string, files: File[], now: Date = new Date()): Promise<DriveFile[]> {
+/** Upload files into `root / <path…>`, creating the folders as needed. */
+export async function uploadToFolder(root: string, path: string[], files: File[]): Promise<DriveFile[]> {
   const token = await driveToken();
-  const year = await findOrCreateFolder(token, root, String(now.getFullYear()));
-  const dest = await findOrCreateFolder(token, year, folder);
+  let dest = root;
+  for (const name of path) dest = await findOrCreateFolder(token, dest, name);
   const out: DriveFile[] = [];
   for (const f of files) out.push(await uploadFile(token, dest, f));
   return out;
 }
+
+/** Upload files into `root / <year> / <folder>`, creating the folders as needed. */
+export const uploadToYearFolder = (root: string, folder: string, files: File[], now: Date = new Date()): Promise<DriveFile[]> => uploadToFolder(root, [String(now.getFullYear()), folder], files);

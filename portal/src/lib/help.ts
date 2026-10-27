@@ -92,12 +92,12 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
   {
     key: "purchases",
-    title: "Purchase requests",
+    title: "Payments",
     summary: "Pay a vendor, get reimbursed, or send IAR credit card receipts.",
     href: "/purchases",
     module: "purchase-requests",
     short: [
-      "Click New purchase request and choose what it's for: pay a vendor or person, reimburse yourself, or IAR credit card receipts.",
+      "Click New payment request and choose what it's for: pay a vendor or person, reimburse yourself, or IAR credit card receipts.",
       "Add a line for each sub-account it's charged to, and attach a receipt or invoice. On a phone you can take a photo.",
       "Your committee's chair approves it (the director, if you're the chair), then the finance office reviews it. Large amounts also need an executive.",
       "You'll get a message when it's paid, or if anyone sends it back with a question.",
@@ -106,7 +106,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Send a purchase request",
         steps: [
-          "Open Purchase Requests and click New purchase request.",
+          "Open Payments and click New payment request.",
           "Choose what it's for: pay a vendor or person, reimburse me, or IAR credit card receipts.",
           "Pick the vendor from the saved list, or add a new one. Saved vendors are shared by every committee.",
           "Add a line for each sub-account it's charged to, with the amount and a short note.",
@@ -169,7 +169,8 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "Marketing for an event",
         steps: [
           "Put marketing for an event on the event request itself. Tick Open to the public and answer marketing's questions there.",
-          "Marketing gets its task once the event is approved. Nothing is advertised before then.",
+          "Add images for the flyer (logos, photos, artwork) right on the form, or later on the request page. Image files only, no PDFs or Word documents.",
+          "Marketing sees it as soon as the event is approved. Nothing is advertised before then.",
         ],
       },
       {

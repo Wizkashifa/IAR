@@ -70,7 +70,7 @@ Every event gets mission review in two steps: the director of the committee's pi
 - Event start and end, plus a room reservation window that covers setup and teardown
 - Room or rooms, expected attendance, whether food is served, public or internal, whether registration is needed
 - Optional budget estimate
-- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, when to start marketing, a Drive link to files, and a "details are final" confirmation
+- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, images for marketing (uploaded to the marketing Shared Drive under "Event Requests / <event name>", images only), and a "details are final" confirmation. Marketing sees it as soon as it's approved.
 - If A/V support is needed: the kinds of support, what the event includes, and an acknowledgement that A/V isn't guaranteed
 
 **Tasks added to the card**, each prefilled from the card:

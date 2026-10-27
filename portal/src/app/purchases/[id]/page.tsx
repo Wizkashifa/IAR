@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
   const viewer = await requireViewer();
   const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
-  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) return { title: "Purchase request" };
+  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) return { title: "Payment request" };
   return { title: `${card.title} · ${card.id}` };
 }
 
@@ -262,7 +262,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
 
   return (
     <RequestPage
-      crumb={{ href: "/purchases", label: "Purchase Requests" }}
+      crumb={{ href: "/purchases", label: "Payments" }}
       id={card.id}
       title={card.title}
       pills={

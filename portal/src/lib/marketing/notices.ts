@@ -3,8 +3,9 @@
  *
  * Alert only whoever has to act next: the marketing team (a post in its
  * Google Chat space) for a new request or an answer to its question; the
- * requester when marketing asks a question or declines. Scheduled and done
- * are in-portal notices only. Plain functions so they can be tested.
+ * requester when marketing asks a question or declines; a team member when
+ * work is handed to them. Scheduled and done are in-portal notices only.
+ * Plain functions so they can be tested.
  */
 import { preview } from "../comments";
 import { type Notice, type Recipient, commentNotices } from "../notices";
@@ -35,6 +36,9 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
     add(TEAM, `${what} is new for the weekly review.`, true);
     return out;
   }
+  // Handed to someone on the team: it's theirs to do now.
+  if (m.assignee && !same(m.assignee, before.marketing.assignee) && (m.stage === "scheduled" || m.stage === "doing"))
+    add({ email: m.assignee }, `${what} is yours: ${actor.name || actor.email} handed it to you.${m.doneBy ? ` Marketing aims to finish by ${longDay(m.doneBy)}.` : ""}`, true);
   if (was === m.stage) {
     // Same stage: only a new done-by date is worth telling the requester.
     if ((m.stage === "scheduled" || m.stage === "doing") && m.doneBy && m.doneBy !== before.marketing.doneBy)
@@ -70,8 +74,8 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
 function nextActor(c: MarketingCard): Recipient | null {
   switch (c.marketing.stage) {
     case "review":
-    case "scheduled":
       return TEAM;
+    case "scheduled":
     case "doing":
       return c.marketing.assignee ? { email: c.marketing.assignee } : TEAM;
     case "question":

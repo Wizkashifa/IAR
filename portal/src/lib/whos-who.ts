@@ -82,7 +82,7 @@ export function requestRoutes(slug: string): RequestRoute[] {
   if (slug === "maintenance" || slug === "tech") return [{ href: "/it-maintenance/new", label: "AV/IT/Maintenance" }];
   return [
     { href: "/events/new", label: "Event request" },
-    { href: "/purchases/new", label: "Purchase request" },
+    { href: "/purchases/new", label: "Payment request" },
   ];
 }
 
@@ -125,7 +125,7 @@ export const TOPICS: { words: string[]; text: string; href: string; label: strin
     words: ["reimbursement", "reimburse", "reimbursements", "receipt", "receipts", "pay a vendor", "invoice", "check", "credit card", "purchase", "buy"],
     text: "The finance office handles payments and reimbursements. Send a purchase request and it goes to the right people.",
     href: "/purchases/new",
-    label: "Purchase request",
+    label: "Payment request",
   },
   {
     words: ["room", "book a room", "reserve", "reservation", "gym", "hall", "event"],

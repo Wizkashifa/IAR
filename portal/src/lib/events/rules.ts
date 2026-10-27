@@ -26,8 +26,6 @@ export type RuleId = (typeof RULES)[number]["id"];
 export const ruleOn = (rules: Partial<Record<string, boolean>>, id: RuleId) => rules[id] !== false;
 
 
-/** Marketing asks for at least this many weeks of promotion before a public event. */
-export const MARKETING_WEEKS = 2;
 /** A description this long gives reviewers and the teams what they need. */
 export const DESCRIPTION_GOOD = 200;
 
@@ -207,11 +205,8 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
     const miss: string[] = [];
     if (!b?.text.trim()) miss.push("the announcement text");
     if (!b?.subtitle.trim()) miss.push("a one-line subtitle");
-    if (!b?.startOn) miss.push("when to start marketing");
     if (e.registration && !b?.regLink.trim()) miss.push("the registration link");
     if (miss.length) add("bad", `Marketing needs ${miss.join(", ").replace(/, ([^,]*)$/, " and $1")}.`, MF, true);
-    else if (b && b.startOn > e.date) add("bad", "Marketing has to start before the event.", MF, true);
-    else if (b && daysBetween(b.startOn, e.date) < MARKETING_WEEKS * 7) add("warn", `Marketing starts ${daysBetween(b.startOn, e.date)} days before the event. Marketing asks for at least ${MARKETING_WEEKS} weeks.`, MF);
     if (b && b.subtitle.trim().split(/\s+/).length > 6) add("info", "Keep the one-line subtitle to 5 or 6 words. It goes on the flyer.", MF);
   }
   if (e.av && !(e.avNeeds?.kinds.length)) add("bad", "Choose the type of A/V support you need.", MF, true);

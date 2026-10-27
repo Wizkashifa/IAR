@@ -26,7 +26,6 @@ const num = (v: unknown, max: number) => {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
 };
-const URL_RE = /^https?:\/\/\S+$/i;
 
 export function parseEventInput(raw: EventFormInput, ctx: EventParseContext): { ok: true; input: EventInput } | { ok: false; errors: string[] } {
   const errors: string[] = [];
@@ -70,11 +69,8 @@ export function parseEventInput(raw: EventFormInput, ctx: EventParseContext): { 
       flyer: str(b.flyer, 1500),
       regLink: str(b.regLink, 500),
       payment: str(b.payment, 1000),
-      startOn: isDate(b.startOn) ? (b.startOn as string) : "",
-      files: str(b.files, 500),
       final: bool(b.final),
     };
-    if (brief.files && !URL_RE.test(brief.files)) errors.push("The Drive link for files should start with https://.");
     if (!brief.final) errors.push("Confirm the details are final, so marketing can publish them.");
   }
   let avNeeds: AvNeeds | undefined;
@@ -156,7 +152,7 @@ export function draftInput(raw: EventFormInput, ctx: EventParseContext): EventIn
     newProgram: bool(raw.newProgram),
     outsideSpeaker: bool(raw.outsideSpeaker),
     fundraiser: bool(raw.fundraiser),
-    brief: bool(raw.isPublic) ? { subtitle: str(b.subtitle, 80), text: str(b.text, 3000), flyer: str(b.flyer), regLink: str(b.regLink, 500), payment: "", startOn: isDate(b.startOn) ? (b.startOn as string) : "", files: "", final: true } : undefined,
+    brief: bool(raw.isPublic) ? { subtitle: str(b.subtitle, 80), text: str(b.text, 3000), flyer: str(b.flyer), regLink: str(b.regLink, 500), payment: "", final: true } : undefined,
     avNeeds: bool(raw.av) ? { kinds: Array.isArray(a.kinds) ? a.kinds.map(String) : [], includes: [], ack: true } : undefined,
     teamNotes: "",
   };

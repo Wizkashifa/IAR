@@ -9,7 +9,8 @@ import { requireViewer } from "@/lib/viewer";
 import { closeOutNotices, linkedPurchases, spendOf, submitCloseOut } from "@/lib/events/closeout";
 import { eventActor, eventContext } from "@/lib/events/context";
 import { recordRoomCheck, roomCheckNotices } from "@/lib/events/roomchecks";
-import { TaskError, type TaskAction, actOnTask, taskNotices } from "@/lib/events/tasks";
+import { TASK_TEAMS, TaskError, type TaskAction, actOnTask, assignTask, taskNotices } from "@/lib/events/tasks";
+import { queueTeamMembers } from "@/lib/groups";
 import * as wf from "@/lib/events/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 
@@ -53,9 +54,9 @@ async function change(id: string, by: string, apply: (card: wf.EventCard) => { n
   return "Someone else changed this event a moment ago. Try again.";
 }
 
-const OK_TEXT: Record<TaskAction, string> = { take: "taken", start: "started", done: "done", ask: "asked" };
+const OK_TEXT: Record<TaskAction, string> = { take: "taken", start: "started", done: "done", ask: "asked", assign: "assigned" };
 
-/** Take, start or finish a team task, or ask the requester a question about it. */
+/** Take, start or finish a team task, hand it to someone else on the team, or ask the requester a question about it. */
 export async function workOnTask(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = { ...eventActor(viewer), name: viewer.name };
@@ -64,10 +65,14 @@ export async function workOnTask(form: FormData): Promise<void> {
   const action = String(form.get("step") ?? "") as TaskAction;
   const note = String(form.get("note") ?? "").slice(0, 1000);
   const back = internalPath(String(form.get("back") ?? "")) ?? `/events/${id}`;
+  const to = String(form.get("assignee") ?? "");
+  // Who each team's tasks can be handed to: everyone in its Google Group.
+  const members = action === "assign" ? new Map(await Promise.all(TASK_TEAMS.map(async (t) => [t, await queueTeamMembers(t)] as const))) : null;
   const error = !OK_TEXT[action]
     ? "Unknown action."
     : await change(id, actor.email, (card) => {
-        const next = actOnTask(card, taskId, actor, action, nowIso(), note);
+        const team = card.event.tasks?.find((t) => t.id === taskId)?.team;
+        const next = members ? assignTask(card, taskId, actor, to, (team && members.get(team)) || [], nowIso()) : actOnTask(card, taskId, actor, action, nowIso(), note);
         return { next, notices: taskNotices(next, taskId, actor, action, note) };
       });
   revalidatePath("/queues");

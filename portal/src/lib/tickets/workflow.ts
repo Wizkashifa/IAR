@@ -23,7 +23,7 @@
  */
 import type { Card, CardStatus } from "../cards";
 import { ORG, roleMailbox, type Role } from "../org";
-import { type Directory, type Membership, groupSlug } from "../teams";
+import { type Directory, type Membership, groupSlug, groupUsers } from "../teams";
 import { type TicketDetails, type TicketLinkKind, type TicketKind, type TicketPhoto, type TicketStatus, type TicketTeam, type Urgency, LINK_LABEL, TEAM_LABEL, TEAM_NAME, URGENCY } from "./types";
 import { lc, same } from "../text";
 import { daysBetween } from "../dates";
@@ -72,10 +72,7 @@ export function teamsOf(actor: Pick<TicketActor, "roles">): TicketTeam[] {
 }
 
 /** Everyone in the team's Google Group (people, not nested groups), by email: who a ticket can be assigned to. */
-export function teamMemberEmails(dir: Directory, team: TicketTeam): string[] {
-  const g = dir.teams.find((x) => lc(x.email) === lc(teamGroup(team)));
-  return [...new Set((g?.members ?? []).filter((m) => m.type === "USER").map((m) => lc(m.email)))].sort();
-}
+export const teamMemberEmails = (dir: Directory, team: TicketTeam): string[] => groupUsers(dir, teamGroup(team));
 
 /** Teams a person chairs or vice-chairs, from their memberships in Google Groups. */
 export function leadsOf(memberships: Membership[]): TicketTeam[] {

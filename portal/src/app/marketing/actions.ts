@@ -5,7 +5,7 @@ import { cardStore, ConflictError } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
-import { directory } from "@/lib/groups";
+import { directory, queueTeamMembers } from "@/lib/groups";
 import { todayLocal } from "@/lib/dates";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
@@ -157,7 +157,7 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
 
 const marketing = { path: "/marketing", is: wf.isMarketingCard };
 
-/** Schedule, ask, decline, start, change the date, finish, answer or cancel. */
+/** Schedule, ask, decline, start, hand to someone, change the date, finish, answer or cancel. */
 export async function actOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
@@ -182,6 +182,9 @@ export async function actOnMarketing(form: FormData): Promise<void> {
           break;
         case "reschedule":
           next = wf.reschedule(card, actor, now, doneBy, note);
+          break;
+        case "assign":
+          next = wf.assign(card, actor, now, String(form.get("assignee") ?? ""), await queueTeamMembers("marketing"));
           break;
         case "finish":
           next = wf.finish(card, actor, now, note);

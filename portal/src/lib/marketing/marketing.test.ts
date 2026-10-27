@@ -453,6 +453,39 @@ test("files: images, artwork and documents up to 10 MB each, a few at a time, 20
   assert.match(checkFiles(heavy).join(" "), /over 25 MB together/);
 });
 
+test("files: an event's marketing images are images only, no PDFs or Word documents", () => {
+  assert.deepEqual(checkFiles([{ name: "flyer.PNG", size: 1000 }, { name: "speaker.jpeg", size: 1000 }, { name: "phone.heic", size: 1000 }, { name: "logo.svg", size: 1000 }], 0, { imagesOnly: true }), []);
+  const bad = checkFiles([{ name: "details.pdf", size: 1000 }, { name: "wording.docx", size: 1000 }, { name: "art.psd", size: 1000 }], 0, { imagesOnly: true });
+  assert.equal(bad.length, 3);
+  assert.match(bad[0], /details\.pdf: only images/);
+});
+
+test("assign: anyone on the marketing team hands scheduled or in-progress work to a teammate", () => {
+  const members = [mk.email, mk2.email];
+  const c = submitted();
+  assert.equal(wf.permission(c, mk, "assign").ok, false, "not before it's scheduled");
+  const s = wf.schedule(c, mk, T(1), "2026-11-04");
+  assert.equal(wf.permission(s, volunteer, "assign").ok, false, "only the marketing team");
+  assert.throws(() => wf.assign(s, mk, T(1), "vol@x.org", members), /isn't on the marketing team/);
+  assert.throws(() => wf.assign(s, mk, T(1), "", members), /Choose who/);
+
+  const a = wf.assign(s, mk, T(1), "MK2@x.org", members);
+  assert.equal(a.marketing.assignee, mk2.email);
+  assert.equal(a.marketing.stage, "scheduled", "handing it over doesn't move it");
+  assert.equal(a.marketing.history.at(-1)?.action, `Assigned to ${mk2.email}`);
+  assert.throws(() => wf.assign(a, mk, T(1), mk2.email, members), /already working on it/);
+  assert.deepEqual(marketingNotices(s, a, mk).map((n) => ["email" in n.to ? n.to.email : "", n.alert]), [[mk2.email, true]], "the new person gets an alert");
+
+  // Whoever it was handed to keeps it when someone else starts it.
+  const d = wf.start(a, mk, T(2));
+  assert.equal(d.marketing.assignee, mk2.email);
+  const back = wf.assign(d, mk2, T(2), mk.email, members);
+  assert.equal(back.marketing.assignee, mk.email);
+  assert.equal(back.marketing.history.at(-1)?.action, `Handed from ${mk2.email} to ${mk.email}`);
+  assert.deepEqual(marketingNotices(d, wf.assign(d, mk, T(2), mk.email, members), mk), [], "taking it yourself tells nobody");
+  assert.equal(wf.permission(wf.finish(back, mk, T(3)), mk, "assign").ok, false, "not once it's done");
+});
+
 test("files: the requester and the marketing team add files; nobody adds to a closed request", () => {
   const c = submitted();
   assert.equal(wf.permission(c, volunteer, "files").ok, true);
