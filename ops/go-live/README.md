@@ -10,7 +10,7 @@ It's safe to run again at any time. Each step checks what already exists and ski
 
 Everything goes into IAR's Google organization (islam1.org): IAR's Cloud project, IAR's Workspace, IAR's billing account. Sign in to gcloud and to the browser with **your @islam1.org super admin account**, never a personal Gmail. go-live checks this and stops if it isn't.
 
-go-live never creates or downloads a service account key (the portal signs its own tokens), and never sends an email: the one email it writes, to IAR's DNS manager, is saved as a draft in your Gmail for you to read and send.
+go-live never creates or downloads a service account key (the portal signs its own tokens), and never touches anyone's email.
 
 ## What you need
 
@@ -55,7 +55,7 @@ Other options:
 6. **Google Chat** (*partly by hand*). The "IAR Portal" Chat app, then one Chat space per team with its group and the app in it.
 7. **Shared Drives** for receipts, W-9s (finance only), maintenance photos and marketing files.
 8. **Room calendars.** Lists IAR's room resources in Google (it never creates rooms) and asks once which ones people can't book; the Sheet's Rooms tab can also say Yes or No for a room. Shares each bookable room's calendar, and the main events calendar if IAR has one (press Enter to skip), with `portal@`.
-9. **Deploy.** Builds and deploys the portal to Cloud Run with all its settings, has you add its sign-in address to the Web client (*by hand, checked*), and maps `portal.islam1.org`: go-live writes a **Gmail draft** to IAR's DNS manager with the exact records. On later runs it checks DNS and the certificate, and switches the portal to `portal.islam1.org` once both work.
+9. **Deploy.** Builds and deploys the portal to Cloud Run with all its settings, has you add its sign-in address to the Web client (*by hand, checked*), and maps `portal.islam1.org`, then shows the DNS record to add (a CNAME `portal` → `ghs.googlehosted.com`; on Cloudflare, DNS only). On later runs it checks DNS and the certificate, and switches the portal to `portal.islam1.org` once both work.
 10. **Portal Settings.** Writes the Sheet's team funds and cards, the Chat spaces and the bookable rooms from step 8 into Portal Settings. Only fills gaps: anything an admin already chose is kept. Then archives the Sheet: from then on, **Google Groups is the record** of who does what.
 11. **Running costs and safety.** The daily job, a nightly Firestore backup kept 30 days, an uptime check that emails the admins, a $25/month budget alert (*asked*), and a cleanup rule keeping the last 10 builds.
 12. **Check.** The sign-in page answers, and the smoke test from `docs/beta-launch.md` to do with testers.
@@ -91,7 +91,7 @@ Without it, deploy by hand from the repo root, on the code you want live: `gclou
 
 Run the same command again whenever you like: after fixing a problem it stopped on, after a step done by hand, to check DNS for `portal.islam1.org`, or just to see that everything is still in place. It picks up where it left off.
 
-go-live remembers what it made in `ops/go-live/.state.json`: project and resource IDs, never people. The one exception is the DNS manager's email address, kept so the draft can be written again if needed. The file is gitignored; keep it on this computer. If it's lost, go-live finds most things again by name and asks for the rest.
+go-live remembers what it made in `ops/go-live/.state.json`: project and resource IDs, never people. The file is gitignored; keep it on this computer. If it's lost, go-live finds most things again by name and asks for the rest.
 
 After step 10, the Sheet is archived and **nobody is added from it again**: add, remove or promote people in Admin console → Directory → Groups.
 

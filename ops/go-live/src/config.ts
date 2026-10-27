@@ -47,7 +47,6 @@ export const ADMIN_SCOPES = [
   `${S}drive`, `${S}spreadsheets`,
   `${S}calendar.acls`, `${S}calendar.events.readonly`,
   `${S}chat.spaces.create`, `${S}chat.spaces.readonly`, `${S}chat.memberships`, `${S}chat.memberships.app`,
-  `${S}gmail.compose`,
 ];
 
 /** The portal's one domain-wide delegation entry, and who each scope is used as. */

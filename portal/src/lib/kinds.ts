@@ -1,7 +1,7 @@
 /**
  * The kinds of request, one row each: where its pages are, what it's called,
  * and which field on the card holds its own details. Lists that mix every
- * kind (My Requests, What's stuck, search, the beta measures) read this, so a
+ * kind (My Requests, What's stuck, search, the portal measures) read this, so a
  * new kind of request is one row here plus its module (lib/registry.ts).
  * Plain data and functions, safe anywhere.
  */

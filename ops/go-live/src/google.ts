@@ -4,8 +4,8 @@
  * the gcloud CLI); google-fake.ts keeps everything in memory for the tests.
  *
  * There is deliberately no way here to create or download a service account
- * key, or to send an email: the portal signs its own tokens, and go-live only
- * ever writes Gmail drafts for the admin to send.
+ * key, or to touch anyone's email: the portal signs its own tokens, and
+ * go-live doesn't use Gmail at all.
  */
 import type { FirestoreIndex } from "./indexes";
 import type { Tab } from "./sheet";
@@ -120,8 +120,6 @@ export interface Google {
   addSpaceGroup(space: string, groupId: string): Promise<void>;
   /** Adds the IAR Portal Chat app (users/app). Fails until the app is configured and visible to the admin. */
   addSpaceApp(space: string): Promise<void>;
-  /** A draft in the admin's own mailbox. Never sent by go-live. */
-  createDraft(m: { to: string; subject: string; text: string; html?: string }): Promise<{ id: string; url: string }>;
 
   // ---- Firestore (REST, with the gcloud token) -------------------------
   getDoc(project: string, path: string): Promise<Record<string, unknown> | null>;

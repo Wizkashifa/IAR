@@ -64,7 +64,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <ModuleHead
         title="Portal Settings"
-        actions={<Button href="/admin/measures" icon="pie">Beta measures</Button>}
+        actions={<Button href="/admin/measures" icon="pie">Measures</Button>}
         lead={
           <>
         Who is on each committee or team, who chairs it and who directs it all come from Google Groups. Change people in{" "}

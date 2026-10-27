@@ -28,8 +28,7 @@ export type Options = {
 
 /**
  * What go-live remembers between runs: IDs and settings it created, never
- * people. The DNS manager's address is the one exception, and .state.json is
- * gitignored.
+ * people. .state.json is gitignored.
  */
 export type State = {
   version: 1;
@@ -58,8 +57,6 @@ export type State = {
   portalUrl?: string;
   customDomainLive?: boolean;
   redirectsVerified?: string[];
-  dnsManagerEmail?: string;
-  dnsDraftId?: string;
   poExecutiveThreshold?: string;
   settingsWrittenAt?: string;
   testersAddedAt?: string;

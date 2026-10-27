@@ -5,7 +5,7 @@ import type { FormName, StartedCount } from "./measures";
 
 /**
  * How many times someone started typing in each request form, per day, for
- * the beta measures (lib/measures.ts). Only the form's name, the day and a
+ * the portal measures (lib/measures.ts). Only the form's name, the day and a
  * count: no content and nobody's identity. Stored at
  * orgs/{orgId}/formStarts/{day}_{form}.
  */
