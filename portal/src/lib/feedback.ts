@@ -7,7 +7,7 @@ import type { FeedbackKind } from "./feedback-kinds";
 export { FEEDBACK_KIND_LABEL, type FeedbackKind } from "./feedback-kinds";
 
 /**
- * Beta feedback: problems, ideas and questions about the portal itself, sent
+ * Feedback: problems, ideas and questions about the portal itself, sent
  * from any page. Goes to portal admins, not to a team queue (facilities and
  * IT work their own requests elsewhere). Stored at orgs/{orgId}/feedback.
  */

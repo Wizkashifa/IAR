@@ -42,8 +42,11 @@ export const ORG = {
     executive: `portal-role-executive@${domain}`,
     admins: `portal-role-admin@${domain}`,
   } as Partial<Record<Role, string>>,
-  /** The beta testers. They keep trying what's still a demo (purchase requests) for real, after the rest of the portal opens to everyone. */
-  betaGroup: `portal-role-beta@${domain}`,
+  /**
+   * The testers ("Portal: Testers"). They use what's still a demo (purchase requests) for real. The address
+   * keeps its first name, portal-role-beta@, so settings that point to it keep working.
+   */
+  testersGroup: `portal-role-beta@${domain}`,
 };
 
 /** Where email for a role's queue goes: its role group, or the team group that grants it. */
@@ -71,8 +74,8 @@ export function directRolesFromGroups(groupEmails: string[], fromTeams: Role[] =
 
 /** Turn a user's Google Group emails into portal roles, for what they can see. */
 /**
- * During a beta, only members of this group (PORTAL_ACCESS_GROUP, e.g.
- * portal-role-beta@islam1.org) and portal admins can sign in. Unset: every
+ * While PORTAL_ACCESS_GROUP is set (go-live sets it until the portal opens to
+ * everyone), only that group's members and portal admins can sign in. Unset: every
  * @domain account can. Add testers to the group directly; nested groups
  * aren't checked.
  */

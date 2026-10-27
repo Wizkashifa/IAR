@@ -58,6 +58,9 @@ export const groups: Stage = {
           },
         });
       else {
+        // Role groups keep go-live's names (a new name, like "Portal: Testers"); committees keep whatever the admins named them.
+        if (w.kind === "role" && existing.name !== w.name)
+          out.push({ kind: "update", text: `Rename ${w.email} from "${existing.name}" to "${w.name}" (its address stays)`, run: (c) => c.g.renameGroup(w.email, w.name, w.description) });
         const s = await g.getGroupSettings(w.email);
         const fix: Record<string, string> = {};
         if (w.kind !== "role" && s.whoCanModerateMembers !== OWNERS_ONLY) fix.whoCanModerateMembers = OWNERS_ONLY;

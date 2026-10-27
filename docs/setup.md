@@ -14,7 +14,7 @@ Open http://localhost:3000. `npm run dev` turns on dev mode: there is no Google 
 
 ## One-time Google setup
 
-**go-live does all of this** (`ops/go-live/`, see its [README](../ops/go-live/README.md) and [beta-launch.md](beta-launch.md)): it shows every change first, asks before each step, and checks the steps Google makes you do by hand. The sections below are the same steps by hand, as a reference and a fallback. Done once by a Workspace super admin who can create projects in the islam1.org Cloud organization. The names are the ones go-live uses.
+**go-live does all of this** (`ops/go-live/`, see its [README](../ops/go-live/README.md) and [launch.md](launch.md)): it shows every change first, asks before each step, and checks the steps Google makes you do by hand. The sections below are the same steps by hand, as a reference and a fallback. Done once by a Workspace super admin who can create projects in the islam1.org Cloud organization. The names are the ones go-live uses.
 
 ### 1. Google Cloud project
 
@@ -58,7 +58,7 @@ gcloud firestore indexes composite create --collection-group=notifications \
 
 Turn on point-in-time recovery: `gcloud firestore databases update --database='(default)' --enable-pitr`.
 
-Cards (purchases `PO-12001`…, events `EV-1101`…, marketing `MK-1001`…, IT & maintenance `TK-1001`…) are stored at `orgs/iar/cards/{cardId}`, preventive maintenance schedules at `orgs/iar/ticketSchedules/{id}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, each person's notification settings at `orgs/iar/notifyPrefs/{email}`, alerts held overnight (quiet hours) at `orgs/iar/heldAlerts`, out-of-office handoffs at `orgs/iar/away/{email}`, beta feedback (with replies) at `orgs/iar/feedback`, the log of portal admins signing in as someone to troubleshoot (Portal Settings → Sign in as someone) at `orgs/iar/audit`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
+Cards (purchases `PO-12001`…, events `EV-1101`…, marketing `MK-1001`…, IT & maintenance `TK-1001`…) are stored at `orgs/iar/cards/{cardId}`, preventive maintenance schedules at `orgs/iar/ticketSchedules/{id}`, saved payees at `orgs/iar/vendors/{vendorId}`, and request-number counters at `orgs/iar/counters/{prefix}` (purchase requests start at PO-12001, after the old form's numbers). Notifications are at `orgs/iar/notifications`, each person's notification settings at `orgs/iar/notifyPrefs/{email}`, alerts held overnight (quiet hours) at `orgs/iar/heldAlerts`, out-of-office handoffs at `orgs/iar/away/{email}`, feedback (with replies) at `orgs/iar/feedback`, the log of portal admins signing in as someone to troubleshoot (Portal Settings → Sign in as someone) at `orgs/iar/audit`, and asks for a booked time slot at `orgs/iar/slotRequests` (numbered from SR-1001). If Firestore asks for another index the first time a page loads, the error in the Cloud Run log includes a link that creates it.
 
 ### 3. Runtime service account
 
@@ -168,7 +168,7 @@ To change a director, change the pillar's Owner. To move a committee to another 
 | portal-role-finance@ | Finance review, payment, QuickBooks entry, restricted S&W requests; can submit for any fund |
 | portal-role-executive@ | Whoever holds an executive office (Head Imam, Shura chair, CEO; one person can hold several): final mission review of events, and executive approvals. When an office changes hands, change the group's members |
 | portal-role-admin@ | Every module and Portal Settings, for support. Never approves or pays. Keep to two or three people |
-| portal-role-beta@ | During the beta only: with `PORTAL_ACCESS_GROUP` set, only this group and the admins can sign in. Add testers directly, not through nested groups |
+| portal-role-beta@ | The testers ("Portal: Testers"): their purchase requests are real while purchase requests are a demo. While `PORTAL_ACCESS_GROUP` is set, only this group and the admins can sign in. Add testers directly, not through nested groups |
 
 **Group settings.** In every team and pillar group, set "Who can manage members" to owners only (or admins only). Otherwise a manager could add people to a committee, which would let them request from its fund.
 
@@ -191,8 +191,8 @@ Portal admins can see every module for support, but being an admin never lets an
 
 The portal alerts whoever has to act next: an approver when a request reaches them, a requester when it comes back for changes, the person covering for someone away, and a team when there's something new in its queue. A person gets a **direct message from the "IAR Portal" Chat app**; a role or team gets a **post in its Chat space** ("IAR Portal · Finance"), one thread per request. Everything else appears only under Notifications in the portal.
 
-1. **The Chat app** (Cloud console → Google Chat API → Configuration): app name "IAR Portal", the IAR logo as its avatar, interactive features on, "Receive 1:1 messages" and "Join spaces and group conversations" ticked; connection: **HTTP endpoint URL** `https://<portal address>/api/chat`, authentication audience **HTTP endpoint URL**; visibility: `portal-role-beta@` and `portal-role-admin@` (everyone after the beta). Don't build it as a Workspace add-on. The app sends as the runtime service account itself (the `chat.bot` scope); there's no key and no delegation for it.
-2. **List it privately** (Google Workspace Marketplace SDK → App configuration: visibility Private, Individual + Admin Install (Chat apps can't be admin-only); App integrations: Chat app; then the store listing and Publish; private listings aren't reviewed by Google), and **install it** for `portal-role-beta@` and `portal-role-admin@` (open the Google Workspace Marketplace at workspace.google.com/marketplace, search "IAR Portal", Admin install, certain groups). Installing it is what lets the app message people.
+1. **The Chat app** (Cloud console → Google Chat API → Configuration): app name "IAR Portal", the IAR logo as its avatar, interactive features on, "Receive 1:1 messages" and "Join spaces and group conversations" ticked; connection: **HTTP endpoint URL** `https://<portal address>/api/chat`, authentication audience **HTTP endpoint URL**; visibility: everyone in islam1.org (or `portal-role-beta@` and `portal-role-admin@` while sign-in is limited to the testers). Don't build it as a Workspace add-on. The app sends as the runtime service account itself (the `chat.bot` scope); there's no key and no delegation for it.
+2. **List it privately** (Google Workspace Marketplace SDK → App configuration: visibility Private, Individual + Admin Install (Chat apps can't be admin-only); App integrations: Chat app; then the store listing and Publish; private listings aren't reviewed by Google), and **install it** for everyone (open the Google Workspace Marketplace at workspace.google.com/marketplace, search "IAR Portal", Admin install; or certain groups while sign-in is limited to the testers). Installing it is what lets the app message people.
 3. **Spaces**: one per role or queue team (Finance, Office, Executive, Admins, Marketing, IT & A/V, Facilities, Security), with that team's Google Group added as a member so the space follows the group, and the app added. Save each space's name (`spaces/AAAA…`) in Portal Settings `chatSpaces`, keyed by role (`finance`, `office`, `executive`, `admins`, `marketing`, `it`, `av`, `facilities`, `security`). A role with no space gets its alerts by email to its group.
 4. Set `PORTAL_CHAT=on` when deploying.
 
@@ -215,7 +215,7 @@ gcloud run deploy iar-portal --source portal --region us-east1 \
   --set-secrets GOOGLE_CLIENT_SECRET=google-client-secret:latest,NEXTAUTH_SECRET=nextauth-secret:latest
 ```
 
-Drop `PORTAL_ACCESS_GROUP` when the beta ends to open the portal to every islam1.org account. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. If the organization's "Domain restricted sharing" policy blocks it, override that policy for this project only. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL and deploy again.
+Leave out `PORTAL_ACCESS_GROUP` to open the portal to every islam1.org account; set it to limit sign-in to the testers. `--allow-unauthenticated` lets the sign-in page load; every other page requires an islam1.org Google sign-in inside the app. If the organization's "Domain restricted sharing" policy blocks it, override that policy for this project only. After the first deploy, set `NEXTAUTH_URL` and the OAuth redirect URI to the service URL and deploy again.
 
 **Later changes deploy themselves** once go-live's extra step is run (`npm --prefix ops/go-live start -- --only autodeploy --apply`): a Cloud Build trigger in this project deploys each change to `portal/` merged into `main`, after its tests pass (`portal/cloudbuild.yaml`), as `portal-deployer@`, which can only push the image and add a revision. See "Deploying changes" in `ops/go-live/README.md`.
 

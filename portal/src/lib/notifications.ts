@@ -138,7 +138,7 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   const updates: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
-  // Purchase requests in demo mode: only beta testers' requests reach Chat or email (lib/purchases/demo.ts).
+  // Purchase requests in demo mode: only testers' requests reach Chat or email (lib/purchases/demo.ts).
   const sends = await purchaseAlerts(notices.map((n) => n.cardId ?? ""));
 
   try {

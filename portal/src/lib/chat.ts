@@ -8,7 +8,7 @@ import { failed } from "./health";
  * Cloud Run service account itself (the chat.bot scope through the service's
  * own credentials), so there is no key and no delegation. It can message a
  * person once the app is installed for them (an admin installs it for the
- * beta group, then everyone), and post in the spaces it's been added to.
+ * people at IAR), and post in the spaces it's been added to.
  * Setup is in docs/setup.md §8. In dev mode nothing is sent; messages are
  * kept in memory and shown on /dev.
  */

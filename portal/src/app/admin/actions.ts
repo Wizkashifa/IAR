@@ -101,7 +101,7 @@ export async function saveEventRules(form: FormData): Promise<void> {
   back({ ok: "Event rules saved." }, "rules");
 }
 
-/** Purchase requests as a demo (only beta testers' requests send alerts) or live for everyone. */
+/** Purchase requests as a demo (only testers' requests send alerts) or live for everyone. */
 export async function savePurchasesDemo(form: FormData): Promise<void> {
   const viewer = await requireAdmin();
   const store = await settingsStore();
@@ -142,7 +142,7 @@ export async function startActingAs(form: FormData): Promise<void> {
   } catch {
     return back({ error: "Couldn't look that person up in Google. Check the address." }, "support");
   }
-  if (!mayUsePortal(groups)) return back({ error: "That person can't use the portal yet (they're not in the beta group)." }, "support");
+  if (!mayUsePortal(groups)) return back({ error: "That person can't sign in to the portal yet." }, "support");
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) return back({ error: "Signing in as someone needs NEXTAUTH_SECRET, which isn't set." }, "support");
   const targetName = await nameOf(target);

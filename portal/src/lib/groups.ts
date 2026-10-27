@@ -113,7 +113,7 @@ const peopleCache = globalThis as unknown as { __iarPortalPeople?: { at: number;
 /**
  * Everyone who can use the portal, as addresses, for an admin picking whom to
  * sign in as (lib/teams.ts `portalPeopleFrom`). Refreshed every 15 minutes.
- * Someone in the beta group only through another group isn't listed.
+ * While there's an access group, someone in it only through another group isn't listed.
  */
 export async function portalPeople(): Promise<string[]> {
   if (isDevAuth()) return DEV_PERSONAS.map((p) => p.email);

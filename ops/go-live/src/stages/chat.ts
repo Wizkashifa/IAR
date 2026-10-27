@@ -26,8 +26,8 @@ function steps(ctx: Ctx): string[] {
     "   App visibility: Private (only people in your domain). Installation settings: Individual + Admin Install (Chat apps can't be admin-only; the Chat visibility above still limits who sees it).",
     "   App integrations: tick Chat app (it uses the configuration from 1). Fill in the developer details with IAR's office address, save.",
     "   Store listing: app name IAR Portal, short description, the logo above, any category that fits (Admin is fine); then Publish (Private listings aren't reviewed by Google).",
-    `3. Install it for the beta group: open the Google Workspace Marketplace (${console_.marketplace}), search "IAR Portal" (only ${d} sees it) →`,
-    `   Admin install → certain groups: ${role("beta", d)} and ${role("admins", d)}. When the beta ends, install it for everyone.`,
+    `3. Install it: open the Google Workspace Marketplace (${console_.marketplace}), search "IAR Portal" (only ${d} sees it) →`,
+    `   Admin install → certain groups: ${role("beta", d)} (the testers) and ${role("admins", d)}. Once the portal is open to everyone (go-live --production), make it visible to and install it for everyone.`,
   ];
 }
 
@@ -40,7 +40,7 @@ export const chat: Stage = {
     if (!state.chatAppConfigured)
       out.push({
         kind: "manual",
-        text: 'Set up the "IAR Portal" Chat app, its private Marketplace listing, and install it for the beta group',
+        text: 'Set up the "IAR Portal" Chat app, its private Marketplace listing, and install it for the testers and admins',
         detail: steps(ctx),
         run: async (c) => {
           await byHand(c, "chat-app", steps(c));

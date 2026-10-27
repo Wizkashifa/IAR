@@ -2,7 +2,7 @@
   "name": "iar-go-live",
   "version": "0.1.0",
   "private": true,
-  "description": "Sets up IAR's Google Workspace and Cloud for the portal, after showing every change. Run on an IAR super admin's computer; see docs/beta-launch.md.",
+  "description": "Sets up IAR's Google Workspace and Cloud for the portal, after showing every change. Run on an IAR super admin's computer; see docs/launch.md.",
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json",
     "start": "npm run build && node dist/ops/go-live/src/main.js",

@@ -102,7 +102,7 @@ const ROLE_OF: Record<GroupMember["role"], TeamRole> = { OWNER: "chair", MANAGER
 
 /**
  * Everyone the portal knows from Google Groups (team, pillar and role
- * groups), as addresses. With a beta `gate` group, only people directly in
+ * groups), as addresses. With an access `gate` group, only people directly in
  * it or in `admins`, the two groups that let someone sign in.
  */
 export function portalPeopleFrom(groups: DirectoryGroup[], gate?: { group: string; admins: string }): string[] {
