@@ -167,8 +167,10 @@ export class FakeGoogle implements Google {
   async redirectUriAccepted() {
     return this.redirectsAccepted;
   }
+  /** Set when this computer's own DNS lookup fails although DNS is fine (a network that blocks it). */
+  localDnsBroken = false;
   async dnsMatches(_host: string, _r: DnsRecord) {
-    return this.dnsDone;
+    return this.dnsDone && !this.localDnsBroken;
   }
 
   // ---- Directory ---------------------------------------------------------

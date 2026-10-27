@@ -75,7 +75,12 @@ function dnsLines(m: DomainMapping, domain: string): string[] {
   ];
 }
 
-const ready = async (ctx: Ctx, m: DomainMapping) => m.ready && m.certificateReady && (await Promise.all(m.records.map((r) => ctx.g.dnsMatches(customHost(ctx.opt.domain), r)))).every(Boolean);
+/**
+ * Google issues the certificate only after it has seen the right DNS itself, so its word is enough. This
+ * computer's own lookup can fail where DNS is fine (some networks block it), so it only adds a hint.
+ */
+const ready = (m: DomainMapping) => m.ready && m.certificateReady;
+const seenHere = async (ctx: Ctx, m: DomainMapping) => (await Promise.all(m.records.map((r) => ctx.g.dnsMatches(customHost(ctx.opt.domain), r)))).every(Boolean);
 
 export const deploy: Stage = {
   id: "deploy",
@@ -158,7 +163,7 @@ export const deploy: Stage = {
         },
       });
     if (mapping) {
-      if (await ready(ctx, mapping)) {
+      if (ready(mapping)) {
         const custom = `https://${host}`;
         if (!(state.redirectsVerified ?? []).includes(callback(custom))) out.push(redirectChange(ctx, () => custom));
         out.push({
@@ -175,7 +180,7 @@ export const deploy: Stage = {
         out.push({
           kind: "check",
           text: `Waiting for ${host}: ${mapping.message ?? "the DNS records aren't in yet, or the certificate isn't ready"}. Run go-live again later; it switches over once both work.`,
-          detail: dnsLines(mapping, opt.domain),
+          detail: [...dnsLines(mapping, opt.domain), ...((await seenHere(ctx, mapping)) ? ["The record is in; Google is issuing the certificate (usually within an hour)."] : [])],
         });
     }
     return out;

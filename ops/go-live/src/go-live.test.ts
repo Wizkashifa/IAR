@@ -384,6 +384,18 @@ test("deploy on merge: GitHub addresses are read in every form git writes them",
   assert.equal(githubRemote("http://127.0.0.1/git/iar/portal"), null);
 });
 
+test("once Google says the address is ready, go-live switches even if this computer can't look up the DNS itself", async () => {
+  const fake = setup({ ready: false });
+  const { state } = await fullApply(fake);
+  fake.dnsDone = true;
+  fake.localDnsBroken = true;
+  fake.redirectsAccepted = false;
+  const r = await run(fake, structuredClone(state), { apply: true });
+  assert.equal(r.stopped, undefined, r.out);
+  assert.ok(r.asked.some((q) => q.step === "redirect-uri"), "asks for the new redirect URI");
+  assert.equal(fake.service!.env.NEXTAUTH_URL, "https://portal.x.org");
+});
+
 test("once DNS works, a later run switches the portal to portal.<domain> and moves the daily job with it", async () => {
   const fake = setup({ ready: false });
   const { state } = await fullApply(fake);
