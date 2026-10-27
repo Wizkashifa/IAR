@@ -30,7 +30,8 @@ const isCurrent = (path: string, href: string) => (href === "/" ? path === "/" :
 /**
  * The portal's frame: the green top bar, the menu and the page.
  * From 1000px wide the menu is a sidebar beside the page; narrower, it's a
- * drawer from the left with search and your account links in it too.
+ * drawer from the left with search and Help at the top and your account links
+ * at the bottom. Either way it scrolls when it's taller than the screen.
  */
 export function AppFrame({
   org,
@@ -56,11 +57,20 @@ export function AppFrame({
   const menuBtn = useRef<HTMLButtonElement>(null);
   const rail = useRef<HTMLElement>(null);
   useEffect(() => setOpen(false), [path]);
+  // Keep this page's link in view when the menu is longer than the screen. Scrolls only the menu, never the page.
+  useEffect(() => {
+    const menu = rail.current;
+    const link = menu?.querySelector<HTMLElement>(`.${styles.on}`);
+    if (!menu || !link) return;
+    const room = 24; // clear of the shade along the bottom edge
+    if (link.offsetTop < menu.scrollTop) menu.scrollTop = link.offsetTop - room;
+    else if (link.offsetTop + link.offsetHeight > menu.scrollTop + menu.clientHeight - room) menu.scrollTop = link.offsetTop + link.offsetHeight - menu.clientHeight + room;
+  }, [path, open]);
   useEffect(() => {
     if (!open) return;
     document.body.classList.add(styles.locked);
     // Once the drawer has started sliding in (it's hidden until then), move the keyboard into it.
-    const t = window.setTimeout(() => rail.current?.querySelector<HTMLElement>("a, button")?.focus(), 30);
+    const t = window.setTimeout(() => rail.current?.querySelector<HTMLElement>("a, button")?.focus({ preventScroll: true }), 30);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
@@ -128,7 +138,13 @@ export function AppFrame({
       </header>
       <div className={styles.shell}>
         <nav ref={rail} id="portal-menu" className={`${styles.rail}${open ? ` ${styles.open}` : ""}`} aria-label="Portal menu">
-          <div className={styles.mob}>{drawerSearch}</div>
+          <div className={styles.mob}>
+            {drawerSearch}
+            <Link href="/help" className={`${styles.link}${path.startsWith("/help") ? ` ${styles.on}` : ""}`} aria-current={path.startsWith("/help") ? "page" : undefined}>
+              <Icon name="help" />
+              <span className={styles.nm}>Help</span>
+            </Link>
+          </div>
           {groups.map((g, i) => (
             <div key={g.label ?? i} className={styles.group}>
               {g.label && <div className={styles.groupLabel}>{g.label}</div>}
@@ -146,7 +162,7 @@ export function AppFrame({
           ))}
           <div className={`${styles.mob} ${styles.foot}`}>
             <div className={styles.groupLabel}>{account.name}</div>
-            <AccountLinks account={account} withAway={false} withHelp onPick={() => setOpen(false)} />
+            <AccountLinks account={account} withAway={false} onPick={() => setOpen(false)} />
           </div>
         </nav>
         {open && <div className={styles.scrim} onClick={() => setOpen(false)} aria-hidden="true" />}
