@@ -32,6 +32,8 @@ export type RequestPageProps = {
   main: ReactNode;
   /** Details, checks, calendar. Below the main column on phones. */
   side?: ReactNode;
+  /** Portal admins only, at the very end: deleting the request. */
+  admin?: ReactNode;
 };
 
 /**
@@ -40,7 +42,7 @@ export type RequestPageProps = {
  * happens next", any notes, the action row, then the request in a main column
  * and its details in a side column.
  */
-export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, main, side }: RequestPageProps) {
+export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, main, side, admin }: RequestPageProps) {
   const leadText = (lead ?? []).filter(Boolean).join(" · ");
   return (
     <div className={styles.page}>
@@ -82,6 +84,7 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
         <div className={styles.main}>{main}</div>
         {side && <aside className={styles.side}>{side}</aside>}
       </div>
+      {admin}
     </div>
   );
 }

@@ -31,7 +31,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Portal Settings" };
 
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
-const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W purchase requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
+const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W payment requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
 const SPACE_LABEL: Record<string, string> = { office: "IAR office", finance: "Finance", executive: "Executive", admins: "Portal admins", marketing: "Marketing", it: "IT", av: "A/V", facilities: "Facilities", security: "Security" };
 const ROLE_LABEL: Record<string, string> = {
   office: "Rentals, run sheet; submits for any committee",
@@ -243,14 +243,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       )}
       </Section>
 
-      <Section open={open === "purchases"} title={<>Purchase requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
+      <Section open={open === "purchases"} title={<>Payment requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
       <p className="hint">
-        While purchase requests are a demo, every purchase page says so, and only requests from testers (people in {ORG.testersGroup}) alert their chair and
-        finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make purchase requests live for everyone.
+        While payment requests are a demo, every purchase page says so, and only requests from testers (people in {ORG.testersGroup}) alert their chair and
+        finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make payment requests live for everyone.
       </p>
       <Panel>
         <form action={savePurchasesDemo} className="stack">
-          <Checkbox name="demo" defaultChecked={purchasesDemoOn(settings)}>Purchase requests are a demo</Checkbox>
+          <Checkbox name="demo" defaultChecked={purchasesDemoOn(settings)}>Payment requests are a demo</Checkbox>
           <div><Button type="submit">Save</Button></div>
         </form>
       </Panel>

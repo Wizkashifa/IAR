@@ -68,7 +68,7 @@ export async function RequestExamples() {
         chips={[
           { label: "All", href: "/dev/styles", on: true },
           { label: "Events", href: "/dev/styles?kind=event" },
-          { label: "Purchases", href: "/dev/styles?kind=purchase" },
+          { label: "Payments", href: "/dev/styles?kind=purchase" },
         ]}
         legend
         empty="You haven't asked for anything yet."

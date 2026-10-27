@@ -50,7 +50,7 @@ const event = {
   newProgram: true,
   outsideSpeaker: false,
   fundraiser: false,
-  brief: { subtitle: "Family film", text: "Join us", flyer: "", regLink: "", payment: "", startOn: "2026-10-01", files: "", final: true },
+  brief: { subtitle: "Family film", text: "Join us", flyer: "", regLink: "", payment: "", files: "https://drive.google.com/old", final: true },
   avNeeds: { kinds: ["projector"], includes: ["video"], ack: true },
   teamNotes: "",
   stage: "done",
@@ -65,7 +65,8 @@ test("an event again: what the requester said, a new date, and nothing from the 
   assert.equal(e.date >= "2026-11-15", true);
   assert.deepEqual(e.recur, { freq: "weekly", until: "" });
   assert.equal(e.newProgram, false, "it isn't new any more");
-  assert.equal(e.brief?.startOn, "");
+  assert.equal(e.brief?.subtitle, "Family film");
+  assert.equal(e.brief?.files, undefined, "the old Drive link isn't asked for any more");
   assert.equal(e.brief?.final, false);
   assert.equal(e.avNeeds?.ack, false);
   assert.deepEqual(e.avNeeds?.kinds, ["projector"]);

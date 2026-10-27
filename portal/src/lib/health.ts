@@ -18,7 +18,7 @@ export const ALERT_EVERY_MS = 6 * 60 * 60 * 1000;
 export const DEGRADED_MS = 15 * 60 * 1000;
 
 const WHAT: Record<Service, { name: string; meaning: string }> = {
-  directory: { name: "Google Groups (who's on which team)", meaning: "Until it can, it uses the last list it had, or nobody is on a team and purchase requests go to finance review." },
+  directory: { name: "Google Groups (who's on which team)", meaning: "Until it can, it uses the last list it had, or nobody is on a team and payment requests go to finance review." },
   rooms: { name: "IAR's room list in Google", meaning: "It's using the last room list it had." },
   calendar: { name: "the room calendars", meaning: "Room checks and bookings may be missing or out of date." },
   chat: { name: "Google Chat", meaning: "Alerts go by email where they can." },

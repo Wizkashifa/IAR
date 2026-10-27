@@ -28,8 +28,8 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "purchase-requests",
-    nav: "Purchases",
-    name: "Purchase Requests",
+    nav: "Payments",
+    name: "Payments",
     summary: "Pay a vendor, get reimbursed, or submit IAR credit card receipts.",
     visibleTo: ["member"],
     phase: 1,

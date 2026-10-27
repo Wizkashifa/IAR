@@ -8,7 +8,7 @@ import { purchaseContext } from "./settings";
 import { isPurchaseCard } from "./workflow";
 
 /**
- * Purchase Requests' part of the daily job: reminders after 3 days,
+ * Payments' part of the daily job: reminders after 3 days,
  * escalation to the director after 5, and the weekday morning digest.
  */
 export async function daily(now: Date): Promise<string> {

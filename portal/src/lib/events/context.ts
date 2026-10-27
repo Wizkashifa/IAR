@@ -72,7 +72,7 @@ export function committeesFor(viewer: Viewer, dir: Directory): { group: string; 
 /** Room 240 and other restricted rooms: chairs, the office, the executive and admins. */
 export const mayBookRestricted = (viewer: Viewer) => viewer.actingRoles.some((r) => r === "chairs" || r === "office" || r === "executive" || r === "admins") || viewer.directs.length > 0;
 
-/** Events this person may link a purchase request to: their own approved ones (and ones in close-out), and their committees' upcoming approved events. */
+/** Events this person may link a payment request to: their own approved ones (and ones in close-out), and their committees' upcoming approved events. */
 export async function linkableEventsFor(viewer: Viewer): Promise<EventChoice[]> {
   const cards = (await (await cardStore()).listByType("event", ["approved", "close_out"])).filter(isEventCard);
   return linkableEvents(cards, { email: viewer.email, groups: viewer.teams.map((t) => t.group) }, todayLocal());

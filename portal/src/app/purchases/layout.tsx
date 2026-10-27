@@ -3,7 +3,7 @@ import { portalSettings, purchasesDemoOn } from "@/lib/portal-settings";
 import { getViewer } from "@/lib/viewer";
 
 /**
- * Every purchase page. While purchase requests are a demo (Portal Settings),
+ * Every purchase page. While payment requests are a demo (Portal Settings),
  * says so at the top: for testers, that theirs are real.
  */
 export default async function PurchasesLayout({ children }: { children: React.ReactNode }) {
@@ -12,10 +12,10 @@ export default async function PurchasesLayout({ children }: { children: React.Re
   return (
     <div className="stack loose">
       {viewer?.tester ? (
-        <Note>Purchase requests are a demo for everyone else. Yours are real: they go to your chair and finance and send alerts as usual.</Note>
+        <Note>Payment requests are a demo for everyone else. Yours are real: they go to your chair and finance and send alerts as usual.</Note>
       ) : (
         <Note tone="warn">
-          <strong>Demo:</strong> purchase requests aren&apos;t live yet. Try anything you like. Nothing here is a real request, nobody is alerted, and nothing will be paid.
+          <strong>Demo:</strong> payment requests aren&apos;t live yet. Try anything you like. Nothing here is a real request, nobody is alerted, and nothing will be paid.
         </Note>
       )}
       <div>{children}</div>

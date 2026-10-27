@@ -7,7 +7,7 @@ import { portalSettings } from "../portal-settings";
 import { purchaseAlertsSend, purchasesDemoOn } from "../settings-rules";
 
 /**
- * Purchase requests in demo mode (Portal Settings): whether a request's
+ * Payment requests in demo mode (Portal Settings): whether a request's
  * alerts go out by Google Chat or email. Only testers' requests do; the
  * rest stay on the bell. The rule is settings-rules.ts `purchaseAlertsSend`.
  */

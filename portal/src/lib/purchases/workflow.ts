@@ -1,5 +1,5 @@
 /**
- * Purchase Requests approval rules, as plain functions over a card so they
+ * Payments approval rules, as plain functions over a card so they
  * can be tested without a server. Pages and server actions call these; they
  * never change a purchase card's stage themselves.
  *

@@ -24,7 +24,7 @@ export type Kind = {
 
 export const KINDS: Kind[] = [
   { type: "event", path: "/events", one: "Event", many: "Events", module: "events", newLabel: "New event request" },
-  { type: "purchase", path: "/purchases", one: "Purchase", many: "Purchases", module: "purchase-requests", newLabel: "New purchase request" },
+  { type: "purchase", path: "/purchases", one: "Payment", many: "Payments", module: "purchase-requests", newLabel: "New payment request" },
   { type: "marketing", path: "/marketing", one: "Marketing", many: "Marketing", module: "marketing-requests", newLabel: "New marketing request" },
   { type: "ticket", path: "/it-maintenance", one: "AV/IT/Maintenance", many: "AV/IT/Maintenance", module: "it-maintenance", newLabel: "AV/IT/Maintenance" },
 ];

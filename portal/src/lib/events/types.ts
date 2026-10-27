@@ -3,6 +3,7 @@
  * (see lib/cards.ts). Design: docs/plan.md, "The event card".
  */
 import type { HistoryEntry } from "../workflow-core";
+import type { MarketingFile } from "../marketing/types";
 
 export type RecurFreq = "weekly" | "biweekly" | "monthly";
 
@@ -16,9 +17,8 @@ export type MarketingBrief = {
   flyer: string;
   regLink: string;
   payment: string;
-  /** "YYYY-MM-DD": when to start marketing. */
-  startOn: string;
-  files: string;
+  /** Older requests only: a Google Drive link to files. New requests upload images instead (EventDetails.images). */
+  files?: string;
   /** The requester says the details are final, so marketing can publish them. */
   final: boolean;
 };
@@ -118,7 +118,7 @@ export type CloseOut = {
   notes: string;
   /** The requester confirmed the final costs (the purchases linked to the event). */
   costsConfirmed: boolean;
-  /** Spent, from the linked purchase requests, when it was closed. */
+  /** Spent, from the linked payment requests, when it was closed. */
   spent: number;
   /** A deposit should be refunded (the finance office was told). */
   depositRefund?: boolean;
@@ -161,4 +161,6 @@ export type EventDetails = EventInput & {
   closeOutSince?: string;
   closeOutNudged?: string;
   closeOut?: CloseOut;
+  /** Images for marketing (public events), in the marketing Shared Drive's "Event Requests / <date · event name>" folder. */
+  images?: MarketingFile[];
 };

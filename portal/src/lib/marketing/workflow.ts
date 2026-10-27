@@ -11,6 +11,8 @@
  * - The marketing team is whoever is on portal-team-marketing@ (role "marketing").
  * - A marketing member can submit a request, but someone else on the team
  *   reviews it (schedules, asks or declines). They can still do the work.
+ * - Anyone on the team can hand scheduled or in-progress work to someone
+ *   else on the team (or take it themselves).
  * - The requester answers questions, can edit the request until it's
  *   scheduled, and can cancel it until then.
  * - Portal admins can open every request for support but act only if they're
@@ -109,7 +111,7 @@ export function isTight(card: MarketingCard, today: string): boolean {
 
 // ---- Who can act -------------------------------------------------------------
 
-export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "answer" | "edit" | "cancel" | "files";
+export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "assign" | "answer" | "edit" | "cancel" | "files";
 
 /** Review decisions, which nobody makes on their own request. */
 const REVIEW_ACTIONS: Action[] = ["schedule", "ask", "decline"];
@@ -152,6 +154,8 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
       return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("This request isn't scheduled or in progress.");
     case "reschedule":
       return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("Only scheduled work has a done-by date to change.");
+    case "assign":
+      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("Only scheduled or in-progress work can be handed to someone.");
   }
   return no("Unknown action.");
 }
@@ -290,15 +294,32 @@ export function edit(card: MarketingCard, actor: Actor, now: string, edited: Mar
   return withStage(base, m, now);
 }
 
-/** Someone on the team starts the work; they're recorded as working on it. */
+/** Someone on the team starts the work. Whoever it was handed to keeps it; if nobody had it, the person starting it does. */
 export function start(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
   mustDo(card, actor, "start");
   const m: MarketingDetails = {
     ...moved(card.marketing, "doing", now),
-    assignee: actor.email.toLowerCase(),
+    assignee: card.marketing.assignee ?? actor.email.toLowerCase(),
     history: [...card.marketing.history, historyEntry(actor.email, now, "Started", note?.trim() || undefined)],
   };
   return withStage(card, m, now);
+}
+
+/**
+ * Hand scheduled or in-progress work to someone on the marketing team (or
+ * take it yourself). `members`: everyone in the marketing team's Google
+ * Group, by email. The stage doesn't change.
+ */
+export function assign(card: MarketingCard, actor: Actor, now: string, to: string, members: string[]): MarketingCard {
+  mustDo(card, actor, "assign");
+  const email = to.trim().toLowerCase();
+  const m = card.marketing;
+  if (!email) throw new WorkflowError("Choose who should work on it.");
+  if (!members.some((x) => same(x, email))) throw new WorkflowError(`${email} isn't on the marketing team's Google Group.`);
+  if (same(m.assignee, email)) throw new WorkflowError(`${same(email, actor.email) ? "You're" : `${email} is`} already working on it.`);
+  const self = same(email, actor.email);
+  const action = m.assignee ? `Handed from ${m.assignee} to ${self ? "themselves" : email}` : self ? "Took it" : `Assigned to ${email}`;
+  return withStage(card, { ...m, assignee: email, history: [...m.history, historyEntry(actor.email, now, action)] }, now);
 }
 
 /** Change the done-by date of scheduled or in-progress work. A new date can get its own reminder. */

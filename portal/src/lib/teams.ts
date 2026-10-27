@@ -114,6 +114,12 @@ export function portalPeopleFrom(groups: DirectoryGroup[], gate?: { group: strin
   return [...all].filter((e) => allowed.has(e)).sort();
 }
 
+/** The people (not nested groups) in one group, by email: who that team's work can be handed to. */
+export function groupUsers(dir: Directory, groupEmail: string): string[] {
+  const g = [...dir.teams, ...dir.pillars].find((x) => lc(x.email) === lc(groupEmail));
+  return [...new Set((g?.members ?? []).filter((m) => m.type === "USER").map((m) => lc(m.email)))].sort();
+}
+
 /** The teams a person is on, with their role in each. */
 export function membershipsOf(dir: Directory, email: string): Membership[] {
   const e = lc(email);

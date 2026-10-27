@@ -22,6 +22,10 @@ import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 import { lc } from "@/lib/text";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import { filesFrom } from "@/lib/drive";
+import { checkFiles } from "@/lib/marketing/files";
+import { NOT_SET_UP, marketingFolder, saveEventImages } from "@/lib/marketing/drive";
+import { addImages, imagesOf, imagesPermission } from "@/lib/events/images";
 import type { FormState } from "@/components/FormErrors";
 
 
@@ -157,6 +161,13 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
     if (bad) return { errors: [bad] };
   }
 
+  // Images for marketing, checked before anything is saved.
+  const images = input.isPublic ? filesFrom(form, "images") : [];
+  if (images.length) {
+    const problems = (await marketingFolder()) ? checkFiles(images, card0 ? imagesOf(card0).length : 0, { imagesOnly: true }) : [NOT_SET_UP];
+    if (problems.length) return { errors: problems };
+  }
+
   const r = await checksFor(ctx, viewer, input, card0);
   const others = r.checks.filter((c) => c.block && c.rule !== "IAR Google Calendar");
   if (others.length) return { errors: others.map((c) => c.text) };
@@ -211,8 +222,67 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
   }
   await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
   revalidatePath("/events");
+  if (images.length) {
+    try {
+      await attachImages(card.id, actor, await saveEventImages(input.title, input.date, images));
+    } catch (err) {
+      console.error("event image upload failed", err);
+      redirect(`/events/${card.id}?sent=1&error=${encodeURIComponent("Your request was sent, but the images didn't upload. Try adding them again on this page.")}#images`);
+    }
+  }
   // The request page says "Sent." with what happens next (RequestPage `sent`).
   redirect(`/events/${card.id}?sent=1`);
+}
+
+/**
+ * Adds uploaded images to the latest copy of the request. Someone may have
+ * saved it while the images uploaded (a slow upload, an approval), so it
+ * tries once more on a fresh copy.
+ */
+async function attachImages(id: string, actor: wf.EventActor, saved: Awaited<ReturnType<typeof saveEventImages>>): Promise<void> {
+  const store = await cardStore();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const latest = await store.get(id);
+    if (!wf.isEventCard(latest)) throw new WorkflowError("That request no longer exists.");
+    try {
+      await store.save(addImages(latest, actor, nowIso(), saved), latest.updatedAt);
+      return;
+    } catch (err) {
+      if (!(err instanceof ConflictError) || attempt === 1) throw err;
+    }
+  }
+}
+
+/** Images for marketing, added from the request page by the requester or the marketing team. Never changes the stage. */
+export async function addEventImages(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = eventActor(viewer);
+  const id = String(form.get("id") ?? "");
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isEventCard(card)) redirect("/events");
+  const back = (q: string) => {
+    revalidatePath(`/events/${id}`);
+    redirect(`/events/${id}?${q}#images`);
+  };
+  const allowed = imagesPermission(card, actor);
+  if (!allowed.ok) back(`error=${encodeURIComponent(allowed.reason)}`);
+  const files = filesFrom(form, "images");
+  if (files.length === 0) back(`error=${encodeURIComponent("Choose an image first.")}`);
+  const problems = (await marketingFolder()) ? checkFiles(files, imagesOf(card).length, { imagesOnly: true }) : [NOT_SET_UP];
+  if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
+
+  let error: string | null = null;
+  try {
+    await attachImages(id, actor, await saveEventImages(card.title, card.event.date, files));
+  } catch (err) {
+    if (err instanceof WorkflowError) error = err.message;
+    else {
+      console.error("event image upload failed", err);
+      error = "The images didn't upload. Try again.";
+    }
+  }
+  back(error ? `error=${encodeURIComponent(error)}` : "ok=images");
 }
 
 const events = { path: "/events", is: wf.isEventCard, canOpen: async (card: wf.EventCard, viewer: Viewer) => (await eventAccess(card, viewer)).open };

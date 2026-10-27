@@ -161,7 +161,7 @@ test("who it waits on: events, marketing and tickets", () => {
 
   const t = ticket();
   assert.deepEqual(holderOf(t), { to: [{ role: "facilities" }], step: "New" });
-  const a = tw.assign(t, fac, T(1), fac.email, [fac.email]);
+  const a = tw.assign(t, fac, T(1), fac.email, { facilities: [fac.email], it: [] });
   assert.deepEqual(holderOf(a)?.to, [{ email: fac.email }]);
   const fixed = tw.resolve(tw.start(a, fac, T(2)), fac, T(3), "New cartridge");
   assert.deepEqual(holderOf(fixed)?.to, [{ email: vol.email }], "fixed: the reporter confirms");

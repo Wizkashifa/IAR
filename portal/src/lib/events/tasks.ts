@@ -2,7 +2,7 @@
  * Team tasks on an event card (docs/plan.md, "The event card"). When an
  * event is approved it gets a task for each team it needs:
  * - Marketing, for a public event: flyer, announcement and website listing,
- *   due the day marketing should start.
+ *   due by the event's first date. The team sees it as soon as it's approved.
  * - A/V, when A/V support was asked for: the kinds asked for, due on the day.
  * - Facilities, when the requester wrote a setup plan (tables, chairs, stage).
  * - Security, when it has a room: the room check before and after, plus
@@ -45,7 +45,7 @@ export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTa
       id: "marketing",
       team: "marketing",
       title: `Flyer, announcement and website listing${e.brief?.subtitle ? `: “${e.brief.subtitle}”` : ""}`,
-      dueDate: e.brief?.startOn && e.brief.startOn <= first ? e.brief.startOn : first,
+      dueDate: first,
     });
   }
   if (e.av) {
@@ -110,7 +110,7 @@ export function taskUnlockNotices(before: EventCard | null, after: EventCard): N
 
 // ---- Working on a task -----------------------------------------------------
 
-export type TaskAction = "take" | "start" | "done" | "ask";
+export type TaskAction = "take" | "start" | "done" | "ask" | "assign";
 
 /** A team's members work its tasks; the IAR office can work any of them. */
 export const worksTeam = (team: TaskTeam, roles: Role[]) => roles.includes(team) || roles.includes("office");
@@ -126,6 +126,7 @@ export function taskPermission(card: EventCard, taskId: string, actor: EventActo
   if (task.status === "done") return { ok: false, reason: "This task is already done." };
   if (action === "take" && task.assignee && lc(task.assignee) !== lc(actor.email)) return { ok: false, reason: `${task.assignee} already took this task.` };
   if (action === "take" && task.assignee) return { ok: false, reason: "You already have this task." };
+  if (action === "assign") return { ok: true, task };
   if (action === "start" && task.status === "doing") return { ok: false, reason: "This task is already in progress." };
   return { ok: true, task };
 }
@@ -160,14 +161,42 @@ export function actOnTask(card: EventCard, taskId: string, actor: EventActor & {
       const asked = withTask(card, task, now, actor.email, "Question for the requester", text);
       return withComment(asked, { at: now, by: actor.email, name: actor.name ?? actor.email, text: `${TEAM_NAME[task.team]} question (${task.title}): ${text}` });
     }
+    case "assign":
+      throw new TaskError("Choose who should have it.");
   }
 }
 
-/** Who hears about a task change: the requester when it's done (in the portal), and when the team asks them something (an alert: they have to answer). */
+/**
+ * Hand a task to someone on its team (or take it yourself). `members`:
+ * everyone in the team's Google Group, by email. Its status doesn't change.
+ */
+export function assignTask(card: EventCard, taskId: string, actor: EventActor, to: string, members: string[], now: string): EventCard {
+  const p = taskPermission(card, taskId, actor, "assign");
+  if (!p.ok) throw new TaskError(p.reason);
+  const task = p.task;
+  const email = lc(to.trim());
+  if (!email) throw new TaskError("Choose who should have it.");
+  if (!members.some((m) => lc(m) === email)) throw new TaskError(`${email} isn't on the ${TEAM_NAME[task.team]} team's Google Group.`);
+  if (task.assignee && lc(task.assignee) === email) throw new TaskError(`${lc(actor.email) === email ? "You already have" : `${email} already has`} this task.`);
+  const self = lc(actor.email) === email;
+  const action = task.assignee ? `Handed from ${task.assignee} to ${self ? "themselves" : email}` : self ? "Taken" : `Assigned to ${email}`;
+  return withTask(card, { ...task, assignee: email }, now, actor.email, action);
+}
+
+/**
+ * Who hears about a task change: the requester when it's done (in the portal),
+ * and when the team asks them something (an alert: they have to answer); a
+ * teammate when it's handed to them (an alert).
+ */
 export function taskNotices(after: EventCard, taskId: string, actor: EventActor, action: TaskAction, note = ""): Notice[] {
   const task = after.event.tasks?.find((t) => t.id === taskId);
-  if (!task || lc(after.ownerEmail) === lc(actor.email)) return [];
   const what = `${after.id} “${after.title}”`;
+  // Handed to someone else on the team: they hear about it, with an alert (it's theirs to do now).
+  if (action === "assign") {
+    if (!task?.assignee || lc(task.assignee) === lc(actor.email)) return [];
+    return [{ to: { email: task.assignee }, cardId: after.id, href: `/events/${after.id}#tasks`, text: `${what}: ${actor.name || actor.email} handed you the ${TEAM_NAME[task.team]} task “${task.title}”. Due ${dayText(task.dueDate)}.`, alert: true, delegable: false }];
+  }
+  if (!task || lc(after.ownerEmail) === lc(actor.email)) return [];
   if (action === "done") {
     return [{ to: { email: after.ownerEmail }, cardId: after.id, href: `/events/${after.id}#tasks`, text: `${what}: ${TEAM_NAME[task.team]} finished “${task.title}”.${note.trim() ? ` Note: ${short(note, 140)}` : ""}`, alert: false, delegable: false }];
   }

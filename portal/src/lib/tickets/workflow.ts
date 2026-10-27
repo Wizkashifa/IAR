@@ -23,7 +23,7 @@
  */
 import type { Card, CardStatus } from "../cards";
 import { ORG, roleMailbox, type Role } from "../org";
-import { type Directory, type Membership, groupSlug } from "../teams";
+import { type Directory, type Membership, groupSlug, groupUsers } from "../teams";
 import { type TicketDetails, type TicketLinkKind, type TicketKind, type TicketPhoto, type TicketStatus, type TicketTeam, type Urgency, LINK_LABEL, TEAM_LABEL, TEAM_NAME, URGENCY } from "./types";
 import { lc, same } from "../text";
 import { daysBetween } from "../dates";
@@ -72,10 +72,10 @@ export function teamsOf(actor: Pick<TicketActor, "roles">): TicketTeam[] {
 }
 
 /** Everyone in the team's Google Group (people, not nested groups), by email: who a ticket can be assigned to. */
-export function teamMemberEmails(dir: Directory, team: TicketTeam): string[] {
-  const g = dir.teams.find((x) => lc(x.email) === lc(teamGroup(team)));
-  return [...new Set((g?.members ?? []).filter((m) => m.type === "USER").map((m) => lc(m.email)))].sort();
-}
+export const teamMemberEmails = (dir: Directory, team: TicketTeam): string[] => groupUsers(dir, teamGroup(team));
+
+/** The teams that work tickets. */
+export const TICKET_TEAMS: TicketTeam[] = ["it", "facilities"];
 
 /** Teams a person chairs or vice-chairs, from their memberships in Google Groups. */
 export function leadsOf(memberships: Membership[]): TicketTeam[] {
@@ -235,7 +235,8 @@ export function permission(card: TicketCard, actor: TicketActor, action: Action)
   if (t.status === "resolved") return no("This is marked fixed and waiting for the reporter to confirm.");
   switch (action) {
     case "assign":
-      if (!team && !office) return no(`Only ${teamName} or the IAR office can assign it.`);
+      // IT Services (IT and A/V) and Facility Maintenance hand tickets to each other.
+      if (!teamsOf(actor).length && !office) return no("Only IT Services, Facility Maintenance or the IAR office can assign it.");
       if (t.assigneeEmail && !same(t.assigneeEmail, actor.email) && !lead && !office)
         return no(`It's assigned to ${t.assigneeEmail}. Only they, the team's chair or vice chair, or the IAR office can hand it to someone else.`);
       return { ok: true };
@@ -271,22 +272,28 @@ function responded(t: TicketDetails, card: TicketCard, actor: TicketActor, now: 
 // Each returns a new card; the caller saves it.
 
 /**
- * Assign to a team member (or yourself). `members`: everyone in the team's
- * Google Group, by email. A new or reopened ticket becomes "assigned"; one
- * already being worked on keeps its status with the new person.
+ * Assign to someone on IT Services or Facility Maintenance (or yourself).
+ * `members`: everyone in each team's Google Group, by email. Handed to
+ * someone on the other team, the ticket moves to that team. A new or reopened
+ * ticket becomes "assigned"; one already being worked on keeps its status
+ * with the new person.
  */
-export function assign(card: TicketCard, actor: TicketActor, now: string, to: string, members: string[]): TicketCard {
+export function assign(card: TicketCard, actor: TicketActor, now: string, to: string, members: Record<TicketTeam, string[]>): TicketCard {
   mustDo(card, actor, "assign");
   const email = lc(to);
   const t = card.ticket;
   if (!email) throw new WorkflowError("Choose who should take it.");
-  if (!members.some((m) => same(m, email))) throw new WorkflowError(`${email} isn't on the ${TEAM_LABEL[t.team]} team's Google Group.`);
+  const on = (team: TicketTeam) => members[team].some((m) => same(m, email));
+  const team = on(t.team) ? t.team : TICKET_TEAMS.find(on);
+  if (!team) throw new WorkflowError(`${email} isn't on the IT Services or Facility Maintenance Google Group.`);
   if (same(t.assigneeEmail, email)) throw new WorkflowError(`It's already assigned to ${same(email, actor.email) ? "you" : email}.`);
   const self = same(email, actor.email);
-  const action = t.assigneeEmail ? `Handed from ${t.assigneeEmail} to ${self ? "themselves" : email}` : self ? "Picked it up" : `Assigned to ${email}`;
+  const handed = t.assigneeEmail ? `Handed from ${t.assigneeEmail} to ${self ? "themselves" : email}` : self ? "Picked it up" : `Assigned to ${email}`;
+  const action = team === t.team ? handed : `${handed}, moving it to ${TEAM_NAME[team]}`;
   const status: TicketStatus = t.status === "new" || t.status === "reopened" ? "assigned" : t.status;
   const next: TicketDetails = {
     ...t,
+    team,
     ...responded(t, card, actor, now),
     status,
     statusSince: status === t.status ? t.statusSince : now,

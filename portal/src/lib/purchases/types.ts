@@ -1,5 +1,5 @@
 /**
- * Purchase Requests: the fields a purchase card carries on top of the shared
+ * Payments: the fields a purchase card carries on top of the shared
  * Card (see lib/cards.ts).
  */
 import type { HistoryEntry } from "../workflow-core";

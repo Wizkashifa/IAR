@@ -82,7 +82,7 @@ export function requestRoutes(slug: string): RequestRoute[] {
   if (slug === "maintenance" || slug === "tech") return [{ href: "/it-maintenance/new", label: "AV/IT/Maintenance" }];
   return [
     { href: "/events/new", label: "Event request" },
-    { href: "/purchases/new", label: "Purchase request" },
+    { href: "/purchases/new", label: "Payment request" },
   ];
 }
 
@@ -118,14 +118,14 @@ export const TEAM_KEYWORDS: Record<string, string[]> = {
 
 /**
  * Things the portal handles directly rather than one team: searching
- * "reimbursement" should say to send a purchase request, not list a team.
+ * "reimbursement" should say to send a payment request, not list a team.
  */
 export const TOPICS: { words: string[]; text: string; href: string; label: string }[] = [
   {
     words: ["reimbursement", "reimburse", "reimbursements", "receipt", "receipts", "pay a vendor", "invoice", "check", "credit card", "purchase", "buy"],
-    text: "The finance office handles payments and reimbursements. Send a purchase request and it goes to the right people.",
+    text: "The finance office handles payments and reimbursements. Send a payment request and it goes to the right people.",
     href: "/purchases/new",
-    label: "Purchase request",
+    label: "Payment request",
   },
   {
     words: ["room", "book a room", "reserve", "reservation", "gym", "hall", "event"],
@@ -174,7 +174,7 @@ export function searchTeams(teams: TeamEntry[], q: string): TeamEntry[] {
     .map((s) => s.t);
 }
 
-/** Portal pages that answer a search better than any team ("reimbursement" → a purchase request). */
+/** Portal pages that answer a search better than any team ("reimbursement" → a payment request). */
 export function searchTopics(q: string): typeof TOPICS {
   const query = norm(q);
   if (!queryWords(q).length) return [];

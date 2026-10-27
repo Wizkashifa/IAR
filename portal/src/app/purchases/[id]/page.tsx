@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
@@ -41,7 +43,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
   const viewer = await requireViewer();
   const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
-  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) return { title: "Purchase request" };
+  if (!isPurchaseCard(card) || !canViewDetail(card, { ...actor, seeAll: viewer.roles.includes("admins") })) return { title: "Payment request" };
   return { title: `${card.title} · ${card.id}` };
 }
 
@@ -262,7 +264,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
 
   return (
     <RequestPage
-      crumb={{ href: "/purchases", label: "Purchase Requests" }}
+      crumb={{ href: "/purchases", label: "Payments" }}
+      admin={mayDeleteRequests(viewer) ? <DeleteRequest id={card.id} /> : undefined}
       id={card.id}
       title={card.title}
       pills={

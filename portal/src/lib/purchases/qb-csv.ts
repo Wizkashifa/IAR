@@ -1,5 +1,5 @@
 /**
- * A CSV of purchase requests for entering in QuickBooks: one row per line
+ * A CSV of payment requests for entering in QuickBooks: one row per line
  * item, in plain columns the finance office can map to an import or copy
  * from. Only what's already on the request: no requester names or addresses,
  * and an aid request (restricted) shows no payee or line notes.

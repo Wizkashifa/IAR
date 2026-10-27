@@ -186,7 +186,7 @@ test("portal people: everyone in the portal's groups; with an access group only 
   assert.deepEqual(portalPeopleFrom(groups, { group: "portal-role-beta@x.org", admins: "portal-role-admin@x.org" }), ["admin@x.org", "chair@x.org", "tester@x.org"]);
 });
 
-test("purchase requests demo: on until an admin turns it off; then only testers' requests send alerts", () => {
+test("payment requests demo: on until an admin turns it off; then only testers' requests send alerts", () => {
   assert.equal(purchasesDemoOn({}), true);
   assert.equal(purchasesDemoOn({ purchasesDemo: true }), true);
   assert.equal(purchasesDemoOn({ purchasesDemo: false }), false);

@@ -33,7 +33,7 @@ export const viewport: Viewport = { themeColor: "#0b3a24" };
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {
   events: { group: "request", label: "Events & Rooms", icon: "calendar" },
-  "purchase-requests": { group: "request", label: "Purchase Requests", icon: "receipt" },
+  "purchase-requests": { group: "request", label: "Payments", icon: "receipt" },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: "megaphone" },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },

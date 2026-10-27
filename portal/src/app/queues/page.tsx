@@ -18,6 +18,7 @@ import { TASK_STATUS_LABEL, TEAM_NAME } from "@/lib/events/tasks";
 import type { EventTask, TaskTeam } from "@/lib/events/types";
 import { isEventCard } from "@/lib/events/workflow";
 import { nameResolver } from "@/lib/names";
+import { queueTeamMembers } from "@/lib/groups";
 import { actorFor } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
@@ -35,6 +36,7 @@ const MESSAGES: Record<string, string> = {
   "task-started": "Marked in progress.",
   "task-done": "Marked done. The requester can see it on the event.",
   "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
+  "task-assigned": "Handed over. They get an alert, and their name shows on the event.",
 };
 
 const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
@@ -59,11 +61,12 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
   const team: TaskTeam = teams.includes(sp.team as TaskTeam) ? (sp.team as TaskTeam) : teams[0];
   const store = await cardStore();
   const ctx = await eventContext();
-  const [events, marketing, actor, needs] = await Promise.all([
+  const [events, marketing, actor, needs, members] = await Promise.all([
     store.listByType("event", ["submitted", "in_review", "approved", "close_out"]),
     team === "marketing" ? store.listByType("marketing", ["approved"]) : Promise.resolve([] as Card[]),
     actorFor(viewer),
     needsContext(),
+    queueTeamMembers(team),
   ]);
   const cards = events.filter(isEventCard);
   const allOpen = queueItems(cards, team, ctx.today);
@@ -77,7 +80,9 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
   const back = `/queues?team=${team}`;
   const roomNames = (ids: string[]) => ids.map((r) => roomById(ctx.rooms, r)?.name ?? r).join(", ") || "Off-site";
   const tasks = [...open, ...done];
-  const names = await nameResolver([...emailsIn([...tasks.map((t) => t.card), ...mk]), ...tasks.flatMap((t) => (t.task.assignee ? [t.task.assignee] : []))]);
+  const names = await nameResolver([...emailsIn([...tasks.map((t) => t.card), ...mk]), ...tasks.flatMap((t) => (t.task.assignee ? [t.task.assignee] : [])), ...members]);
+  // Who on the team a task can be handed to.
+  const people = members.map((m) => ({ email: m, name: m === viewer.email.toLowerCase() ? `Me (${names(m)})` : names(m) }));
 
   const row = ({ card, task, overdue }: QueueItem, withButtons: boolean) => (
     <ItemRow
@@ -90,14 +95,14 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
           {card.event.dates.length > 1 && !task.date ? ` (series, ${card.event.dates.length} dates)` : ""}, {timeText(card.event.start)}–{timeText(card.event.end)} · from {names(card.ownerEmail)}
         </>
       }
-      who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `${task.team === "marketing" ? "Start marketing" : "Due"} ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}
+      who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `Due ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}
       state={task.status === "done" ? "done" : overdue ? "bad" : task.assignee?.toLowerCase() === viewer.email.toLowerCase() || !task.assignee ? "act" : "wait"}
       right={
         <>
           <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} dot>
             {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
           </Pill>
-          {withButtons && <TaskButtons card={card} task={task} roles={viewer.actingRoles} email={viewer.email} back={back} />}
+          {withButtons && <TaskButtons card={card} task={task} roles={viewer.actingRoles} email={viewer.email} back={back} people={people} />}
         </>
       }
     />

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { canRequestAgain } from "@/lib/again";
@@ -33,6 +35,9 @@ import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
 import { FileList } from "@/components/FileList";
 import { same } from "@/lib/text";
+import { queueTeamMembers } from "@/lib/groups";
+import { Disclosure } from "@/components/Disclosure";
+import { PeoplePicker } from "@/components/PeoplePicker";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +67,9 @@ export default async function MarketingDetail({
   const own = mc.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const due = neededBy(m.answers);
   const days = daysUntilNeeded(mc, today);
-  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
+  // Who on the marketing team the work can be handed to.
+  const team = permission(mc, actor, "assign").ok ? await queueTeamMembers("marketing") : [];
+  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
   const tone = ROW_TONE[rowState(mc, actor, { today })];
   const files = filesOf(m);
@@ -151,6 +158,7 @@ export default async function MarketingDetail({
     <>
       <RequestPage
         crumb={{ href: "/marketing", label: "Marketing Requests" }}
+        admin={mayDeleteRequests(viewer) ? <DeleteRequest id={mc.id} /> : undefined}
         id={mc.id}
         title={mc.title}
         pills={
@@ -260,34 +268,49 @@ export default async function MarketingDetail({
     }
 
     if (can("start") || can("finish") || can("reschedule")) {
+      const others = team.filter((e) => !same(e, m.assignee));
       return (
-        <form action={actOnMarketing} className="stack">
-          {base}
-          <div className="row">
-            {can("start") && (
-              <Button type="submit" name="action" value="start" variant="primary">
-                Start
-              </Button>
-            )}
-            {can("finish") && (
-              <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
-                Mark done
-              </Button>
-            )}
-            {can("reschedule") && (
-              <Button type="submit" name="action" value="reschedule">
-                Change date
-              </Button>
-            )}
-            {declineButton}
-          </div>
-          <div className="grid split">
-            {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
-            <Field label={m.stage === "doing" ? "Link to the finished work, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
-              <input name="note" maxLength={2000} />
-            </Field>
-          </div>
-        </form>
+        <div className="stack">
+          <form action={actOnMarketing} className="stack">
+            {base}
+            <div className="row">
+              {can("start") && (
+                <Button type="submit" name="action" value="start" variant="primary">
+                  Start
+                </Button>
+              )}
+              {can("finish") && (
+                <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
+                  Mark done
+                </Button>
+              )}
+              {can("reschedule") && (
+                <Button type="submit" name="action" value="reschedule">
+                  Change date
+                </Button>
+              )}
+              {declineButton}
+            </div>
+            <div className="grid split">
+              {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
+              <Field label={m.stage === "doing" ? "Link to the finished work, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
+                <input name="note" maxLength={2000} />
+              </Field>
+            </div>
+          </form>
+          {can("assign") && others.length > 0 && (
+            <Disclosure summary={m.assignee ? "Hand to someone else" : "Give to someone"} button="quiet">
+              <form action={actOnMarketing} className="stack">
+                {base}
+                <input type="hidden" name="action" value="assign" />
+                <PeoplePicker name="assignee" label="Who on the marketing team should work on it" required people={others.map((e) => ({ email: e, name: same(e, viewer.email) ? `Me (${names(e)})` : names(e) }))} />
+                <div>
+                  <Button type="submit">Hand it over</Button>
+                </div>
+              </form>
+            </Disclosure>
+          )}
+        </div>
       );
     }
 

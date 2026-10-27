@@ -83,7 +83,7 @@ export function eventAgain(e: EventInput, today: string): EventInput {
     newProgram: false,
     outsideSpeaker: e.outsideSpeaker,
     fundraiser: e.fundraiser,
-    brief: e.brief ? { ...e.brief, startOn: "", final: false } : undefined,
+    brief: e.brief ? { subtitle: e.brief.subtitle, text: e.brief.text, flyer: e.brief.flyer, regLink: e.brief.regLink, payment: e.brief.payment, final: false } : undefined,
     avNeeds: e.avNeeds ? { kinds: [...e.avNeeds.kinds], includes: [...e.avNeeds.includes], ack: false } : undefined,
     teamNotes: e.teamNotes,
   };

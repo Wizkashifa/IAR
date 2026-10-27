@@ -24,7 +24,7 @@ import { Chips } from "@/components/Chips";
 import { DataTable } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Purchase Requests" };
+export const metadata: Metadata = { title: "Payments" };
 
 const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }[] = [
   { id: "all", label: "All open", test: (c) => c.status !== "closed" },
@@ -77,14 +77,14 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <ModuleHead
-        title="Purchase Requests"
+        title="Payments"
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={
           <>
             {finance && <Button href="/purchases/finance">Finance desk</Button>}
             <Button href="/purchases/vendors">Saved vendors</Button>
             <Button href="/purchases/new" variant="primary" icon="plus">
-              New purchase request
+              New payment request
             </Button>
           </>
         }
@@ -106,10 +106,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         {(myPurchases.length > 0 || !overseer) && <ItemList
           title="Your requests"
           sections={sectionsOf(mineRows)}
-          empty="You haven't sent a purchase request yet."
+          empty="You haven't sent a payment request yet."
           emptyAction={
             <Button href="/purchases/new" variant="primary" size="small">
-              New purchase request
+              New payment request
             </Button>
           }
         />}

@@ -7,7 +7,7 @@ import { FUNDS } from "./accounts";
 import type { RoutingSettings } from "./workflow";
 
 /**
- * Purchase Requests settings, put together from two places nobody edits by
+ * Payments settings, put together from two places nobody edits by
  * hand: Google Groups (who chairs, vice-chairs and directs each team) and
  * Portal Settings (which fund each team charges, and IAR's cards). A team
  * with no chair, or a fund no team charges, is safe: its requests go to the

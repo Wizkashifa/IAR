@@ -1,5 +1,5 @@
 /**
- * Purchase Requests rules. Run with `npm test`.
+ * Payments rules. Run with `npm test`.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";

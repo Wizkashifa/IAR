@@ -118,9 +118,9 @@ test("checks: the MPH needs a 2-hour cleaning gap; a public event needs its mark
   const busy: BusyItem[] = [{ roomId: "mphA", date: "2026-11-14", start: "15:00", end: "16:45", label: "Sisters' fitness", kind: "booking", eventId: "f1" }];
   const r = eventChecks(base({ rooms: ["mphA"] }), ctx(busy));
   assert.ok(r.checks.some((c) => c.sev === "warn" && /cleaning gap/.test(c.text)));
-  const pub = eventChecks(base({ isPublic: true, brief: { subtitle: "", text: "", flyer: "", regLink: "", payment: "", startOn: "", files: "", final: true } }), ctx());
+  const pub = eventChecks(base({ isPublic: true, brief: { subtitle: "", text: "", flyer: "", regLink: "", payment: "", final: true } }), ctx());
   assert.equal(pub.blocked, true);
-  assert.match(pub.checks.find((c) => c.block)!.text, /announcement text, a one-line subtitle and when to start marketing/);
+  assert.match(pub.checks.find((c) => c.block)!.text, /the announcement text and a one-line subtitle\./);
 });
 
 test("checks: a series longer than 3 months, or an end before the start, stops the request", () => {

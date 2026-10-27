@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
@@ -33,10 +35,16 @@ import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } 
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
 import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
-import { tasksFor } from "@/lib/events/tasks";
+import { TASK_TEAMS, tasksFor, worksTeam } from "@/lib/events/tasks";
+import { queueTeamMembers } from "@/lib/groups";
+import { imagesOf, imagesPermission } from "@/lib/events/images";
+import { IMAGE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD } from "@/lib/marketing/files";
+import { marketingFolder } from "@/lib/marketing/drive";
+import { FileDrop } from "@/components/FileDrop";
+import { FileList } from "@/components/FileList";
 import { purchaseTotal } from "@/lib/purchases/types";
 import { fmtDateTime, fmtMoney } from "@/lib/format";
-import { actOnEvent, actOnEventWith, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
+import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
 import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
@@ -60,9 +68,11 @@ const MESSAGES: Record<string, string> = {
   "task-started": "Marked in progress.",
   "task-done": "Marked done. The requester can see it here.",
   "task-asked": "Question sent as a comment on the event. The requester gets an alert.",
+  "task-assigned": "Handed over. They get an alert, and their name shows here.",
   "check-ok": "Room check saved.",
   "check-problem": "Room check saved. The requester and the IAR office have been told about the problem.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
+  images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -102,9 +112,16 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
   const office = ev.roles.includes("office");
+  const images = imagesOf(card);
+  const canAddImages = imagesPermission(card, ev).ok;
+  const uploads = canAddImages && Boolean(await marketingFolder());
+
+  // Who each team's tasks can be handed to, for the teams this person works on.
+  const myTeams = isLive ? TASK_TEAMS.filter((t) => worksTeam(t, viewer.actingRoles) && tasks.some((x) => x.team === t)) : [];
+  const teamMembers = new Map(await Promise.all(myTeams.map(async (t) => [t, await queueTeamMembers(t)] as const)));
 
   // Everyone this page shows, by name.
-  const emails = [card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
+  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
   const names = await nameResolver(emails);
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
@@ -156,6 +173,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   return (
     <RequestPage
       crumb={{ href: "/events", label: "Events & Rooms" }}
+      admin={mayDeleteRequests(viewer) ? <DeleteRequest id={card.id} what="Its room holds come off the calendar, and anyone who asked for its time gets it." /> : undefined}
       id={card.id}
       title={card.title}
       pills={
@@ -180,7 +198,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           </Panel>
 
           {e.isPublic && e.brief && (
-            <Panel title="Marketing brief" right={e.brief.startOn ? `Start marketing ${dayText(e.brief.startOn)}` : undefined}>
+            <Panel title="Marketing brief">
               <KeyValue
                 items={[
                   { label: "Subtitle", value: e.brief.subtitle },
@@ -191,6 +209,26 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   { label: "Files", value: e.brief.files && <a href={e.brief.files} target="_blank" rel="noreferrer">Drive folder</a> },
                 ]}
               />
+            </Panel>
+          )}
+
+          {e.isPublic && (images.length > 0 || canAddImages) && (
+            <Panel title="Images for marketing" right={images.length ? `${images.length}` : undefined} id="images">
+              <div className="stack">
+                <FileList files={images.map((f) => ({ ...f, by: f.by === viewer.email.toLowerCase() ? "you" : names(f.by) }))} empty="No images yet." />
+                {canAddImages &&
+                  (uploads ? (
+                    <form action={addEventImages} className="stack">
+                      <input type="hidden" name="id" value={card.id} />
+                      <FileDrop name="images" label="Add images" hint={`Photos, logos or artwork as image files (JPG, PNG, HEIC). No PDFs or Word documents. Up to ${MAX_PER_UPLOAD} at a time, ${MAX_FILE_MB} MB each.`} accept={IMAGE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
+                      <div>
+                        <Button type="submit">Add images</Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <p className="hint">Image uploads for marketing aren&apos;t set up yet. Share a Google Drive link in a comment.</p>
+                  ))}
+              </div>
             </Panel>
           )}
 
@@ -219,7 +257,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
               <Rows>
                 {tasks.map((t) => (
-                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} />
+                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={(teamMembers.get(t.team) ?? []).map((m) => ({ email: m, name: m === viewer.email.toLowerCase() ? `Me (${names(m)})` : names(m) }))} />
                 ))}
               </Rows>
               {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
@@ -248,9 +286,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           )}
 
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
-            <Panel title="Purchases for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
+            <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState icon="receipt">None linked yet. When you send a purchase request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState icon="receipt">None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (
@@ -261,7 +299,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               )}
               <PanelFoot>
                 Spent so far: <strong>{spendText(spent, e.budget)}</strong>
-                {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New purchase request</Link></> : null}
+                {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New payment request</Link></> : null}
               </PanelFoot>
             </Panel>
           )}
@@ -358,7 +396,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </>
           )}
           {resubmit && <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>}
-          {addPurchase && <Button href="/purchases/new" icon="receipt">Add a purchase request</Button>}
+          {addPurchase && <Button href="/purchases/new" icon="receipt">Add a payment request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
           {(reviewing || resubmit || addPurchase || renew || again) && <span className="grow" />}
@@ -444,9 +482,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />
               </Field>
               <div>
-                <div className="hint">Actual spend (from the purchases linked to this event)</div>
+                <div className="hint">Actual spend (from the payment requests linked to this event)</div>
                 <strong>{spendText(spent, e.budget)}</strong>
-                <div className="hint">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
+                <div className="hint">{linked.length} payment request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
             </div>
             <div>

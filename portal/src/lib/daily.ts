@@ -16,7 +16,7 @@ import { plural } from "./text";
  */
 const JOBS: { name: string; run: (now: Date) => Promise<string> }[] = [
   { name: "Messages held overnight", run: async (now) => `${plural(await sendHeldAlerts(now), "message")} sent.` },
-  { name: "Purchase Requests", run: purchases },
+  { name: "Payments", run: purchases },
   { name: "Events & Rooms", run: events },
   { name: "Marketing Requests", run: marketing },
   { name: "IT & Maintenance", run: tickets },

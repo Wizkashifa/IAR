@@ -43,7 +43,7 @@ export type Card = {
   amount?: number;
   updatedAt: string;
   createdAt?: string;
-  /** Purchase Requests module fields (type "purchase"). */
+  /** Payments module fields (type "purchase"). */
   purchase?: PurchaseDetails;
   /** Events & Rooms module fields (type "event"). */
   event?: EventDetails;
@@ -117,6 +117,8 @@ export interface CardStore {
   create(card: Omit<Card, "id">, prefix: string): Promise<Card>;
   /** Saves only if nobody else saved since `expectedUpdatedAt`. */
   save(card: Card, expectedUpdatedAt: string): Promise<void>;
+  /** Deletes a request for good (portal admins only, see lib/card-delete.ts). */
+  remove(id: string): Promise<void>;
   listVendors(): Promise<Vendor[]>;
   saveVendor(v: Vendor): Promise<void>;
   deleteVendor(id: string): Promise<void>;
@@ -210,6 +212,10 @@ const memoryStore: CardStore = {
     if (!cur || cur.updatedAt !== expectedUpdatedAt) throw new ConflictError();
     mem.cards.set(card.id, clone(card));
   },
+  async remove(id) {
+    await ensureSeeded();
+    mem.cards.delete(id);
+  },
   async listVendors() {
     await ensureSeeded();
     return [...mem.vendors.values()].map(clone).sort((a, b) => a.name.localeCompare(b.name));
@@ -295,6 +301,9 @@ async function getFirestoreStore(): Promise<CardStore> {
         tx.set(ref, clean(withIndexFields(card)));
       });
     },
+    async remove(id) {
+      await cards.doc(id).delete();
+    },
     async listVendors() {
       const snap = await vendors.orderBy("name").limit(2000).get();
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Vendor, "id">) }));
@@ -346,6 +355,10 @@ function onBehalfStore(store: CardStore, as: ActAs): CardStore {
     async deleteVendor(id) {
       await store.deleteVendor(id);
       await note(`Removed vendor ${id}`);
+    },
+    async remove(id) {
+      await store.remove(id);
+      await note(`Deleted ${id}`);
     },
   };
 }
