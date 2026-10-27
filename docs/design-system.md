@@ -109,6 +109,6 @@ portal/src/
 ## Decided (Oct 25, 2026)
 
 - **Mantine for the hard widgets only**, through our wrappers: date and time pickers, the room and people pickers, file drop, confirm dialogs, toasts and the header search. Panels, rows, pills, the step bar and the request page stay ours, built from the demo. Magic UI (animated landing-page pieces on Tailwind) is not a fit.
-- **Desktop sidebar** from about 1000px wide; the drawer stays on phones.
+- **Desktop sidebar** from about 1000px wide; the drawer stays on phones, with search and Help at its top and your account links at its bottom. Both scroll when the menu is taller than the screen.
 - **The IT & Maintenance button** reads "AV/IT/Maintenance".
 - **Names** come from the read-only Workspace user scope (`admin.directory.user.readonly`), which an IAR super admin approves in go-live.

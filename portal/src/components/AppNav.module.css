@@ -61,8 +61,12 @@
   .deskAccount { gap: var(--s-2); }
   .sep { width: 1px; height: 24px; margin: 0 6px; background: var(--gold-line); }
 
-  /* Page area beside the sidebar. */
-  .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 64px); }
+  /* Page area beside the sidebar. --top-h is the top bar's height (.topInner and its gold border, plus a phone's notch). */
+  .shell {
+    --top-h: calc(64px + env(safe-area-inset-top, 0px));
+    display: grid; grid-template-columns: 220px minmax(0, 1fr);
+    min-height: calc(100vh - var(--top-h)); min-height: calc(100dvh - var(--top-h));
+  }
   .main {
     min-width: 0; padding-block: 28px 64px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -70,12 +74,24 @@
   .main:focus { outline: none; }
   .mainInner { max-width: 1040px; margin: 0 auto; }
 
-  /* The menu: a sidebar on wide screens. */
+  /*
+   * The menu: a sidebar on wide screens. It scrolls when it's taller than the screen (admins have a long menu), sized to
+   * the visible screen (dvh, so a phone's or tablet's browser bar doesn't hide the bottom). A faint shade along the
+   * bottom edge shows there's more below; it's covered once you scroll to the end.
+   */
   .rail {
-    position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow-y: auto;
-    display: flex; flex-direction: column; gap: 2px; padding: var(--s-4) var(--s-3);
-    background: var(--surface); border-right: 1px solid var(--line);
+    position: sticky; top: var(--top-h); align-self: start;
+    height: calc(100vh - var(--top-h)); height: calc(100dvh - var(--top-h));
+    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+    display: flex; flex-direction: column; gap: 2px;
+    padding: var(--s-4) var(--s-3) max(var(--s-4), env(safe-area-inset-bottom, 0px));
+    background:
+      linear-gradient(var(--surface), var(--surface)) center bottom / 100% 16px no-repeat local,
+      linear-gradient(to top, var(--line), transparent) center bottom / 100% 16px no-repeat scroll,
+      var(--surface);
+    border-right: 1px solid var(--line);
   }
+  .rail > * { flex: none; }
   .group { display: flex; flex-direction: column; gap: 2px; }
   .groupLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 14px 10px 6px; }
   .link {
@@ -101,6 +117,7 @@
     .shell { grid-template-columns: minmax(0, 1fr); }
     .rail {
       position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; height: auto; width: min(300px, 86vw);
+      max-height: 100vh; max-height: 100dvh;
       padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-left: max(12px, env(safe-area-inset-left, 0px));
       box-shadow: var(--shadow-2); transform: translateX(-102%); visibility: hidden;
       transition: transform 0.2s ease-out, visibility 0.2s;

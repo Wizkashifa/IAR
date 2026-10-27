@@ -26,10 +26,10 @@ function useFeedback() {
 }
 
 /**
- * Out of office, feedback, theme and sign out. In the phone menu (where the menu itself already has Out of office, and Help,
- * which sits in the top bar on wider screens); `AccountMenu` shows it from the header on wider screens.
+ * Out of office, feedback, theme and sign out. At the bottom of the phone menu (which already has Out of office, and Help at
+ * its top); `AccountMenu` shows it from the header on wider screens.
  */
-export function AccountLinks({ account, onPick, withAway = true, withHelp = false }: { account: Account; onPick?: () => void; withAway?: boolean; withHelp?: boolean }) {
+export function AccountLinks({ account, onPick, withAway = true }: { account: Account; onPick?: () => void; withAway?: boolean }) {
   const fb = useFeedback();
   return (
     <div className={styles.links}>
@@ -44,12 +44,6 @@ export function AccountLinks({ account, onPick, withAway = true, withHelp = fals
         <Icon name="bell" />
         <span>Notification settings</span>
       </Link>
-      {withHelp && (
-        <Link href="/help" className={styles.link} onClick={onPick}>
-          <Icon name="help" />
-          <span>Help</span>
-        </Link>
-      )}
       <a
         href={fb.href}
         className={styles.link}
