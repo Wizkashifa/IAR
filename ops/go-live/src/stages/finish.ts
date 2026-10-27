@@ -51,8 +51,8 @@ export const beta: Stage = {
           kind: "update",
           text: `Open the portal to every @${opt.domain} account (remove PORTAL_ACCESS_GROUP and redeploy). Then make the Chat app visible to everyone and install it for everyone (see below), or only the testers get Chat alerts`,
           detail: [
-            `1. ${console_.chatConfig(opt.project)}: Visibility → "Make this Chat app available to everyone in ${opt.domain}". Save.`,
-            `2. ${console_.marketplace}: "IAR Portal" → Admin install → Everyone in ${opt.domain}.`,
+            `1. ${console_.chatConfig(opt.project)}: under Visibility, untick "Make this Chat app available to specific people and groups". Save.`,
+            `2. ${console_.marketplace}: "IAR Portal" → Admin install → everyone in ${opt.domain}. Installing it is what lets the app message people.`,
           ],
           ask: "access",
           run: async (c) => {
