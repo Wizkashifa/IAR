@@ -39,7 +39,7 @@ export function sampleTickets(): Card[] {
 
   // Urgent, picked up and being worked on.
   let c = make(office, { team: "facilities", kind: "request", title: "MPH is not cooling before Family Night", room: "MPH A&B – full gym", equipment: "Rooftop HVAC unit 2", urgency: "urgent", description: "It's 84°F inside and setup starts at 4.\nThe unit 2 compressor sounds like it's struggling." }, t(2, 9));
-  c = wf.assign(c, facilities, t(2, 10), facilities.email, MEMBERS.facilities);
+  c = wf.assign(c, facilities, t(2, 10), facilities.email, MEMBERS);
   c = wf.start(c, facilities, t(1, 11));
   out.push(c);
 
@@ -48,7 +48,7 @@ export function sampleTickets(): Card[] {
 
   // Waiting on parts.
   c = make(chair, { team: "facilities", kind: "request", title: "Main hall side door doesn't latch", room: "Main Prayer Hall", equipment: "Side door by the shoe racks", urgency: "high", description: "The door swings open in the wind. It's chained shut for now." }, t(5, 9));
-  c = wf.assign(c, chair, t(5, 10), facilities.email, MEMBERS.facilities);
+  c = wf.assign(c, chair, t(5, 10), facilities.email, MEMBERS);
   c = wf.start(c, facilities, t(4, 9));
   c = wf.waitForParts(c, facilities, t(4, 15), "New strike plate ordered from the locksmith, due Thursday.");
   out.push(c);
@@ -66,14 +66,14 @@ export function sampleTickets(): Card[] {
 
   // Fixed yesterday: Sample Volunteer is asked to confirm.
   c = make(volunteer, { team: "it", kind: "request", title: "Wi-Fi drops in the conference room", room: "Room 240 – conference room", urgency: "normal", description: "Wi-Fi drops every few minutes, mostly on video calls." }, t(3, 13));
-  c = wf.assign(c, it, t(3, 15), it.email, MEMBERS.it);
+  c = wf.assign(c, it, t(3, 15), it.email, MEMBERS);
   c = wf.start(c, it, t(2, 10));
   c = wf.resolve(c, it, t(1, 16), "Moved the access point off the crowded channel and updated its firmware.");
   out.push(c);
 
   // Done and confirmed.
   c = make(volunteer, { team: "facilities", kind: "request", title: "Replace burnt-out lights by the east entrance", room: "Outside / parking", urgency: "low", description: "Two light poles by the east entrance are dark after Isha." }, t(14, 20));
-  c = wf.assign(c, facilities, t(13, 9), facilities.email, MEMBERS.facilities);
+  c = wf.assign(c, facilities, t(13, 9), facilities.email, MEMBERS);
   c = wf.resolve(c, facilities, t(12, 15), "Replaced both bulbs.");
   c = wf.confirm(c, volunteer, t(11, 19));
   out.push(c);

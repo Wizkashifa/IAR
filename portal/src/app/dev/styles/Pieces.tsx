@@ -110,12 +110,12 @@ export function Pieces() {
 
       <Panel title="Page pieces" right="Crumb, LinkCard, Pill small, PanelNote, PanelFoot, .hint">
         <div className="stack">
-          <Crumb trail={[{ href: "/dev/styles", label: "Purchase Requests" }, { href: "/dev/styles", label: "PO-12007" }]} here="Make changes" />
+          <Crumb trail={[{ href: "/dev/styles", label: "Payments" }, { href: "/dev/styles", label: "PO-12007" }]} here="Make changes" />
           <LinkCards label="Examples">
             <LinkCard href="/dev/styles" icon="megaphone" title="Graphic or flyer">
               A flyer, social media post or slide for a program.
             </LinkCard>
-            <LinkCard href="/dev/styles" icon="book" title="Purchase Requests">
+            <LinkCard href="/dev/styles" icon="book" title="Payments">
               How to pay a vendor, get reimbursed or send card receipts.
             </LinkCard>
           </LinkCards>

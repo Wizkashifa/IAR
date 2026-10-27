@@ -224,7 +224,7 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
   revalidatePath("/events");
   if (images.length) {
     try {
-      const saved = await saveEventImages(input.title, images);
+      const saved = await saveEventImages(input.title, input.date, images);
       await store.save(addImages(trouble.card, actor, nowIso(), saved), trouble.card.updatedAt);
     } catch (err) {
       console.error("event image upload failed", err);
@@ -256,7 +256,7 @@ export async function addEventImages(form: FormData): Promise<void> {
 
   let error: string | null = null;
   try {
-    const saved = await saveEventImages(card.title, files);
+    const saved = await saveEventImages(card.title, card.event.date, files);
     // Someone may have saved the request while the images uploaded: add them to the latest copy.
     for (let attempt = 0; attempt < 2; attempt++) {
       const latest = attempt === 0 ? card : await store.get(id);

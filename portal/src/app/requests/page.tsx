@@ -14,12 +14,13 @@ import { actorFor } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { needsContext } from "@/lib/waiting";
 import { KINDS } from "@/lib/kinds";
+import { Note } from "@/components/Note";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My Requests" };
 
-export default async function MyRequests({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
-  const { kind } = await searchParams;
+export default async function MyRequests({ searchParams }: { searchParams: Promise<{ kind?: string; deleted?: string; problem?: string }> }) {
+  const { kind, deleted, problem } = await searchParams;
   const viewer = await requireViewer();
   const [all, actor, ctx] = await Promise.all([(await cardStore()).listByOwner(viewer.email), actorFor(viewer), needsContext()]);
   const live = new Set(visibleModules(viewer.roles).filter((m) => m.status === "live").map((m) => m.id));
@@ -44,6 +45,8 @@ export default async function MyRequests({ searchParams }: { searchParams: Promi
           </Button>
         ))}
       />
+      {deleted && <Note tone="ok">{deleted} was deleted.</Note>}
+      {problem && <Note tone="warn">{problem}</Note>}
       <HelpBox module="requests" />
       <ItemList
         title="Your requests"

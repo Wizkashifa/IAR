@@ -1,5 +1,5 @@
 /**
- * Who hears about a purchase request when it moves, and whether they get an alert.
+ * Who hears about a payment request when it moves, and whether they get an alert.
  *
  * The plan's rule: alert only the person who has to act next. Approvers get
  * a Google Chat message the moment a request reaches them; the requester gets

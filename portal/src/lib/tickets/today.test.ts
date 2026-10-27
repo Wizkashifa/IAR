@@ -14,7 +14,7 @@ const reporter: wf.TicketActor = { email: `vol@${d}`, name: "Vol Unteer", roles:
 const fac: wf.TicketActor = { email: `fac@${d}`, name: "Fac Staff", roles: ["member", "facilities"] };
 const fac2: wf.TicketActor = { email: `fac2@${d}`, name: "Fac Two", roles: ["member", "facilities"] };
 const office: wf.TicketActor = { email: `office@${d}`, name: "Office", roles: ["member", "office"] };
-const members = [fac.email, fac2.email];
+const members = { facilities: [fac.email, fac2.email], it: [] };
 
 const T = (h: number) => new Date(Date.UTC(2026, 9, 1, 12) + h * 36e5).toISOString();
 const NOW = new Date(T(10));

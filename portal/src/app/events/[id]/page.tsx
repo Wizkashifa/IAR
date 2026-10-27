@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
@@ -171,6 +173,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   return (
     <RequestPage
       crumb={{ href: "/events", label: "Events & Rooms" }}
+      admin={mayDeleteRequests(viewer) ? <DeleteRequest id={card.id} what="Its room holds come off the calendar, and anyone who asked for its time gets it." /> : undefined}
       id={card.id}
       title={card.title}
       pills={
@@ -283,9 +286,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           )}
 
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
-            <Panel title="Purchases for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
+            <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState icon="receipt">None linked yet. When you send a purchase request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState icon="receipt">None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (
@@ -296,7 +299,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               )}
               <PanelFoot>
                 Spent so far: <strong>{spendText(spent, e.budget)}</strong>
-                {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New purchase request</Link></> : null}
+                {own && (card.status === "approved" || card.status === "close_out") ? <> · <Link href="/purchases/new">New payment request</Link></> : null}
               </PanelFoot>
             </Panel>
           )}
@@ -393,7 +396,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </>
           )}
           {resubmit && <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>}
-          {addPurchase && <Button href="/purchases/new" icon="receipt">Add a purchase request</Button>}
+          {addPurchase && <Button href="/purchases/new" icon="receipt">Add a payment request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
           {(reviewing || resubmit || addPurchase || renew || again) && <span className="grow" />}
@@ -479,9 +482,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <input type="number" name="attendance" min={0} max={100000} defaultValue={own ? e.attendance : undefined} required={own} />
               </Field>
               <div>
-                <div className="hint">Actual spend (from the purchases linked to this event)</div>
+                <div className="hint">Actual spend (from the payment requests linked to this event)</div>
                 <strong>{spendText(spent, e.budget)}</strong>
-                <div className="hint">{linked.length} purchase request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
+                <div className="hint">{linked.length} payment request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
             </div>
             <div>

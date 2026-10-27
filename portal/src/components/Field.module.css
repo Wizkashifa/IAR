@@ -3,7 +3,9 @@
   .label { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); }
   /* A field whose control has its own id (DateField): its label line is the same height as the others'. */
   .field > label[for] { font-size: var(--t-sm); }
-  .req { color: var(--bad); margin-left: 2px; }
+  /* "Required", the same on every form (RequiredTag). */
+  .req { display: inline-block; margin-left: var(--s-2); padding: 1px 7px; border-radius: 999px; background: var(--bad-soft); color: var(--bad); font-size: var(--t-xs); font-weight: 600; line-height: 1.5; vertical-align: 1px; }
+  .key { margin: 0; font-size: var(--t-sm); color: var(--ink-3); }
   .hint { font-size: 12px; color: var(--ink-3); }
   .error { display: flex; gap: 6px; align-items: flex-start; font-size: var(--t-sm); color: var(--bad); font-weight: 600; }
   .error > svg { margin-top: 2px; }

@@ -52,7 +52,7 @@ export function AppFrame({
 }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
-  // The one menu link for this page: the longest that matches, so /purchases/finance lights up Finance desk, not Purchase Requests too.
+  // The one menu link for this page: the longest that matches, so /purchases/finance lights up Finance desk, not Payments too.
   const current = groups.flatMap((g) => g.links.map((l) => l.href)).filter((h) => isCurrent(path, h)).sort((a, b) => b.length - a.length)[0];
   const menuBtn = useRef<HTMLButtonElement>(null);
   const rail = useRef<HTMLElement>(null);

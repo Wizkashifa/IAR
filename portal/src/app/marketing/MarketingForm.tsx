@@ -8,7 +8,7 @@ import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
-import { Field, FormActions } from "@/components/Field";
+import { Field, FormActions, RequiredKey } from "@/components/Field";
 import { Panel } from "@/components/Panel";
 import type { MarketingFormState } from "./actions";
 import styles from "./marketing.module.css";
@@ -48,6 +48,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
       <input type="hidden" name="kind" value={kind} />
       <FormStarted form="marketing" />
       <FormErrors errors={state.errors} />
+      <RequiredKey />
 
       {question !== undefined && (
         <Panel title="Marketing's question">
@@ -119,11 +120,10 @@ export default function MarketingForm({ action, kind, committees, initial, quest
 function Question({ f, value, today }: { f: MarketingField; value?: string; today: string }) {
   const name = `a_${f.key}`;
   const label = `${f.label}${f.required ? "" : " (optional)"}`;
-  const legend = <>{label}{f.required && <span aria-hidden="true"> *</span>}</>;
   const wide = f.half || f.kind === "date" ? undefined : "wide";
   if (f.kind === "radio") {
     return (
-      <Choices legend={legend} plain hint={f.hint} className="wide">
+      <Choices legend={label} required={f.required} plain hint={f.hint} className="wide">
         {f.options?.map((o) => (
           <Choice key={o.value} type="radio" name={name} value={o.value} defaultChecked={value === o.value} required={f.required} label={o.label} />
         ))}

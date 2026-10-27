@@ -7,7 +7,7 @@ import { purchaseContext } from "./settings";
 import * as wf from "./workflow";
 
 /**
- * Sample purchase requests for local development, built by running the real
+ * Sample payment requests for local development, built by running the real
  * workflow so every stage, history line and permission is what the app would
  * produce. Requests, payees and amounts are made up; the accounts are IAR's.
  */

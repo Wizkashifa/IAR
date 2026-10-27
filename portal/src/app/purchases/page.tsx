@@ -106,7 +106,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         {(myPurchases.length > 0 || !overseer) && <ItemList
           title="Your requests"
           sections={sectionsOf(mineRows)}
-          empty="You haven't sent a purchase request yet."
+          empty="You haven't sent a payment request yet."
           emptyAction={
             <Button href="/purchases/new" variant="primary" size="small">
               New payment request

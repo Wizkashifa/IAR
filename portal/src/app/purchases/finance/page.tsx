@@ -91,7 +91,7 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
         lead="Pay approved requests, enter them in QuickBooks and record refunds, several at a time."
         actions={
           <>
-            <Button href="/purchases">All purchase requests</Button>
+            <Button href="/purchases">All payment requests</Button>
             {/* A plain link: the CSV is a download, not a page. */}
             <a href={csvHref} download className={buttonClass({ variant: "primary" })}>
               <Icon name="down" />

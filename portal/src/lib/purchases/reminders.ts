@@ -1,5 +1,5 @@
 /**
- * What the daily job does about purchase requests (plan: "morning digest,
+ * What the daily job does about payment requests (plan: "morning digest,
  * overdue escalation"). Plain functions so they can be tested; daily.ts
  * loads the requests, calls these, saves and delivers.
  *
@@ -87,7 +87,7 @@ export function morningDigest(cards: PurchaseCard[], now: string): Notice[] {
     const list = sorted.slice(0, 8).map((c) => `${purchaseLabel(c)}, ${days(daysWaiting(c, nowMs))}`).join("; ");
     const more = sorted.length > 8 ? `; and ${sorted.length - 8} more` : "";
     const whose = "email" in to ? "you" : to.role === "finance" ? "the finance office" : "the executive";
-    out.push({ to, href: "/purchases", text: `Good morning. ${sorted.length} purchase request${sorted.length === 1 ? " is" : "s are"} waiting on ${whose}: ${list}${more}.`, alert: true, delegable: "email" in to });
+    out.push({ to, href: "/purchases", text: `Good morning. ${sorted.length} payment request${sorted.length === 1 ? " is" : "s are"} waiting on ${whose}: ${list}${more}.`, alert: true, delegable: "email" in to });
   }
   return out;
 }

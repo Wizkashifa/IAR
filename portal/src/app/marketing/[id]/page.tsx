@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { canRequestAgain } from "@/lib/again";
@@ -156,6 +158,7 @@ export default async function MarketingDetail({
     <>
       <RequestPage
         crumb={{ href: "/marketing", label: "Marketing Requests" }}
+        admin={mayDeleteRequests(viewer) ? <DeleteRequest id={mc.id} /> : undefined}
         id={mc.id}
         title={mc.title}
         pills={

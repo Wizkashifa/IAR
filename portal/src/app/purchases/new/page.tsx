@@ -14,7 +14,7 @@ import { isPurchaseCard } from "@/lib/purchases/workflow";
 import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "New purchase request" };
+export const metadata: Metadata = { title: "New payment request" };
 
 export default async function NewPurchase({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   const { from } = await searchParams;

@@ -49,6 +49,6 @@ test("digest: one message per approver and one for finance, weekdays only", () =
   const cards = [card("PO-1"), card("PO-2", { stageSince: day(-2) }), card("PO-3", { stage: "finance", approverEmail: undefined })];
   const d = morningDigest(cards, day(1));
   assert.deepEqual(d.map((n) => n.to), [{ email: "chair@x.org" }, { role: "finance" }]);
-  assert.match(d[0].text, /2 purchase requests are waiting on you: PO-2 .*3 days; PO-1/);
+  assert.match(d[0].text, /2 payment requests are waiting on you: PO-2 .*3 days; PO-1/);
   assert.equal(morningDigest(cards, day(5)).length, 0, "Saturday");
 });

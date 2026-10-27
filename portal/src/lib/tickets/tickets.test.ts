@@ -23,7 +23,7 @@ const facLead: wf.TicketActor = { email: `faclead@${d}`, name: "Fac Chair", role
 const itTech: wf.TicketActor = { email: `it@${d}`, name: "IT Tech", roles: ["member", "it", "av"] };
 const office: wf.TicketActor = { email: `office@${d}`, name: "Office", roles: ["member", "office"] };
 const admin: wf.TicketActor = { email: `admin@${d}`, name: "Admin", roles: ["member", "admins"] };
-const members = [fac.email, fac2.email, facLead.email];
+const members = { facilities: [fac.email, fac2.email, facLead.email], it: [`it@${d}`] };
 
 const T = (h: number) => new Date(Date.UTC(2026, 9, 1, 12) + h * 36e5).toISOString();
 
@@ -83,12 +83,19 @@ test("start on an unassigned ticket assigns whoever starts it", () => {
   assert.deepEqual(c.ticket.history.slice(1).map((h) => h.action), ["Picked it up", "Started work"]);
 });
 
-test("assign: only team members or the office; only to someone on the team's Google Group", () => {
+test("assign: only IT, Facilities or the office; only to someone on one of their Google Groups", () => {
   const c = reported();
-  throws(() => wf.assign(c, reporter, T(1), fac.email, members), /Only the Facilities team or the IAR office/);
-  throws(() => wf.assign(c, itTech, T(1), fac.email, members), /Only the Facilities team/);
-  throws(() => wf.assign(c, admin, T(1), fac.email, members), /Only the Facilities team/);
-  throws(() => wf.assign(c, fac, T(1), `stranger@${d}`, members), /isn't on the Facilities team's Google Group/);
+  throws(() => wf.assign(c, reporter, T(1), fac.email, members), /Only IT Services, Facility Maintenance or the IAR office/);
+  throws(() => wf.assign(c, admin, T(1), fac.email, members), /Only IT Services, Facility Maintenance/);
+  throws(() => wf.assign(c, fac, T(1), `stranger@${d}`, members), /isn't on the IT Services or Facility Maintenance Google Group/);
+  // IT and Facilities hand tickets to each other; the ticket moves to the new person's team.
+  const toFac = wf.assign(c, itTech, T(1), fac.email, members);
+  assert.equal(toFac.ticket.team, "facilities");
+  const toIt = wf.assign(c, fac, T(1), itTech.email, members);
+  assert.equal(toIt.ticket.team, "it");
+  assert.equal(toIt.ticket.assigneeEmail, itTech.email);
+  assert.equal(toIt.ticket.history.at(-1)!.action, `Assigned to ${itTech.email}, moving it to IT Services`);
+  assert.equal(wf.permission(toIt, itTech, "start").ok, true, "the IT tech can work it now");
   const byOffice = wf.assign(c, office, T(1), fac2.email, members);
   assert.equal(byOffice.ticket.assigneeEmail, fac2.email);
   assert.equal(wf.assign(c, fac, T(1), fac2.email, members).ticket.history.at(-1)!.action, `Assigned to ${fac2.email}`);
@@ -192,7 +199,7 @@ test("teams: leads and members come from the Google Groups", () => {
 
 // ---- Visibility -------------------------------------------------------------------
 
-test("visibility: reporter, followers, the ticket's team, office, admins; not other members or the other team", () => {
+test("visibility: reporter, followers, IT and Facilities (they hand tickets to each other), office, admins; not other members", () => {
   const c = wf.setWatching(reported(), `watcher@${d}`, true, T(1));
   const see = (v: wf.TicketActor & { seeAll?: boolean }) => canViewTicket(c, v);
   assert.ok(see(reporter));
@@ -201,9 +208,9 @@ test("visibility: reporter, followers, the ticket's team, office, admins; not ot
   assert.ok(see({ ...admin, seeAll: true }));
   assert.ok(see({ email: `watcher@${d}`, name: "W", roles: ["member"] }));
   assert.equal(see({ email: `other@${d}`, name: "O", roles: ["member", "chairs"] }), false);
-  assert.equal(see(itTech), false);
+  assert.ok(see(itTech), "the other team can open it to hand it over");
   assert.equal(see(admin), false, "admins see only with seeAll");
-  assert.equal(canOpenCard(c, itTech), false);
+  assert.ok(canOpenCard(c, itTech));
   assert.ok(canOpenCard(c, fac));
 });
 

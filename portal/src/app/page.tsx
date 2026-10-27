@@ -33,7 +33,7 @@ const fmtDay = (d: string, weekday = false) =>
 /** The quick buttons, for the live modules this person can use. */
 const QUICK: { module: string; href: string; label: string; icon: IconName }[] = [
   { module: "events", href: "/events/new", label: "New event request", icon: "calendar" },
-  { module: "purchase-requests", href: "/purchases/new", label: "New purchase request", icon: "receipt" },
+  { module: "purchase-requests", href: "/purchases/new", label: "New payment request", icon: "receipt" },
   { module: "marketing-requests", href: "/marketing/new", label: "Marketing request", icon: "megaphone" },
   { module: "it-maintenance", href: "/it-maintenance/new", label: "AV/IT/Maintenance", icon: "wrench" },
 ];

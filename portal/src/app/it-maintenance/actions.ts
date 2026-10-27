@@ -69,7 +69,7 @@ export async function actOnTicket(form: FormData): Promise<void> {
       let next: wf.TicketCard;
       switch (action as wf.Action) {
         case "assign":
-          next = wf.assign(card, actor, now, field(form, "assignee"), (await teamMembers())[card.ticket.team]);
+          next = wf.assign(card, actor, now, field(form, "assignee"), await teamMembers());
           break;
         case "start":
           next = wf.start(card, actor, now);
@@ -127,7 +127,7 @@ export async function actFromToday(form: FormData): Promise<void> {
   if (!error) {
     try {
       let next: wf.TicketCard;
-      if (action === "assign") next = wf.assign(card, actor, now, actor.email, (await teamMembers())[card.ticket.team]);
+      if (action === "assign") next = wf.assign(card, actor, now, actor.email, await teamMembers());
       else if (action === "start") next = wf.start(card, actor, now);
       else if (action === "wait") next = wf.waitForParts(card, actor, now, note);
       else next = wf.resolve(card, actor, now, note);

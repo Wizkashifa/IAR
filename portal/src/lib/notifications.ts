@@ -40,6 +40,8 @@ interface NotificationStore {
   /** Newest first, for any of these addresses. */
   listFor(to: string[], limit: number): Promise<Notification[]>;
   markRead(ids: string[], email: string): Promise<void>;
+  /** Drops every notification about one request (when a portal admin deletes it). */
+  removeForCard(cardId: string): Promise<void>;
 }
 
 const g = globalThis as unknown as { __iarNotifs?: { items: Notification[]; seq: number } };
@@ -54,6 +56,9 @@ const memoryStore: NotificationStore = {
   },
   async markRead(ids, email) {
     for (const n of mem.items) if (ids.includes(n.id) && !n.readBy.includes(email)) n.readBy.push(email);
+  },
+  async removeForCard(cardId) {
+    mem.items = mem.items.filter((n) => n.cardId !== cardId);
   },
 };
 
@@ -78,12 +83,23 @@ async function getFirestoreStore(): Promise<NotificationStore> {
       for (const id of ids.slice(0, 400)) batch.update(col.doc(id), { readBy: FieldValue.arrayUnion(email) });
       await batch.commit();
     },
+    async removeForCard(cardId) {
+      const snap = await col.where("cardId", "==", cardId).limit(400).get();
+      const batch = db.batch();
+      for (const d of snap.docs) batch.delete(d.ref);
+      await batch.commit();
+    },
   };
   return fsStore;
 }
 
 async function store(): Promise<NotificationStore> {
   return isDevAuth() ? memoryStore : getFirestoreStore();
+}
+
+/** Drops the bell's notifications about a deleted request, so none link to a page that's gone. */
+export async function removeNotificationsFor(cardId: string): Promise<void> {
+  await (await store()).removeForCard(cardId);
 }
 
 /** The addresses a person's notifications can come to: their email and their own groups' roles. */
@@ -138,12 +154,12 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   const updates: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
-  // Purchase requests in demo mode: only testers' requests reach Chat or email (lib/purchases/demo.ts).
+  // Payment requests in demo mode: only testers' requests reach Chat or email (lib/purchases/demo.ts).
   const sends = await purchaseAlerts(notices.map((n) => n.cardId ?? ""));
 
   try {
     for (const n of notices) {
-      // A demo purchase request: on the bell only, never Chat or email.
+      // A demo payment request: on the bell only, never Chat or email.
       const live = !n.cardId || sends(n.cardId);
       const alert = n.alert && live;
       const base = { cardId: n.cardId, href: n.href, at: now, by: actor, readBy: [] as string[] };
@@ -173,7 +189,7 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   await sendAlerts([...alerts, ...(await wantedUpdates(updates))], { now: new Date(now) });
 }
 
-/** Which cards' alerts may go out (purchase requests in demo mode only for testers). Loaded on first use, as it reads the card store. */
+/** Which cards' alerts may go out (payment requests in demo mode only for testers). Loaded on first use, as it reads the card store. */
 async function purchaseAlerts(cardIds: string[]): Promise<(cardId: string) => boolean> {
   const { purchaseAlertsFor } = await import("./purchases/demo");
   return purchaseAlertsFor(cardIds);

@@ -8,7 +8,7 @@ import type { MarketingFile, MarketingKind } from "./types";
  * Marketing request files go to the "Marketing Files" Shared Drive go-live
  * makes (MARKETING_DRIVE_FOLDER_ID), one folder per year and one per request
  * ("2026 / MK-1004 · Graphic design"). Images for a public event request go
- * in "Event Requests", one folder per event, named after it. The portal's runtime service account
+ * in "Event Requests", one folder per event, by its date and name. The portal's runtime service account
  * and the marketing team's Google Group are Content managers on it.
  *
  * Until the folder is set, the forms still work: people share a Google Drive
@@ -35,13 +35,13 @@ export async function saveMarketingFiles(cardId: string, kind: MarketingKind, fi
 /** Where event requests' images go in the marketing drive: one folder per event, by its name. */
 export const EVENT_REQUESTS_FOLDER = "Event Requests";
 
-/** An event's name as a Drive folder name: one line, not too long. */
-export const eventFolderName = (title: string) => title.replace(/\s+/g, " ").trim().slice(0, 120) || "Untitled event";
+/** An event's Drive folder: its date first (so they sort by date), then its name ("2026-11-17 · Family Fun Night"). */
+export const eventFolderName = (title: string, date: string) => `${date} · ${title.replace(/\s+/g, " ").trim().slice(0, 120) || "Untitled event"}`;
 
-export async function saveEventImages(eventTitle: string, files: File[]): Promise<Omit<MarketingFile, "at" | "by">[]> {
+export async function saveEventImages(eventTitle: string, eventDate: string, files: File[]): Promise<Omit<MarketingFile, "at" | "by">[]> {
   if (files.length === 0) return [];
   if (isDevAuth()) return files.map((f) => ({ name: f.name, size: f.size }));
   const root = await marketingFolder();
   if (!root) throw new Error(NOT_SET_UP);
-  return uploadToFolder(root, [EVENT_REQUESTS_FOLDER, eventFolderName(eventTitle)], files);
+  return uploadToFolder(root, [EVENT_REQUESTS_FOLDER, eventFolderName(eventTitle, eventDate)], files);
 }

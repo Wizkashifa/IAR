@@ -43,7 +43,7 @@ export const ORG = {
     admins: `portal-role-admin@${domain}`,
   } as Partial<Record<Role, string>>,
   /**
-   * The testers ("Portal: Testers"). They use what's still a demo (purchase requests) for real. The address
+   * The testers ("Portal: Testers"). They use what's still a demo (payment requests) for real. The address
    * keeps its first name, portal-role-beta@, so settings that point to it keep working.
    */
   testersGroup: `portal-role-beta@${domain}`,

@@ -79,7 +79,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "After the event",
         steps: [
           "The request page asks you to close it out: how many people came, how it went, and the final costs.",
-          "Purchases linked to the event count towards its budget, so the final costs are mostly filled in for you.",
+          "Payment requests linked to the event count towards its budget, so the final costs are mostly filled in for you.",
         ],
       },
       {
@@ -104,7 +104,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     ],
     sections: [
       {
-        heading: "Send a purchase request",
+        heading: "Send a payment request",
         steps: [
           "Open Payments and click New payment request.",
           "Choose what it's for: pay a vendor or person, reimburse me, or IAR credit card receipts.",
@@ -240,7 +240,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     href: "/requests",
     module: "my-requests",
     short: [
-      "Everything you've asked for is here: events, purchases, marketing and AV/IT/Maintenance.",
+      "Everything you've asked for is here: events, payments, marketing and AV/IT/Maintenance.",
       "Needs you is at the top: something sent back, a question, or an event to close out.",
       "Waiting on others shows who has it now. Done is folded away at the bottom.",
     ],

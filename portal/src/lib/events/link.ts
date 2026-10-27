@@ -1,5 +1,5 @@
 /**
- * Linking a purchase request to an event, so the event's costs add up at
+ * Linking a payment request to an event, so the event's costs add up at
  * close-out. The purchase form offers the requester's own approved events
  * (and ones in close-out) and their committees' upcoming approved events.
  * Plain functions so they can be tested.

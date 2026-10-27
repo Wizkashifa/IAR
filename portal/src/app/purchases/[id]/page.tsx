@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
@@ -263,6 +265,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   return (
     <RequestPage
       crumb={{ href: "/purchases", label: "Payments" }}
+      admin={mayDeleteRequests(viewer) ? <DeleteRequest id={card.id} /> : undefined}
       id={card.id}
       title={card.title}
       pills={

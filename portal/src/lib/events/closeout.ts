@@ -2,7 +2,7 @@
  * Close-out after the event (docs/plan.md, "The event card"). The morning
  * after an approved event's last date, the daily job moves it to close-out
  * and the requester is asked for the actual attendance, how it went, and to
- * confirm the final costs: the purchase requests linked to the event. A week
+ * confirm the final costs: the payment requests linked to the event. A week
  * later they get a reminder. Submitting closes the card; the IAR office can
  * close it for them. Plain functions so they can be tested.
  */
@@ -44,7 +44,7 @@ export function markNudged(card: EventCard, now: string): EventCard {
 
 // ---- Linked purchases --------------------------------------------------------
 
-/** Purchase requests linked to the event that still count: not cancelled or rejected. */
+/** Payment requests linked to the event that still count: not cancelled or rejected. */
 export function linkedPurchases(cards: Card[], eventId: string): Card[] {
   return cards.filter((c) => c.type === "purchase" && c.purchase?.eventCardId === eventId && c.status !== "cancelled" && c.status !== "denied");
 }
@@ -85,7 +85,7 @@ export function submitCloseOut(card: EventCard, actor: EventActor, now: string, 
   const n = raw === "" ? undefined : Number(raw);
   if (n !== undefined && (!Number.isInteger(n) || n < 0 || n > 100000)) errors.push("Enter the actual attendance as a whole number.");
   if (owner && n === undefined) errors.push("Enter about how many people came.");
-  if (owner && !input.costsConfirmed) errors.push("Confirm the final costs: the purchase requests linked to this event. Link any missing ones first.");
+  if (owner && !input.costsConfirmed) errors.push("Confirm the final costs: the payment requests linked to this event. Link any missing ones first.");
   if (errors.length) throw new WorkflowError(errors.join(" "));
   const notes = String(input.notes ?? "").trim().slice(0, 2000);
   const byOffice = !owner;

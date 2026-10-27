@@ -7,7 +7,7 @@ import type { Card } from "./cards";
 
 /**
  * A request number in the query, normalized to "PO-12001", or null. A bare
- * number is a purchase request when it's in the PO range (12001 up), and
+ * number is a payment request when it's in the PO range (12001 up), and
  * otherwise has no prefix to guess, so matchCards looks it up by number.
  */
 export function requestNumber(q: string): string | null {

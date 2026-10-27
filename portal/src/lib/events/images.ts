@@ -2,7 +2,7 @@
  * Images for marketing on a public event request: the requester adds them on
  * the form (or later, on the request page), and the marketing team can add
  * them too. They're kept in the marketing Shared Drive under "Event Requests /
- * <event name>" (lib/marketing/drive.ts). Images only: no PDFs or documents
+ * <date · event name>" (lib/marketing/drive.ts). Images only: no PDFs or documents
  * (checkFiles with imagesOnly, lib/marketing/files.ts). Plain functions so
  * they can be tested.
  */

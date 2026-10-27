@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { mayDeleteRequests } from "@/lib/card-delete";
+import { DeleteRequest } from "@/app/requests/DeleteRequest";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -24,8 +26,8 @@ import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { statusText } from "@/lib/status-text";
-import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY } from "@/lib/tickets/types";
-import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission } from "@/lib/tickets/workflow";
+import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
+import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
 import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
@@ -86,7 +88,10 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const own = card.ownerEmail.toLowerCase() === actor.email;
   const preventive = t.kind === "preventive";
   const team = onTeam(actor, t.team);
-  const [members, needsActor] = await Promise.all([can("assign") ? teamMembers().then((m) => m[t.team]) : Promise.resolve([] as string[]), actorFor(viewer)]);
+  // Who it can be handed to: its own team first, then the other team (IT Services and Facility Maintenance hand tickets to each other).
+  const [byTeam, needsActor] = await Promise.all([can("assign") ? teamMembers() : Promise.resolve({ it: [], facilities: [] } as Record<TicketTeam, string[]>), actorFor(viewer)]);
+  const members = [...new Set([...byTeam[t.team], ...TICKET_TEAMS.filter((x) => x !== t.team).flatMap((x) => byTeam[x])])];
+  const otherTeam = (m: string) => (byTeam[t.team].includes(m) ? undefined : TEAM_NAME[TICKET_TEAMS.find((x) => byTeam[x].includes(m)) ?? t.team]);
   const names = await nameResolver([card.ownerEmail, ...(t.assigneeEmail ? [t.assigneeEmail] : []), ...members, ...t.history.map((h) => h.by).filter((b) => b.includes("@"))]);
   const nameOf = (who: string) => (who.includes("@") ? names(who) : who);
 
@@ -156,13 +161,13 @@ export default async function TicketDetail({ params, searchParams }: { params: P
               <PeoplePicker
                 name="assignee"
                 label={t.assigneeEmail ? "Hand it to someone else" : "Or give it to"}
-                people={members.filter((m) => m !== t.assigneeEmail).map((m) => ({ email: m, name: m === actor.email ? `Me (${names(m)})` : names(m) }))}
+                people={members.filter((m) => m !== t.assigneeEmail).map((m) => ({ email: m, name: m === actor.email ? `Me (${names(m)})` : names(m), note: otherTeam(m) }))}
               />
             </div>
             <Button type="submit">Assign</Button>
           </form>
         ) : (
-          members.length === 0 && <p className="hint">Nobody is in the {TEAM_NAME[t.team]} Google Group yet. Ask a portal admin to add the team.</p>
+          members.length === 0 && <p className="hint">Nobody is in the IT Services or Facility Maintenance Google Group yet. Ask a portal admin to add the teams.</p>
         )}
       </div>
     ),
@@ -353,6 +358,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   return (
     <RequestPage
       crumb={{ href: "/it-maintenance", label: "IT & Maintenance" }}
+      admin={mayDeleteRequests(viewer) ? <DeleteRequest id={card.id} /> : undefined}
       id={card.id}
       title={card.title}
       pills={

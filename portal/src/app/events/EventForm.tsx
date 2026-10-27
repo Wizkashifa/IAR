@@ -4,7 +4,7 @@ import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { Button } from "@/components/Button";
 import { DateField, TimeField } from "@/components/DateField";
-import { Field, FormActions } from "@/components/Field";
+import { Field, FormActions, RequiredKey, RequiredTag } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
@@ -232,6 +232,7 @@ export default function EventForm(p: EventFormProps) {
         {p.renews && <Note>The next period of {p.renews.id}, which ends {longDate(p.renews.until)}. It goes through the same checks and approval as any new request.</Note>}
         {p.moved && <Note>You gave up this event&apos;s time to someone else&apos;s request. Pick a new time; only the director needs to approve it.</Note>}
         <FormErrors errors={state.errors} />
+        <RequiredKey />
 
         <fieldset className={styles.section} id="evSect">
           <legend><span className={styles.sn}>{num("evSect")}</span>Event and room</legend>
@@ -247,7 +248,7 @@ export default function EventForm(p: EventFormProps) {
               <textarea rows={5} value={d.description} onChange={(e) => set("description", e.target.value)} placeholder="What will happen and who it's for. Include the schedule and any speakers or guests." maxLength={4000} required />
             </Field>
             <div className="grid two">
-              <Field label="Sponsoring committee">
+              <Field label="Sponsoring committee" required>
                 <select value={d.committeeGroup} onChange={(e) => update((x) => ({ ...x, committeeGroup: e.target.value, committeeName: p.committees.find((c) => c.group === e.target.value)?.name ?? "" }))}>
                   {p.committees.map((c) => <option key={c.group} value={c.group}>{c.name}</option>)}
                 </select>
@@ -322,21 +323,21 @@ export default function EventForm(p: EventFormProps) {
             <legend><span className={styles.sn}>{num("briefSect")}</span>Marketing</legend>
             <div className={styles.sectionBody}>
               <p className="hint">Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
-              <Field label="One-line subtitle (5–6 words)" hint="Used on the flyer and in other marketing.">
-                <input value={d.brief.subtitle} onChange={(e) => setBrief("subtitle", e.target.value)} maxLength={80} placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters" />
+              <Field label="One-line subtitle (5–6 words)" hint="Used on the flyer and in other marketing." required>
+                <input required value={d.brief.subtitle} onChange={(e) => setBrief("subtitle", e.target.value)} maxLength={80} placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters" />
               </Field>
-              <Field label="Announcement text to publish" hint="Marketing already has the date, time and room, and may edit the text for clarity.">
-                <textarea rows={4} value={d.brief.text} onChange={(e) => setBrief("text", e.target.value)} maxLength={3000} placeholder={ANNOUNCE_EXAMPLE} />
+              <Field label="Announcement text to publish" hint="Marketing already has the date, time and room, and may edit the text for clarity." required>
+                <textarea required rows={4} value={d.brief.text} onChange={(e) => setBrief("text", e.target.value)} maxLength={3000} placeholder={ANNOUNCE_EXAMPLE} />
               </Field>
               <Field label="Anything else the flyer or announcement must say (optional)">
                 <textarea rows={2} value={d.brief.flyer} onChange={(e) => setBrief("flyer", e.target.value)} placeholder="Bring a water bottle, late registration cost, Q&A at the end" maxLength={1500} />
               </Field>
               {d.registration && (
-                <Field label="Registration link and instructions">
-                  <input value={d.brief.regLink} onChange={(e) => setBrief("regLink", e.target.value)} placeholder="https://… and how to sign up" maxLength={500} />
+                <Field label="Registration link and instructions" required>
+                  <input required value={d.brief.regLink} onChange={(e) => setBrief("regLink", e.target.value)} placeholder="https://… and how to sign up" maxLength={500} />
                 </Field>
               )}
-              <Field label="Payment info and instructions (if any)">
+              <Field label="Payment info and instructions (optional)">
                 <textarea rows={2} value={d.brief.payment} onChange={(e) => setBrief("payment", e.target.value)} placeholder="Cost, how to pay, deadlines" maxLength={1000} />
               </Field>
               {p.uploads ? (
@@ -361,7 +362,7 @@ export default function EventForm(p: EventFormProps) {
             <legend><span className={styles.sn}>{num("avSect")}</span>A/V</legend>
             <div className={styles.sectionBody}>
               <p className="hint">The A/V team will contact you about what they can support.</p>
-              <Choices legend="What A/V support do you need? Check all that apply.">
+              <Choices legend="What A/V support do you need? Check all that apply." required>
                 {Object.entries(AV_KINDS).map(([k, l]) => (
                   <Choice key={k} type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} label={l} />
                 ))}
@@ -381,7 +382,7 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Notes for the teams (optional)">
               <textarea rows={2} value={d.teamNotes} onChange={(e) => set("teamNotes", e.target.value)} placeholder="Anything marketing, A/V or security should know" maxLength={1000} />
             </Field>
-            <Checkbox checked={d.agree} onChange={(e) => set("agree", e.target.checked)}>
+            <Checkbox required checked={d.agree} onChange={(e) => set("agree", e.target.checked)}>
               I&apos;ve read the{" "}
               {p.policyUrl ? (
               <a href={p.policyUrl} target="_blank" rel="noreferrer">
@@ -391,12 +392,13 @@ export default function EventForm(p: EventFormProps) {
               "room reservation policy"
               )}{" "}
               and accept its rules and liability statement.
+              <RequiredTag />
             </Checkbox>
             {d.av && (
-              <Checkbox checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))}>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.</Checkbox>
+              <Checkbox required checked={d.avNeeds.ack} onChange={(e) => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, ack: e.target.checked } }))}>I understand A/V support isn&apos;t guaranteed and the A/V team will contact me.<RequiredTag /></Checkbox>
             )}
             {d.isPublic && (
-              <Checkbox checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)}>The details I&apos;ve given are final, so marketing can publish them.</Checkbox>
+              <Checkbox required checked={d.brief.final} onChange={(e) => setBrief("final", e.target.checked)}>The details I&apos;ve given are final, so marketing can publish them.<RequiredTag /></Checkbox>
             )}
           </div>
         </fieldset>

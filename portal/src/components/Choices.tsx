@@ -1,16 +1,20 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 import styles from "./Choices.module.css";
+import { RequiredTag } from "./Field";
 
 /**
  * A question answered by picking: a fieldset with its legend and the
  * choices, as cards (the default) or a plain list. `legendHidden` keeps the
  * legend for screen readers when a panel title already asks the question.
- * `stacked` puts one choice per row.
+ * `stacked` puts one choice per row. `required` shows the Required tag.
  */
-export function Choices({ legend, legendHidden, plain, stacked, hint, children, className }: { legend: ReactNode; legendHidden?: boolean; plain?: boolean; stacked?: boolean; hint?: ReactNode; children: ReactNode; className?: string }) {
+export function Choices({ legend, legendHidden, plain, stacked, required, hint, children, className }: { legend: ReactNode; legendHidden?: boolean; plain?: boolean; stacked?: boolean; required?: boolean; hint?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <fieldset className={[styles.group, plain && styles.plain, stacked && styles.stacked, className].filter(Boolean).join(" ")}>
-      <legend className={legendHidden ? "sr-only" : styles.legend}>{legend}</legend>
+      <legend className={legendHidden ? "sr-only" : styles.legend}>
+        {legend}
+        {required && !legendHidden && <RequiredTag />}
+      </legend>
       <div className={styles.list}>{children}</div>
       {hint && <p className={styles.hint}>{hint}</p>}
     </fieldset>

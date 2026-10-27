@@ -1,5 +1,5 @@
 /**
- * Purchase Requests as the portal's shared pages see it: who can open one,
+ * Payments as the portal's shared pages see it: who can open one,
  * its steps and what happens next, whether it waits on someone and on whom.
  * Collected in lib/registry.ts. Plain functions.
  */

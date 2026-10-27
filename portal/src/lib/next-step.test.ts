@@ -257,7 +257,7 @@ function ticket(): tw.TicketCard {
   c.id = "TK-1";
   return c;
 }
-const MEMBERS = [fac.email, fac2.email];
+const MEMBERS = { facilities: [fac.email, fac2.email], it: [] };
 const reporter: tw.TicketActor = { email: vol.email, name: vol.name, roles: vol.roles };
 
 test("tickets: picked up, worked on, fixed, then the reporter confirms", () => {

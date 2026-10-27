@@ -63,7 +63,7 @@ test("search: keywords, names and descriptions, filler words ignored", () => {
   assert.deepEqual(searchTeams(teams, "who handles"), []);
 });
 
-test("search: reimbursements point to a purchase request rather than a team", () => {
+test("search: reimbursements point to a payment request rather than a team", () => {
   assert.equal(searchTopics("Who handles reimbursements?")[0].href, "/purchases/new");
   assert.deepEqual(searchTopics("who"), []);
 });

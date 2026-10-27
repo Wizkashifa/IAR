@@ -13,7 +13,7 @@ export function Field({ label, hint, error, required, htmlFor, children, classNa
   const head = (
     <span className={styles.label}>
       {label}
-      {required && <span className={styles.req} aria-hidden="true">*</span>}
+      {required && <RequiredTag />}
     </span>
   );
   const foot = (
@@ -42,6 +42,27 @@ export function Field({ label, hint, error, required, htmlFor, children, classNa
       {children}
       {foot}
     </label>
+  );
+}
+
+/**
+ * The mark on a question that must be answered, the same on every form. The
+ * control itself carries `required`, so screen readers already say so.
+ */
+export function RequiredTag() {
+  return (
+    <span className={styles.req} aria-hidden="true">
+      Required
+    </span>
+  );
+}
+
+/** One line at the top of a form saying what the tag means. */
+export function RequiredKey() {
+  return (
+    <p className={styles.key}>
+      Questions marked <RequiredTag /> must be answered before you can send it.
+    </p>
   );
 }
 
