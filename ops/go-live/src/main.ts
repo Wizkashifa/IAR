@@ -31,7 +31,7 @@ const HELP = `go-live: set up Google for the IAR Portal and deploy it.
   --sync              Also list people in the portal groups who aren't on the Sheet,
                       and remove them after a separate yes.
   --redeploy          Rebuild and deploy the current portal code.
-  --production        End the beta: open the portal to every account (asks first).
+  --production        Open the portal to every account, not just the testers (asks first).
   --project <id>      Cloud project (default ${DEFAULTS.project}).
   --region <region>   Cloud region (default ${DEFAULTS.region}).
   --domain <domain>   Workspace domain (default ${DEFAULTS.domain}).

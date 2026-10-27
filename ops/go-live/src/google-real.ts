@@ -220,6 +220,9 @@ export class RealGoogle implements Google {
     const { data } = await this.dir().groups.insert({ requestBody: { email: g.email, name: g.name, description: g.description } });
     return { id: data.id!, email: data.email!.toLowerCase(), name: data.name ?? g.name };
   }
+  async renameGroup(email: string, name: string, description: string) {
+    await this.dir().groups.patch({ groupKey: email, requestBody: { name, description } });
+  }
   async listMembers(group: string): Promise<Member[]> {
     const list = await all<admin_directory_v1.Schema$Member, admin_directory_v1.Schema$Members>((pageToken) => this.dir().members.list({ groupKey: group, maxResults: 200, pageToken }), (d) => d.members);
     return list.filter((m) => m.email).map((m) => ({ email: m.email!.toLowerCase(), role: (m.role ?? "MEMBER") as MemberRole, type: m.type === "GROUP" ? "GROUP" : "USER" }));

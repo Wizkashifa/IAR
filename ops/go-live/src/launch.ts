@@ -25,7 +25,8 @@ export const ROLE_GROUPS: RoleGroup[] = [
   { key: "finance", name: "Portal: Finance", local: `${ROLE_PREFIX}finance`, what: "Finance review, payment, QuickBooks entry, restricted S&W requests" },
   { key: "executive", name: "Portal: Executive", local: `${ROLE_PREFIX}executive`, what: "Whoever holds an executive office (Head Imam, Shura chair, CEO): final mission review of events, executive approvals" },
   { key: "admins", name: "Portal: Admins", local: `${ROLE_PREFIX}admin`, what: "Two or three people who support the portal. Never approve or pay" },
-  { key: "beta", name: "Portal: Beta testers", local: `${ROLE_PREFIX}beta`, what: "During the beta, only this group and the admins can sign in" },
+  // The testers' address keeps its first name (portal-role-beta@): the portal's settings point to it.
+  { key: "beta", name: "Portal: Testers", local: `${ROLE_PREFIX}beta`, what: "Testers: they use what's still a demo (purchase requests) for real. While the portal isn't open to everyone, only they and the admins can sign in" },
 ];
 
 export const teamGroup = (name: string, domain: string) => teamGroupEmail(name, domain);

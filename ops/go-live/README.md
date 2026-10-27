@@ -1,6 +1,6 @@
 # go-live
 
-One command that sets up IAR's Google Workspace and Google Cloud for the IAR Portal, and deploys it. It does, in order, every step in `docs/setup.md` (§1–§9) and `docs/beta-launch.md`.
+One command that sets up IAR's Google Workspace and Google Cloud for the IAR Portal, and deploys it. It does, in order, every step in `docs/setup.md` (§1–§9) and `docs/launch.md`.
 
 **By default it changes nothing.** It lists every change it would make, step by step, in plain language. Add `--apply` and it shows the same list for each step and asks **Apply? (y/N)** before doing it. Anything that costs money, may email people, widens access or removes something gets its own separate yes.
 
@@ -38,7 +38,7 @@ Other options:
 | `--sync` | Also list people in the portal groups who aren't on the Sheet, and remove them after a separate yes. Without it, go-live only adds |
 | `--redeploy` | Rebuild and deploy the current portal code |
 | `--only autodeploy` | Extra step, not part of a full run: deploy the portal automatically each time a change is merged (see "Deploying changes" below) |
-| `--production` | End the beta: open the portal to every islam1.org account (asks first) |
+| `--production` | Open the portal to every islam1.org account, not just the testers (asks first) |
 | `--project <id>` | Cloud project (default `iar-portal`) |
 | `--region <region>` | Cloud region (default `us-east1`, closest to Raleigh) |
 | `--domain <domain>` | Workspace domain (default `islam1.org`) |
@@ -58,8 +58,8 @@ Other options:
 9. **Deploy.** Builds and deploys the portal to Cloud Run with all its settings, has you add its sign-in address to the Web client (*by hand, checked*), and maps `portal.islam1.org`, then shows the DNS record to add (a CNAME `portal` → `ghs.googlehosted.com`; on Cloudflare, DNS only). On later runs it checks DNS and the certificate, and switches the portal to `portal.islam1.org` once both work.
 10. **Portal Settings.** Writes the Sheet's team funds and cards, the Chat spaces and the bookable rooms from step 8 into Portal Settings. Only fills gaps: anything an admin already chose is kept. Then archives the Sheet: from then on, **Google Groups is the record** of who does what.
 11. **Running costs and safety.** The daily job, a nightly Firestore backup kept 30 days, an uptime check that emails the admins, a $25/month budget alert (*asked*), and a cleanup rule keeping the last 10 builds.
-12. **Check.** The sign-in page answers, and the smoke test from `docs/beta-launch.md` to do with testers.
-13. **Go live (beta).** Adds the Sheet's testers to `portal-role-beta@` (*asked*, since Google may email them). With `--production`, opens the portal to everyone instead (*asked*).
+12. **Check.** The sign-in page answers, and the smoke test from `docs/launch.md` to do with testers.
+13. **Go live.** Adds the Sheet's testers to `portal-role-beta@` (*asked*, since Google may email them). With `--production`, opens the portal to everyone instead (*asked*), and reminds you to make the Chat app visible to and installed for everyone.
 
 ## What's done by hand, and why
 
@@ -67,7 +67,7 @@ Google has no API for these, so go-live prints the exact steps (with the console
 
 - **Step 0: the OAuth consent screen and two sign-in clients.** In the Cloud console: consent screen *Internal*, app name "IAR Portal"; a **Web application** client for the portal (go-live asks for its Client ID); a **Desktop app** client for go-live, whose JSON you save as `ops/go-live/client_secret.json` (it's gitignored). Checked: the file is a Desktop client from this project, and the Client ID belongs to this project.
 - **Step 4: the domain-wide delegation entry**, in the Admin console. Checked: for a minute you get permission to sign test tokens as the portal's service account, go-live gets a token for each scope exactly as the portal will, and the permission is removed again.
-- **Step 6: the Chat app configuration, its private Marketplace listing, and installing it for the beta group.** Checked: go-live adds the app to the Chat spaces, which fails if it isn't set up and visible to you.
+- **Step 6: the Chat app configuration, its private Marketplace listing, and installing it** (for the testers and admins at first; for everyone once the portal is open to all). Checked: go-live adds the app to the Chat spaces, which fails if it isn't set up and visible to you.
 - **Step 9: the redirect URI** on the Web client (once for the Cloud Run address, again for portal.islam1.org). Checked: Google accepts the address for that client.
 - **Extra step autodeploy: installing the Cloud Build app on GitHub**, on the portal's repository only. Checked: Cloud Build reports the GitHub link as complete.
 - **Step 9: proving IAR manages islam1.org** to Google, if gcloud doesn't already show it as verified: `gcloud domains verify islam1.org`.

@@ -179,7 +179,7 @@ test("group names: a leading \"Portal:\" (used to find groups in the Admin conso
   assert.equal(groupDisplayName("Portal:"), "Portal:");
 });
 
-test("portal people: everyone in the portal's groups; during the beta only the beta group and admins", () => {
+test("portal people: everyone in the portal's groups; with an access group only its members and admins", () => {
   const g = (email: string, members: string[], type: "USER" | "GROUP" = "USER"): DirectoryGroup => ({ email, name: email, members: members.map((m) => ({ email: m, role: "MEMBER" as const, type })) });
   const groups = [g("portal-team-youth@x.org", ["Chair@x.org", "member@x.org"]), g("portal-role-beta@x.org", ["chair@x.org", "tester@x.org"]), g("portal-role-admin@x.org", ["admin@x.org"]), g("portal-team-women@x.org", ["portal-role-beta@x.org"], "GROUP")];
   assert.deepEqual(portalPeopleFrom(groups), ["admin@x.org", "chair@x.org", "member@x.org", "tester@x.org"]);

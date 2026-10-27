@@ -228,7 +228,7 @@ The calendar stays the booking record. The database holds everything about the c
 | Line item, vendor, account | Line items split across sub-accounts, saved vendors with W-9 status (`portal/src/lib/purchases/types.ts`) |
 | Comment, attachment, audit log | Every change, who made it and when; files kept in the Shared Drive |
 
-**Groups** (see "Committees and teams" below, and `docs/setup.md` §6): one `portal-team-*` group per committee or team, one `portal-pillar-*` group per director, and the role groups `portal-role-office`, `-finance`, `-executive`, `-admin` and `-beta`. Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
+**Groups** (see "Committees and teams" below, and `docs/setup.md` §6): one `portal-team-*` group per committee or team, one `portal-pillar-*` group per director, and the role groups `portal-role-office`, `-finance`, `-executive`, `-admin` and `-beta` (the testers). Each restricted group that also guards a shared drive (Shura, Social & Welfare, Finance) is added to that drive as a member; see the Library section.
 
 ## Roadmap
 
@@ -237,7 +237,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | Phase | Scope | Gate to start the next phase |
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
-| 1 · Shell, Purchase Requests, Event cards (beta) | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. The beta also brings in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; pilot with a small group of testers | Pilot runs clean; old Requisition and Program Request forms retired |
+| 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. Phase 1 also brought in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; piloted with a small group of testers, now live for everyone. Purchase requests stay a demo until finance is ready | Live; old Program Request form retired, Requisition form retired once purchase requests go live |
 | 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
 | 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
@@ -276,12 +276,12 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Connect the existing repo (`wizkashifa/iar`)
 - [x] Confirm the stack: Cloud Run + Firestore in an IAR-owned Google Cloud project
 - [x] Build the shell: Google sign-in limited to @islam1.org, group-based navigation, My Requests (`portal/`, sample data in dev mode)
-- [ ] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/beta-launch.md`)
+- [x] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/launch.md`)
 - [x] Purchase Requests module on the shell
-- [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page for beta testers, and out-of-office handoff of approvals
+- [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page, with replies, and out-of-office handoff of approvals
 - [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
 - [x] Event cards with calendar holds and rule flags, and asking for a booked time
-- [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built for the beta ahead of their phases
+- [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built ahead of their phases
 - [x] The daily job: purchase reminders and morning digest, ask reminders and escalation, close-out, preventive maintenance
 - [x] `go-live`: one command that sets up Workspace and Cloud after showing every change, and the members template
 - [ ] Office fills in the members Sheet; go-live creates the groups and service accounts
@@ -325,7 +325,7 @@ Budget and financial reporting are not part of the initial launch, so this list 
   - A director sees those committees' requests and can approve at the chair step alongside the chair, recorded "as director".
   - They can submit for those committees.
   - They never act on Social & Welfare's restricted requests, their own requests, or finance, payment or executive steps.
-- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta. The executive group holds whoever has an executive office (Head Imam, Shura chair, CEO). One person can hold several, and nothing about the offices is in code.
+- **Role groups** (`portal-role-<job>@`): office, finance, admin and beta (the testers, "Portal: Testers"). The executive group holds whoever has an executive office (Head Imam, Shura chair, CEO). One person can hold several, and nothing about the offices is in code.
 - **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Safety & Security, Social & Welfare or Shura gives that team's queue or module.
 - **Funds.** Members charge their own teams' funds; the office and finance can charge any fund. Each team's fund is set in Portal Settings, which suggests one when the names match.
 

@@ -8,7 +8,7 @@ import { purchaseAlertsSend, purchasesDemoOn } from "../settings-rules";
 
 /**
  * Purchase requests in demo mode (Portal Settings): whether a request's
- * alerts go out by Google Chat or email. Only beta testers' requests do; the
+ * alerts go out by Google Chat or email. Only testers' requests do; the
  * rest stay on the bell. The rule is settings-rules.ts `purchaseAlertsSend`.
  */
 
@@ -17,10 +17,10 @@ const testers = new Map<string, { at: number; yes: boolean }>();
 
 async function isTester(email: string): Promise<boolean> {
   const e = email.toLowerCase();
-  if (isDevAuth()) return Boolean(DEV_PERSONAS.find((p) => p.email === e)?.groups.includes(ORG.betaGroup));
+  if (isDevAuth()) return Boolean(DEV_PERSONAS.find((p) => p.email === e)?.groups.includes(ORG.testersGroup));
   const hit = testers.get(e);
   if (hit && Date.now() - hit.at < TESTER_REFRESH_MS) return hit.yes;
-  const yes = (await lookupGroups(e)).includes(ORG.betaGroup);
+  const yes = (await lookupGroups(e)).includes(ORG.testersGroup);
   testers.set(e, { at: Date.now(), yes });
   return yes;
 }

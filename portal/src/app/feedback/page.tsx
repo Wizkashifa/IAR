@@ -26,7 +26,7 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="stack">
-      <ModuleHead title="Send feedback" lead="The portal is in beta. Tell us about anything broken, confusing or missing. It goes straight to the portal admins." />
+      <ModuleHead title="Send feedback" lead="Tell us about anything broken, confusing or missing. It goes straight to the portal admins." />
       {ok ? (
         <Note tone="ok">
           Thank you, it&apos;s been sent. <Link href={page}>Back to where you were</Link>

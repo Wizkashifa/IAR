@@ -20,14 +20,14 @@ import { type Membership, directedTeamGroups, membershipsOf, teamRoles } from ".
  * set when a portal admin is signed in as this person to troubleshoot: the
  * portal is theirs, and what's saved says the admin did it (lib/act-as.ts).
  */
-export type Viewer = { email: string; name: string; roles: Role[]; actingRoles: Role[]; teams: Membership[]; directs: string[]; dev: boolean; supportAdmin?: { email: string; name: string }; betaTester: boolean };
+export type Viewer = { email: string; name: string; roles: Role[]; actingRoles: Role[]; teams: Membership[]; directs: string[]; dev: boolean; supportAdmin?: { email: string; name: string }; tester: boolean };
 
 async function build(email: string, name: string, groups: string[], dev: boolean): Promise<Viewer> {
   const [dir, settings] = await Promise.all([directory(), portalSettings()]);
   const teams = membershipsOf(dir, email);
   const fromTeams: Role[] = [...teamRoles(teams)];
   if (settings.cards.some((c) => c.holderEmail === email.toLowerCase())) fromTeams.push("cardholders");
-  return { email, name, roles: rolesFromGroups(groups, fromTeams), actingRoles: directRolesFromGroups(groups, fromTeams), teams, directs: directedTeamGroups(dir, email), dev, betaTester: groups.some((g) => g.toLowerCase() === ORG.betaGroup) };
+  return { email, name, roles: rolesFromGroups(groups, fromTeams), actingRoles: directRolesFromGroups(groups, fromTeams), teams, directs: directedTeamGroups(dir, email), dev, tester: groups.some((g) => g.toLowerCase() === ORG.testersGroup) };
 }
 
 // The groups of someone an admin is signed in as (they have no session of their own to carry them), for 15 minutes.
@@ -74,7 +74,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   }
   const me = await signedIn();
   if (!me) return null;
-  // Removed from the beta group: groups refresh every 15 minutes, then access stops.
+  // Removed from the access group (while there is one): groups refresh every 15 minutes, then access stops.
   if (!mayUsePortal(me.groups)) return null;
   const as = await currentActAs();
   if (as) {

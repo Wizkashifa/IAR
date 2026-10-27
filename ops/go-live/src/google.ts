@@ -76,6 +76,8 @@ export interface Google {
   createUser(u: { email: string; givenName: string; familyName: string; password: string }): Promise<void>;
   getGroup(email: string): Promise<Group | null>;
   createGroup(g: { email: string; name: string; description: string }): Promise<Group>;
+  /** A new display name and description for an existing group. Its address never changes. */
+  renameGroup(email: string, name: string, description: string): Promise<void>;
   listMembers(group: string): Promise<Member[]>;
   addMember(group: string, m: Member): Promise<void>;
   updateMemberRole(group: string, email: string, role: MemberRole): Promise<void>;

@@ -100,7 +100,7 @@ export const deploy: Stage = {
         text: `${svc ? "Rebuild and redeploy" : "Build and deploy"} the portal (Cloud Run service ${SERVICE} in ${opt.region}, from portal/; about 5 minutes) as ${runtimeSa(ctx)}, open to the internet so the sign-in page loads`,
         detail: Object.entries(desiredEnv(ctx, url())).map(([k, v]) => `${k}=${v}`).concat(Object.entries(SECRETS).map(([k, v]) => `${k} from Secret Manager (${v.split(":")[0]})`)),
         required: true,
-        // Deploying for the first time with --production skips the beta gate, so it gets its own yes.
+        // Deploying for the first time with --production skips the testers-only sign-in, so it gets its own yes.
         ask: !svc && isProduction(ctx) ? "access" : undefined,
         run: async (c) => {
           await ensureBuilder(c);
@@ -149,7 +149,7 @@ export const deploy: Stage = {
           ),
       });
     const mapping = svc ? await g.getDomainMapping(p, opt.region, host) : null;
-    // portal.<domain> can wait: the beta can start on the Cloud Run address, so each of these can be put off.
+    // portal.<domain> can wait: the portal works on the Cloud Run address, so each of these can be put off.
     const unverified = async (c: Ctx) => !(await c.g.verifiedDomains()).includes(opt.domain) && (c.log(`  Skipped: ${opt.domain} isn't verified yet. Run go-live again once it is.`), true);
     if (!mapping)
       out.push({

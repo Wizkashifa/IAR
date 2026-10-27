@@ -113,10 +113,10 @@ test("show-only lists every change and changes nothing", async () => {
   assert.equal(r.results.length, 14);
   assert.ok(changesPlanned(r) > 80, String(changesPlanned(r)));
   assert.match(r.out, /Step 0 of 13: Check this computer and sign in/);
-  assert.match(r.out, /Step 13 of 13: Go live \(beta\)/);
+  assert.match(r.out, /Step 13 of 13: Go live: the testers, or everyone with --production/);
   assert.match(r.out, /Create portal-team-youth@x.org "Youth"/);
   assert.match(r.out, /Link IAR's billing account .*\[costs money\]/);
-  assert.match(r.out, /Open the beta: add the 2 testers .*\[may email people\]/);
+  assert.match(r.out, /Add the 2 testers .*\[may email people\]/);
   assert.match(r.out, /Nothing was changed/);
   assert.ok(!r.asked.some((q) => q.kind === "yesno"), "show-only asks nothing");
   assert.equal(r.saved(), null, "show-only saves no state");
@@ -215,9 +215,9 @@ test("apply from nothing creates everything, then a second run plans no changes"
 
   // Check
   assert.match(r.out, /\/signin answers \(200\)/);
-  assert.match(r.out, /\[ \] Someone not in portal-role-beta@ signs in/);
+  assert.match(r.out, /\[ \] Someone signed in to Google with an @islam1\.org account goes straight in/);
 
-  // Beta
+  // Testers
   assert.deepEqual(fake.members.get("portal-role-beta@x.org")?.map((m) => m.email), ["tester1@x.org", "tester2@x.org"]);
 
   // Again: nothing to do (the custom domain is still waiting for DNS, which is a check, not a change).
@@ -288,7 +288,7 @@ test("testers are added only in the last step, and only after their own yes", as
   assert.deepEqual(fake.members.get("portal-role-beta@x.org"), []);
   const emailAsk = r.asked.filter((q) => /may email people/.test(q.question));
   assert.equal(emailAsk.length, 1);
-  assert.match(emailAsk[0].question, /Open the beta/);
+  assert.match(emailAsk[0].question, /Add the 2 testers/);
   const later = await run(fake, structuredClone(r.ctx.state), { apply: true, only: "beta" });
   assert.equal(later.stopped, undefined, later.out);
   assert.deepEqual(fake.members.get("portal-role-beta@x.org")?.map((m) => m.email), ["tester1@x.org", "tester2@x.org"]);
@@ -382,6 +382,17 @@ test("deploy on merge: GitHub addresses are read in every form git writes them",
   assert.equal(githubRemote("https://github.com/iar/portal"), "https://github.com/iar/portal.git");
   assert.equal(githubRemote("ssh://git@github.com/iar/portal.git"), "https://github.com/iar/portal.git");
   assert.equal(githubRemote("http://127.0.0.1/git/iar/portal"), null);
+});
+
+test("role groups keep go-live's names: the old \"Portal: Beta testers\" becomes \"Portal: Testers\", same address", async () => {
+  const fake = setup({ ready: false });
+  const { state } = await fullApply(fake);
+  const testers = fake.groups.get("portal-role-beta@x.org")!;
+  testers.name = "Portal: Beta testers";
+  const r = await run(fake, structuredClone(state), { apply: true });
+  assert.equal(r.stopped, undefined, r.out);
+  assert.match(r.out, /Rename portal-role-beta@x\.org from "Portal: Beta testers" to "Portal: Testers"/);
+  assert.equal(fake.groups.get("portal-role-beta@x.org")!.name, "Portal: Testers");
 });
 
 test("once Google says the address is ready, go-live switches even if this computer can't look up the DNS itself", async () => {

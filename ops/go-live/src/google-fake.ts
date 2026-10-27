@@ -186,6 +186,10 @@ export class FakeGoogle implements Google {
   async getGroup(email: string) {
     return this.groups.get(email.toLowerCase()) ?? null;
   }
+  async renameGroup(email: string, name: string) {
+    const g = this.groups.get(email.toLowerCase());
+    if (g) g.name = name;
+  }
   async createGroup(g: { email: string; name: string; description: string }) {
     if (this.groups.has(g.email)) throw new Error("exists");
     const group = { id: this.id("0grp"), email: g.email, name: g.name };

@@ -3,7 +3,7 @@
  * Card (see lib/cards.ts). Design: docs/plan.md (IT & Maintenance tickets)
  * and the demo (demo/index.html, "Tickets").
  *
- * Beta core only: report, assign, work, resolve, confirm; preventive
+ * The core: report, assign, work, resolve, confirm; preventive
  * schedules; a one-time Jira import. Sprints, epics, sub-tasks and reports
  * wait until the facilities lead confirms they use them.
  */

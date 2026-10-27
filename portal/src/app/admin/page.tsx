@@ -52,7 +52,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const teams = [...dir.teams].sort((a, b) => a.name.localeCompare(b.name));
   const nameOf = (g: string) => dir.teams.find((t) => t.email === g)?.name ?? g;
   const gaps = teams.filter((t) => teamPeople(dir, t.email).chairs.length === 0 || !funds[t.email]).length;
-  const beta = process.env.PORTAL_ACCESS_GROUP;
+  const accessGroup = process.env.PORTAL_ACCESS_GROUP;
   // Whom an admin can sign in as: everyone who can use the portal but themselves, by name, with their first team.
   const others = isDevAuth() ? [] : (await portalPeople().catch(() => [])).filter((e) => e !== viewer.email.toLowerCase());
   const otherNames = await namesFor(others);
@@ -181,10 +181,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <td>{ROLE_LABEL[role]}</td>
               </tr>
             ))}
-            {beta && (
+            {accessGroup && (
               <tr>
-                <td><code>{beta}</code></td>
-                <td>During the beta, only this group and the admins can sign in</td>
+                <td><code>{accessGroup}</code></td>
+                <td>Only this group and the admins can sign in, until the portal is opened to everyone</td>
               </tr>
             )}
           </tbody>
@@ -245,7 +245,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       <Section open={open === "purchases"} title={<>Purchase requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
       <p className="hint">
-        While purchase requests are a demo, every purchase page says so, and only requests from beta testers (people in {ORG.betaGroup}) alert their chair and
+        While purchase requests are a demo, every purchase page says so, and only requests from testers (people in {ORG.testersGroup}) alert their chair and
         finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make purchase requests live for everyone.
       </p>
       <Panel>
@@ -394,7 +394,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 label="Who"
                 people={signInChoices}
                 required
-                hint="Everyone who can use the portal. Someone in the beta group only through another group isn't listed."
+                hint="Everyone who can use the portal."
               />
               <div>
                 <Button type="submit" variant="primary">Sign in as them</Button>

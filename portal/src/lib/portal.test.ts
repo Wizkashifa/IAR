@@ -103,7 +103,7 @@ test("links: only paths inside the portal are followed", () => {
   for (const bad of ["//evil.example", "/\\evil.example", "https://evil.example", "purchases", "/a\r\nSet-Cookie: x"]) assert.equal(internalPath(bad), null, bad);
 });
 
-test("beta gate: only the access group and portal admins get in while it's set", () => {
+test("access gate: only the access group and portal admins get in while it's set", () => {
   const before = process.env.PORTAL_ACCESS_GROUP;
   try {
     delete process.env.PORTAL_ACCESS_GROUP;
