@@ -53,8 +53,8 @@ export async function addCard(form: FormData): Promise<void> {
   const store = await settingsStore();
   const s = await store.get();
   const r = checkCard(
-    { last4: form.get("last4"), holderEmail: form.get("holderEmail"), holderName: form.get("holderName"), fund: form.get("fund") },
-    { funds: FUNDS, domain: isDevAuth() ? DEV_DOMAIN : ORG.domain, existing: s.cards },
+    { last4: form.get("last4"), holderEmail: form.get("holderEmail"), holderName: form.get("holderName") },
+    { domain: isDevAuth() ? DEV_DOMAIN : ORG.domain, existing: s.cards },
   );
   if (!r.ok) return back({ error: r.error }, "cards");
   await store.save({ ...s, cards: [...s.cards, r.card], updatedAt: new Date().toISOString(), updatedBy: viewer.email });

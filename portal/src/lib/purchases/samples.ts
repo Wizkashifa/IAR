@@ -134,7 +134,7 @@ export async function samplePurchases(): Promise<Card[]> {
   const month = statement.month;
   const fromStatement = (last4: string, choose: (merchant: string) => Partial<LineInput>) => {
     const sc = cardOn(statement, last4)!;
-    return { sc, lines: sc.charges.map((ch) => ({ ref: ch.ref, accountId: "", amount: ch.amount, hasReceipt: true, ...choose(merchantName(ch.description)) })) };
+    return { sc, lines: sc.charges.map((ch) => ({ ref: ch.ref, accountId: "", amount: ch.amount, ...choose(merchantName(ch.description)) })) };
   };
   const vol = fromStatement("2093", (m) =>
     m === "Amazon" ? { group: "Amazon", accountId: "a78", note: "Certificates, seals and folders for nikah certificates" } :

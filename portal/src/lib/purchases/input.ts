@@ -19,7 +19,6 @@ export type LineInput = {
   note?: string;
   date?: string;
   merchant?: string;
-  hasReceipt?: boolean;
   flag?: "" | "refund" | "repay";
   repayBy?: string;
   /** Card receipts: the statement charge this line is for. */
@@ -51,11 +50,11 @@ export type PurchaseInput = {
 
 export type InputContext = {
   requesterName: string;
-  /** Cards this person holds (last four digits → fund). */
-  cards: { last4: string; fund: string }[];
+  /** Cards this person holds (last four digits). A card isn't tied to a fund: each charge has its own sub-account. */
+  cards: { last4: string }[];
   /** Saved vendors, to decide whether a W-9 is needed. */
   vendors: { name: string; w9OnFile: boolean }[];
-  /** Funds this person may charge (their committees and teams'). Card receipts follow the card's fund. Unset: any fund. */
+  /** Funds this person may charge (their committees and teams'). Card receipts can charge any fund. Unset: any fund. */
   funds?: string[];
   /** Event cards (EV-…) this person may link the purchase to. Unset: any (sample data). */
   events?: string[];
@@ -97,14 +96,13 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
   if (kind === "card") {
     const held = ctx.cards.find((c) => c.last4 === str(raw.cardLast4, 4));
     if (!held) errors.push("Choose one of your IAR cards.");
-    else fund = held.fund;
     const month = str(raw.statementMonth, 7);
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) errors.push("Choose the statement month.");
     else if (held && !ctx.statement)
       errors.push(ctx.statementIn ? `Card ···${held.last4} has no charges on that month's statement, so there's nothing to send.` : `The statement for that month isn't in yet. The finance office uploads it each month.`);
     if (held) card = { last4: held.last4, statementMonth: month };
   }
-  if (!FUNDS.includes(fund)) errors.push("Choose the fund or committee this is charged to.");
+  if (kind !== "card" && !FUNDS.includes(fund)) errors.push("Choose the fund or committee this is charged to.");
   else if (kind !== "card" && ctx.funds && !ctx.funds.includes(fund)) errors.push("You can only charge the funds of committees and teams you're on. Ask a member of that committee to submit it.");
 
   // Payee and payment: not for card receipts.
@@ -129,6 +127,8 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
   // Lines.
   const rawLines = Array.isArray(raw.lines) ? raw.lines : [];
   const lines: LineItem[] = kind === "card" ? cardLines(rawLines, ctx.statement, errors) : otherLines(rawLines, errors);
+  // Card receipts can be spread over several funds: the request is filed under the one most of the money went to.
+  if (kind === "card") fund = mainFund(lines) ?? "";
 
   const attestation = str(raw.attestationName, 120);
   if (!attestation) errors.push("Type your name to sign the request.");
@@ -182,7 +182,8 @@ function otherLines(rawLines: LineInput[], errors: string[]): LineItem[] {
     if (!account) errors.push(`Line ${n}: choose a sub-account.`);
     const amount = parseAmount(l.amount);
     if (!(amount > 0) || amount > 1_000_000) errors.push(`Line ${n}: enter an amount over $0 with at most two decimals.`);
-    const line: LineItem = { id: `L${n}`, accountId: account?.id ?? "", amount: amount > 0 ? amount : 0, hasReceipt: l.hasReceipt !== false };
+    // Every request carries its receipts or invoices (checked with the files), so every line has one.
+    const line: LineItem = { id: `L${n}`, accountId: account?.id ?? "", amount: amount > 0 ? amount : 0, hasReceipt: true };
     const note = str(l.note, 200);
     if (note) line.note = note;
     return line;
@@ -193,7 +194,7 @@ function otherLines(rawLines: LineInput[], errors: string[]): LineItem[] {
  * Card receipts: one line per charge on the imported statement, in its
  * order. Date, merchant and amount come from the statement, whatever the
  * browser sent; the cardholder gives each charge its sub-account and why
- * it was bought, and says what's coming back or has no receipt.
+ * it was bought, and says what's coming back.
  */
 function cardLines(rawLines: LineInput[], statement: StatementCard | null | undefined, errors: string[]): LineItem[] {
   if (!statement) return [];
@@ -221,7 +222,6 @@ function cardLines(rawLines: LineInput[], statement: StatementCard | null | unde
     const note = str(l.note, 200);
     if (!note) errors.push(`${label}: say why it was bought.`);
     else line.note = note;
-    line.hasReceipt = l.hasReceipt !== false;
     const group = str(l.group, 120);
     if (group && group === merchantName(c.description)) line.group = group;
     if (line.group && l.flag) errors.push(`${label}: split up the ${line.group} charges to mark one as expected back.`);
@@ -234,4 +234,26 @@ function cardLines(rawLines: LineInput[], statement: StatementCard | null | unde
     }
     return line;
   });
+}
+
+/** The fund that most of the lines' money is charged to (by size, credits counting too), or null when no line has a sub-account. */
+export function mainFund(lines: Pick<LineItem, "accountId" | "amount">[]): string | null {
+  const by = new Map<string, number>();
+  for (const l of lines) {
+    const a = findAccount(l.accountId);
+    if (a) by.set(a.fund, (by.get(a.fund) ?? 0) + Math.abs(l.amount));
+  }
+  return [...by.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
+}
+
+/** The funds a request's lines are charged to, the main one first. */
+export function fundsOf(lines: Pick<LineItem, "accountId" | "amount">[]): string[] {
+  const main = mainFund(lines);
+  const all = [...new Set(lines.map((l) => findAccount(l.accountId)?.fund).filter((f): f is string => Boolean(f)))];
+  return main ? [main, ...all.filter((f) => f !== main)] : all;
+}
+
+/** Every payment request needs at least one receipt or invoice: the files already on it plus any just added. */
+export function receiptsError(existing: number, added: number): string | null {
+  return existing + added > 0 ? null : "Attach the receipts or invoices. Every request needs at least one.";
 }

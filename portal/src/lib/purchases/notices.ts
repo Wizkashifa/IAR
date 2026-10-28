@@ -110,6 +110,14 @@ export function purchaseNotices(before: PurchaseCard | null, after: PurchaseCard
   return out;
 }
 
+/** The requester added receipts: whoever the request waits on hears in the portal (no alert: nothing new to decide). */
+export function receiptsAddedNotices(card: PurchaseCard, actor: Actor, count: number): Notice[] {
+  const next = isOpen(card) ? nextActor(card) : null;
+  if (!next || ("email" in next && same(next.email, actor.email))) return [];
+  const text = `${actor.name} added ${count} receipt${count === 1 ? "" : "s"} to ${purchaseLabel(card)}.`;
+  return [{ to: next, cardId: card.id, href: `/purchases/${card.id}`, text, alert: false, delegable: false }];
+}
+
 /**
  * A new comment: the requester, whoever the request is waiting on, and
  * earlier commenters hear about it in the portal. No alert: a comment asks

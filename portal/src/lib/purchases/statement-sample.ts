@@ -139,6 +139,6 @@ export function testCharges(charges: { date: string; description: string; amount
       total: Math.round(charges.reduce((s, c) => s + c.amount, 0) * 100) / 100,
       charges: withRefs.map((c) => ({ ref: c.ref, date: c.date, postDate: c.date, description: c.description, amount: c.amount })),
     },
-    lines: withRefs.map((c) => ({ ref: c.ref, accountId: "", amount: c.amount, note: "For the office", hasReceipt: true, ...c.line })),
+    lines: withRefs.map((c) => ({ ref: c.ref, accountId: "", amount: c.amount, note: "For the office", ...c.line })),
   };
 }

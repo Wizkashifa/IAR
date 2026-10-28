@@ -33,7 +33,9 @@ import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
+import { AddReceipts } from "../AddReceipts";
 import { lineRows, merchantName } from "@/lib/purchases/statement";
+import { fundsOf } from "@/lib/purchases/input";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +63,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const can = (a: Action) => permission(pc, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const isCard = p.kind === "card";
+  // Card receipts can charge several funds: name them all.
+  const fundsLabel = isCard ? fundsOf(p.lines).map(shortFund).join(", ") || shortFund(p.fund) : shortFund(p.fund);
   const total = purchaseTotal(p);
   const owed = openExpectedReturns(p);
   const live = card.status === "in_review" || card.status === "approved" || card.status === "paid";
@@ -261,7 +265,10 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </Panel>
 
       <Panel title="Receipts and files" right={`${p.attachments.length}`}>
-        <FileList files={p.attachments} empty="No files attached." />
+        <div className="stack">
+          <FileList files={p.attachments} empty="No files attached." />
+          {can("attach") && <AddReceipts action={actOnPurchase} fields={base} />}
+        </div>
       </Panel>
 
       <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />
@@ -324,7 +331,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           <WaitingPill card={card} />
         </>
       }
-      lead={[KIND_LABEL[p.kind], shortFund(p.fund), `from ${names(card.ownerEmail)}`, fmtMoney(total)]}
+      lead={[KIND_LABEL[p.kind], fundsLabel, `from ${names(card.ownerEmail)}`, fmtMoney(total)]}
       steps={steps}
       next={next}
       sent={sent === "1"}

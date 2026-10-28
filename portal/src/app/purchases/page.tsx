@@ -182,7 +182,6 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
           <tr>
             <th>Card</th>
             <th>Cardholder</th>
-            <th>Fund</th>
             <th>Receipts</th>
           </tr>
         </thead>
@@ -193,7 +192,6 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
               <tr key={c.last4}>
                 <td data-label="Card">···{c.last4}</td>
                 <td data-label="Cardholder">{c.holderName}</td>
-                <td data-label="Fund">{shortFund(c.fund)}</td>
                 <td data-label="Receipts">
                   {sub ? (
                     <>

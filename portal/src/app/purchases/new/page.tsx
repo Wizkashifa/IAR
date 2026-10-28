@@ -25,7 +25,7 @@ export default async function NewPurchase({ searchParams }: { searchParams: Prom
   // "Request this again": start from a finished request this person made or chairs.
   const source = from ? await (await cardStore()).get(from) : null;
   const copy = isPurchaseCard(source) && canRequestAgain(source, viewer, todayLocal()) ? purchaseAgain(source.purchase) : undefined;
-  const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }));
+  const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4 }));
   if (copy && !funds.includes(copy.fund)) copy.fund = "";
   const statements = await statementChoices(viewer.email, held);
   // From "your card statement is in": open on that card and month (or its latest statement not yet sent).

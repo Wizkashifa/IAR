@@ -97,7 +97,7 @@ test("a purchase again: payee, fund and lines with amounts; no receipts, invoice
   assert.equal(p.payee, undefined, "a reimbursement pays whoever asks this time");
   assert.equal(purchaseAgain({ ...purchase, kind: "pay", payee: "Triangle Sound" } as PurchaseDetails).payee, "Triangle Sound");
   assert.equal(p.fund, "Youth Expenses");
-  assert.deepEqual(p.lines, [{ accountId: "56000", amount: "184.50", note: "Snacks", date: "", merchant: "Costco", hasReceipt: true, flag: "", repayBy: "" }]);
+  assert.deepEqual(p.lines, [{ accountId: "56000", amount: "184.50", note: "Snacks", date: "", merchant: "Costco", flag: "", repayBy: "" }]);
   assert.equal(p.invoiceNumber, undefined);
   assert.equal(p.statementMonth, undefined);
   assert.equal(p.eventCardId, undefined);

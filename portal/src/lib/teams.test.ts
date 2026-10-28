@@ -157,13 +157,13 @@ test("roles: role groups plus team roles, with queue email going to the team's g
   assert.equal(roleMailbox("chairs"), null);
 });
 
-test("settings: cards keep only the last four digits and a domain holder; team funds must be real", () => {
-  const ctx = { funds: FUNDS, domain: "x.org", existing: [{ last4: "1111", holderEmail: "a@x.org", holderName: "A", fund: "Youth Expenses" }] };
-  assert.ok(checkCard({ last4: "2093", holderEmail: " H@x.org ", holderName: "H", fund: "Youth Expenses" }, ctx).ok);
-  assert.equal(checkCard({ last4: "4111111111111111", holderEmail: "h@x.org", holderName: "H", fund: "Youth Expenses" }, ctx).ok, false);
-  assert.equal(checkCard({ last4: "1111", holderEmail: "h@x.org", holderName: "H", fund: "Youth Expenses" }, ctx).ok, false);
-  assert.equal(checkCard({ last4: "2093", holderEmail: "h@gmail.com", holderName: "H", fund: "Youth Expenses" }, ctx).ok, false);
-  assert.equal(checkCard({ last4: "2093", holderEmail: "h@x.org", holderName: "H", fund: "Made Up" }, ctx).ok, false);
+test("settings: cards keep only the last four digits and a domain holder, no fund; team funds must be real", () => {
+  const ctx = { domain: "x.org", existing: [{ last4: "1111", holderEmail: "a@x.org", holderName: "A" }] };
+  const ok = checkCard({ last4: "2093", holderEmail: " H@x.org ", holderName: "H" }, ctx);
+  assert.deepEqual(ok, { ok: true, card: { last4: "2093", holderEmail: "h@x.org", holderName: "H" } });
+  assert.equal(checkCard({ last4: "4111111111111111", holderEmail: "h@x.org", holderName: "H" }, ctx).ok, false);
+  assert.equal(checkCard({ last4: "1111", holderEmail: "h@x.org", holderName: "H" }, ctx).ok, false);
+  assert.equal(checkCard({ last4: "2093", holderEmail: "h@gmail.com", holderName: "H" }, ctx).ok, false);
   const t = { funds: FUNDS, teamGroups: ["portal-team-youth@x.org"] };
   assert.ok(checkTeamFund("portal-team-youth@x.org", "Youth Expenses", t).ok);
   assert.ok(checkTeamFund("portal-team-youth@x.org", "", t).ok);

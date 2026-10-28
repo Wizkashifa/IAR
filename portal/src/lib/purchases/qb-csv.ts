@@ -41,7 +41,8 @@ export function qbRows(cards: PurchaseCard[]): string[][] {
         c.id,
         KIND_LABEL[p.kind],
         payeeOf(c, l.merchant, Boolean(l.ref)),
-        shortFund(p.fund),
+        // A card's charges can go to several funds: each line is classed by its own sub-account's fund.
+        shortFund(p.kind === "card" && a ? a.fund : p.fund),
         a?.code ?? "",
         a?.name ?? "Unknown account",
         memo,

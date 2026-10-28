@@ -26,7 +26,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   if (!permission(card, { email: viewer.email, name: viewer.name, roles: viewer.actingRoles }, "resubmit").ok) redirect(`/purchases/${id}`);
   const p = card.purchase;
   const ctx = await purchaseContext();
-  const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4, fund: c.fund }));
+  const held = cardsHeldBy(ctx, viewer.email).map((c) => ({ last4: c.last4 }));
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: `/purchases/${id}`, label: id }]} here="Make changes" />
@@ -68,7 +68,6 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
             note: l.note ?? "",
             date: l.date ?? "",
             merchant: l.merchant ?? "",
-            hasReceipt: l.hasReceipt,
             flag: l.flag ?? "",
             repayBy: l.repayBy ?? "",
             ref: l.ref,
