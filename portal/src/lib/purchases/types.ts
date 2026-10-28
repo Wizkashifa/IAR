@@ -53,7 +53,17 @@ export type Attachment = {
   /** Google Drive file ID in the PO records Shared Drive (production). */
   driveFileId?: string;
   url?: string;
+  /** Card receipts: the statement charges (refs) this receipt is for. None: it's for the whole request. */
+  refs?: string[];
 };
+
+/**
+ * A card receipt uploaded on its own, before the request is sent (one
+ * request each, so a big month never goes up in one go). The browser only
+ * ever names it by `id`; who uploaded it, for which card and month, is
+ * checked when the request is sent.
+ */
+export type ReceiptUpload = { id: string; ownerEmail: string; last4: string; month: string; attachment: Attachment; at: string };
 
 
 /**

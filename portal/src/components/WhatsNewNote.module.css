@@ -12,7 +12,7 @@
   }
   .close:hover { opacity: 1; background: var(--surface); }
   .close:focus-visible { outline: none; box-shadow: var(--ring); }
-  .list { margin: var(--s-2) 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: var(--t-md); line-height: 1.45; max-width: 80ch; }
+  .list { margin: var(--s-2) 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: var(--t-md); line-height: 1.45; }
   .list a, .foot a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
   .foot a { display: inline-block; padding-block: 4px; }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); font-size: var(--t-md); }

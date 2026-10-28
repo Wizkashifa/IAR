@@ -46,7 +46,8 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
         funds={await fundsFor(viewer, ctx)}
         {...await vendorFormProps(viewer)}
         events={await linkableEventsFor(viewer)}
-        existingFiles={p.attachments.map((a) => a.name)}
+        existingFiles={p.attachments.filter((a) => !a.refs?.length).map((a) => a.name)}
+        existingReceipts={p.attachments.flatMap((a) => (a.refs?.length ? [{ name: a.name, refs: a.refs }] : []))}
         existingW9={p.w9Uploaded?.name}
         submitLabel="Send it again"
         cancelHref={`/purchases/${id}`}

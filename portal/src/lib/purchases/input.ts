@@ -8,7 +8,9 @@ import { merchantName, type StatementCard } from "./statement";
 import {
   CHECK_DELIVERIES,
   type DeliveryMethod,
+  type Attachment,
   type LineItem,
+  type ReceiptUpload,
   type PurchaseDetails,
   type PurchaseKind,
 } from "./types";
@@ -25,6 +27,8 @@ export type LineInput = {
   ref?: string;
   /** Card receipts: lumped with the merchant's other charges under this name. */
   group?: string;
+  /** Card receipts: the receipts uploaded for this charge (ReceiptUpload ids). */
+  receipts?: string[];
 };
 
 export type PurchaseInput = {
@@ -65,9 +69,16 @@ export type InputContext = {
    */
   statement?: StatementCard | null;
   statementIn?: boolean;
+  /** Card receipts: the uploads the lines name, loaded by the server (any that don't exist are simply missing). */
+  uploads?: ReceiptUpload[];
+  /** Card receipts being edited: the receipts already on the request. */
+  existingReceipts?: Attachment[];
+  /** Who is sending (card receipts: uploads must be theirs). */
+  requesterEmail?: string;
 };
 
-export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments"> } | { ok: false; errors: string[] };
+/** `receipts`: card receipts' newly uploaded files, each with the charges it covers. */
+export type ParseResult = { ok: true; details: Omit<PurchaseDetails, "stage" | "stageSince" | "approvals" | "history" | "restricted" | "attachments">; receipts: Attachment[] } | { ok: false; errors: string[] };
 
 const KINDS: PurchaseKind[] = ["pay", "reimburse", "card"];
 /** A card can have many charges in a month; other requests are split before this. */
@@ -129,6 +140,10 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
   const lines: LineItem[] = kind === "card" ? cardLines(rawLines, ctx.statement, errors) : otherLines(rawLines, errors);
   // Card receipts can be spread over several funds: the request is filed under the one most of the money went to.
   if (kind === "card") fund = mainFund(lines) ?? "";
+  const receipts =
+    kind === "card" && card && ctx.statement
+      ? cardReceipts(rawLines, lines, ctx.uploads ?? [], { owner: ctx.requesterEmail ?? "", last4: card.last4, month: card.statementMonth }, ctx.existingReceipts ?? [], errors)
+      : [];
 
   const attestation = str(raw.attestationName, 120);
   if (!attestation) errors.push("Type your name to sign the request.");
@@ -153,6 +168,7 @@ export function parsePurchaseInput(raw: PurchaseInput, ctx: InputContext): Parse
 
   return {
     ok: true,
+    receipts,
     details: {
       kind,
       fund,
@@ -256,4 +272,36 @@ export function fundsOf(lines: Pick<LineItem, "accountId" | "amount">[]): string
 /** Every payment request needs at least one receipt or invoice: the files already on it plus any just added. */
 export function receiptsError(existing: number, added: number): string | null {
   return existing + added > 0 ? null : "Attach the receipts or invoices. Every request needs at least one.";
+}
+
+/**
+ * Card receipts: the receipt files for the charges, each with the charges
+ * it covers. Every charge needs one (a lumped group shares its receipts),
+ * counting receipts already on a request being edited. An upload that
+ * isn't this person's, for this card and month, is refused.
+ */
+export function cardReceipts(rawLines: LineInput[], lines: LineItem[], uploads: ReceiptUpload[], who: { owner: string; last4: string; month: string }, existing: Attachment[], errors: string[]): Attachment[] {
+  const covers = new Map<string, Set<string>>();
+  let unknown = false;
+  for (const l of rawLines) {
+    const ref = str(l.ref, 40);
+    if (!lines.some((x) => x.ref === ref)) continue;
+    for (const raw of (Array.isArray(l.receipts) ? l.receipts : []).slice(0, 20)) {
+      const id = str(raw, 60);
+      const u = uploads.find((x) => x.id === id);
+      if (!u || u.ownerEmail.toLowerCase() !== who.owner.toLowerCase() || u.last4 !== who.last4 || u.month !== who.month) {
+        unknown = true;
+        continue;
+      }
+      covers.set(id, (covers.get(id) ?? new Set()).add(ref));
+    }
+  }
+  if (unknown) errors.push("A receipt couldn't be found. Add it again on its charge.");
+  const covered = new Set([...[...covers.values()].flatMap((s) => [...s]), ...existing.flatMap((a) => a.refs ?? [])]);
+  // A lumped group is covered when any of its charges is.
+  for (const l of lines) if (l.group && lines.some((x) => x.group === l.group && covered.has(x.ref!))) covered.add(l.ref!);
+  for (const l of lines) {
+    if (!covered.has(l.ref!)) errors.push(`${l.date!.slice(5).replace("-", "/")} ${merchantName(l.merchant!)}: add its receipt.`);
+  }
+  return [...covers.entries()].map(([id, refs]) => ({ ...uploads.find((u) => u.id === id)!.attachment, refs: [...refs] }));
 }

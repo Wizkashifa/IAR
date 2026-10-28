@@ -20,6 +20,7 @@ import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { groupCharges, type StatementChoice } from "@/lib/purchases/statement";
 import { fmtMonth } from "@/lib/format";
 import { AccountOptions, CardCharges, type ChargeInput } from "./CardCharges";
+import type { ChargeFile } from "./ChargeReceipt";
 import { RECEIPT_TYPES } from "./AddReceipts";
 
 type Line = LineInput & { key: number };
@@ -43,6 +44,8 @@ export type FormProps = {
   lastAddress?: string;
   /** Files already on the request (editing). */
   existingFiles?: string[];
+  /** Card receipts being edited: the receipts already on the request, with the charges each covers. */
+  existingReceipts?: { name: string; refs: string[] }[];
   /** A W-9 was already uploaded with this request (editing). */
   existingW9?: string;
   /** Events this person can link the purchase to (their own and their committees'). */
@@ -79,7 +82,7 @@ const fmtW9Date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-
 
 const W9_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/heic", "image/heif", "image/webp"];
 
-export default function PurchaseForm({ action, initial, requesterName, cards, statements = [], start, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, events = [], submitLabel, cancelHref }: FormProps) {
+export default function PurchaseForm({ action, initial, requesterName, cards, statements = [], start, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingReceipts = [], existingW9, events = [], submitLabel, cancelHref }: FormProps) {
   const eventChoices = initial?.eventCardId && !events.some((e) => e.id === initial.eventCardId) ? [{ id: initial.eventCardId, label: initial.eventCardId }, ...events] : events;
   const [eventCardId, setEventCardId] = useState(initial?.eventCardId ?? "");
   const fundChoices = initial?.fund && !funds.includes(initial.fund) ? [initial.fund, ...funds] : funds;
@@ -95,6 +98,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
   const choiceFor = (last4: string, month: string) => statements.find((x) => x.last4 === last4 && x.month === month);
   const choice = choiceFor(cardLast4, statementMonth);
   const [charges, setCharges] = useState(() => chargeValues(choice, initial?.kind === "card" ? initial.lines : undefined));
+  // Card receipts: each charge's receipt files, by its ref. Those already on a request being edited stay.
+  const startReceipts = () => {
+    const out: Record<string, ChargeFile[]> = {};
+    existingReceipts.forEach((a, i) => a.refs.forEach((ref) => (out[ref] ??= []).push({ id: `existing-${i}`, name: a.name, existing: true })));
+    return out;
+  };
+  const [receipts, setReceipts] = useState(startReceipts);
+  const [uploading, setUploading] = useState(0);
   const [description, setDescription] = useState(initial?.description ?? (start ? "Card statement receipts" : ""));
   const [payee, setPayee] = useState(initial?.payee ?? "");
   const [invoiceNumber, setInvoiceNumber] = useState(initial?.invoiceNumber ?? "");
@@ -143,13 +154,23 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
     setCardLast4(last4);
     setStatementMonth(month);
     setCharges(chargeValues(choiceFor(last4, month)));
+    setReceipts(last4 === initial?.cardLast4 && month === initial?.statementMonth ? startReceipts() : {});
   };
+  const addReceipt = (refs: string[], f: ChargeFile) => setReceipts((r) => ({ ...r, ...Object.fromEntries(refs.slice(0, 1).map((ref) => [ref, [...(r[ref] ?? []), f]])) }));
+  const removeReceipt = (id: string) => setReceipts((r) => Object.fromEntries(Object.entries(r).map(([ref, fs]) => [ref, fs.filter((f) => f.id !== id)])));
+  const receiptsOn = (refs: string[]) => [...new Map(refs.flatMap((ref) => receipts[ref] ?? []).map((f) => [f.id, f])).values()];
   const setCharge = (ref: string, patch: Partial<ChargeInput>) => setCharges((c) => ({ ...c, values: { ...c.values, [ref]: { ...c.values[ref], ...patch } } }));
   const groupRefs = (name: string) => groups.find((g) => g.name === name)?.refs ?? [];
   const setGroup = (name: string, patch: Partial<ChargeInput>) =>
     setCharges((c) => ({ ...c, values: { ...c.values, ...Object.fromEntries(groupRefs(name).map((ref) => [ref, { ...c.values[ref], ...patch }])) } }));
   // Lumping gives every charge the first one's sub-account and reason; nothing is expected back on a lumped charge.
-  const lump = (name: string, on: boolean) =>
+  const lump = (name: string, on: boolean) => {
+    // Splitting a group keeps its receipts on every charge they covered.
+    if (!on) {
+      const refs = groupRefs(name);
+      const all = receiptsOn(refs);
+      setReceipts((r) => ({ ...r, ...Object.fromEntries(refs.map((ref) => [ref, all])) }));
+    }
     setCharges((c) => {
       const refs = groupRefs(name);
       const first = c.values[refs[0]];
@@ -158,10 +179,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         values: on ? { ...c.values, ...Object.fromEntries(refs.map((ref) => [ref, { ...first, flag: "" as const, repayBy: "" }])) } : c.values,
       };
     });
+  };
   const cardLinesOut: LineInput[] = (choice?.charges ?? []).map((ch) => {
     const v = charges.values[ch.ref];
     const g = groups.find((x) => x.refs.includes(ch.ref));
-    return { ref: ch.ref, amount: ch.amount, accountId: v?.accountId ?? "", note: v?.note ?? "", flag: v?.flag ?? "", repayBy: v?.repayBy ?? "", group: g && charges.lumped.includes(g.name) ? g.name : "" };
+    const lumpedIn = g && charges.lumped.includes(g.name) ? g : undefined;
+    // New uploads only (by id); receipts already on the request stay on it. A lumped group's receipts cover all its charges.
+    const ids = receiptsOn(lumpedIn ? lumpedIn.refs : [ch.ref]).filter((f) => !f.existing).map((f) => f.id);
+    return { ref: ch.ref, amount: ch.amount, accountId: v?.accountId ?? "", note: v?.note ?? "", flag: v?.flag ?? "", repayBy: v?.repayBy ?? "", group: lumpedIn?.name ?? "", receipts: ids };
   });
 
   const payload: PurchaseInput = {
@@ -351,7 +376,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         <div className="stack">
           <p className="hint">
             {card
-              ? "These are the charges on the statement. For each one, choose its sub-account and say why it was bought. Charges from the same store can be lumped together, so one receipt covers them."
+              ? "These are the charges on the statement. For each one, choose its sub-account, say why it was bought and add its receipt (each one uploads as soon as you pick it). Charges from the same store can be lumped together, so one receipt covers them."
               : "Split the total across as many sub-accounts as it really covers."}
           </p>
           {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
@@ -368,6 +393,12 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                 onCharge={setCharge}
                 onGroup={setGroup}
                 onLump={lump}
+                last4={cardLast4}
+                month={statementMonth}
+                receipts={receipts}
+                onReceipt={addReceipt}
+                onRemoveReceipt={removeReceipt}
+                onBusy={(d) => setUploading((n) => n + d)}
               />
             )
           ) : (
@@ -413,6 +444,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         </div>
       </Panel>
 
+      {!card && (
       <Panel title="Receipts and invoices">
         <div className="stack">
           {existingFiles.length > 0 && <Note>Already attached: {existingFiles.join(", ")}</Note>}
@@ -423,14 +455,11 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             camera
             maxFiles={10}
             accept={RECEIPT_TYPES}
-            hint={
-              card
-                ? "Every charge needs its receipt or invoice. One file can cover several charges, such as your Amazon order history for the month. Up to 10 files now; after you send it, you can add more from the request's page."
-                : "Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
-            }
+            hint="Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
           />
         </div>
       </Panel>
+      )}
 
       <Panel title="Sign">
         <div className="stack">
@@ -443,17 +472,18 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
 
       <FormActions>
         <Button href={cancelHref}>Cancel</Button>
-        <Submit label={submitLabel} />
+        <Submit label={submitLabel} waiting={uploading > 0} />
       </FormActions>
     </form>
   );
 }
 
-function Submit({ label }: { label: string }) {
+/** `waiting`: receipts are still uploading, so it can't be sent yet. */
+function Submit({ label, waiting }: { label: string; waiting?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending}>
-      {pending ? "Sending…" : label}
+    <Button type="submit" variant="primary" disabled={pending || waiting}>
+      {pending ? "Sending…" : waiting ? "Waiting for receipts to upload…" : label}
     </Button>
   );
 }

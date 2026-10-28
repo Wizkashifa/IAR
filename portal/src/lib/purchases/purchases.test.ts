@@ -9,7 +9,7 @@ import type { Vendor } from "../cards";
 import { fundsOf, mainFund, parseAmount, parsePurchaseInput, receiptsError, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
 import { purchaseCommentNotices, purchaseNotices, receiptsAddedNotices } from "./notices";
-import { testCharges } from "./statement-sample";
+import { TEST_UPLOADS, testCharges } from "./statement-sample";
 import * as wf from "./workflow";
 import { WorkflowError } from "../workflow-core";
 
@@ -27,7 +27,7 @@ const settings: wf.RoutingSettings = {
   approversFor: (fund) => (fund === "Women Expenses" ? {} : { chairs: [chair.email], backups: [backup.email] }),
   executiveThreshold: 2500,
 };
-const ctx = { requesterName: volunteer.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }, { name: "No W9 Co", w9OnFile: false }] };
+const ctx = { requesterName: volunteer.name, requesterEmail: volunteer.email, uploads: TEST_UPLOADS, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }, { name: "No W9 Co", w9OnFile: false }] };
 
 const T = (n: number) => new Date(Date.UTC(2026, 9, 1 + n, 14)).toISOString();
 
@@ -668,4 +668,38 @@ test("more receipts: the requester adds them in several sends until the request 
   done = wf.recordBooks(done, finance, T(7));
   assert.equal(wf.permission(done, volunteer, "attach").ok, false);
   assert.equal(wf.permission(wf.cancel(submitted(), volunteer, T(1)), volunteer, "attach").ok, false);
+});
+
+test("card receipts: every charge needs its receipt; a lumped group shares one; only the sender's own uploads, for this card and month", () => {
+  const t = testCharges([
+    { date: "2026-09-02", description: "AMAZON MKTPL*AB12  Amzn.com/billWA", amount: 40, line: { accountId: "a78", group: "Amazon" } },
+    { date: "2026-09-09", description: "AMAZON MKTPL*CD34  Amzn.com/billWA", amount: 15, line: { accountId: "a78", group: "Amazon" } },
+    { date: "2026-09-10", description: "COSTCO WHSE #0002  APEX  NC", amount: 20, line: { accountId: "a76" } },
+  ]);
+  const amazonReceipt = t.lines[0].receipts!;
+  // The Amazon order history covers both Amazon charges; Costco has its own.
+  const lines = [{ ...t.lines[0] }, { ...t.lines[1], receipts: amazonReceipt }, { ...t.lines[2] }];
+  const ok = parsePurchaseInput(cardInput(lines), { ...ctx, statement: t.statement });
+  assert.ok(ok.ok);
+  if (!ok.ok) return;
+  assert.deepEqual(ok.receipts.map((a) => a.refs), [[t.statement.charges[0].ref, t.statement.charges[1].ref], [t.statement.charges[2].ref]]);
+
+  // Costco without a receipt: refused, naming the charge.
+  const missing = parsePurchaseInput(cardInput([lines[0], lines[1], { ...lines[2], receipts: [] }]), { ...ctx, statement: t.statement });
+  assert.ok(!missing.ok && missing.errors.includes("09/10 Costco: add its receipt."));
+  // A lumped group is covered by a receipt on any of its charges.
+  const groupOnce = parsePurchaseInput(cardInput([lines[0], { ...lines[1], receipts: [] }, lines[2]]), { ...ctx, statement: t.statement });
+  assert.ok(groupOnce.ok);
+
+  // Someone else's upload, or one for another card or month, doesn't count.
+  const theirs = testCharges([{ date: "2026-09-10", description: "COSTCO", amount: 20, line: {} }], "2093", "someone@x.org");
+  const other = parsePurchaseInput(cardInput([lines[0], lines[1], { ...lines[2], receipts: theirs.lines[0].receipts }]), { ...ctx, statement: t.statement });
+  assert.ok(!other.ok && other.errors.includes("A receipt couldn't be found. Add it again on its charge."));
+  const wrongMonth = testCharges([{ date: "2026-08-10", description: "COSTCO", amount: 20, line: {} }]);
+  const old = parsePurchaseInput(cardInput([lines[0], lines[1], { ...lines[2], receipts: wrongMonth.lines[0].receipts }]), { ...ctx, statement: t.statement });
+  assert.equal(old.ok, false);
+
+  // Editing a returned request: receipts already on it still count.
+  const kept = parsePurchaseInput(cardInput([lines[0], lines[1], { ...lines[2], receipts: [] }]), { ...ctx, statement: t.statement, existingReceipts: [{ name: "costco.jpg", size: 1, refs: [t.statement.charges[2].ref] }] });
+  assert.ok(kept.ok && kept.receipts.length === 1, "only the new upload is returned; the kept one stays on the request");
 });

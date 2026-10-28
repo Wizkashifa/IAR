@@ -86,3 +86,16 @@ export async function saveStatementPdf(month: string, file: File): Promise<strin
   const [out] = await uploadToFolder(root, ["Card statements", month.slice(0, 4)], [renamed]);
   return out?.driveFileId;
 }
+
+/**
+ * One card receipt, uploaded before its request exists: filed under "Card
+ * receipts / 2026-10 / Card 2093" in the PO records Shared Drive. Dev keeps
+ * only the name and size.
+ */
+export async function saveCardReceipt(last4: string, month: string, file: File): Promise<Attachment> {
+  if (isDevAuth()) return { name: file.name, size: file.size };
+  const root = process.env.PO_DRIVE_FOLDER_ID;
+  if (!root) throw new Error("Receipt uploads aren't set up yet (PO_DRIVE_FOLDER_ID). See docs/setup.md.");
+  const [out] = await uploadToFolder(root, ["Card receipts", month, `Card ${last4}`], [file]);
+  return out;
+}

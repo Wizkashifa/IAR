@@ -6,6 +6,7 @@
  */
 import type { LineInput } from "./input";
 import type { StatementCard } from "./statement";
+import type { ReceiptUpload } from "./types";
 
 export type SampleCharge = { day: number; post: number; desc: string; city?: string; amount: number };
 export type SampleCard = { last4: string; holderName: string; charges: SampleCharge[] };
@@ -126,12 +127,18 @@ export function samplePdf(pages: SampleLine[][]): Uint8Array {
   return new TextEncoder().encode(out);
 }
 
+/** For tests: the receipt uploads testCharges made (one per charge, by `owner`). Pass as InputContext.uploads. */
+export const TEST_UPLOADS: ReceiptUpload[] = [];
+let testSeq = 0;
+
 /**
  * For tests: a card's charges as an imported statement holds them, and a
  * request line for each (the sub-account and reason given, as the form sends).
  */
-export function testCharges(charges: { date: string; description: string; amount: number; line: Partial<LineInput> }[], last4 = "2093"): { statement: StatementCard; lines: LineInput[] } {
-  const withRefs = charges.map((c, i) => ({ ...c, ref: `T${last4}${String(i + 1).padStart(4, "0")}` }));
+export function testCharges(charges: { date: string; description: string; amount: number; line: Partial<LineInput> }[], last4 = "2093", owner = "vol@x.org"): { statement: StatementCard; lines: LineInput[] } {
+  const withRefs = charges.map((c, i) => ({ ...c, ref: `T${last4}${String(i + 1).padStart(4, "0")}`, receipt: `test-upload-${++testSeq}` }));
+  for (const c of withRefs)
+    TEST_UPLOADS.push({ id: c.receipt, ownerEmail: owner, last4, month: c.date.slice(0, 7), at: c.date, attachment: { name: `${c.ref}.jpg`, size: 1 } });
   return {
     statement: {
       last4,
@@ -139,6 +146,6 @@ export function testCharges(charges: { date: string; description: string; amount
       total: Math.round(charges.reduce((s, c) => s + c.amount, 0) * 100) / 100,
       charges: withRefs.map((c) => ({ ref: c.ref, date: c.date, postDate: c.date, description: c.description, amount: c.amount })),
     },
-    lines: withRefs.map((c) => ({ ref: c.ref, accountId: "", amount: c.amount, note: "For the office", ...c.line })),
+    lines: withRefs.map((c) => ({ ref: c.ref, accountId: "", amount: c.amount, note: "For the office", receipts: [c.receipt], ...c.line })),
   };
 }

@@ -23,7 +23,7 @@ import { actorFor, peopleStore } from "@/lib/people";
 import { isActive } from "@/lib/away";
 import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
 import { purchaseContext } from "@/lib/purchases/settings";
-import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal } from "@/lib/purchases/types";
+import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal, type Attachment } from "@/lib/purchases/types";
 import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, isPurchaseCard, permission, returnTargets, type Action, type PurchaseCard } from "@/lib/purchases/workflow";
 import { actOnPurchase, commentOnPurchase } from "../actions";
 import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
@@ -63,6 +63,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const can = (a: Action) => permission(pc, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const isCard = p.kind === "card";
+  // Card receipts: files for particular charges show with those charges; the rest are for the whole request.
+  const wholeRequest = p.attachments.filter((a) => !a.refs?.length);
+  const receiptsFor = (lines: { ref?: string }[]) => p.attachments.filter((a) => a.refs?.some((r) => lines.some((l) => l.ref === r)));
   // Card receipts can charge several funds: name them all.
   const fundsLabel = isCard ? fundsOf(p.lines).map(shortFund).join(", ") || shortFund(p.fund) : shortFund(p.fund);
   const total = purchaseTotal(p);
@@ -180,6 +183,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                         {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
                       </span>
                       {row.lines[0].note && <span className={cell.sub}>{row.lines[0].note}</span>}
+                      <ChargeFiles files={receiptsFor(row.lines)} />
                       {row.lines.some((l) => !l.hasReceipt) && (
                         <span className={styles.tags}>
                           <Pill tone="warn">No receipt</Pill>
@@ -225,6 +229,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
                       {acct && acct.fund !== p.fund && ` (${shortFund(acct.fund)})`}
                     </span>
                     {l.note && <span className={cell.sub}>{l.note}</span>}
+                    {isCard && <ChargeFiles files={receiptsFor([l])} />}
                     {(!l.hasReceipt || l.flag || l.amount < 0) && (
                       <span className={styles.tags}>
                         {l.amount < 0 && <Pill tone="info">Credit</Pill>}
@@ -264,9 +269,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </DataTable>
       </Panel>
 
-      <Panel title="Receipts and files" right={`${p.attachments.length}`}>
+      <Panel title={isCard ? "Other files" : "Receipts and files"} right={`${wholeRequest.length}`}>
         <div className="stack">
-          <FileList files={p.attachments} empty="No files attached." />
+          <FileList files={wholeRequest} empty={isCard ? "Each charge's receipts are with the charge above." : "No files attached."} />
           {can("attach") && <AddReceipts action={actOnPurchase} fields={base} />}
         </div>
       </Panel>
@@ -472,4 +477,14 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </div>
     );
   }
+}
+
+/** A charge's own receipts, under it in the charges table. */
+function ChargeFiles({ files }: { files: Attachment[] }) {
+  if (files.length === 0) return null;
+  return (
+    <div className={styles.chargeFiles}>
+      <FileList files={files} empty="" />
+    </div>
+  );
 }

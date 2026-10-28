@@ -14,7 +14,8 @@ import { receiptsSentFor, statementFor } from "@/lib/purchases/statement-context
 import { requestableFunds } from "@/lib/teams";
 import { linkableEventsFor } from "@/lib/events/context";
 import { vendorAfterPayment, vendorWithW9, vendorsForFund } from "@/lib/purchases/vendors";
-import type { PurchaseDetails } from "@/lib/purchases/types";
+import type { Attachment, PurchaseDetails } from "@/lib/purchases/types";
+import { receiptUploadStore } from "@/lib/purchases/receipt-uploads";
 import * as wf from "@/lib/purchases/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
@@ -33,7 +34,7 @@ export async function fundsFor(viewer: Viewer, ctx: PurchaseContext): Promise<st
 }
 
 /** `keep`: the fund and W-9 already on a request being edited; the W-9 needn't be uploaded again. */
-async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { id: string; fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string; files: number }) {
+async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, keep?: { id: string; fund: string; w9?: PurchaseDetails["w9Uploaded"]; eventCardId?: string; attachments: Attachment[] }) {
   let raw: PurchaseInput;
   try {
     raw = JSON.parse(String(form.get("payload") ?? "{}")) as PurchaseInput;
@@ -46,6 +47,9 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
   const w9Files = filesFrom(form, "w9");
   // Card receipts: the charges come from the imported statement, never from the browser.
   const card = raw.kind === "card" ? await statementFor(String(raw.cardLast4 ?? ""), String(raw.statementMonth ?? "")) : undefined;
+  // Card receipts: each charge's receipts were uploaded one by one; the lines name them, and only this person's count.
+  const uploadIds = raw.kind === "card" && Array.isArray(raw.lines) ? [...new Set(raw.lines.flatMap((l) => (Array.isArray(l.receipts) ? l.receipts : [])).map(String))].slice(0, 300) : [];
+  const uploads = uploadIds.length ? await (await receiptUploadStore()).getMany(uploadIds) : [];
   const parsed = parsePurchaseInput(
     { ...raw, w9Attached: w9Files.length > 0 || Boolean(keep?.w9) },
     {
@@ -57,6 +61,9 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
       // The events the form offered; a request being edited may keep the event it was linked to.
       events: [...(await linkableEventsFor(viewer)).map((e) => e.id), ...(keep?.eventCardId ? [keep.eventCardId] : [])],
       ...card,
+      uploads,
+      requesterEmail: viewer.email,
+      existingReceipts: (keep?.attachments ?? []).filter((a) => a.refs?.length),
     },
   );
   // One set of receipts per card and month.
@@ -65,10 +72,11 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
     if (sent.length) return { ok: false as const, errors: [`Receipts for this card and month were already sent as ${sent[0].id}.`] };
   }
   const files = filesFrom(form, "attachments");
-  const noReceipts = receiptsError(keep?.files ?? 0, files.length);
+  // Card receipts are checked charge by charge (above); everything else needs at least one file.
+  const noReceipts = raw.kind === "card" ? null : receiptsError(keep?.attachments.length ?? 0, files.length);
   const fileErrors = [...checkFiles(files), ...checkW9(w9Files), ...(noReceipts ? [noReceipts] : [])];
   if (!parsed.ok || fileErrors.length) return { ok: false as const, errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors] };
-  return { ok: true as const, details: parsed.details, files, w9File: parsed.details.w9Required ? w9Files[0] : undefined };
+  return { ok: true as const, details: parsed.details, receipts: parsed.receipts, files, w9File: parsed.details.w9Required ? w9Files[0] : undefined };
 }
 
 /** Upload the W-9 first: if it fails, nothing is submitted and the requester can try again. */
@@ -95,7 +103,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
   const now = nowIso();
   const w9 = await storeW9(r.details.payee, r.w9File, now);
   if (w9 === "failed") return { errors: [W9_FAILED] };
-  const draft = wf.newPurchase(w9 ? { ...r.details, w9Uploaded: w9 } : r.details, viewer.email, now);
+  const draft = wf.newPurchase(w9 ? { ...r.details, w9Uploaded: w9 } : r.details, viewer.email, now, r.receipts);
   const routed = wf.submit(draft, actor, ctx.routing, now);
   const { id: _blank, ...toCreate } = routed;
   const created = (await store.create(toCreate, "PO")) as wf.PurchaseCard;
@@ -129,12 +137,12 @@ export async function resubmitPurchase(id: string, _prev: FormState, form: FormD
   if (!allowed.ok) return { errors: [allowed.reason] };
 
   const ctx = await purchaseContext();
-  const r = await parseForm(viewer, form, ctx, { id: card.id, fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId, files: card.purchase.attachments.length });
+  const r = await parseForm(viewer, form, ctx, { id: card.id, fund: card.purchase.fund, w9: card.purchase.w9Uploaded, eventCardId: card.purchase.eventCardId, attachments: card.purchase.attachments });
   if (!r.ok) return { errors: r.errors };
   const now = nowIso();
   const w9 = await storeW9(r.details.payee, r.w9File, now);
   if (w9 === "failed") return { errors: [W9_FAILED] };
-  let attachments = card.purchase.attachments;
+  let attachments = [...card.purchase.attachments, ...r.receipts];
   try {
     attachments = [...attachments, ...(await saveAttachments(card.id, r.details.fund, r.files))];
   } catch (err) {
