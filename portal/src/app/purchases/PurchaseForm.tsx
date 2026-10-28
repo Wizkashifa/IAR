@@ -20,6 +20,7 @@ import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { groupCharges, type StatementChoice } from "@/lib/purchases/statement";
 import { fmtMonth } from "@/lib/format";
 import { AccountOptions, CardCharges, type ChargeInput } from "./CardCharges";
+import { RECEIPT_TYPES } from "./AddReceipts";
 
 type Line = LineInput & { key: number };
 
@@ -76,21 +77,6 @@ const blankLine = (): Line => ({ key: keySeq++, accountId: "", amount: "", note:
 
 const fmtW9Date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
 
-const RECEIPT_TYPES = [
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/heic",
-  "image/heif",
-  "image/webp",
-  "image/gif",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/csv",
-  "text/plain",
-];
 const W9_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/heic", "image/heif", "image/webp"];
 
 export default function PurchaseForm({ action, initial, requesterName, cards, statements = [], start, funds, vendors, restrictedVendors = [], lastAddress = "", existingFiles = [], existingW9, events = [], submitLabel, cancelHref }: FormProps) {
@@ -439,7 +425,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             accept={RECEIPT_TYPES}
             hint={
               card
-                ? "Every charge needs its receipt or invoice. One file can cover several charges, such as your Amazon order history for the month. Photos or PDFs, up to 10 files."
+                ? "Every charge needs its receipt or invoice. One file can cover several charges, such as your Amazon order history for the month. Up to 10 files now; after you send it, you can add more from the request's page."
                 : "Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
             }
           />

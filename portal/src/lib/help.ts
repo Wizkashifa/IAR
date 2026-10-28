@@ -141,6 +141,7 @@ export const HELP_GUIDES: HelpGuide[] = [
           "For each charge, choose its sub-account and say why it was bought. A card isn't tied to one committee: each charge can go to any committee's sub-account. The portal suggests the sub-account you used last time at the same store.",
           "Several charges from one store, such as Amazon, can be lumped together: one sub-account, one reason and one receipt (your order history for the month) cover them all. Click Split up to do them one by one.",
           "Attach a receipt or invoice for every charge. One file can cover several, such as your Amazon order history for the month. Receipts can't be left out.",
+          "A request takes up to 10 files at a time. Have more? Send it with the first ones, then open the request and use Add more receipts as many times as you need, until it's done.",
           "Mark any charge that will be refunded or repaid.",
           "Card receipts go straight to the finance office.",
         ],

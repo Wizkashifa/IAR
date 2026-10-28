@@ -190,7 +190,10 @@ function waitingOnStep(p: PurchaseDetails): string | undefined {
 
 // ---- Who can act ---------------------------------------------------------
 
-export type Action = "approve" | "return" | "reject" | "pay" | "books" | "resolve" | "cancel" | "resubmit";
+export type Action = "approve" | "return" | "reject" | "pay" | "books" | "resolve" | "cancel" | "resubmit" | "attach";
+
+/** Receipts and invoices one request can hold, over all its sends. */
+export const MAX_ATTACHMENTS = 100;
 
 /** Whether `actor` may take `action` now, and if not, why. */
 export function permission(card: PurchaseCard, actor: Actor, action: Action): { ok: true } | { ok: false; reason: string } {
@@ -205,6 +208,14 @@ export function permission(card: PurchaseCard, actor: Actor, action: Action): { 
     if (closed) return no("This request is already closed.");
     if (p.stage === "payment" || p.stage === "books" || p.stage === "done")
       return no("Approved or paid requests can't be cancelled; ask the finance office.");
+    return { ok: true };
+  }
+  // More receipts, in as many sends as needed, until the request is done.
+  if (action === "attach") {
+    if (!own) return no("Only the requester can add receipts.");
+    if (closed) return no("This request is closed.");
+    if (p.stage === "done") return no("This request is done. Send any late receipts to the finance office.");
+    if (p.attachments.length >= MAX_ATTACHMENTS) return no(`This request already has ${MAX_ATTACHMENTS} files, the most one can hold.`);
     return { ok: true };
   }
   if (action === "resubmit") {
@@ -246,7 +257,7 @@ export function permission(card: PurchaseCard, actor: Actor, action: Action): { 
   return no("Unknown action.");
 }
 
-function mustDo(card: PurchaseCard, actor: Actor, action: Action) {
+export function mustDo(card: PurchaseCard, actor: Actor, action: Action) {
   must(permission(card, actor, action));
 }
 
@@ -421,6 +432,21 @@ export function resubmit(card: PurchaseCard, edited: PurchaseDetails, actor: Act
     history: route.note ? [...base.purchase.history, historyEntry(actor.email, now, "Routed", route.note)] : base.purchase.history,
   };
   return withStage(base, p, now);
+}
+
+/** The requester adds receipts or invoices after sending. The request stays where it is. */
+export function addAttachments(card: PurchaseCard, actor: Actor, now: string, files: Attachment[]): PurchaseCard {
+  mustDo(card, actor, "attach");
+  if (files.length === 0) throw new WorkflowError("Choose the receipts to add first.");
+  if (card.purchase.attachments.length + files.length > MAX_ATTACHMENTS)
+    throw new WorkflowError(`A request holds at most ${MAX_ATTACHMENTS} files; it has ${card.purchase.attachments.length}.`);
+  const n = files.length;
+  const p: PurchaseDetails = {
+    ...card.purchase,
+    attachments: [...card.purchase.attachments, ...files],
+    history: [...card.purchase.history, historyEntry(actor.email, now, `Added ${n} receipt${n === 1 ? "" : "s"}`, files.map((f) => f.name).join(", "))],
+  };
+  return { ...card, purchase: p, updatedAt: now };
 }
 
 export function cancel(card: PurchaseCard, actor: Actor, now: string): PurchaseCard {

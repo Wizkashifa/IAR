@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/Choices";
 import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
+import { AddReceipts } from "../AddReceipts";
 import { lineRows, merchantName } from "@/lib/purchases/statement";
 import { fundsOf } from "@/lib/purchases/input";
 
@@ -264,7 +265,10 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </Panel>
 
       <Panel title="Receipts and files" right={`${p.attachments.length}`}>
-        <FileList files={p.attachments} empty="No files attached." />
+        <div className="stack">
+          <FileList files={p.attachments} empty="No files attached." />
+          {can("attach") && <AddReceipts action={actOnPurchase} fields={base} />}
+        </div>
       </Panel>
 
       <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />

@@ -5,7 +5,7 @@ import { cardStore, ConflictError } from "@/lib/cards";
 import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
-import { purchaseCommentNotices, purchaseNotices } from "@/lib/purchases/notices";
+import { purchaseCommentNotices, purchaseNotices, receiptsAddedNotices } from "@/lib/purchases/notices";
 import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/purchases/drive";
 import { parsePurchaseInput, receiptsError, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
@@ -205,6 +205,23 @@ export async function actOnPurchase(form: FormData): Promise<void> {
         case "cancel":
           next = wf.cancel(card, actor, now);
           break;
+        case "attach": {
+          // Check before uploading, so nothing reaches Drive for a request that can't take it.
+          wf.mustDo(card, actor, "attach");
+          const files = filesFrom(form, "attachments");
+          const bad = checkFiles(files);
+          if (bad.length) throw new WorkflowError(bad.join(" "));
+          if (files.length === 0) throw new WorkflowError("Choose the receipts to add first.");
+          let saved;
+          try {
+            saved = await saveAttachments(card.id, card.purchase.fund, files);
+          } catch (err) {
+            console.error("attachment upload failed", err);
+            throw new WorkflowError("The receipts didn't upload, so nothing was added. Try again, or send fewer at a time.");
+          }
+          next = wf.addAttachments(card, actor, now, saved);
+          return { next, notices: receiptsAddedNotices(next, actor, saved.length) };
+        }
         default:
           return unknownAction();
       }

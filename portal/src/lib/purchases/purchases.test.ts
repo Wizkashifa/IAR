@@ -8,7 +8,7 @@ import { mergeVendors, vendorAfterPayment, vendorWithW9, vendorsForFund, visible
 import type { Vendor } from "../cards";
 import { fundsOf, mainFund, parseAmount, parsePurchaseInput, receiptsError, type PurchaseInput } from "./input";
 import { checkComment, withComment } from "../comments";
-import { purchaseCommentNotices, purchaseNotices } from "./notices";
+import { purchaseCommentNotices, purchaseNotices, receiptsAddedNotices } from "./notices";
 import { testCharges } from "./statement-sample";
 import * as wf from "./workflow";
 import { WorkflowError } from "../workflow-core";
@@ -640,4 +640,32 @@ test("comments: Social & Welfare comment notices never quote the comment", () =>
   const sw = submitted({ fund: "Social & Welfare", lines: [{ accountId: findSwAccount(), amount: "300" }] });
   const ns = purchaseCommentNotices(withComment(sw, { at: T(1), by: finance.email, name: finance.name, text: "Family name is…" }), finance, "Family name is…");
   assert.ok(ns.every((n) => !n.text.includes("Family name")));
+});
+
+test("more receipts: the requester adds them in several sends until the request is done; it stays where it is", () => {
+  let c = submitted();
+  const before = c.purchase.attachments.length;
+  assert.equal(wf.permission(c, chair, "attach").ok, false, "only the requester");
+  c = wf.addAttachments(c, volunteer, T(1), [{ name: "a.jpg", size: 1 }, { name: "b.jpg", size: 1 }]);
+  c = wf.addAttachments(c, volunteer, T(2), [{ name: "c.pdf", size: 1 }]);
+  assert.equal(c.purchase.attachments.length, before + 3);
+  assert.equal(c.purchase.stage, "chair");
+  assert.deepEqual(c.purchase.history.slice(-2).map((h) => [h.action, h.note]), [["Added 2 receipts", "a.jpg, b.jpg"], ["Added 1 receipt", "c.pdf"]]);
+  assert.throws(() => wf.addAttachments(c, volunteer, T(3), []), WorkflowError);
+  // Whoever it waits on hears in the portal, without an alert.
+  const n = receiptsAddedNotices(c, volunteer, 1);
+  assert.deepEqual(n.map((x) => [x.to, x.alert]), [[{ email: chair.email }, false]]);
+
+  // At most MAX_ATTACHMENTS over all sends.
+  const full = { ...c, purchase: { ...c.purchase, attachments: Array.from({ length: wf.MAX_ATTACHMENTS - 1 }, (_, i) => ({ name: `${i}.jpg`, size: 1 })) } };
+  assert.throws(() => wf.addAttachments(full, volunteer, T(3), [{ name: "x", size: 1 }, { name: "y", size: 1 }]), WorkflowError);
+
+  // Not once it's done, cancelled or declined.
+  let done = wf.approve(c, chair, settings, T(4));
+  done = wf.approve(done, finance, settings, T(5));
+  done = wf.recordPayment(done, finance, T(6), "Check", "1");
+  assert.equal(wf.permission(done, volunteer, "attach").ok, true, "still open at QuickBooks entry");
+  done = wf.recordBooks(done, finance, T(7));
+  assert.equal(wf.permission(done, volunteer, "attach").ok, false);
+  assert.equal(wf.permission(wf.cancel(submitted(), volunteer, T(1)), volunteer, "attach").ok, false);
 });
