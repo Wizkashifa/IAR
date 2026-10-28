@@ -6,7 +6,7 @@ import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { purchaseCommentNotices, purchaseNotices, receiptsAddedNotices } from "@/lib/purchases/notices";
-import { checkFiles, checkW9, filesFrom, saveAttachments, saveW9 } from "@/lib/purchases/drive";
+import { checkFiles, checkW9, filesFrom, saveAttachments, saveCardReceipt, saveW9 } from "@/lib/purchases/drive";
 import { parsePurchaseInput, receiptsError, type PurchaseInput } from "@/lib/purchases/input";
 import { FUNDS } from "@/lib/purchases/accounts";
 import { type PurchaseContext, cardsHeldBy, personFunds, purchaseContext } from "@/lib/purchases/settings";
@@ -224,7 +224,13 @@ export async function actOnPurchase(form: FormData): Promise<void> {
           if (files.length === 0) throw new WorkflowError("Choose the receipts to add first.");
           let saved;
           try {
-            saved = await saveAttachments(card.id, card.purchase.fund, files);
+            // Card receipts: with the rest of that card's month, so its folder has every receipt.
+            const cm = card.purchase.kind === "card" ? card.purchase.card : undefined;
+            if (cm) {
+              // One at a time: each finds or makes the month's folder, and two at once could make it twice.
+              saved = [];
+              for (const f of files) saved.push(await saveCardReceipt(cm.last4, cm.statementMonth, f));
+            } else saved = await saveAttachments(card.id, card.purchase.fund, files);
           } catch (err) {
             console.error("attachment upload failed", err);
             throw new WorkflowError("The receipts didn't upload, so nothing was added. Try again, or send fewer at a time.");
