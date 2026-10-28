@@ -63,7 +63,7 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
       ...card,
       uploads,
       requesterEmail: viewer.email,
-      existingReceipts: (keep?.attachments ?? []).filter((a) => a.refs?.length),
+      existingReceipts: keep?.attachments ?? [],
     },
   );
   // One set of receipts per card and month.
@@ -72,6 +72,8 @@ async function parseForm(viewer: Viewer, form: FormData, ctx: PurchaseContext, k
     if (sent.length) return { ok: false as const, errors: [`Receipts for this card and month were already sent as ${sent[0].id}.`] };
   }
   const files = filesFrom(form, "attachments");
+  if (parsed.ok && (keep?.attachments.length ?? 0) + parsed.receipts.length + files.length > wf.MAX_ATTACHMENTS)
+    return { ok: false as const, errors: [`A request holds at most ${wf.MAX_ATTACHMENTS} receipts and files. Lump repeat stores together, or send fewer files.`] };
   // Card receipts are checked charge by charge (above); everything else needs at least one file.
   const noReceipts = raw.kind === "card" ? null : receiptsError(keep?.attachments.length ?? 0, files.length);
   const fileErrors = [...checkFiles(files), ...checkW9(w9Files), ...(noReceipts ? [noReceipts] : [])];
@@ -114,7 +116,7 @@ export async function createPurchase(_prev: FormState, form: FormData): Promise<
       const attachments = await saveAttachments(created.id, created.purchase.fund, r.files);
       const withFiles: wf.PurchaseCard = {
         ...created,
-        purchase: { ...created.purchase, attachments, history: [...created.purchase.history, { at: nowIso(), by: actor.email, action: `Attached ${attachments.length} file${attachments.length === 1 ? "" : "s"}` }] },
+        purchase: { ...created.purchase, attachments: [...created.purchase.attachments, ...attachments], history: [...created.purchase.history, { at: nowIso(), by: actor.email, action: `Attached ${attachments.length} file${attachments.length === 1 ? "" : "s"}` }] },
         updatedAt: nowIso(),
       };
       await store.save(withFiles, created.updatedAt);

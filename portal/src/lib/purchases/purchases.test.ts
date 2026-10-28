@@ -701,5 +701,16 @@ test("card receipts: every charge needs its receipt; a lumped group shares one; 
 
   // Editing a returned request: receipts already on it still count.
   const kept = parsePurchaseInput(cardInput([lines[0], lines[1], { ...lines[2], receipts: [] }]), { ...ctx, statement: t.statement, existingReceipts: [{ name: "costco.jpg", size: 1, refs: [t.statement.charges[2].ref] }] });
-  assert.ok(kept.ok && kept.receipts.length === 1, "only the new upload is returned; the kept one stays on the request");
+  assert.ok(kept.ok && kept.receipts.length === 1, "only the new Amazon upload is returned; the kept Costco one stays on the request");
+  // A file on the request for no charge in particular (sent before receipts went on charges) covers them all.
+  const older = parsePurchaseInput(cardInput(lines.map((l) => ({ ...l, receipts: [] }))), { ...ctx, statement: t.statement, existingReceipts: [{ name: "all-receipts.pdf", size: 1 }] });
+  assert.ok(older.ok);
+
+  // A credit is money coming back: its receipt isn't required.
+  const credit = testCharges([
+    { date: "2026-09-02", description: "COSTCO WHSE #0002  APEX  NC", amount: 20, line: { accountId: "a76" } },
+    { date: "2026-09-05", description: "TARGET 00012345  CARY  NC", amount: -25, line: { accountId: "a76" } },
+  ]);
+  const noCreditReceipt = parsePurchaseInput(cardInput([credit.lines[0], { ...credit.lines[1], receipts: [] }]), { ...ctx, statement: credit.statement });
+  assert.ok(noCreditReceipt.ok);
 });

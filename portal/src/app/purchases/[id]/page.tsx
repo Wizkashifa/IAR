@@ -64,7 +64,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const own = card.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const isCard = p.kind === "card";
   // Card receipts: files for particular charges show with those charges; the rest are for the whole request.
-  const wholeRequest = p.attachments.filter((a) => !a.refs?.length);
+  // Files for no charge on it now (including ones for charges no longer on it) are listed for the whole request.
+  const wholeRequest = p.attachments.filter((a) => !a.refs?.some((r) => p.lines.some((l) => l.ref === r)));
   const receiptsFor = (lines: { ref?: string }[]) => p.attachments.filter((a) => a.refs?.some((r) => lines.some((l) => l.ref === r)));
   // Card receipts can charge several funds: name them all.
   const fundsLabel = isCard ? fundsOf(p.lines).map(shortFund).join(", ") || shortFund(p.fund) : shortFund(p.fund);

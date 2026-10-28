@@ -8,7 +8,7 @@ import { accountLabel, shortFund, type Account } from "@/lib/purchases/accounts"
 import { fmtMoney as money, fmtShortDay as day } from "@/lib/format";
 import { merchantName, type ChargeGroup, type StatementCharge } from "@/lib/purchases/statement";
 import styles from "./purchases.module.css";
-import { ChargeReceipt, type ChargeFile } from "./ChargeReceipt";
+import { ChargeReceipt, filesOn, type ChargeFile } from "./ChargeReceipt";
 
 /** What the cardholder fills in for a charge. */
 export type ChargeInput = { accountId: string; note: string; flag: "" | "refund" | "repay"; repayBy: string };
@@ -33,12 +33,11 @@ type Props = {
   receipts: Record<string, ChargeFile[]>;
   /** Add a receipt to these charges (one, or a lumped group's). */
   onReceipt: (refs: string[], f: ChargeFile) => void;
-  onRemoveReceipt: (id: string) => void;
+  /** Take a receipt off these charges (one, or a lumped group's). */
+  onRemoveReceipt: (refs: string[], id: string) => void;
   onBusy: (delta: number) => void;
 };
 
-/** The receipts on several charges, each once. */
-const filesOn = (receipts: Record<string, ChargeFile[]>, refs: string[]) => [...new Map(refs.flatMap((r) => receipts[r] ?? []).map((f) => [f.id, f])).values()];
 
 /** The sub-account choices (the fund first when every fund is shown). */
 export function AccountOptions({ accounts, allFunds }: { accounts: Account[]; allFunds: boolean }) {
@@ -59,7 +58,7 @@ export function AccountOptions({ accounts, allFunds }: { accounts: Account[]; al
  */
 export function CardCharges({ charges, groups, values, lumped, accounts, allFunds, placeholder, onCharge, onGroup, onLump, last4, month, receipts, onReceipt, onRemoveReceipt, onBusy }: Props) {
   const receiptFor = (refs: string[], label: string) => (
-    <ChargeReceipt last4={last4} month={month} files={filesOn(receipts, refs)} label={label} onAdd={(f) => onReceipt(refs, f)} onRemove={onRemoveReceipt} onBusy={onBusy} />
+    <ChargeReceipt last4={last4} month={month} files={filesOn(receipts, refs)} label={label} onAdd={(f) => onReceipt(refs, f)} onRemove={(id) => onRemoveReceipt(refs, id)} onBusy={onBusy} />
   );
   const groupOf = (c: StatementCharge) => groups.find((g) => g.refs.includes(c.ref));
   const shown = new Set<string>();

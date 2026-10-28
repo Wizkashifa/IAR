@@ -276,8 +276,8 @@ export function receiptsError(existing: number, added: number): string | null {
 
 /**
  * Card receipts: the receipt files for the charges, each with the charges
- * it covers. Every charge needs one (a lumped group shares its receipts),
- * counting receipts already on a request being edited. An upload that
+ * it covers. Every charge needs one (a lumped group shares its receipts;
+ * credits don't), counting receipts already on a request being edited. An upload that
  * isn't this person's, for this card and month, is refused.
  */
 export function cardReceipts(rawLines: LineInput[], lines: LineItem[], uploads: ReceiptUpload[], who: { owner: string; last4: string; month: string }, existing: Attachment[], errors: string[]): Attachment[] {
@@ -298,10 +298,13 @@ export function cardReceipts(rawLines: LineInput[], lines: LineItem[], uploads: 
   }
   if (unknown) errors.push("A receipt couldn't be found. Add it again on its charge.");
   const covered = new Set([...[...covers.values()].flatMap((s) => [...s]), ...existing.flatMap((a) => a.refs ?? [])]);
+  // A file already on the request for no charge in particular (sent before receipts went on charges, or added later) covers them all.
+  if (existing.some((a) => !a.refs?.length)) for (const l of lines) covered.add(l.ref!);
   // A lumped group is covered when any of its charges is.
   for (const l of lines) if (l.group && lines.some((x) => x.group === l.group && covered.has(x.ref!))) covered.add(l.ref!);
+  // A credit is money coming back, not spending: its receipt is welcome but not required.
   for (const l of lines) {
-    if (!covered.has(l.ref!)) errors.push(`${l.date!.slice(5).replace("-", "/")} ${merchantName(l.merchant!)}: add its receipt.`);
+    if (!covered.has(l.ref!) && l.amount > 0) errors.push(`${l.date!.slice(5).replace("-", "/")} ${merchantName(l.merchant!)}: add its receipt.`);
   }
   return [...covers.entries()].map(([id, refs]) => ({ ...uploads.find((u) => u.id === id)!.attachment, refs: [...refs] }));
 }

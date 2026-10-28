@@ -1,6 +1,6 @@
 "use client";
 import { useId, useState } from "react";
-import { buttonClass } from "@/components/Button";
+import { Button, buttonClass } from "@/components/Button";
 import { Icon } from "@/components/Icon";
 import { RECEIPT_TYPES } from "./AddReceipts";
 import { uploadCardReceipt } from "./receipt-actions";
@@ -8,6 +8,9 @@ import styles from "./purchases.module.css";
 
 /** A receipt on a charge: uploaded this time (`id` is its upload), or already on the request being edited. */
 export type ChargeFile = { id: string; name: string; existing?: boolean };
+
+/** The receipts on some charges (one, or a lumped group's), each once. */
+export const filesOn = (receipts: Record<string, ChargeFile[]>, refs: string[]): ChargeFile[] => [...new Map(refs.flatMap((r) => receipts[r] ?? []).map((f) => [f.id, f])).values()];
 
 type Props = {
   last4: string;
@@ -64,9 +67,9 @@ export function ChargeReceipt({ last4, month, files, label, onAdd, onRemove, onB
               <Icon name="check" size="sm" />
               <span className={styles.receiptName}>{f.name}</span>
               {!f.existing && (
-                <button type="button" className={styles.receiptRemove} onClick={() => onRemove(f.id)} aria-label={`Remove ${f.name} from ${label}`}>
+                <Button variant="quiet" size="small" onClick={() => onRemove(f.id)} aria-label={`Remove ${f.name} from ${label}`}>
                   Remove
-                </button>
+                </Button>
               )}
             </li>
           ))}

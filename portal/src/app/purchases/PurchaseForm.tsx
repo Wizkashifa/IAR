@@ -20,7 +20,7 @@ import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { groupCharges, type StatementChoice } from "@/lib/purchases/statement";
 import { fmtMonth } from "@/lib/format";
 import { AccountOptions, CardCharges, type ChargeInput } from "./CardCharges";
-import type { ChargeFile } from "./ChargeReceipt";
+import { filesOn, type ChargeFile } from "./ChargeReceipt";
 import { RECEIPT_TYPES } from "./AddReceipts";
 
 type Line = LineInput & { key: number };
@@ -157,8 +157,8 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
     setReceipts(last4 === initial?.cardLast4 && month === initial?.statementMonth ? startReceipts() : {});
   };
   const addReceipt = (refs: string[], f: ChargeFile) => setReceipts((r) => ({ ...r, ...Object.fromEntries(refs.slice(0, 1).map((ref) => [ref, [...(r[ref] ?? []), f]])) }));
-  const removeReceipt = (id: string) => setReceipts((r) => Object.fromEntries(Object.entries(r).map(([ref, fs]) => [ref, fs.filter((f) => f.id !== id)])));
-  const receiptsOn = (refs: string[]) => [...new Map(refs.flatMap((ref) => receipts[ref] ?? []).map((f) => [f.id, f])).values()];
+  const removeReceipt = (refs: string[], id: string) => setReceipts((r) => ({ ...r, ...Object.fromEntries(refs.map((ref) => [ref, (r[ref] ?? []).filter((f) => f.id !== id)])) }));
+  const receiptsOn = (refs: string[]) => filesOn(receipts, refs);
   const setCharge = (ref: string, patch: Partial<ChargeInput>) => setCharges((c) => ({ ...c, values: { ...c.values, [ref]: { ...c.values[ref], ...patch } } }));
   const groupRefs = (name: string) => groups.find((g) => g.name === name)?.refs ?? [];
   const setGroup = (name: string, patch: Partial<ChargeInput>) =>
@@ -379,6 +379,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               ? "These are the charges on the statement. For each one, choose its sub-account, say why it was bought and add its receipt (each one uploads as soon as you pick it). Charges from the same store can be lumped together, so one receipt covers them."
               : "Split the total across as many sub-accounts as it really covers."}
           </p>
+          {card && existingFiles.length > 0 && <Note>Already on the request for all its charges: {existingFiles.join(", ")}</Note>}
           {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
           {card ? (
             choice && (
