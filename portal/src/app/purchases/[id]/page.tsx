@@ -15,11 +15,12 @@ import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
-import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
+import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
+import { rowStatusText } from "@/lib/status-text";
 import { actorFor, peopleStore } from "@/lib/people";
 import { isActive } from "@/lib/away";
 import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
@@ -79,7 +80,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const linkedEvent = p.eventCardId ? await (await cardStore()).get(p.eventCardId) : null;
   const finance = actor.roles.includes("finance");
   const names = await nameResolver([
-    card.ownerEmail,
+    ...emailsIn([card]),
     ...(p.approverEmail ? [p.approverEmail] : []),
     ...p.history.map((h) => h.by),
     ...(card.comments ?? []).map((c) => c.by),
@@ -88,7 +89,8 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
   const opts = { executiveThreshold: ctx.routing.executiveThreshold };
   const steps = stepsFor(card, opts);
   const next = nextStepText(card, viewer, names, opts);
-  const waiting = own ? card.waitingOn : whoText(card, viewer, names);
+  // Who has it, with names instead of addresses ("You:" stays for the requester).
+  const waiting = whoText(card, viewer, names);
   const receipts = p.lines.filter((l) => l.hasReceipt).length;
   const hidden = (name: string, value: string) => <input type="hidden" name={name} value={value} />;
   const base = (
@@ -323,6 +325,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
     </Panel>
   );
 
+  const act = actionParts();
   return (
     <RequestPage
       crumb={{ href: "/purchases", label: "Payments" }}
@@ -343,14 +346,20 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       next={next}
       sent={sent === "1"}
       notes={notes}
-      actions={<Actions />}
+      actions={act.panel}
+      bar={act.main ? { label: rowStatusText(card, rowState(card, actor)), main: act.main } : undefined}
       main={main}
       side={side}
     />
   );
 
-  /** What the person looking can do now, in one panel: the main action first, then sending back, then cancelling. */
-  function Actions() {
+  /**
+   * What the person looking can do now. `main` is the one main button (approve,
+   * record the payment, mark it entered), shown in the bottom bar and sending
+   * its form by id; `panel` is the rest, at the end of the page: the note,
+   * sending back, declining, cancelling.
+   */
+  function actionParts(): { panel: React.ReactNode; main?: React.ReactNode } {
     const approve = can("approve");
     const pay = can("pay");
     const books = can("books");
@@ -376,15 +385,32 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </div>
     );
     if (!approve && !pay && !books && !cancel && !sendBack) {
-      if (again) return again;
+      if (again) return { panel: again };
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
-      return why && !why.ok ? <p className="hint">{why.reason}</p> : null;
+      return { panel: why && !why.ok ? <p className="hint">{why.reason}</p> : null };
     }
     const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
-    return (
+    const main = approve ? (
+      <Button type="submit" form="act-approve" name="action" value="approve" variant="primary" icon="check">
+        {approveLabel}
+      </Button>
+    ) : pay ? (
+      <ConfirmButton form="act-pay" variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
+        Record payment
+      </ConfirmButton>
+    ) : books ? (
+      <form action={actOnPurchase}>
+        {base}
+        {hidden("action", "books")}
+        <Button type="submit" variant="primary" icon="check">
+          Mark entered in QuickBooks
+        </Button>
+      </form>
+    ) : undefined;
+    const panel = (
       <div className="stack">
         {approve && (
-          <form action={actOnPurchase} className="stack">
+          <form id="act-approve" action={actOnPurchase} className="stack">
             {base}
             <div className="grid">
               <Field label="Note" hint="Needed to send it back or decline it. Everyone on the request sees it.">
@@ -396,9 +422,6 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
             )}
             <div className="row">
-              <Button type="submit" name="action" value="approve" variant="primary" icon="check">
-                {approveLabel}
-              </Button>
               <Button type="submit" name="action" value="return">
                 Send back
               </Button>
@@ -410,7 +433,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         )}
 
         {pay && (
-          <form action={actOnPurchase} className="stack">
+          <form id="act-pay" action={actOnPurchase} className="stack">
             {base}
             <h2 className={styles.actHead}>Record the payment</h2>
             {p.payment && (
@@ -429,11 +452,6 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
               <Field label="Check number or ACH reference" required>
                 <input name="reference" required maxLength={60} />
               </Field>
-            </div>
-            <div className="row">
-              <ConfirmButton variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
-                Record payment
-              </ConfirmButton>
             </div>
           </form>
         )}
@@ -456,16 +474,6 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           </Disclosure>
         )}
 
-        {books && (
-          <form action={actOnPurchase} className="row">
-            {base}
-            {hidden("action", "books")}
-            <Button type="submit" variant="primary" icon="check">
-              Mark entered in QuickBooks
-            </Button>
-          </form>
-        )}
-
         {cancel && (
           <form action={actOnPurchase} className="row">
             {base}
@@ -478,6 +486,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         {again}
       </div>
     );
+    // Marking it entered needs nothing else: with no other options, there's no panel, just the bar.
+    const other = approve || pay || (sendBack && !approve) || cancel || again;
+    return { panel: other ? panel : null, main };
   }
 }
 

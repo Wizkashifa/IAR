@@ -24,10 +24,18 @@ export type RequestPageProps = {
   /** Notes under the steps: sent back, flags, out of office. */
   notes?: ReactNode;
   /**
-   * The buttons for the person looking, in one row. Put the main action first
-   * and quiet or destructive ones (Withdraw, Cancel) last.
+   * Everything else the person looking can do, at the end of the page after
+   * the request: notes and reasons, Send back, Decline, Withdraw. Quiet or
+   * destructive ones (Withdraw, Cancel) last.
    */
   actions?: ReactNode;
+  /**
+   * The one main action, in a bar stuck to the bottom of the screen while the
+   * request is read: `label` says what's needed ("Needs your approval"),
+   * `main` is the primary button. A button outside its form submits it with
+   * `form="<the form's id>"`. On phones it takes the bottom bar's place.
+   */
+  bar?: { label?: ReactNode; main: ReactNode };
   /** The request itself, then comments and history. */
   main: ReactNode;
   /** Details, checks, calendar. Below the main column on phones. */
@@ -37,12 +45,13 @@ export type RequestPageProps = {
 };
 
 /**
- * One layout for every request page (events, purchases, marketing, tickets),
- * as in the demo: breadcrumb, title and status, the step bar with "What
- * happens next", any notes, the action row, then the request in a main column
- * and its details in a side column.
+ * One layout for every request page (events, purchases, marketing, tickets):
+ * breadcrumb, title and status, the step bar with "What happens next", any
+ * notes, then the request in a main column and its details in a side column,
+ * and the other actions after it. The main action waits in a bar at the
+ * bottom right, so people decide after reading, with the button in reach.
  */
-export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, main, side, admin }: RequestPageProps) {
+export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, bar, main, side, admin }: RequestPageProps) {
   const leadText = (lead ?? []).filter(Boolean).join(" · ");
   return (
     <div className={styles.page}>
@@ -78,13 +87,36 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
 
       {notes}
 
-      {actions && <section className={`${styles.panel} ${styles.actions}`} aria-label="Actions">{actions}</section>}
-
       <div className={side ? styles.issue : undefined}>
         <div className={styles.main}>{main}</div>
         {side && <aside className={styles.side}>{side}</aside>}
       </div>
+
+      {actions && (
+        <section id="request-actions" className={`${styles.panel} ${styles.actions}`} aria-labelledby={bar ? "request-actions-title" : undefined} aria-label={bar ? undefined : "Actions"}>
+          {bar && (
+            <h2 id="request-actions-title" className={styles.actionsTitle}>
+              Other options
+            </h2>
+          )}
+          {actions}
+        </section>
+      )}
       {admin}
+
+      {bar && (
+        <div className={styles.bar} data-sticky-actions>
+          {bar.label && <p className={styles.barLabel}>{bar.label}</p>}
+          <div className={styles.barButtons}>
+            {actions && (
+              <a href="#request-actions" className={styles.barMore}>
+                Other options
+              </a>
+            )}
+            <div className={styles.barMain}>{bar.main}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

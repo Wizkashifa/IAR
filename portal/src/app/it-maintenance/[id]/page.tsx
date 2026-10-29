@@ -26,7 +26,7 @@ import { actorFor } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
-import { statusText } from "@/lib/status-text";
+import { rowStatusText, statusText } from "@/lib/status-text";
 import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
 import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
@@ -105,6 +105,23 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const permitted = (["assign", "start", "wait", "resolve", "due", "link", "cancel"] as Action[]).filter(can);
   const primary = primaryFor(card).filter(can);
   const more = permitted.filter((a) => !primary.includes(a) && a !== "cancel");
+  // The first main action goes in the bottom bar, sending its form here by id; the rest stay below as plain buttons.
+  const BAR_ACTIONS = ["confirm", "assign", "start", "resolve"];
+  const barAction = primary.find((a) => BAR_ACTIONS.includes(a) && (a !== "assign" || (team && t.assigneeEmail !== actor.email)));
+  const inBar = (a: string) => a === barAction;
+  const variantFor = (a: Action): "primary" | "default" => (primary.includes(a) && !barAction ? "primary" : "default");
+  const startLabel = t.status === "waiting_parts" ? "Parts are in: back to work" : "Start work";
+  const resolveLabel = preventive ? "Mark done" : "Mark fixed";
+  const barMain =
+    barAction === "confirm" ? (
+      <Button variant="primary" type="submit" form="ticket-confirm" formAction={actOnTicketWith.bind(null, "confirm")}>
+        Yes, it&apos;s fixed
+      </Button>
+    ) : barAction ? (
+      <Button variant="primary" type="submit" form={`ticket-${barAction}`}>
+        {barAction === "assign" ? "I'll take it" : barAction === "start" ? startLabel : resolveLabel}
+      </Button>
+    ) : undefined;
 
   // ---- The action forms, each usable in the row or under "More" ----------------
   const forms: Record<string, ReactNode> = {
@@ -127,15 +144,17 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </form>
     ),
     confirm: (
-      <form key="confirm" action={actOnTicket} className={`stack grow`}>
+      <form key="confirm" id="ticket-confirm" action={actOnTicket} className={`stack grow`}>
         {base}
         <Field label="If it's not fixed, say what's still wrong" hint={`It closes by itself after 7 days if nobody says otherwise.`}>
           <textarea name="note" rows={2} maxLength={2000} />
         </Field>
         <div className="row">
-          <Button variant="primary" type="submit" formAction={actOnTicketWith.bind(null, "confirm")}>
-            Yes, it&apos;s fixed
-          </Button>
+          {!inBar("confirm") && (
+            <Button variant="primary" type="submit" formAction={actOnTicketWith.bind(null, "confirm")}>
+              Yes, it&apos;s fixed
+            </Button>
+          )}
           <Button type="submit" formAction={actOnTicketWith.bind(null, "reopen")}>
             It&apos;s not fixed
           </Button>
@@ -145,13 +164,15 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     assign: (
       <div key="assign" className="row bottom">
         {team && t.assigneeEmail !== actor.email && (
-          <form action={actOnTicket}>
+          <form id="ticket-assign" action={actOnTicket}>
             {base}
             <input type="hidden" name="action" value="assign" />
             <input type="hidden" name="assignee" value={actor.email} />
-            <Button variant={primary.includes("assign") ? "primary" : "default"} type="submit">
-              I&apos;ll take it
-            </Button>
+            {!inBar("assign") && (
+              <Button variant={variantFor("assign")} type="submit">
+                I&apos;ll take it
+              </Button>
+            )}
           </form>
         )}
         {members.filter((m) => m !== t.assigneeEmail).length > 0 ? (
@@ -173,26 +194,30 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </div>
     ),
     start: (
-      <form key="start" action={actOnTicket}>
+      <form key="start" id="ticket-start" action={actOnTicket}>
         {base}
         <input type="hidden" name="action" value="start" />
-        <Button variant={primary.includes("start") ? "primary" : "default"} type="submit">
-          {t.status === "waiting_parts" ? "Parts are in: back to work" : "Start work"}
-        </Button>
+        {!inBar("start") && (
+          <Button variant={variantFor("start")} type="submit">
+            {startLabel}
+          </Button>
+        )}
       </form>
     ),
     resolve: (
-      <form key="resolve" action={actOnTicket} className={`stack grow`}>
+      <form key="resolve" id="ticket-resolve" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="resolve" />
         <Field label={preventive ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={preventive ? undefined : "The reporter is asked to check and confirm."}>
           <textarea name="note" rows={2} maxLength={2000} required />
         </Field>
-        <div>
-          <Button variant={primary.includes("resolve") ? "primary" : "default"} type="submit">
-            {preventive ? "Mark done" : "Mark fixed"}
-          </Button>
-        </div>
+        {!inBar("resolve") && (
+          <div>
+            <Button variant={variantFor("resolve")} type="submit">
+              {resolveLabel}
+            </Button>
+          </div>
+        )}
       </form>
     ),
     wait: (
@@ -244,7 +269,8 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       </div>
     ) : undefined;
 
-  const statusTone = ROW_TONE[rowState(card, needsActor)];
+  const state = rowState(card, needsActor);
+  const statusTone = ROW_TONE[state];
   const notes = (
     <>
       <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
@@ -376,6 +402,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       sent={sp.sent === "1"}
       notes={notes}
       actions={actions}
+      bar={barMain ? { label: rowStatusText(card, state), main: barMain } : undefined}
       main={main}
       side={side}
     />
