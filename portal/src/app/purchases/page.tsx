@@ -19,7 +19,7 @@ import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { FlashNote } from "@/components/FlashNote";
-import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth, purchaseStatus } from "./ui";
+import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth } from "./ui";
 import styles from "./purchases.module.css";
 import { Chips } from "@/components/Chips";
 import { DataTable } from "@/components/DataTable";
@@ -39,9 +39,9 @@ const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }
   { id: "returns", label: "Refunds & repayments due", test: (c) => openExpectedReturns(c.purchase).length > 0 },
 ];
 
-/** List rows for purchases, with each one's step as its status. */
+/** List rows for purchases; each pill says who has it, as in every other list (lib/status-text.ts rowStatusText). */
 function rows(cards: PurchaseCard[], viewer: NeedsViewer, names: NameResolver): RowData[] {
-  return rowsFor(cards, viewer, { names }).map((r, i) => ({ ...r, status: purchaseStatus(cards[i]) }));
+  return rowsFor(cards, viewer, { names });
 }
 
 export default async function PurchasesPage({ searchParams }: { searchParams: Promise<{ view?: string; ok?: string; error?: string }> }) {
