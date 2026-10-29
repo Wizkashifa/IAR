@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Card } from "@/lib/cards";
 import { cardRow, type RowData, type RowOptions } from "@/lib/card-row";
 import type { Grouped, NeedsViewer } from "@/lib/needs-you";
-import { statusText } from "@/lib/status-text";
+import { rowStatusText } from "@/lib/status-text";
 import { EmptyState } from "./EmptyState";
 import { Icon } from "./Icon";
 import { CardRow } from "./ItemRow";
@@ -12,7 +12,10 @@ import { Chips, type Chip } from "./Chips";
 
 /** List rows for these requests, for the person looking (lib/card-row.ts). */
 export function rowsFor(cards: Card[], viewer: NeedsViewer, o: RowOptions = {}): RowData[] {
-  return cards.map((c) => cardRow(c, viewer, statusText(c), o));
+  return cards.map((c) => {
+    const row = cardRow(c, viewer, "", o);
+    return { ...row, status: rowStatusText(c, row.state) };
+  });
 }
 
 /** Rows in three groups, from lib/needs-you.ts `groupForViewer`. */
@@ -33,8 +36,8 @@ export function sectionsOf(g: { needsYou: RowData[]; waiting: RowData[]; done: R
 
 
 /**
- * A list of requests in a panel: a title and count, optional filter chips and
- * colour key, then section bands ("Needs you 3") with their rows. Done is
+ * A list of requests in a panel: a title and count, optional filter chips,
+ * then section bands ("Needs you 3") with their rows. Done is
  * folded. Empty sections are left out; with nothing at all, `empty` shows.
  */
 export function ItemList({
@@ -43,7 +46,6 @@ export function ItemList({
   sections,
   rows,
   chips,
-  legend,
   empty = "Nothing here yet.",
   emptyAction,
 }: {
@@ -54,8 +56,6 @@ export function ItemList({
   /** A plain list with no bands, instead of sections. */
   rows?: RowData[];
   chips?: Chip[];
-  /** Show the key to the edge colours. */
-  legend?: boolean;
   empty?: ReactNode;
   emptyAction?: ReactNode;
 }) {
@@ -65,12 +65,9 @@ export function ItemList({
   const banded = Boolean(sections);
   return (
     <div className={styles.wrap}>
-      {(chips?.length || legend) && (
+      {chips && chips.length > 0 && (
         <div className={styles.bar}>
-          {chips && chips.length > 0 && (
-            <Chips label="Show" chips={chips} />
-          )}
-          {legend && <Legend />}
+          <Chips label="Show" chips={chips} />
         </div>
       )}
       <Panel title={title} right={right ?? <span>{open} open</span>} flush>
@@ -111,18 +108,6 @@ function Rows({ rows }: { rows: RowData[] }) {
       {rows.map((r) => (
         <CardRow key={r.id} row={r} />
       ))}
-    </ul>
-  );
-}
-
-/** What the edge colours mean. */
-export function Legend() {
-  return (
-    <ul className={styles.legend} aria-label="What the colours mean">
-      <li><i className={styles.kAct} />You need to act</li>
-      <li><i className={styles.kWait} />Waiting on others</li>
-      <li><i className={styles.kDone} />Approved or done</li>
-      <li><i className={styles.kBad} />Stopped or late</li>
     </ul>
   );
 }

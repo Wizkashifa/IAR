@@ -331,7 +331,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       title={card.title}
       pills={
         <>
-          <Pill tone={ROW_TONE[rowState(card, actor)]} dot>
+          <Pill tone={ROW_TONE[rowState(card, actor)]} status>
             {purchaseStatus(card)}
           </Pill>
           {p.restricted && <Pill tone="bad">Restricted</Pill>}

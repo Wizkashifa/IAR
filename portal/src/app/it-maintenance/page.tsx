@@ -130,7 +130,6 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           <ItemList
             title="Your requests"
             sections={sectionsOf(groupedRows(groupForViewer(myTickets, needsActor), needsActor, rowOpts))}
-            legend
             empty="Nothing yet. Use “AV/IT/Maintenance” when something breaks or you need something from IT, A/V or maintenance."
             emptyAction={
               <Button size="small" href="/it-maintenance/new">

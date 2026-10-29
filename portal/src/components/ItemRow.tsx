@@ -77,7 +77,7 @@ export function ItemRow({ title, id, href, external, submit, icon, accent, when,
       {(status || right) && (
         <div className={styles.r}>
           {status && state !== "plain" && (
-            <Pill tone={ROW_TONE[state]} dot>
+            <Pill tone={ROW_TONE[state]} status>
               {status}
             </Pill>
           )}

@@ -12,11 +12,4 @@
   .turn { transition: transform 0.12s; }
   .folded[open] .turn { transform: rotate(90deg); }
   .folded li { opacity: 0.85; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font-size: 12px; color: var(--ink-2); }
-  .legend li { display: inline-flex; align-items: center; gap: 6px; }
-  .legend i { width: 8px; height: 8px; border-radius: 50%; }
-  .kAct { background: var(--gold); }
-  .kWait { background: var(--info); }
-  .kDone { background: var(--ok); }
-  .kBad { background: var(--bad); }
 }

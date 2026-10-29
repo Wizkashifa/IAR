@@ -92,16 +92,16 @@ export default function StylesPage() {
         <div className="stack">
           <div className="row">
             {TONES.map((t) => (
-              <Pill key={t} tone={t} dot>
+              <Pill key={t} tone={t} status>
                 {t}
               </Pill>
             ))}
           </div>
           <div className="row">
-            <Pill tone="warn" dot>Changes requested</Pill>
-            <Pill tone="info" dot>Chair approval</Pill>
-            <Pill tone="ok" dot>Approved</Pill>
-            <Pill tone="bad" dot>Declined</Pill>
+            <Pill tone="warn" status>Changes requested</Pill>
+            <Pill tone="info" status>Chair approval</Pill>
+            <Pill tone="ok" status>Approved</Pill>
+            <Pill tone="bad" status>Declined</Pill>
             <Pill>3</Pill>
           </div>
         </div>

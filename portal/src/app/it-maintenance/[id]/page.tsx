@@ -364,7 +364,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       title={card.title}
       pills={
         <>
-          <Pill tone={statusTone} dot>
+          <Pill tone={statusTone} status>
             {statusText(card)}
           </Pill>
           <TicketTags card={card} />

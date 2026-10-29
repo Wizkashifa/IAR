@@ -86,7 +86,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
         state={state}
         right={
           <>
-            <Pill tone={ROW_TONE[state]} dot>
+            <Pill tone={ROW_TONE[state]} status>
               {daysText(days)}
             </Pill>
             {canRemind(item, now) ? (

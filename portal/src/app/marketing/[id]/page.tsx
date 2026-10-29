@@ -163,7 +163,7 @@ export default async function MarketingDetail({
         id={mc.id}
         title={mc.title}
         pills={
-          <Pill tone={tone} dot>
+          <Pill tone={tone} status>
             {statusText(mc)}
           </Pill>
         }

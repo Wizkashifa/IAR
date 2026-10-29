@@ -1,5 +1,7 @@
 @layer components {
   .pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+  /* A status: tall enough to read and tap past, bold, with its icon. */
+  .status { min-height: 30px; height: auto; padding: 4px 12px; font-size: var(--t-md); font-weight: 700; white-space: normal; text-align: left; line-height: 1.2; }
   .dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
   .ok { background: var(--ok-soft); color: var(--ok); }
   .warn { background: var(--warn-soft); color: var(--warn); }

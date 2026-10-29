@@ -1,5 +1,5 @@
 import { Button } from "@/components/Button";
-import { ItemList, Legend, groupedRows, sectionsOf } from "@/components/ItemList";
+import { ItemList, groupedRows, sectionsOf } from "@/components/ItemList";
 import { ItemRow } from "@/components/ItemRow";
 import { KeyValue } from "@/components/KeyValue";
 import { ModuleHead } from "@/components/ModuleHead";
@@ -50,7 +50,6 @@ export async function RequestExamples() {
 
       <div className="stack">
         <h2>List rows</h2>
-        <Legend />
         <Panel title="One of each" flush>
           <ul className={styles.rows}>
             <ItemRow title="Youth Halaqa — winter series" id="EV-1042" href="/dev/styles" sub="Youth · Tue, Nov 17" who="You: make the requested changes" status="Changes requested" state="act" />
@@ -70,7 +69,6 @@ export async function RequestExamples() {
           { label: "Events", href: "/dev/styles?kind=event" },
           { label: "Payments", href: "/dev/styles?kind=purchase" },
         ]}
-        legend
         empty="You haven't asked for anything yet."
         emptyAction={<Button size="small" href="/events/new">New event request</Button>}
       />
@@ -86,7 +84,7 @@ export async function RequestExamples() {
               id={sample.id}
               title={sample.title}
               pills={
-                <Pill tone={ROW_TONE[rowState(sample, actor, { ctx: { directorsOf } })]} dot>
+                <Pill tone={ROW_TONE[rowState(sample, actor, { ctx: { directorsOf } })]} status>
                   {statusText(sample)}
                 </Pill>
               }

@@ -103,7 +103,7 @@ function FileRow({ file: f, today, showFolder }: { file: LibraryFile; today: str
       sub={sub}
       right={
         review && (
-          <Pill tone={review.tone} dot={review.tone !== "neutral"}>
+          <Pill tone={review.tone} status={review.tone !== "neutral"}>
             {review.label}
           </Pill>
         )

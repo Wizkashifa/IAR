@@ -100,7 +100,7 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       state={task.status === "done" ? "done" : overdue ? "bad" : task.assignee?.toLowerCase() === viewer.email.toLowerCase() || !task.assignee ? "act" : "wait"}
       right={
         <>
-          <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} dot>
+          <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} status>
             {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
           </Pill>
           {withButtons && <TaskButtons card={card} task={task} roles={viewer.actingRoles} email={viewer.email} back={back} people={people} />}

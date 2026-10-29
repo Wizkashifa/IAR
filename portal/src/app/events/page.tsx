@@ -76,7 +76,6 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <ItemList
         title="Your requests"
         sections={sectionsOf(groupedRows(groupForViewer(myEvents, actor, needs), actor, o))}
-        legend={myEvents.length > 0}
         empty="You haven't requested an event yet."
         emptyAction={<Button href="/events/new" size="small">New event request</Button>}
       />

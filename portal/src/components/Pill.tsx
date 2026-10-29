@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Icon, type IconName } from "./Icon";
 import styles from "./Pill.module.css";
 
 /**
@@ -8,10 +9,19 @@ import styles from "./Pill.module.css";
  */
 export type Tone = "neutral" | "ok" | "warn" | "bad" | "info" | "accent" | "gold";
 
-/** A small rounded label, usually a status. `dot` adds the coloured dot the demo uses on statuses; `small` is for a tag beside a heading ("Today", "3 new"). */
-export function Pill({ tone = "neutral", dot, small, children, title }: { tone?: Tone; dot?: boolean; small?: boolean; children: ReactNode; title?: string }) {
+/** Each meaning's icon, so a status never relies on colour alone. */
+const TONE_ICON: Partial<Record<Tone, IconName>> = { warn: "triangle", info: "clock", ok: "check", bad: "ban" };
+
+/**
+ * A small rounded label. `status` makes it a status pill: taller, bold, with
+ * its tone's icon (a dot for tones without one); `small` is for a tag beside a
+ * heading ("Today", "3 new").
+ */
+export function Pill({ tone = "neutral", status, small, children, title }: { tone?: Tone; status?: boolean; small?: boolean; children: ReactNode; title?: string }) {
+  const icon = status ? TONE_ICON[tone] : undefined;
   return (
-    <span className={[styles.pill, tone !== "neutral" && styles[tone], dot && styles.dot, small && styles.small].filter(Boolean).join(" ")} title={title}>
+    <span className={[styles.pill, tone !== "neutral" && styles[tone], status && styles.status, status && !icon && styles.dot, small && styles.small].filter(Boolean).join(" ")} title={title}>
+      {icon && <Icon name={icon} size="sm" />}
       {children}
     </span>
   );

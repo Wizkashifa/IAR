@@ -5,6 +5,7 @@
  */
 import { FLAG, NOTIFIED, STATUS_LABEL, STEP } from "../glossary";
 import type { NeedsViewer } from "../needs-you";
+import type { RowState } from "../card-row";
 import type { ModuleDef } from "../registry";
 import type { Holder } from "../stuck";
 import { type NameOf, type Steps, type Viewer, quoted, speaker, stopAt, track } from "../steps";
@@ -64,6 +65,22 @@ function holder(card: MarketingCard): Holder | null {
   }
 }
 
+/** The list pill: what's needed from you, or who has it (see ModuleDef.rowStatus). */
+function rowStatus(card: MarketingCard, state: RowState): string | undefined {
+  switch (card.marketing.stage) {
+    case "review":
+      return state === "act" ? "Needs your review" : "With the marketing team";
+    case "question":
+      return state === "act" ? "Needs an answer from you" : "With the requester";
+    case "scheduled":
+      return state === "act" ? "Needs you to start it" : "Scheduled with marketing";
+    case "doing":
+      return state === "act" ? "Needs your work" : "Being made by marketing";
+    default:
+      return undefined;
+  }
+}
+
 export const marketingModule: ModuleDef<MarketingCard> = {
   type: "marketing",
   is: isMarketingCard,
@@ -73,4 +90,5 @@ export const marketingModule: ModuleDef<MarketingCard> = {
   next: marketingNext,
   needs: marketingNeeds,
   holder,
+  rowStatus,
 };

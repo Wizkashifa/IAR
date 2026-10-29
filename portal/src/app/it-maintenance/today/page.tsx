@@ -54,7 +54,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
         <span className={styles.id}>{card.id}</span>
       </div>
       <div className={styles.pills}>
-        <Pill tone={working ? "info" : t.status === "waiting_parts" ? "warn" : "neutral"} dot>
+        <Pill tone={working ? "info" : t.status === "waiting_parts" ? "warn" : "neutral"} status>
           {STATUS_LABEL[t.status]}
         </Pill>
         {t.urgency !== "normal" && <Pill tone={t.urgency === "urgent" ? "bad" : t.urgency === "high" ? "warn" : "neutral"}>{URGENCY[t.urgency].label}</Pill>}

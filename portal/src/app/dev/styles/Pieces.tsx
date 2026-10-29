@@ -20,7 +20,7 @@ export function Pieces() {
     <>
       <Panel title="Rows that aren't requests" right="components/ItemRow.tsx: state=plain" flush>
         <Rows>
-          <ItemRow state="plain" icon="book" title="Room reservation policy" href="https://drive.google.com" external="Google Drive" sub="Google Doc · Facilities · updated Oct 2, 2026" right={<Pill tone="warn" dot>Review due Nov 1, 2026</Pill>} />
+          <ItemRow state="plain" icon="book" title="Room reservation policy" href="https://drive.google.com" external="Google Drive" sub="Google Doc · Facilities · updated Oct 2, 2026" right={<Pill tone="warn" status>Review due Nov 1, 2026</Pill>} />
           <ItemRow state="plain" href="/dev/styles" title={<>Youth <Pill tone="accent">You&apos;re on it</Pill></>} sub="Chair: Sample Chair · Vice chair: Sample Vice Chair" extra="Programs, trips and halaqas for IAR's youth." right="12 people" />
           <ItemRow state="done" title="MPH A" sub="Holds 75 · Main · Food allowed" right={<Button size="small">Request this room</Button>} />
           <ItemRow state="act" title="PO-12007 is waiting on you" sub="Oct 24, 10:00 AM" href="/dev/styles" />

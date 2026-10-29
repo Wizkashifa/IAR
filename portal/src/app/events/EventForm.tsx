@@ -421,7 +421,7 @@ export default function EventForm(p: EventFormProps) {
             ))}
           </ol>
         </Panel>
-        <Panel title="Checks" right={summary ? <Pill tone={summary.tone} dot>{checking ? "Checking…" : summary.label}</Pill> : undefined}>
+        <Panel title="Checks" right={summary ? <Pill tone={summary.tone} status>{checking ? "Checking…" : summary.label}</Pill> : undefined}>
           <div className="stack">
             <ChecksList checks={result.checks} />
             {result.clashes.map((c) => (

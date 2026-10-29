@@ -179,7 +179,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       title={card.title}
       pills={
         <>
-          <Pill tone={tone} dot>{statusText(card)}</Pill>
+          <Pill tone={tone} status>{statusText(card)}</Pill>
           {eventFlags(e).map((f) => (
             <Pill key={f} tone="gold">{f}</Pill>
           ))}
@@ -516,7 +516,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     return (
       <Panel
         title={holderIsThis ? `${a.requesterName} asks for your booked time` : `${mine ? "You" : a.requesterName} asked for a booked time`}
-        right={<Pill tone={isOpenAsk(a) ? "warn" : a.status === "released" ? "ok" : "bad"} dot>{SLOT_STATUS_LABEL[a.status]}</Pill>}
+        right={<Pill tone={isOpenAsk(a) ? "warn" : a.status === "released" ? "ok" : "bad"} status>{SLOT_STATUS_LABEL[a.status]}</Pill>}
       >
         <div className="stack">
           <KeyValue

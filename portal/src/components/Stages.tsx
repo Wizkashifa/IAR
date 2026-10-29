@@ -31,7 +31,7 @@ export function Stages({ steps, flag }: { steps: Step[]; flag?: StepFlag }) {
       )}
       {flag && (
         <div className={styles.flag}>
-          <Pill tone={flag.tone} dot>
+          <Pill tone={flag.tone} status>
             {flag.label}
           </Pill>
         </div>

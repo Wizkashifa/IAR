@@ -21,7 +21,7 @@ const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: 
 
 export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean }) {
   return (
-    <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} dot={task.status !== "locked"}>
+    <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} status={task.status !== "locked"}>
       {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
     </Pill>
   );
