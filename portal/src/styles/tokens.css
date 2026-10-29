@@ -82,10 +82,11 @@
     --mod-events-soft: #e1f0e7;
     --mod-events-tint: #e9f3ec;
     --mod-events-nav: #8fd3a4;
-    --mod-pay: #7a5d22;
-    --mod-pay-soft: #f6ecd4;
-    --mod-pay-tint: #f6ecd4;
-    --mod-pay-nav: #e6cf9c;
+    /* Payments: IAR's taupe, deepened for text. Not gold, which means "needs you" and "selected". */
+    --mod-pay: #6b5a44;
+    --mod-pay-soft: #f1ebe2;
+    --mod-pay-tint: #f3eee7;
+    --mod-pay-nav: #d6c6ab;
     --mod-mkt: #2a52a0;
     --mod-mkt-soft: #e3eaf8;
     --mod-mkt-tint: #ebf0fa;
@@ -161,9 +162,9 @@
     --mod-events: #5fcb8e;
     --mod-events-soft: #17301f;
     --mod-events-tint: #13201a;
-    --mod-pay: #e2c98f;
-    --mod-pay-soft: #2b2618;
-    --mod-pay-tint: #1e1c14;
+    --mod-pay: #cdb99d;
+    --mod-pay-soft: #2a241c;
+    --mod-pay-tint: #1d1a16;
     --mod-mkt: #93b4f5;
     --mod-mkt-soft: #1a2440;
     --mod-mkt-tint: #151a26;

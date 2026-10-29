@@ -5,9 +5,10 @@ import styles from "./Pill.module.css";
 /**
  * The four meanings colour has in the portal: ok (done, approved), warn (you
  * need to act), bad (stopped, late), info (waiting on someone else). accent is
- * the brand green; gold marks today; neutral is for counts and labels.
+ * the brand green; gold marks today; neutral is for counts and labels; tag is
+ * an outlined label for a fact about a request (an event's "Food served").
  */
-export type Tone = "neutral" | "ok" | "warn" | "bad" | "info" | "accent" | "gold";
+export type Tone = "neutral" | "ok" | "warn" | "bad" | "info" | "accent" | "gold" | "tag";
 
 /** Each meaning's icon, so a status never relies on colour alone. */
 const TONE_ICON: Partial<Record<Tone, IconName>> = { warn: "triangle", info: "clock", ok: "check", bad: "ban" };

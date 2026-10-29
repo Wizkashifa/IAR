@@ -26,7 +26,7 @@ export type ItemRowProps = {
   who?: ReactNode;
   /** More under the supporting line: a description, reasons, notes. */
   extra?: ReactNode;
-  /** Things to notice, as gold pills under the title (an event's food, outside speaker, …). */
+  /** Things to notice, as outlined tags under the title (an event's food, outside speaker, …). */
   flags?: string[];
   /** The status in words, as a pill in the row's tone. */
   status?: string;
@@ -67,7 +67,7 @@ export function ItemRow({ title, id, href, external, submit, icon, accent, when,
         {flags && flags.length > 0 && (
           <div className={styles.flags}>
             {flags.map((f) => (
-              <Pill key={f} tone="gold" small>
+              <Pill key={f} tone="tag" small>
                 {f}
               </Pill>
             ))}

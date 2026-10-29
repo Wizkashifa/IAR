@@ -181,7 +181,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         <>
           <Pill tone={tone} status>{statusText(card)}</Pill>
           {eventFlags(e).map((f) => (
-            <Pill key={f} tone="gold">{f}</Pill>
+            <Pill key={f} tone="tag">{f}</Pill>
           ))}
         </>
       }
