@@ -1,5 +1,8 @@
 @layer pages {
   .first { margin-top: var(--s-5); }
+  /* Right now: two panels side by side on wide screens, stacked on narrow ones. */
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--s-4); align-items: start; }
+  .kv { padding: var(--s-4); }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: var(--s-4); margin-top: var(--s-4); }
 
   .total { font-weight: 700; }

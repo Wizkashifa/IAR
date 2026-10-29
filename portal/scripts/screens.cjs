@@ -38,7 +38,7 @@ const SCREENS = [
   { name: "Out of office", path: "/away", as: "chair" },
   { name: "Feedback", path: "/feedback", as: "member" },
   { name: "Portal Settings", path: "/admin", as: "admin" },
-  { name: "Portal measures", path: "/admin/measures", as: "admin" },
+  { name: "Portal measures", path: "/measures", as: "executive" },
 ];
 
 const BASE = `http://localhost:${process.env.PORT || 3000}`;

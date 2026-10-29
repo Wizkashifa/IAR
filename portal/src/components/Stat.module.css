@@ -1,0 +1,17 @@
+@layer components {
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+  .stat {
+    display: flex; flex-direction: column; gap: var(--s-1); height: 100%; padding: var(--s-4);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
+    color: var(--ink); text-decoration: none;
+  }
+  .link { transition: border-color var(--speed); }
+  .link:hover { border-color: var(--gold); text-decoration: none; }
+  .link:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .label { font-size: var(--t-sm); color: var(--ink-2); }
+  .value { font-family: var(--font-head); font-weight: 700; font-size: var(--t-greet); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .ok { color: var(--ok); }
+  .warn { color: var(--warn); }
+  .bad { color: var(--bad); }
+  .note { font-size: var(--t-sm); color: var(--ink-3); }
+}

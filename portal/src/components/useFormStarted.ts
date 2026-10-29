@@ -4,7 +4,7 @@ import type { FormName } from "@/lib/measures";
 
 /**
  * Counts a request form as started the first time someone types in it, for
- * the portal measures (app/admin/measures). Sends only the form's name: no
+ * the portal measures (app/measures). Sends only the form's name: no
  * content, nothing about the person. Once per page load; never gets in the
  * way if the count can't be sent.
  */

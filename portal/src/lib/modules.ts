@@ -213,7 +213,7 @@ export const MODULES: PortalModule[] = [
     visibleTo: ["executive", "admins"],
     phase: 2,
     status: "live",
-    href: "/admin/measures",
+    href: "/measures",
     plannedFeatures: [],
   },
   {

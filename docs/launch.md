@@ -114,7 +114,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] O sees a request waiting over a week in What's stuck, sends a reminder, and the person it waits on gets a Chat message.
 - [ ] Who's who lists every committee with its chair; the Library lists the policies, and searching the Library for a word from inside one finds it.
 - [ ] Someone sets updates to "In the morning digest" in Notification settings; the next morning's digest includes them.
-- [ ] Portal measures (`/admin/measures`) shows the test requests in this week's counts.
+- [ ] Portal measures (`/measures`) shows the test requests in this week's counts.
 - [ ] The daily job ran this morning (`gcloud scheduler jobs describe portal-daily --location us-east1` shows a recent success).
 - [ ] Cloud Run logs (`gcloud run services logs read iar-portal --region us-east1`) show no "failed" lines.
 
@@ -122,7 +122,7 @@ Delete the test requests' Drive files afterwards; the requests themselves stay a
 
 ## Running it
 
-- **Every week:** read the feedback at `/feedback` (reply there; the sender hears in Chat) and the counts at `/admin/measures`: where requests wait longest, how often they're sent back, and which forms people start but don't send. Check What's stuck for anything over a week.
+- **Every week:** read the feedback at `/feedback` (reply there; the sender hears in Chat) and the counts at `/measures`: where requests wait longest, how often they're sent back, and which forms people start but don't send. Check What's stuck for anything over a week.
 - **Changes:** merging a pull request that changes `portal/` deploys it (Cloud Build → History shows each one). Add a line to What's new (`portal/src/lib/whats-new.ts`) for anything people will notice.
 - **Purchase requests:** when finance is ready, turn off "Purchase requests are a demo" in Portal Settings. Every request is then real, and alerts go out for everyone.
 - **Facilities:** run IT & Maintenance and Jira side by side for two weeks, with My work today on their phones, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next.
