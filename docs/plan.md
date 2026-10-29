@@ -279,13 +279,13 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/launch.md`)
 - [x] Purchase Requests module on the shell
 - [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page, with replies, and out-of-office handoff of approvals
-- [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
+- [x] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6): the Chat app sends people their alerts
 - [x] Event cards with calendar holds and rule flags, and asking for a booked time
 - [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built ahead of their phases
 - [x] The daily job: purchase reminders and morning digest, ask reminders and escalation, close-out, preventive maintenance
 - [x] `go-live`: one command that sets up Workspace and Cloud after showing every change, and the members template
-- [ ] Office fills in the members Sheet; go-live creates the groups and service accounts
-- [ ] Office checks the room list against IAR's room resources; go-live shares the room calendars with the portal
+- [x] Members added to the portal's Google Groups (by hand in Google Groups rather than through the members Sheet)
+- [x] Room list checked against IAR's room resources, and the room calendars shared with the portal
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)

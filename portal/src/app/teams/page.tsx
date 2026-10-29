@@ -28,7 +28,7 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
   const topics = query ? searchTopics(query) : [];
 
   return (
-    <>
+    <div className="stack">
       <ModuleHead title="Who's who" lead="Every committee and team at IAR, who leads it, and how to ask it for something." />
 
       <SearchForm action="/teams" label="Who handles…" value={query} placeholder="Who handles keys, the sound system, reimbursements…?" />
@@ -84,6 +84,6 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
           })}
         </div>
       )}
-    </>
+    </div>
   );
 }

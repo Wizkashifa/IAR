@@ -376,7 +376,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <Note>In dev mode, switch sample users at /dev instead.</Note>
         ) : (
           <Panel title="Sign in as">
-            <form action={startActingAs} className="grid">
+            <form action={startActingAs} className="stack">
               <PeoplePicker
                 name="email"
                 label="Who"
