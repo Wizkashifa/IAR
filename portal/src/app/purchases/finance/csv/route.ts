@@ -1,15 +1,15 @@
 import { cardStore } from "@/lib/cards";
 import { getViewer } from "@/lib/viewer";
-import { deskCards, filterDesk, isDeskTab, isPayType } from "@/lib/purchases/finance-desk";
+import { deskCards, filterDesk, isDeskTab, isPayType, mayViewDesk } from "@/lib/purchases/finance-desk";
 import { qbCsv } from "@/lib/purchases/qb-csv";
 import { isPurchaseCard } from "@/lib/purchases/workflow";
 
 export const dynamic = "force-dynamic";
 
-/** The finance desk's current list as a CSV for QuickBooks. Finance only. */
+/** The finance desk's current list as a CSV for QuickBooks. Finance, and executives who can see the desk. */
 export async function GET(req: Request) {
   const viewer = await getViewer();
-  if (!viewer || !viewer.roles.includes("finance")) return new Response("Not available.", { status: 404 });
+  if (!viewer || !mayViewDesk(viewer.roles)) return new Response("Not available.", { status: 404 });
   const q = new URL(req.url).searchParams;
   const tab = isDeskTab(q.get("tab") ?? undefined) ? (q.get("tab") as "pay" | "books" | "returns") : "pay";
   const month = /^\d{4}-\d{2}$/.test(q.get("month") ?? "") ? q.get("month")! : undefined;

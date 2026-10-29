@@ -11,7 +11,7 @@ import { cardStore } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";
 import { requireViewer } from "@/lib/viewer";
 import { shortFund } from "@/lib/purchases/accounts";
-import { DESK_TABS, PAY_TYPE_LABEL, deskCards, deskDate, deskOptions, filterDesk, isDeskTab, isPayType, lineKey, openReturns, payTypeOf, type DeskFilter, type DeskTab } from "@/lib/purchases/finance-desk";
+import { DESK_TABS, PAY_TYPE_LABEL, deskCards, deskDate, deskOptions, filterDesk, isDeskTab, isPayType, lineKey, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, type DeskFilter, type DeskTab } from "@/lib/purchases/finance-desk";
 import { KIND_LABEL, purchaseTotal } from "@/lib/purchases/types";
 import { daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { fmtMoney, fmtMonth } from "@/lib/format";
@@ -35,7 +35,8 @@ const waited = (c: PurchaseCard) => {
 export default async function FinanceDeskPage({ searchParams }: { searchParams: Promise<Search> }) {
   const q = await searchParams;
   const viewer = await requireViewer();
-  if (!viewer.roles.includes("finance")) notFound();
+  if (!mayViewDesk(viewer.roles)) notFound();
+  const works = mayWorkDesk(viewer.actingRoles);
   const tab: DeskTab = isDeskTab(q.tab) ? q.tab : "pay";
   const filter: DeskFilter = { fund: q.fund || undefined, month: /^\d{4}-\d{2}$/.test(q.month ?? "") ? q.month : undefined, type: isPayType(q.type) ? q.type : undefined };
 
@@ -88,11 +89,15 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
     <>
       <ModuleHead
         title="Finance desk"
-        lead="Pay approved requests, enter them in QuickBooks and record refunds, several at a time."
+        lead={
+          works
+            ? "Pay approved requests, enter them in QuickBooks and record refunds, several at a time."
+            : "What's approved and waiting to be paid, waiting to be entered in QuickBooks, and refunds still owed. Only the finance office acts on these."
+        }
         actions={
           <>
             <Button href="/purchases">All payment requests</Button>
-            <Button href="/purchases/finance/statement">Upload card statement</Button>
+            <Button href="/purchases/finance/statement">{works ? "Upload card statement" : "Card statements"}</Button>
             {/* A plain link: the CSV is a download, not a page. */}
             <a href={csvHref} download className={buttonClass({ variant: "primary" })}>
               <Icon name="down" />
@@ -142,7 +147,7 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
           )}
         </div>
 
-        <DeskBatch key={back} tab={tab} rows={rows} back={back} action={deskAction} title={filtered ? `${tabLabel} · filtered` : tabLabel} />
+        <DeskBatch key={back} tab={tab} rows={rows} back={back} action={deskAction} title={filtered ? `${tabLabel} · filtered` : tabLabel} readOnly={!works} />
         <p className="hint">The CSV has one row per line item for what&apos;s shown here: date, request, payee, fund, sub-account, memo and amount.</p>
       </div>
     </>

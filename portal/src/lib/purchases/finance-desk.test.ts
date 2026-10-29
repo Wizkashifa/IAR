@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
 import * as pw from "./workflow";
-import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey } from "./finance-desk";
+import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey, statementReceipts } from "./finance-desk";
 import { QB_COLUMNS, csvCell, qbCsv, qbRows } from "./qb-csv";
 import { TEST_UPLOADS, testCharges } from "./statement-sample";
 
@@ -151,4 +151,22 @@ test("QuickBooks CSV: an aid request shows no payee or line notes; card rows use
   // A credit is a plain negative number, not text.
   assert.equal(credit[8], "-12.30");
   assert.ok(qbCsv([card]).includes(",-12.30,"));
+});
+
+test("executives see the desk and card statements; only finance works them", () => {
+  assert.equal(mayViewDesk(["member", "finance"]), true);
+  assert.equal(mayViewDesk(["member", "executive"]), true);
+  assert.equal(mayViewDesk(["member", "office"]), false);
+  assert.equal(mayViewDesk(["member", "chairs"]), false);
+  assert.equal(mayWorkDesk(["member", "finance"]), true);
+  assert.equal(mayWorkDesk(["member", "executive"]), false);
+});
+
+test("a statement's receipts: that month's card receipts, not cancelled ones or other requests", () => {
+  const charge = (date: string) => [{ date, description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } }];
+  const sept = cardReceipts("2026-09", charge("2026-09-02"));
+  const aug = cardReceipts("2026-08", charge("2026-08-02"));
+  const gone = { ...cardReceipts("2026-09", charge("2026-09-03")), status: "cancelled" as const };
+  const pay = purchase();
+  assert.deepEqual(statementReceipts([sept, aug, gone, pay], "2026-09").map((c) => c.id), [sept.id]);
 });

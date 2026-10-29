@@ -4,9 +4,19 @@
  * worked several at a time. Plain functions: the page and its actions call
  * them, and every change still goes through workflow.ts one request at a time.
  */
+import type { Role } from "../org";
 import { openExpectedReturns, paymentMethodOf, type LineItem } from "./types";
 import type { PurchaseCard } from "./workflow";
 import { WorkflowError } from "../workflow-core";
+
+/**
+ * Who can open the desk and the card statements: finance works them, and
+ * executives see them (every request and card receipt there) without acting.
+ * `roles` is what someone can see; admins pass too, also without acting.
+ */
+export const mayViewDesk = (roles: readonly Role[]) => roles.includes("finance") || roles.includes("executive");
+/** Who can pay, book and record on the desk: finance, from their own groups (`actingRoles`). */
+export const mayWorkDesk = (actingRoles: readonly Role[]) => actingRoles.includes("finance");
 
 export type DeskTab = "pay" | "books" | "returns";
 export const DESK_TABS: { id: DeskTab; label: string }[] = [
@@ -60,6 +70,13 @@ export function deskOptions(cards: PurchaseCard[]): { funds: string[]; months: s
   const funds = [...new Set(cards.map((c) => c.purchase.fund))].sort((a, b) => a.localeCompare(b));
   const months = [...new Set(cards.map((c) => deskDate(c).slice(0, 7)))].sort().reverse();
   return { funds, months };
+}
+
+/** The card receipts sent from one month's statement, by card (cancelled and declined ones don't count). */
+export function statementReceipts(cards: PurchaseCard[], month: string): PurchaseCard[] {
+  return cards
+    .filter((c) => c.purchase.kind === "card" && c.purchase.card?.statementMonth === month && c.status !== "cancelled" && c.status !== "denied")
+    .sort((a, b) => (a.purchase.card!.last4 < b.purchase.card!.last4 ? -1 : 1));
 }
 
 /** Refunds and repayments still owed, one per line, for the Refunds owed tab. */

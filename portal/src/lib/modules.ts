@@ -146,7 +146,7 @@ export const MODULES: PortalModule[] = [
     nav: "Finance desk",
     name: "Finance desk",
     summary: "Pay approved requests, enter them in QuickBooks and record refunds, several at a time.",
-    visibleTo: ["finance"],
+    visibleTo: ["finance", "executive"],
     phase: 1,
     status: "live",
     href: "/purchases/finance",

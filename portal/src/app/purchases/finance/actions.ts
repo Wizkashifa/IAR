@@ -9,7 +9,7 @@ import { actorFor } from "@/lib/people";
 import { purchaseNotices } from "@/lib/purchases/notices";
 import { purchaseContext } from "@/lib/purchases/settings";
 import { vendorAfterPayment } from "@/lib/purchases/vendors";
-import { batchSummary, runBatch, splitKey } from "@/lib/purchases/finance-desk";
+import { batchSummary, mayWorkDesk, runBatch, splitKey } from "@/lib/purchases/finance-desk";
 import * as wf from "@/lib/purchases/workflow";
 import { RESULT_COOKIE, type DeskResult } from "./result";
 import { WorkflowError } from "@/lib/workflow-core";
@@ -24,7 +24,7 @@ type DeskAction = keyof typeof VERB;
  */
 export async function deskAction(form: FormData): Promise<void> {
   const viewer = await requireViewer();
-  if (!viewer.roles.includes("finance")) redirect("/purchases");
+  if (!mayWorkDesk(viewer.actingRoles)) redirect("/purchases/finance");
   const actor = await actorFor(viewer);
   const action = String(form.get("action") ?? "") as DeskAction;
   const backRaw = String(form.get("back") ?? "");
