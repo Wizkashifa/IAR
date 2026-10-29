@@ -19,10 +19,8 @@
      * See docs/brand.md.
      */
     --brand-green: #0b3a24;
-    --brand-green-2: #124a30;
     --gold: #c7a154;
     --gold-light: #e6cf9c;
-    --gold-dark: #8a6a2c;
     --cream: #f6eedb;
 
     --bg: #faf6ea;
@@ -75,7 +73,6 @@
     --gold-line: rgba(199, 161, 84, 0.55);
     --gold-wash: rgba(199, 161, 84, 0.14);
     --cream-wash: rgba(246, 238, 219, 0.1);
-    --cream-dim: rgba(246, 238, 219, 0.72);
 
     /*
      * Module accents: one colour per module, used only for its menu icon, its page head and its item icons, never for

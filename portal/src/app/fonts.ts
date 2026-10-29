@@ -8,7 +8,7 @@ import { Fraunces, Lato, Montserrat } from "next/font/google";
  * these into --font, --font-head and --font-display.
  */
 const body = Lato({ subsets: ["latin"], weight: ["400", "700"], style: ["normal", "italic"], variable: "--font-body-face", display: "swap" });
-const head = Montserrat({ subsets: ["latin"], weight: ["600", "700", "900"], variable: "--font-head-face", display: "swap" });
+const head = Montserrat({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-head-face", display: "swap" });
 const display = Fraunces({ subsets: ["latin"], weight: "500", style: "italic", variable: "--font-display-face", display: "swap" });
 
 /** Class names for <html> that define the font variables. */
