@@ -80,7 +80,7 @@ export default async function Home() {
   const firstName = viewer.name.split(" ")[0];
 
   return (
-    <div className="stack">
+    <div className="stack enter">
       <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
       {kinds.length > 0 && <NewRequestTiles kinds={kinds} />}
       <WhatsNewNote />

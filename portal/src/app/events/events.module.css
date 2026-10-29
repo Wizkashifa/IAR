@@ -55,7 +55,7 @@
   .draft { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 
   /* The request page */
-  .about { white-space: pre-wrap; margin: 0; }
+  .about { white-space: pre-wrap; margin: 0; max-width: 60ch; }
   .history { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
   .history li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--s-2); align-items: start; font-size: var(--t-md); }
   .closeout { display: grid; gap: var(--s-4); }

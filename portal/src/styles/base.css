@@ -81,19 +81,14 @@
     background-size: 5px 5px; background-repeat: no-repeat;
   }
 
-  /* A page's sections arrive one after another: fade in and rise 10px, 80ms apart. Before only, so nothing stays moved. */
+  /* Home's sections arrive one after another (.enter): fade in and rise 10px, 80ms apart. Work pages appear at once. Before only, so nothing stays moved. */
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
-  #main > div > .stack > * { animation: rise var(--enter) var(--ease) backwards; }
-  #main > div > .stack > :nth-child(2) { animation-delay: 80ms; }
-  #main > div > .stack > :nth-child(3) { animation-delay: 160ms; }
-  #main > div > .stack > :nth-child(4) { animation-delay: 240ms; }
-  #main > div > .stack > :nth-child(5) { animation-delay: 320ms; }
-  #main > div > .stack > :nth-child(n + 6) { animation-delay: 400ms; }
-
-  @media (max-width: 600px) {
-    input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea { font-size: 16px; }
-    .mantine-Input-wrapper { --input-height: var(--control-h); --input-fz: 16px; }
-  }
+  .enter > * { animation: rise var(--enter) var(--ease) backwards; }
+  .enter > :nth-child(2) { animation-delay: 80ms; }
+  .enter > :nth-child(3) { animation-delay: 160ms; }
+  .enter > :nth-child(4) { animation-delay: 240ms; }
+  .enter > :nth-child(5) { animation-delay: 320ms; }
+  .enter > :nth-child(n + 6) { animation-delay: 400ms; }
 
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }

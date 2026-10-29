@@ -16,7 +16,7 @@ function Brand({ org }: { org: { name: string; shortName: string } }) {
   return (
     <Link href="/" className={styles.brand}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/iar-logo-white.png" alt="" className={styles.mark} />
+      <img src="/brand/iar-logo-white-header.png" alt="" width={80} height={168} className={styles.mark} />
       <span>
         {org.shortName} <span className={styles.portal}>Portal</span>
       </span>
