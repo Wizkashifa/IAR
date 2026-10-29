@@ -13,7 +13,7 @@
 
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea):not([class*="mantine-"]) {
     width: 100%; min-width: 0; min-height: var(--control-h); padding: 6px 10px;
-    background-color: var(--surface); color: var(--ink);
+    background-color: var(--field-bg); color: var(--ink);
     border: 1px solid var(--ctl); border-radius: var(--r-sm);
     transition: border-color var(--speed), box-shadow var(--speed);
   }

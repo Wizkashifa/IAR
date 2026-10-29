@@ -33,7 +33,7 @@ export const theme = createTheme({
 });
 
 const shared = {
-  "--mantine-color-body": "var(--surface)",
+  "--mantine-color-body": "var(--popover-bg)",
   "--mantine-color-text": "var(--ink)",
   "--mantine-color-dimmed": "var(--ink-2)",
   "--mantine-color-placeholder": "var(--ink-3)",

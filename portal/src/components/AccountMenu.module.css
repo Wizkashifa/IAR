@@ -20,7 +20,7 @@
   .menu {
     position: absolute; right: 0; top: calc(100% + 8px); z-index: 40;
     width: min(320px, calc(100vw - 32px)); padding: 6px;
-    background: var(--surface); color: var(--ink);
+    background: var(--popover-bg); color: var(--ink);
     border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-2);
     animation: drop var(--speed-2) var(--ease) backwards;
   }

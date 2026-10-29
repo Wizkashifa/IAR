@@ -173,6 +173,16 @@ const PAIRS: [string, string, number][] = [
     ["--ink-2", `--mod-${m}-tint`, 4.5],
     [`--mod-${m}-nav`, "--nav-bg", 3],
   ]),
+  // Menu counts, fields and popovers (a step up from the cards in dark mode)
+  ["--count-ink", "--count-bg", 4.5],
+  ...["--ink", "--ink-2", "--ink-3"].flatMap((t): [string, string, number][] => [
+    [t, "--field-bg", 4.5],
+    [t, "--popover-bg", 4.5],
+  ]),
+  ["--ctl", "--field-bg", 3],
+  ["--focus", "--field-bg", 3],
+  ["--focus", "--popover-bg", 3],
+  ["--nav-text", "--nav-on", 4.5],
   // Control edges and the focus ring
   ["--ctl", "--surface", 3],
   ["--ctl", "--bg", 3],

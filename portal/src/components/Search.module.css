@@ -20,7 +20,7 @@
   .drawerTrigger {
     display: flex; align-items: center; gap: var(--s-2); width: 100%;
     height: var(--control-h); padding: 0 10px;
-    background: var(--surface); color: var(--ink-3);
+    background: var(--field-bg); color: var(--ink-3);
     border: 1px solid var(--ctl); border-radius: var(--r-sm);
     font: inherit; font-size: var(--t-md); text-align: left; cursor: text;
   }
@@ -29,7 +29,7 @@
   .foot { font-size: var(--t-xs); color: var(--ink-3); }
 
   /* The search panel, matching the menu's look: the chosen row gets the gold edge. */
-  .content { border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2); }
+  .content { border-radius: 12px; background: var(--popover-bg); border: 1px solid var(--line); box-shadow: var(--shadow-2); }
   .search { font-size: var(--t-base); }
   .group::before { color: var(--ink-3); }
   .action { border-radius: var(--r-sm); color: var(--ink-2); }

@@ -85,6 +85,7 @@
       linear-gradient(to top, var(--scrim), transparent) center bottom / 100% 16px no-repeat scroll,
       var(--pattern-faint) 0 0 / 56px 56px local,
       var(--nav-bg);
+    border-right: 1px solid var(--nav-edge);
   }
   .rail > * { flex: none; }
   .group { display: flex; flex-direction: column; gap: 2px; }
@@ -101,7 +102,7 @@
   /* The selected page's icon chip turns solid light gold. */
   .link.on .tile { background: var(--gold-light); color: var(--brand-green); }
   .nm { flex: 1; min-width: 0; }
-  .count { font-size: 11px; font-weight: 600; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; line-height: 18px; }
+  .count { font-size: 11px; font-weight: 600; background: var(--count-bg); color: var(--count-ink); border-radius: 999px; padding: 0 7px; line-height: 18px; }
   .mob { display: none; flex-direction: column; gap: 2px; }
   .foot { margin-top: auto; padding-top: var(--s-3); border-top: 1px solid var(--gold-line); }
   .scrim { display: none; }

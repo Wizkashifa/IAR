@@ -60,7 +60,7 @@ The guide's brand green and rust are just under 4.5:1 on the tinted pill backgro
 
 `guard.test.ts` checks every text and control colour pair in light and dark, so a token that drops below these fails the build.
 
-Dark mode keeps warm charcoal surfaces and the dark green header and menu. Actions stay green there (`--accent` #52C285, with dark green text on the main button), gold keeps meaning "needs you" and "selected", status pills are outlined in their colour, and every text colour is 5:1 or more on its background.
+Dark mode ("Dark v2") keeps warm charcoal surfaces and the dark green header with its gold line; the menu turns neutral charcoal with a thin line on its right. Fields, menus and popovers sit a step lighter than cards. Gold in dark mode is for the header line, menu counts and the selected menu item, plus "needs you". The pattern and the gold illustrations show at half strength (`--pattern-opacity`). Actions stay green there (`--accent` #52C285, with dark green text on the main button), gold keeps meaning "needs you" and "selected", status pills are outlined in their colour, and every text colour is 5:1 or more on its background.
 
 ## When the guide changes
 

@@ -68,7 +68,7 @@
 
   /* Form controls. Mantine's inputs (class mantine-…) style themselves. */
   input:not([type="checkbox"], [type="radio"], [type="file"], [class*="mantine-"]), select:not([class*="mantine-"]), textarea:not([class*="mantine-"]) {
-    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--field-bg);
     border: 1px solid var(--ctl); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
   }
   :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }

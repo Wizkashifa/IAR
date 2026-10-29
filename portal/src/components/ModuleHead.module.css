@@ -7,7 +7,7 @@
   /* IAR's pattern, fading in from the right. Decoration only. */
   .head::after {
     content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: var(--pattern) right top / 56px 56px;
+    background: var(--pattern) right top / 56px 56px; opacity: var(--pattern-opacity);
     -webkit-mask-image: linear-gradient(to left, black, transparent 65%); mask-image: linear-gradient(to left, black, transparent 65%);
   }
   .tile { align-self: center; }

@@ -26,6 +26,9 @@
     --bg: #faf6ea;
     --surface: #ffffff;
     --surface-2: #f3ecd6;
+    /* Fields, menus and popovers: on the card colour in light mode, a step up in dark mode. */
+    --field-bg: var(--surface);
+    --popover-bg: var(--surface);
     --ink: #13241b;
     --ink-2: #4f5b53;
     --ink-3: #636b63;
@@ -46,12 +49,16 @@
     --nav-text: #f6eedb;
     --nav-group: #e6cf9c;
     --nav-on-text: #e6cf9c;
+    /* The menu's right edge: none on the green menu, a line on the dark one. */
+    --nav-edge: transparent;
     /* The search field in the green header. */
     --header-input-bg: #124a30;
     --header-placeholder: #d8cfb9;
     /* IAR's geometric pattern in gold, one 56px tile: faint on the header and menu, stronger where a page head fades it in. */
     --pattern-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.07' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
-    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.2' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='1' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    /* How strongly the pattern (page heads) and the gold illustrations show: halved in dark mode. */
+    --pattern-opacity: 0.2;
     /* The band behind a page's title, and the "What's new" box. */
     --head-band: #f6eedb;
     --news-bg: #fffaf0;
@@ -62,6 +69,9 @@
     --ok-soft: #e3f2e8;
     --warn: #9a4820;
     --warn-soft: #fae9de;
+    /* Counts on menu items ("Home 2"). */
+    --count-bg: var(--warn-soft);
+    --count-ink: var(--warn);
     --bad: #a1302a;
     --bad-soft: #f7e0dd;
     --info: #004d4e;
@@ -156,10 +166,22 @@
     --ctl: #747d75;
     --focus: #c7a154;
     --gold-text: #e2c98f;
-    --nav-bg: #0a2a1b;
-    --nav-on: #173726;
+    /* The menu in dark mode: neutral, a step up from the page, with a line on its right. */
+    --nav-bg: #1b1f1c;
+    --nav-on: #252a26;
+    --nav-text: #e6e1d3;
+    --nav-group: #e2c98f;
+    --nav-on-text: #e6cf9c;
+    --nav-edge: var(--line);
+    /* Fields, menus and popovers sit a step above the cards. */
+    --field-bg: var(--surface-2);
+    --popover-bg: var(--surface-2);
+    /* Counts on menu items are gold in dark mode. */
+    --count-bg: var(--gold);
+    --count-ink: var(--brand-green);
     --head-band: #151b17;
-    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.1' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    --pattern-opacity: 0.1;
+    --pattern-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.035' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
     --mod-events: #5fcb8e;
     --mod-events-soft: #17301f;
     --mod-events-tint: #13201a;
