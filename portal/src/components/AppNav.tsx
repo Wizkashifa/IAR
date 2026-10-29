@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AccountLinks, AccountMenu, type Account } from "./AccountMenu";
-import { Icon, type IconName } from "./Icon";
+import { Icon, IconTile, type IconName } from "./Icon";
+import type { Accent } from "@/lib/modules";
 import styles from "./AppNav.module.css";
 
-export type NavLink = { href: string; label: string; icon: IconName; badge?: ReactNode };
+export type NavLink = { href: string; label: string; icon: IconName; accent?: Accent; badge?: ReactNode };
 export type NavGroup = { label?: string; links: NavLink[] };
 
 /** The logo and "IAR Portal", linking home. */
@@ -141,7 +142,7 @@ export function AppFrame({
           <div className={styles.mob}>
             {drawerSearch}
             <Link href="/help" className={`${styles.link}${path.startsWith("/help") ? ` ${styles.on}` : ""}`} aria-current={path.startsWith("/help") ? "page" : undefined}>
-              <Icon name="help" />
+              <IconTile name="help" size={28} tone="nav" className={styles.tile} />
               <span className={styles.nm}>Help</span>
             </Link>
           </div>
@@ -152,7 +153,7 @@ export function AppFrame({
                 const on = l.href === current;
                 return (
                   <Link key={l.href} href={l.href} className={`${styles.link}${on ? ` ${styles.on}` : ""}`} aria-current={on ? "page" : undefined}>
-                    <Icon name={l.icon} />
+                    <IconTile name={l.icon} accent={l.accent} size={28} tone="nav" className={styles.tile} />
                     <span className={styles.nm}>{l.label}</span>
                     {l.badge}
                   </Link>

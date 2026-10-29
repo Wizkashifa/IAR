@@ -158,6 +158,16 @@ const PAIRS: [string, string, number][] = [
   ["--nav-group", "--nav-bg", 4.5],
   ["--nav-on-text", "--nav-on", 4.5],
   ["--header-placeholder", "--header-input-bg", 4.5],
+  // Module accents: the colour on its icon tile and page head, the page's text on the head, its icon on the menu
+  ...["events", "pay", "mkt", "it"].flatMap((m): [string, string, number][] => [
+    [`--mod-${m}`, `--mod-${m}-soft`, 4.5],
+    [`--mod-${m}`, `--mod-${m}-tint`, 4.5],
+    [`--mod-${m}`, "--surface", 4.5],
+    [`--mod-${m}-tint`, `--mod-${m}`, 4.5],
+    ["--ink", `--mod-${m}-tint`, 4.5],
+    ["--ink-2", `--mod-${m}-tint`, 4.5],
+    [`--mod-${m}-nav`, "--nav-bg", 3],
+  ]),
   // Control edges and the focus ring
   ["--ctl", "--surface", 3],
   ["--ctl", "--bg", 3],

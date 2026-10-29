@@ -17,7 +17,7 @@ export default async function ImportPage() {
   return (
     <div className="stack">
       <Crumb trail={[{ href: "/it-maintenance", label: "IT & Maintenance" }]} />
-      <ModuleHead
+      <ModuleHead accent="it"
         title="Import from Jira"
         lead="Bring the facilities team's open Jira issues over once, so everything is in one place and the people who reported them can follow along. Importing the same file again is safe: issues already brought over are skipped."
       />

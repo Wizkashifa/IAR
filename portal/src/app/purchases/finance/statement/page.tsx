@@ -32,7 +32,7 @@ export default async function StatementPage() {
   return (
     <div className="stack">
       <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: "/purchases/finance", label: "Finance desk" }]} here="Card statement" />
-      <ModuleHead
+      <ModuleHead accent="pay"
         title={works ? "Card statement" : "Card statements"}
         lead={
           works

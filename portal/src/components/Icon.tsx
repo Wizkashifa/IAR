@@ -1,3 +1,4 @@
+import type { Accent } from "@/lib/modules";
 import styles from "./Icon.module.css";
 
 /** The demo's line icons (24px grid, 2px stroke, drawn in the current text colour). To add one, copy its path from a Lucide icon (lucide.dev, ISC licence). */
@@ -61,5 +62,22 @@ export function Icon({ name, size = "md", label, className }: { name: IconName; 
     >
       <path d={PATHS[name]} />
     </svg>
+  );
+}
+
+/** Each request module's icon, wherever it shows (menu, page head, tiles, lists). */
+export const MODULE_ICON: Record<Accent, IconName> = { events: "calendar", pay: "receipt", mkt: "megaphone", it: "wrench" };
+
+/**
+ * An icon in a rounded tile: in its module's colours when `accent` is given
+ * (the icon defaults to the module's), otherwise neutral. "nav" is the chip on
+ * the green menu; "solid" fills the tile with the module colour (a page head).
+ */
+export function IconTile({ name, accent, size = 40, tone = "soft", className }: { name?: IconName; accent?: Accent; size?: 28 | 40 | 44 | 56; tone?: "soft" | "solid" | "nav"; className?: string }) {
+  const icon = name ?? (accent ? MODULE_ICON[accent] : "box");
+  return (
+    <span className={[styles.tile, styles[`t${size}`], styles[tone], className].filter(Boolean).join(" ")} data-mod={accent} aria-hidden="true">
+      <Icon name={icon} size={size >= 56 ? "xl" : size >= 40 ? "lg" : "md"} />
+    </span>
   );
 }

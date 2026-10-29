@@ -62,7 +62,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="stack loose">
-      <ModuleHead
+      <ModuleHead accent="events"
         title="Events & Rooms"
         lead="Request a program or event and book its room. Rooms are checked against the IAR calendar as you fill in the request."
         actions={<Button href="/events/new" variant="primary" icon="plus">New event request</Button>}

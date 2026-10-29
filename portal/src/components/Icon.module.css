@@ -4,4 +4,14 @@
   .md { width: 16px; height: 16px; }
   .lg { width: 20px; height: 20px; }
   .xl { width: 28px; height: 28px; stroke-width: 1.5; }
+
+  /* IconTile: a rounded tile holding an icon, coloured by its module (tokens.css [data-mod]). */
+  .tile { display: inline-grid; place-items: center; flex: none; border-radius: var(--r-sm); }
+  .soft { background: var(--mod-soft, var(--surface-2)); color: var(--mod, var(--ink-2)); }
+  .solid { background: var(--mod, var(--accent)); color: var(--mod-tint, var(--accent-ink)); }
+  .nav { background: var(--cream-wash); color: var(--mod-nav, var(--nav-text)); }
+  .t28 { width: 28px; height: 28px; }
+  .t40 { width: 40px; height: 40px; }
+  .t44 { width: 44px; height: 44px; border-radius: var(--r); }
+  .t56 { width: 56px; height: 56px; border-radius: 14px; }
 }

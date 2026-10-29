@@ -1,5 +1,8 @@
 import type { Role } from "./org";
 
+/** A module's accent colour (tokens.css --mod-*): its menu icon, page head and item icons. Never a status. */
+export type Accent = "events" | "pay" | "mkt" | "it";
+
 export type PortalModule = {
   id: string;
   name: string;
@@ -12,6 +15,8 @@ export type PortalModule = {
   /** Short name for the top menu, shown once the module is live. */
   nav?: string;
   href: string;
+  /** The request modules have one accent colour each. */
+  accent?: Accent;
   plannedFeatures: string[];
 };
 
@@ -35,6 +40,7 @@ export const MODULES: PortalModule[] = [
     phase: 1,
     status: "live",
     href: "/purchases",
+    accent: "pay",
     plannedFeatures: [],
   },
   {
@@ -46,6 +52,7 @@ export const MODULES: PortalModule[] = [
     phase: 1,
     status: "live",
     href: "/events",
+    accent: "events",
     plannedFeatures: [],
   },
   {
@@ -68,6 +75,7 @@ export const MODULES: PortalModule[] = [
     phase: 2,
     status: "live",
     href: "/marketing",
+    accent: "mkt",
     plannedFeatures: [
       "A board view for the marketing team, alongside event marketing tasks in Team Queues",
     ],
@@ -81,6 +89,7 @@ export const MODULES: PortalModule[] = [
     phase: 2,
     status: "live",
     href: "/it-maintenance",
+    accent: "it",
     plannedFeatures: [
       "Equipment list with each item's repair history (the asset tracker)",
       "Rooms from IAR's Google Calendar instead of a fixed list",

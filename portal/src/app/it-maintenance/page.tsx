@@ -67,7 +67,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="stack">
-      <ModuleHead
+      <ModuleHead accent="it"
         title="IT & Maintenance"
         lead="Ask once for anything broken or needed in the building, IT or A/V. It goes to the right team, and you can follow it until it's done."
         actions={

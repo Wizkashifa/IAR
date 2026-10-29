@@ -79,7 +79,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <ModuleHead
+      <ModuleHead accent="pay"
         title="Payments"
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={

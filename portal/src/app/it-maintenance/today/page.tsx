@@ -154,7 +154,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
   if (teams.length === 0) {
     return (
       <div className="stack">
-        <ModuleHead title="My work today" />
+        <ModuleHead accent="it" title="My work today" />
         <EmptyState icon="wrench" action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
           This page is for the IT Services and Facility Maintenance teams. To report a problem, use AV/IT/Maintenance.
         </EmptyState>
@@ -173,7 +173,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
 
   return (
     <div className="stack">
-      <ModuleHead
+      <ModuleHead accent="it"
         title="My work today"
         lead={`${fmtDay(today)}. Yours first, then what nobody on your team has taken, then this week's preventive work.`}
         actions={

@@ -75,6 +75,27 @@
     --cream-wash: rgba(246, 238, 219, 0.1);
     --cream-dim: rgba(246, 238, 219, 0.72);
 
+    /*
+     * Module accents: one colour per module, used only for its menu icon, its page head and its item icons, never for
+     * status. -soft is an icon tile, -tint a page head, -nav the icon on the green menu. [data-mod] below picks one.
+     */
+    --mod-events: #007038;
+    --mod-events-soft: #e1f0e7;
+    --mod-events-tint: #e9f3ec;
+    --mod-events-nav: #8fd3a4;
+    --mod-pay: #7a5d22;
+    --mod-pay-soft: #f6ecd4;
+    --mod-pay-tint: #f6ecd4;
+    --mod-pay-nav: #e6cf9c;
+    --mod-mkt: #2a52a0;
+    --mod-mkt-soft: #e3eaf8;
+    --mod-mkt-tint: #ebf0fa;
+    --mod-mkt-nav: #9db9f2;
+    --mod-it: #4d5866;
+    --mod-it-soft: #e8ebee;
+    --mod-it-tint: #eef0f2;
+    --mod-it-nav: #c3ccd6;
+
     /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
     --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-head: var(--font-head-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
@@ -128,6 +149,18 @@
     --nav-bg: #0a2a1b;
     --nav-on: #173726;
     --head-band: #151b17;
+    --mod-events: #5fcb8e;
+    --mod-events-soft: #17301f;
+    --mod-events-tint: #13201a;
+    --mod-pay: #e2c98f;
+    --mod-pay-soft: #2b2618;
+    --mod-pay-tint: #1e1c14;
+    --mod-mkt: #93b4f5;
+    --mod-mkt-soft: #1a2440;
+    --mod-mkt-tint: #151a26;
+    --mod-it: #b5bfca;
+    --mod-it-soft: #232a31;
+    --mod-it-tint: #181c20;
     --news-bg: #1d1f17;
     --news-line: #4a4128;
     --ok: #5fcb8e;
@@ -144,4 +177,10 @@
     --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
     color-scheme: dark;
   }
+
+  /* Any element with data-mod="events" (pay, mkt, it) gets --mod, --mod-soft, --mod-tint and --mod-nav for that module. */
+  [data-mod="events"] { --mod: var(--mod-events); --mod-soft: var(--mod-events-soft); --mod-tint: var(--mod-events-tint); --mod-nav: var(--mod-events-nav); }
+  [data-mod="pay"] { --mod: var(--mod-pay); --mod-soft: var(--mod-pay-soft); --mod-tint: var(--mod-pay-tint); --mod-nav: var(--mod-pay-nav); }
+  [data-mod="mkt"] { --mod: var(--mod-mkt); --mod-soft: var(--mod-mkt-soft); --mod-tint: var(--mod-mkt-tint); --mod-nav: var(--mod-mkt-nav); }
+  [data-mod="it"] { --mod: var(--mod-it); --mod-soft: var(--mod-it-soft); --mod-tint: var(--mod-it-tint); --mod-nav: var(--mod-it-nav); }
 }

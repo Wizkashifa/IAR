@@ -143,7 +143,9 @@ export default async function Home() {
                     {a.title} {a.pending && <Pill tone="info">Waiting for approval</Pill>}
                   </>
                 }
-                sub={`${rangeText(a.start, a.end)} · ${roomsText(a.rooms)} · ${a.committee ?? SOURCE[a.source]}`}
+                accent="events"
+                when={rangeText(a.start, a.end)}
+                sub={`${roomsText(a.rooms)} · ${a.committee ?? SOURCE[a.source]}`}
               />
             ))}
           </Rows>

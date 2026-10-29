@@ -14,7 +14,7 @@ export default async function NewTicket() {
   return (
     <div className="stack">
       <Crumb trail={[{ href: "/it-maintenance", label: "IT & Maintenance" }]} />
-      <ModuleHead
+      <ModuleHead accent="it"
         title="AV/IT/Maintenance"
         lead="Something broken or something you need: it goes to the maintenance or IT team. You'll hear when someone picks it up and when it's done, and you can follow it in My Requests."
       />

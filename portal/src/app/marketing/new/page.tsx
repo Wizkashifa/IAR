@@ -37,7 +37,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
       <div className="stack loose">
         <div className="stack tight">
           {crumb}
-          <ModuleHead title="What do you need from marketing?" lead="Requests are reviewed and prioritized each week by the team that oversees IAR Marketing." />
+          <ModuleHead accent="mkt" title="What do you need from marketing?" lead="Requests are reviewed and prioritized each week by the team that oversees IAR Marketing." />
         </div>
         <Note>
           Marketing a program or event? Put it on the <Link href="/events/new">event request</Link>. It asks marketing&apos;s questions and unlocks marketing once the event is approved.
@@ -64,7 +64,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
     <div className="stack loose">
       <div className="stack tight">
         {crumb}
-        <ModuleHead
+        <ModuleHead accent="mkt"
           title={t.label}
           lead={t.blurb}
           actions={

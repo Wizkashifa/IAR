@@ -40,7 +40,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
     return (
       <div className="stack">
         {crumb}
-        <ModuleHead title="Preventive schedules" />
+        <ModuleHead accent="it" title="Preventive schedules" />
         <Panel flush>
           <EmptyState icon="repeat">Schedules belong to the IT Services and Facility Maintenance teams. If you think you should be on one, ask its chair.</EmptyState>
         </Panel>
@@ -57,7 +57,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
   return (
     <div className="stack">
       {crumb}
-      <ModuleHead
+      <ModuleHead accent="it"
         title="Preventive schedules"
         lead="Regular jobs, like filter changes and alarm checks. On the due day the portal opens a ticket for the team, then moves the schedule to the next date."
         actions={
