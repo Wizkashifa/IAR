@@ -18,7 +18,7 @@
   }
   a { color: var(--accent-text); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   h1 { font-family: var(--font-head); font-weight: 700; font-size: var(--t-h1); letter-spacing: -0.015em; line-height: 1.25; margin: 0 0 var(--s-1); text-wrap: balance; }
   /* The home greeting: the one place for the italic serif. */
@@ -50,7 +50,7 @@
   .grow { flex: 1 1 260px; min-width: 0; }
   .push { margin-left: auto; }
   /* Mantine's inputs share the portal's focus look. */
-  .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   /* The room picker's typing field sits inside a box that already shows the ring: no second outline. */
   .mantine-PillsInputField-field:focus-visible { outline: none; }
   /*
@@ -67,9 +67,10 @@
   /* Form controls. Mantine's inputs (class mantine-…) style themselves. */
   input:not([type="checkbox"], [type="radio"], [type="file"], [class*="mantine-"]), select:not([class*="mantine-"]), textarea:not([class*="mantine-"]) {
     font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
-    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
+    border: 1px solid var(--ctl); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
   }
-  :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
+  ::placeholder { color: var(--ink-3); opacity: 1; }
   /* Our own arrow, so a dropdown is the same height as the inputs beside it in every browser (Safari ignores a native one's height). */
   select:not([class*="mantine-"], [multiple]) {
     appearance: none; height: var(--control-h); padding-right: 30px;

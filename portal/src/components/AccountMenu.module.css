@@ -8,7 +8,7 @@
     font: inherit; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
   }
   .btn:hover { border-color: var(--gold); background: var(--gold-wash); }
-  .btn:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .btn:focus-visible { outline: none; border-color: var(--gold-light); box-shadow: var(--ring-on-green); }
   .av {
     display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%;
     background: var(--gold); color: var(--brand-green); font-size: 11px; font-weight: 700;

@@ -98,3 +98,77 @@ test("the only global stylesheets are tokens.css and base.css", () => {
   const sheets = files(join(SRC, "styles"), [".css"]).map(rel).sort();
   assert.deepEqual(sheets, ["styles/base.css", "styles/tokens.css"], "Put page styles in a co-located .module.css.");
 });
+
+/**
+ * Contrast, worked out from the tokens themselves in light and dark (WCAG 2):
+ * text 4.5:1 against what it sits on, and 3:1 for the edges of controls, the
+ * focus ring and icons that mean something. Card outlines and the gold heading
+ * lines are decoration and aren't listed. Add a pair when you add a token that
+ * colours text or a control.
+ */
+function themes(): { light: Map<string, string>; dark: Map<string, string> } {
+  const css = readFileSync(join(SRC, "styles/tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const block = (sel: RegExp) => {
+    const at = css.search(sel);
+    const body = css.slice(css.indexOf("{", at) + 1, css.indexOf("}", at));
+    return new Map([...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1]!, m[2]!.trim()]));
+  };
+  const light = block(/:root\s*\{/);
+  const dark = new Map([...light, ...block(/:root\[data-mantine-color-scheme="dark"\]\s*\{/)]);
+  return { light, dark };
+}
+
+function hex(tokens: Map<string, string>, name: string): string {
+  let v = tokens.get(name);
+  for (let i = 0; v && v.startsWith("var(") && i < 5; i++) v = tokens.get(v.slice(4, -1).trim());
+  assert.ok(v && /^#[0-9a-f]{6}$/i.test(v), `${name} isn't a plain #rrggbb colour`);
+  return v!;
+}
+
+function ratio(a: string, b: string): number {
+  const lum = (h: string) => {
+    const [r, g, b2] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * b2!;
+  };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x! + 0.05) / (y! + 0.05);
+}
+
+/** [foreground, background, minimum]. */
+const PAIRS: [string, string, number][] = [
+  // Text on the page and on cards
+  ...["--ink", "--ink-2", "--ink-3", "--accent-text", "--gold-text"].flatMap((t): [string, string, number][] => [
+    [t, "--bg", 4.5],
+    [t, "--surface", 4.5],
+  ]),
+  ["--ink-3", "--surface-2", 4.5],
+  ["--accent-ink", "--accent", 4.5],
+  // Status pills and notes
+  ["--ok", "--ok-soft", 4.5],
+  ["--warn", "--warn-soft", 4.5],
+  ["--bad", "--bad-soft", 4.5],
+  ["--info", "--info-soft", 4.5],
+  // The menu and the header
+  ["--nav-text", "--nav-bg", 4.5],
+  ["--nav-group", "--nav-bg", 4.5],
+  ["--nav-on-text", "--nav-on", 4.5],
+  ["--header-placeholder", "--header-input-bg", 4.5],
+  // Control edges and the focus ring
+  ["--ctl", "--surface", 3],
+  ["--ctl", "--bg", 3],
+  ["--focus", "--surface", 3],
+  ["--focus", "--bg", 3],
+  ["--gold-light", "--nav-bg", 3],
+  ["--gold-light", "--brand-green", 3],
+];
+
+test("token colours have enough contrast, light and dark", () => {
+  const bad: string[] = [];
+  for (const [scheme, tokens] of Object.entries(themes())) {
+    for (const [fg, bg, min] of PAIRS) {
+      const r = ratio(hex(tokens, fg), hex(tokens, bg));
+      if (r < min) bad.push(`${scheme}: ${fg} on ${bg} is ${r.toFixed(2)}:1, needs ${min}:1`);
+    }
+  }
+  assert.deepEqual(bad, [], "Darken (light) or lighten (dark) the foreground in tokens.css.");
+});

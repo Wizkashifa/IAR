@@ -9,7 +9,7 @@
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); padding: var(--s-4); min-width: 0; }
   .next { display: flex; gap: var(--s-2); align-items: flex-start; margin: 14px 0 0; padding-top: var(--s-3); border-top: 1px solid var(--line); font-size: 14px; }
   .next.alone { margin-top: 0; padding-top: 0; border-top: 0; }
-  .next > :first-child { color: var(--gold); margin-top: 2px; flex: none; }
+  .next > :first-child { color: var(--gold-text); margin-top: 2px; flex: none; }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-2); }
   /* A form or group of actions laid out as a stack takes the whole row. */
   .actions > :global(.stack) { flex: 1 1 100%; min-width: 0; }

@@ -33,7 +33,7 @@
     color: var(--cream); text-decoration: none; white-space: nowrap;
   }
   .brand:hover { text-decoration: none; color: var(--cream); }
-  .brand:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+  .brand:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; border-radius: 4px; }
   .mark { height: 42px; width: auto; display: block; }
   .portal { color: var(--gold); }
 
@@ -41,7 +41,7 @@
     display: none; align-items: center; justify-content: center; width: 40px; height: 40px; margin-left: -8px;
     background: none; border: 0; border-radius: var(--r-sm); color: var(--cream); cursor: pointer;
   }
-  .menuBtn:focus-visible { outline: none; box-shadow: var(--ring); }
+  .menuBtn:focus-visible { outline: none; box-shadow: var(--ring-on-green); }
 
   .iconBtn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none;
@@ -52,7 +52,7 @@
   .iconBtn:hover, .iconBtn[aria-current="page"] { border-color: var(--gold); color: var(--gold-light); background: var(--gold-wash); text-decoration: none; }
   /* An icon button with a word beside it (Help). */
   .textBtn { width: auto; gap: 6px; padding: 0 12px; font-weight: 600; font-size: var(--t-sm); }
-  .iconBtn:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .iconBtn:focus-visible { outline: none; border-color: var(--gold-light); box-shadow: var(--ring-on-green); }
   .bellCount {
     position: absolute; top: -6px; right: -6px; min-width: 18px; padding: 0 5px; border-radius: 999px;
     background: var(--gold); color: var(--brand-green); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;

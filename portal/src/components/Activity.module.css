@@ -28,5 +28,5 @@
   .replies { display: flex; flex-wrap: wrap; gap: 6px; }
   .reply { min-height: 28px; padding: 0 10px; border: 1px dashed var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--t-sm); cursor: pointer; text-align: left; }
   .reply:hover { border-color: var(--ink-3); color: var(--ink); }
-  .reply:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .reply:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
 }

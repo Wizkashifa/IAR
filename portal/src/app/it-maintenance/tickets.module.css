@@ -18,7 +18,7 @@
   .count { color: var(--ink-3); font-weight: 600; }
   .card { display: flex; flex-direction: column; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 10px; font-size: var(--t-md); color: var(--ink); box-shadow: var(--shadow-1); transition: border-color var(--speed); }
   .card:hover { border-color: var(--gold); text-decoration: none; }
-  .card:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .card:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
   .sub { color: var(--ink-2); font-size: var(--t-sm); }
   .tags { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 

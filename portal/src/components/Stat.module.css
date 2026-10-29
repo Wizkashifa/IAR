@@ -7,7 +7,7 @@
   }
   .link { transition: border-color var(--speed); }
   .link:hover { border-color: var(--gold); text-decoration: none; }
-  .link:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .link:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   .label { font-size: var(--t-sm); color: var(--ink-2); }
   .value { font-family: var(--font-head); font-weight: 700; font-size: var(--t-greet); line-height: 1.1; font-variant-numeric: tabular-nums; }
   .ok { color: var(--ok); }

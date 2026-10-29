@@ -36,7 +36,21 @@
     --accent-ink: #ffffff;
     --accent-text: #007038;
     --accent-soft: #e1f0e7;
-    --nav-on: #e1f0e7;
+    /* Control edges (inputs, selects, chips, secondary buttons): 3:1 or more, where --line is too faint. */
+    --ctl: #857a60;
+    /* The focus ring; on the green header and menu it's light gold instead (--ring-on-green). */
+    --focus: #8a6a2c;
+    /* Small gold text (dates, links) on cream and the page: the brand gold is too light to read there. */
+    --gold-text: #7a5d22;
+    /* The menu (sidebar and phone drawer): dark green in both themes. */
+    --nav-bg: #0e3f27;
+    --nav-on: #18492f;
+    --nav-text: #f6eedb;
+    --nav-group: #e6cf9c;
+    --nav-on-text: #e6cf9c;
+    /* The search field in the green header. */
+    --header-input-bg: #124a30;
+    --header-placeholder: #d8cfb9;
     --ok: #007038;
     --ok-soft: #e3f2e8;
     --warn: #9a4820;
@@ -79,7 +93,8 @@
     --r-sm: 8px;
     --shadow-1: 0 1px 2px rgba(19, 36, 27, 0.06), 0 1px 1px rgba(19, 36, 27, 0.03);
     --shadow-2: 0 12px 32px rgba(11, 58, 36, 0.16), 0 2px 6px rgba(11, 58, 36, 0.08);
-    --ring: 0 0 0 3px rgba(199, 161, 84, 0.45);
+    --ring: 0 0 0 3px var(--focus);
+    --ring-on-green: 0 0 0 3px var(--gold-light);
     --control-h: 36px;
     --control-h-sm: 30px;
     --speed: 0.12s;
@@ -100,7 +115,11 @@
     --accent-ink: #0b3a24;
     --accent-text: #e2c98f;
     --accent-soft: #29271c;
-    --nav-on: #262619;
+    --ctl: #6e776f;
+    --focus: #c7a154;
+    --gold-text: #e2c98f;
+    --nav-bg: #0a2a1b;
+    --nav-on: #173726;
     --ok: #5fcb8e;
     --ok-soft: #17301f;
     --warn: #f0a070;

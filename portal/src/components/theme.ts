@@ -42,7 +42,7 @@ const shared = {
   "--mantine-color-default": "var(--surface)",
   "--mantine-color-default-hover": "var(--surface-2)",
   "--mantine-color-default-color": "var(--ink)",
-  "--mantine-color-default-border": "var(--line)",
+  "--mantine-color-default-border": "var(--ctl)",
   "--mantine-primary-color-filled": "var(--accent)",
   "--mantine-primary-color-filled-hover": "var(--accent)",
   "--mantine-primary-color-light": "var(--accent-soft)",

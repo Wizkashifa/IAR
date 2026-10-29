@@ -6,7 +6,7 @@
     color: var(--ink); text-decoration: none; transition: border-color var(--speed), background-color var(--speed);
   }
   .card:hover { border-color: var(--gold); text-decoration: none; }
-  .card:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .card:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   .icon { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); }
   .title { display: block; margin-bottom: 4px; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
   .text { display: block; font-size: var(--t-md); color: var(--ink-2); }
