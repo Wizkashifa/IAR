@@ -101,7 +101,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] The approved event shows on the Calendar's week view for its room and committee.
 
 **Marketing Requests**
-- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `<year> / MK-… · Graphic design`. M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
+- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `Graphic design / <year> / MK-…`. M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
 
 **IT & Maintenance**
 - [ ] A reports a leak with a photo. The Facilities space gets a post; the photo is in the Maintenance Photos drive.

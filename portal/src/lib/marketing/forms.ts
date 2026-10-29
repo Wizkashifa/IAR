@@ -40,7 +40,7 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     label: "Graphic design",
     blurb: "A sign, certificate, shirt, table cover, infographic, backdrop or logo.",
     fields: [
-      { key: "desc", label: "Describe the design in detail. Link any examples or resources that help.", kind: "textarea", required: true },
+      { key: "desc", label: "Describe the design in detail", kind: "textarea", required: true, hint: "Link any examples that help, or add them under Files." },
       { key: "due", label: "When is this design needed by?", kind: "date", required: true, hint: DUE_HINT },
     ],
   },
@@ -65,7 +65,6 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     blurb: "Share something that already happened with the community.",
     fields: [
       { key: "desc", label: "Share the details of the event, accomplishment or team member(s) you'd like to highlight.", kind: "textarea", required: true },
-      { key: "media", label: "Google Drive folder of raw (unedited) photos or videos", kind: "url", placeholder: "https://drive.google.com/…", hint: "IAR Marketing may choose not to publish edited media it wasn't involved in." },
       { key: "due", label: "When does this need to be posted by?", kind: "date", required: true },
     ],
   },
@@ -117,6 +116,17 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     fields: [{ key: "desc", label: "Share all the details of your request.", kind: "textarea", required: true }],
   },
 };
+
+/** Types that ask for comments: the rest have an open question for everything, so a second box would repeat it. */
+export const NOTES_KINDS: MarketingKind[] = ["redirect", "badge"];
+export const asksForNotes = (kind: MarketingKind) => NOTES_KINDS.includes(kind);
+
+/**
+ * A request's Google Drive link. Highlight requests sent before the form had
+ * one Files section kept theirs as an answer ("media").
+ */
+export const driveLinkOf = (m: { kind: MarketingKind; answers: Record<string, string>; driveLink?: string }): string | undefined =>
+  m.driveLink || (m.kind === "highlight" ? m.answers.media : undefined) || undefined;
 
 export const isMarketingKind = (k: unknown): k is MarketingKind => typeof k === "string" && (MARKETING_KINDS as readonly string[]).includes(k);
 

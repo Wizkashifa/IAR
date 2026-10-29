@@ -8,12 +8,12 @@ import { canOpenCard } from "../access";
 import { hrefOf } from "../kinds";
 import { withComment } from "../comments";
 import { MARKETING_KINDS } from "./types";
-import { MARKETING_TYPES, type MarketingInput, parseMarketingInput, redirectSource, titleFor } from "./forms";
+import { MARKETING_TYPES, type MarketingInput, asksForNotes, driveLinkOf, parseMarketingInput, redirectSource, titleFor } from "./forms";
 import { canViewMarketing } from "./access";
 import { marketingCommentNotices, marketingNotices } from "./notices";
 import { isMonday, planDaily } from "./reminders";
 import * as wf from "./workflow";
-import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf } from "./files";
+import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf, requestFolderPath } from "./files";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const mk: wf.Actor = { email: "mk@x.org", name: "Mark Eting", roles: ["member", "marketing"] };
@@ -62,7 +62,7 @@ test("forms: a valid request per type passes; unknown answers are dropped", () =
     graphic: { desc: "Banner", due: "2026-11-20" },
     signage: { desc: "Room signs", due: "2026-11-20" },
     announce: { text: "Pantry open Wednesdays", due: TODAY },
-    highlight: { desc: "Basketball win", media: "https://drive.google.com/drive/folders/abc", due: "2026-11-01" },
+    highlight: { desc: "Basketball win", due: "2026-11-01" },
     webpage: { desc: "A page for the food pantry" },
     webedit: { url: "https://raleighmasjid.org/programs", desc: "Fix the Saturday time" },
     redirect: { from: "raleighmasjid.org/pantry", to: "https://forms.gle/abc" },
@@ -98,7 +98,6 @@ test("forms: dates must be real and not in the past", () => {
 test("forms: links must be full web links; the Drive link is optional", () => {
   assert.match(errorsOf({ kind: "webedit", answers: { url: "raleighmasjid.org/programs", desc: "x" } }).join(), /https:\/\//);
   assert.match(errorsOf({ kind: "webedit", answers: { url: "javascript:alert(1)", desc: "x" } }).join(), /https:\/\//);
-  assert.match(errorsOf({ kind: "highlight", answers: { desc: "x", due: TODAY, media: "drive folder" } }).join(), /https:\/\//);
   assert.match(errorsOf({ driveLink: "my drive" }).join(), /Google Drive link/);
   assert.deepEqual(errorsOf({ driveLink: "https://drive.google.com/drive/folders/abc" }), []);
   assert.match(errorsOf({ notes: "x".repeat(2001) }).join(), /under 2,000/);
@@ -519,3 +518,18 @@ test("files: the requester and the marketing team add files; nobody adds to a cl
   assert.throws(() => wf.addFiles(full, mk, T(2), [{ name: "one-more.png", size: 1 }]), /up to 20 files/);
 });
 
+test("a request's files go in one folder, by type then the year it was sent in Raleigh", () => {
+  assert.deepEqual(requestFolderPath("graphic", "MK-1004", "2026-10-27T15:00:00.000Z"), ["Graphic design", "2026", "MK-1004"]);
+  // New Year's Eve evening in Raleigh is already January in UTC: still last year's folder.
+  assert.deepEqual(requestFolderPath("highlight", "MK-1010", "2027-01-01T02:00:00.000Z"), ["Highlight an event, accomplishment or team member", "2026", "MK-1010"]);
+});
+
+test("forms: comments only where the type has no open question for them", () => {
+  assert.deepEqual(MARKETING_KINDS.filter(asksForNotes), ["redirect", "badge"]);
+});
+
+test("forms: a highlight sent before the Files section keeps its Drive folder as the Drive link", () => {
+  assert.equal(driveLinkOf({ kind: "highlight", answers: { media: "https://drive.google.com/a" } }), "https://drive.google.com/a");
+  assert.equal(driveLinkOf({ kind: "highlight", answers: { media: "https://drive.google.com/a" }, driveLink: "https://drive.google.com/b" }), "https://drive.google.com/b");
+  assert.equal(driveLinkOf({ kind: "graphic", answers: { media: "https://drive.google.com/a" } }), undefined);
+});

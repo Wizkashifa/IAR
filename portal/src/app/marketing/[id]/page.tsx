@@ -13,7 +13,7 @@ import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
-import { MARKETING_TYPES, answerText, neededBy } from "@/lib/marketing/forms";
+import { MARKETING_TYPES, answerText, driveLinkOf, neededBy } from "@/lib/marketing/forms";
 import { canViewMarketing } from "@/lib/marketing/access";
 import { daysUntilNeeded, isMarketingCard, isTight, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
 import { Button } from "@/components/Button";
@@ -75,6 +75,7 @@ export default async function MarketingDetail({
   const state = rowState(mc, actor, { today });
   const tone = ROW_TONE[state];
   const files = filesOf(m);
+  const drive = driveLinkOf(m);
   const uploads = Boolean(await marketingFolder());
 
   // Why a marketing member can't review this one (their own request).
@@ -122,7 +123,7 @@ export default async function MarketingDetail({
                   value: !v ? null : f.kind === "url" ? <a href={v} target="_blank" rel="noreferrer">{v}</a> : f.kind === "date" ? fmtDay(v) : <span className="pre">{answerText(f, v)}</span>,
                 };
               }),
-              { label: "Google Drive link", value: m.driveLink ? <a href={m.driveLink} target="_blank" rel="noreferrer">{m.driveLink}</a> : null },
+              { label: "Google Drive link", value: drive ? <a href={drive} target="_blank" rel="noreferrer">{drive}</a> : null },
               { label: "Comments from the requester", value: m.notes ? <span className="pre">{m.notes}</span> : null },
             ]}
           />
@@ -206,7 +207,7 @@ export default async function MarketingDetail({
     return (
       <Panel title="Files" right={files.length ? `${files.length}` : undefined} id="files">
         <div className="stack">
-          <FileList files={files.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty={`No files yet.${m.driveLink ? " The requester shared a Google Drive link above." : ""}`} />
+          <FileList files={files.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty={`No files yet.${drive ? " The requester shared a Google Drive link above." : ""}`} />
           {canAdd &&
             (uploads ? (
               <form action={addMarketingFiles} className="stack">

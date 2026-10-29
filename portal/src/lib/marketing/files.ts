@@ -9,6 +9,8 @@
  * for anything too big, or too many, to upload.
  */
 import type { MarketingFile, MarketingKind } from "./types";
+import { MARKETING_TYPES } from "./forms";
+import { todayLocal } from "../dates";
 
 /** Types whose work starts from the requester's own material. */
 export const FILE_KINDS: MarketingKind[] = ["graphic", "signage", "highlight", "webpage", "badge", "custom"];
@@ -18,10 +20,15 @@ export const asksForFiles = (kind: MarketingKind) => FILE_KINDS.includes(kind);
 export const FILE_HINT: Partial<Record<MarketingKind, string>> = {
   graphic: "Logos, photos or a rough sketch of what you have in mind.",
   signage: "A photo of where the sign goes, or the wording as a document.",
-  highlight: "Photos from the event or of the person or team.",
+  highlight: "Raw (unedited) photos or videos from the event, or of the person or team.",
   webpage: "The page's wording, photos and any documents to link to.",
   badge: "A clear head-and-shoulders photo for the badge.",
   custom: "Anything marketing needs to start.",
+};
+
+/** What the form says under the Drive link, per type, after how to share it. */
+export const DRIVE_NOTE: Partial<Record<MarketingKind, string>> = {
+  highlight: "IAR Marketing may choose not to publish edited media it wasn't involved in.",
 };
 
 export const MAX_FILE_MB = 10;
@@ -83,3 +90,14 @@ export function checkFiles(files: { name: string; size: number }[], already = 0,
 
 /** The files on a request, oldest first (older requests have none). */
 export const filesOf = (m: { files?: MarketingFile[] }): MarketingFile[] => m.files ?? [];
+
+/**
+ * Where a request's files go in the Marketing Files drive: by type, then the
+ * year it was sent (in Raleigh), then the request ("Graphic design / 2026 /
+ * MK-1004"). Files added later go to the same folder, whatever the date.
+ */
+export const requestFolderPath = (kind: MarketingKind, cardId: string, sentAt: string): string[] => [
+  MARKETING_TYPES[kind].label,
+  todayLocal(new Date(sentAt)).slice(0, 4),
+  cardId,
+];

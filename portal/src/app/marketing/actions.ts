@@ -62,7 +62,7 @@ export async function createMarketing(prev: MarketingFormState, form: FormData):
   await deliver(marketingNotices(null, created, actor), actor.email);
   if (files.length) {
     try {
-      const saved = await saveMarketingFiles(created.id, created.marketing.kind, files);
+      const saved = await saveMarketingFiles({ id: created.id, kind: created.marketing.kind, sentAt: created.createdAt ?? created.updatedAt }, files);
       await store.save(wf.addFiles(created, actor, nowIso(), saved), created.updatedAt);
     } catch (err) {
       console.error("marketing file upload failed", err);
@@ -95,7 +95,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
 
   let error: string | null = null;
   try {
-    const saved = await saveMarketingFiles(card.id, card.marketing.kind, files);
+    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
     // Someone may have saved the request while the files uploaded: add them to the latest copy.
     for (let attempt = 0; attempt < 2; attempt++) {
       const latest = attempt === 0 ? card : await store.get(id);

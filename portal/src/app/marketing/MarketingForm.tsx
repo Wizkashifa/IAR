@@ -2,12 +2,12 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
-import { MARKETING_TYPES, NOTES_MAX, type MarketingField, type MarketingInput } from "@/lib/marketing/forms";
+import { MARKETING_TYPES, NOTES_MAX, asksForNotes, type MarketingField, type MarketingInput } from "@/lib/marketing/forms";
 import type { MarketingKind } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
-import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
+import { DRIVE_NOTE, FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions, RequiredKey } from "@/components/Field";
 import { Panel } from "@/components/Panel";
 import type { MarketingFormState } from "./actions";
@@ -35,12 +35,19 @@ export type MarketingFormProps = {
   uploads?: boolean;
 };
 
-/** One request type's questions, the committee, files or a Drive link, and comments. */
+/** The committee and one request type's questions, then files or a Drive link for the types that use them. */
 export default function MarketingForm({ action, kind, committees, initial, question, today, cancelHref, submitLabel, uploads }: MarketingFormProps) {
   const [state, formAction] = useActionState(action, { errors: [], n: 0 });
   const v = state.values ?? initial;
   const t = MARKETING_TYPES[kind];
   const choices = v?.committee && !committees.includes(v.committee) ? [v.committee, ...committees] : committees;
+  // Types that start from the requester's own material get a Files section: uploads, or a Drive link for more.
+  const files = asksForFiles(kind);
+  const driveHint = [
+    uploads === false && files ? "File uploads aren't set up yet, so share your files with a Drive link." : files && uploads ? "For more files, or bigger ones." : "",
+    "Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it.",
+    DRIVE_NOTE[kind] ?? "",
+  ].filter(Boolean).join(" ");
 
   return (
     // Keyed on each answer from the server, so the fields keep what was typed when something needs fixing.
@@ -61,15 +68,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
         </Panel>
       )}
 
-      <Panel title={t.label}>
-        <div className="grid">
-          {t.fields.map((f) => (
-            <Question key={f.key} f={f} value={v?.answers[f.key]} today={today} />
-          ))}
-        </div>
-      </Panel>
-
-      <Panel title="About the request">
+      <Panel title="The request">
         <div className="grid">
           <Field label="Requesting committee or team" required>
             <select name="committee" defaultValue={v?.committee ?? choices[0] ?? ""} required>
@@ -79,34 +78,39 @@ export default function MarketingForm({ action, kind, committees, initial, quest
               ))}
             </select>
           </Field>
-          {uploads && asksForFiles(kind) && (
-            <div className="wide">
-              <FileDrop
-                name="files"
-                label="Files for marketing (optional)"
-                hint={`${FILE_HINT[kind] ?? ""} Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each; for more, use a Drive link.`}
-                accept={FILE_ACCEPT}
-                maxFiles={MAX_PER_UPLOAD}
-                maxSizeMb={MAX_FILE_MB}
-                camera={kind === "highlight" || kind === "badge" || kind === "signage"}
-              />
-            </div>
+          {t.fields.map((f) => (
+            <Question key={f.key} f={f} value={v?.answers[f.key]} today={today} />
+          ))}
+          {(asksForNotes(kind) || v?.notes) && (
+            <Field label="Comments (optional)" className="wide">
+              <textarea name="notes" rows={2} defaultValue={v?.notes ?? ""} maxLength={NOTES_MAX} />
+            </Field>
           )}
-          <Field
-            label="Google Drive link to files (optional)"
-            hint={
-              uploads === false && asksForFiles(kind)
-                ? "File uploads aren't set up yet, so share your files with a Drive link. Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it."
-                : "For a folder or large files. Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it."
-            }
-          >
-            <input type="url" name="driveLink" defaultValue={v?.driveLink ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
-          </Field>
-          <Field label="Comments (optional)" className="wide">
-            <textarea name="notes" rows={2} defaultValue={v?.notes ?? ""} maxLength={NOTES_MAX} />
-          </Field>
         </div>
       </Panel>
+
+      {(files || v?.driveLink) && (
+        <Panel title="Files">
+          <div className="grid">
+            {files && uploads && (
+              <div className="wide">
+                <FileDrop
+                  name="files"
+                  label="Files for marketing (optional)"
+                  hint={`${FILE_HINT[kind] ?? ""} Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each.`}
+                  accept={FILE_ACCEPT}
+                  maxFiles={MAX_PER_UPLOAD}
+                  maxSizeMb={MAX_FILE_MB}
+                  camera={kind === "highlight" || kind === "badge" || kind === "signage"}
+                />
+              </div>
+            )}
+            <Field label={files && uploads ? "Or share a Google Drive folder (optional)" : "Google Drive link to files (optional)"} hint={driveHint} className="wide">
+              <input type="url" name="driveLink" defaultValue={v?.driveLink ?? ""} placeholder="https://drive.google.com/…" maxLength={500} />
+            </Field>
+          </div>
+        </Panel>
+      )}
 
       <FormActions>
         <Button href={cancelHref}>Cancel</Button>

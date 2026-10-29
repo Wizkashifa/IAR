@@ -1,13 +1,13 @@
 import "server-only";
 import { isDevAuth } from "../dev";
-import { uploadToFolder, uploadToYearFolder } from "../drive";
-import { MARKETING_TYPES } from "./forms";
+import { uploadToFolder } from "../drive";
+import { requestFolderPath } from "./files";
 import type { MarketingFile, MarketingKind } from "./types";
 
 /**
  * Marketing request files go to the "Marketing Files" Shared Drive go-live
- * makes (MARKETING_DRIVE_FOLDER_ID), one folder per year and one per request
- * ("2026 / MK-1004 · Graphic design"). Images for a public event request go
+ * makes (MARKETING_DRIVE_FOLDER_ID), one folder per request, by type and the
+ * year it was sent ("Graphic design / 2026 / MK-1004", requestFolderPath). Images for a public event request go
  * in "Event Requests", one folder per event, by its date and name. The portal's runtime service account
  * and the marketing team's Google Group are Content managers on it.
  *
@@ -24,12 +24,12 @@ export async function marketingFolder(): Promise<string | null> {
 
 export const NOT_SET_UP = "File uploads for marketing aren't set up yet. Share your files with a Google Drive link instead.";
 
-export async function saveMarketingFiles(cardId: string, kind: MarketingKind, files: File[], now: Date = new Date()): Promise<Omit<MarketingFile, "at" | "by">[]> {
+export async function saveMarketingFiles(req: { id: string; kind: MarketingKind; sentAt: string }, files: File[]): Promise<Omit<MarketingFile, "at" | "by">[]> {
   if (files.length === 0) return [];
   if (isDevAuth()) return files.map((f) => ({ name: f.name, size: f.size }));
   const root = await marketingFolder();
   if (!root) throw new Error(NOT_SET_UP);
-  return uploadToYearFolder(root, `${cardId} · ${MARKETING_TYPES[kind].label}`, files, now);
+  return uploadToFolder(root, requestFolderPath(req.kind, req.id, req.sentAt), files);
 }
 
 /** Where event requests' images go in the marketing drive: one folder per event, by its name. */
