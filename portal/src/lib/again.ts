@@ -8,7 +8,7 @@
  */
 import type { Card } from "./cards";
 import type { EventInput } from "./events/types";
-import { MARKETING_TYPES, type MarketingInput } from "./marketing/forms";
+import { MARKETING_TYPES, driveLinkOf, type MarketingInput } from "./marketing/forms";
 import type { MarketingDetails } from "./marketing/types";
 import type { PurchaseInput } from "./purchases/input";
 import type { PurchaseDetails } from "./purchases/types";
@@ -126,7 +126,7 @@ export function marketingAgain(m: MarketingDetails, committee: string, today: st
   const dates = new Set((MARKETING_TYPES[m.kind]?.fields ?? []).filter((f) => f.kind === "date").map((f) => f.key));
   const answers: Record<string, string> = {};
   for (const [k, v] of Object.entries(m.answers)) answers[k] = dates.has(k) && v < today ? "" : v;
-  return { kind: m.kind, answers, committee, driveLink: m.driveLink, notes: m.notes };
+  return { kind: m.kind, answers, committee, driveLink: driveLinkOf(m), notes: m.notes };
 }
 
 /** The note at the top of a copied form. */

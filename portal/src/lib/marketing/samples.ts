@@ -47,7 +47,8 @@ export function sampleMarketing(): Card[] {
   // In progress, due in two days.
   c = make(chair, {
     kind: "highlight", committee: "Youth",
-    answers: { desc: "Our youth basketball team won the regional Muslim youth tournament. Shout-out to the players and their coaches.", media: "https://drive.google.com/drive/folders/youth-basketball-final", due: ahead(3) },
+    answers: { desc: "Our youth basketball team won the regional Muslim youth tournament. Shout-out to the players and their coaches.", due: ahead(3) },
+    driveLink: "https://drive.google.com/drive/folders/youth-basketball-final",
   }, 8);
   c = wf.schedule(c, marketing, t(3), ahead(2));
   c = wf.start(c, marketing, t(1));

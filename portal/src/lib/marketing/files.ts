@@ -20,10 +20,15 @@ export const asksForFiles = (kind: MarketingKind) => FILE_KINDS.includes(kind);
 export const FILE_HINT: Partial<Record<MarketingKind, string>> = {
   graphic: "Logos, photos or a rough sketch of what you have in mind.",
   signage: "A photo of where the sign goes, or the wording as a document.",
-  highlight: "Photos from the event or of the person or team.",
+  highlight: "Raw (unedited) photos or videos from the event, or of the person or team.",
   webpage: "The page's wording, photos and any documents to link to.",
   badge: "A clear head-and-shoulders photo for the badge.",
   custom: "Anything marketing needs to start.",
+};
+
+/** What the form says under the Drive link, per type, after how to share it. */
+export const DRIVE_NOTE: Partial<Record<MarketingKind, string>> = {
+  highlight: "IAR Marketing may choose not to publish edited media it wasn't involved in.",
 };
 
 export const MAX_FILE_MB = 10;

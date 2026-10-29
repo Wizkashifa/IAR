@@ -4,6 +4,7 @@ import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/dates";
 import { isMarketingCard, permission } from "@/lib/marketing/workflow";
+import { driveLinkOf } from "@/lib/marketing/forms";
 import { ModuleHead } from "@/components/ModuleHead";
 import { committeesFor, editMarketing } from "../../actions";
 import MarketingForm from "../../MarketingForm";
@@ -37,7 +38,7 @@ export default async function EditMarketing({ params }: { params: Promise<{ id: 
         kind={m.kind}
         committees={await committeesFor(viewer)}
         question={answering ? m.question ?? "" : undefined}
-        initial={{ kind: m.kind, answers: m.answers, committee: card.committee, driveLink: m.driveLink, notes: m.notes }}
+        initial={{ kind: m.kind, answers: m.answers, committee: card.committee, driveLink: driveLinkOf(m), notes: m.notes }}
         today={todayLocal()}
         cancelHref={`/marketing/${id}`}
         submitLabel={answering ? "Send answer" : "Save changes"}
