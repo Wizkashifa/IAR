@@ -67,7 +67,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
         flush
       >
         {rows.length === 0 ? (
-          <EmptyState icon="calendar">Nothing on the room calendars this day.</EmptyState>
+          <EmptyState>Nothing on the room calendars this day.</EmptyState>
         ) : (
           <ol className={styles.sheet}>
             {rows.map((r, i) =>

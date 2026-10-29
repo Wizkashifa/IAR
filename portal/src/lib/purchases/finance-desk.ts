@@ -79,6 +79,20 @@ export function statementReceipts(cards: PurchaseCard[], month: string): Purchas
     .sort((a, b) => (a.purchase.card!.last4 < b.purchase.card!.last4 ? -1 : 1));
 }
 
+/**
+ * The card receipts checklist on Payments: for the latest uploaded statement,
+ * each card on it (the ones with charges to send receipts for) and the request
+ * its cardholder sent for that month, if any. The same match as the Card
+ * statements page (statementReceipts).
+ */
+export function cardChecklist(statement: { month: string; cards: { last4: string; holderName: string }[] }, receipts: PurchaseCard[]) {
+  const sent = statementReceipts(receipts, statement.month);
+  return {
+    month: statement.month,
+    rows: statement.cards.map((c) => ({ last4: c.last4, holderName: c.holderName, request: sent.find((r) => r.purchase.card?.last4 === c.last4) })),
+  };
+}
+
 /** Refunds and repayments still owed, one per line, for the Refunds owed tab. */
 export function openReturns(cards: PurchaseCard[]): { card: PurchaseCard; line: LineItem }[] {
   return cards.flatMap((card) => openExpectedReturns(card.purchase).map((line) => ({ card, line })));

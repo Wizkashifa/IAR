@@ -8,21 +8,23 @@
     font: inherit; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
   }
   .btn:hover { border-color: var(--gold); background: var(--gold-wash); }
-  .btn:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .btn:focus-visible { outline: none; border-color: var(--gold-light); box-shadow: var(--ring-on-green); }
   .av {
     display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%;
     background: var(--gold); color: var(--brand-green); font-size: 11px; font-weight: 700;
   }
   .nm { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.15; text-align: left; }
-  .nm small { font-size: 10.5px; opacity: 0.7; }
+  .nm small { font-size: var(--t-xs); opacity: 0.7; }
   .nm span { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-md); }
 
   .menu {
     position: absolute; right: 0; top: calc(100% + 8px); z-index: 40;
     width: min(320px, calc(100vw - 32px)); padding: 6px;
-    background: var(--surface); color: var(--ink);
+    background: var(--popover-bg); color: var(--ink);
     border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-2);
+    animation: drop var(--speed-2) var(--ease) backwards;
   }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
   .me { display: flex; flex-direction: column; padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
   .me span { font-size: var(--t-sm); color: var(--ink-3); overflow-wrap: anywhere; }
 
@@ -39,4 +41,10 @@
   .away { margin-left: auto; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; font-size: 11px; font-weight: 600; }
   .theme { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; }
   .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); }
+
+  /* The same links at the bottom of the green phone menu. */
+  .onNav .link { color: var(--nav-text); }
+  .onNav .link:hover, .onNav .link[aria-current="page"] { background: var(--cream-wash); color: var(--nav-text); }
+  .onNav .link:focus-visible { box-shadow: var(--ring-on-green); }
+  .onNav .label { color: var(--nav-group); }
 }

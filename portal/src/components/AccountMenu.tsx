@@ -29,10 +29,10 @@ function useFeedback() {
  * Out of office, feedback, theme and sign out. At the bottom of the phone menu (which already has Out of office, and Help at
  * its top); `AccountMenu` shows it from the header on wider screens.
  */
-export function AccountLinks({ account, onPick, withAway = true }: { account: Account; onPick?: () => void; withAway?: boolean }) {
+export function AccountLinks({ account, onPick, withAway = true, onNav }: { account: Account; onPick?: () => void; withAway?: boolean; onNav?: boolean }) {
   const fb = useFeedback();
   return (
-    <div className={styles.links}>
+    <div className={onNav ? `${styles.links} ${styles.onNav}` : styles.links}>
       {withAway && (
         <Link href="/away" className={styles.link} onClick={onPick}>
           <Icon name="clock" />

@@ -31,7 +31,7 @@ export default async function RenewEvent({ params }: { params: Promise<{ id: str
     <div className="stack loose">
       <div className="stack tight">
         <Crumb trail={[{ href: "/events", label: "Events & Rooms" }, { href: `/events/${id}`, label: id }]} here="Renew" />
-        <ModuleHead title="Renew a repeating event" lead={card.title} />
+        <ModuleHead accent="events" title="Renew a repeating event" lead={card.title} />
       </div>
       <EventForm action={submitEvent.bind(null, null)} {...props} initial={{ ...card.event, ...period }} renews={{ id, until: card.event.recur.until }} submitLabel="Request the next period" />
     </div>

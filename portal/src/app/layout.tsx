@@ -12,7 +12,7 @@ import { AppFrame, PublicFrame, type NavGroup, type NavLink } from "@/components
 import { AppNavCount } from "@/components/AppNavCount";
 import { Providers } from "@/components/Providers";
 import { Search, type SearchPlace } from "@/components/Search";
-import type { IconName } from "@/components/Icon";
+import { MODULE_ICON, type IconName } from "@/components/Icon";
 import { getViewer } from "@/lib/viewer";
 import { ORG } from "@/lib/org";
 import { unreadCount } from "@/lib/notifications";
@@ -32,10 +32,10 @@ export const viewport: Viewport = { themeColor: "#0b3a24" };
 
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {
-  events: { group: "request", label: "Events & Rooms", icon: "calendar" },
-  "purchase-requests": { group: "request", label: "Payments", icon: "receipt" },
-  "marketing-requests": { group: "request", label: "Marketing Requests", icon: "megaphone" },
-  "it-maintenance": { group: "request", label: "IT & Maintenance", icon: "wrench" },
+  events: { group: "request", label: "Events & Rooms", icon: MODULE_ICON.events },
+  "purchase-requests": { group: "request", label: "Payments", icon: MODULE_ICON.pay },
+  "marketing-requests": { group: "request", label: "Marketing Requests", icon: MODULE_ICON.mkt },
+  "it-maintenance": { group: "request", label: "IT & Maintenance", icon: MODULE_ICON.it },
   "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
   "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
   calendar: { group: "iar", label: "Calendar", icon: "calendar" },
@@ -68,7 +68,7 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
     Object.keys(MENU)
       .filter((id) => MENU[id]!.group === group)
       .flatMap((id) => live.filter((m) => m.id === id))
-      .map((m) => ({ href: m.href, label: MENU[m.id]!.label, icon: MENU[m.id]!.icon }));
+      .map((m) => ({ href: m.href, label: MENU[m.id]!.label, icon: MENU[m.id]!.icon, accent: m.accent }));
   const all: NavGroup[] = [
     {
       links: [

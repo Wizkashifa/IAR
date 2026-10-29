@@ -87,7 +87,7 @@ export default async function FinanceDeskPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <ModuleHead
+      <ModuleHead accent="pay"
         title="Finance desk"
         lead={
           works

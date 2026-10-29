@@ -6,6 +6,7 @@
 const SCREENS = [
   { name: "Home", path: "/", as: "chair" },
   { name: "My Requests", path: "/requests", as: "chair" },
+  { name: "New request", path: "/requests/new", as: "chair" },
   { name: "Events", path: "/events", as: "chair" },
   { name: "New event", path: "/events/new", as: "chair" },
   { name: "Event request", path: "/events/EV-1101", as: "chair" },
@@ -49,7 +50,8 @@ const SIZES = [
 
 /** A browser context signed in as a sample user (the cookie the /dev page sets). */
 async function signedIn(browser, as, size, scheme) {
-  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme });
+  // Reduced motion, so pages are captured and measured as they settle, not mid-fade.
+  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme, reducedMotion: "reduce" });
   await ctx.addCookies([{ name: "dev_persona", value: as, url: BASE }]);
   return ctx;
 }

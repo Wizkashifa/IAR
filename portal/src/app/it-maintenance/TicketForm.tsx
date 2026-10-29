@@ -97,10 +97,10 @@ export default function TicketForm({ action, locations }: { action: (prev: FormS
       </Panel>
 
       <FormActions>
-        <Submit />
         <Button href="/it-maintenance" variant="quiet">
           Cancel
         </Button>
+        <Submit />
       </FormActions>
     </form>
   );

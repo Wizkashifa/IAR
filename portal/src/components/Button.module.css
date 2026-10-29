@@ -2,20 +2,21 @@
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     min-height: var(--control-h); padding: 0 14px;
-    border: 1px solid var(--line); border-radius: var(--r-sm);
+    border: 1px solid var(--ctl); border-radius: var(--r-sm);
     background: var(--surface); color: var(--ink);
     font: inherit; font-weight: 500; line-height: 1.2; white-space: nowrap; text-decoration: none;
     box-shadow: var(--shadow-1); cursor: pointer;
-    transition: border-color var(--speed), background-color var(--speed), box-shadow var(--speed), filter var(--speed);
+    transition: border-color var(--speed), background-color var(--speed), box-shadow var(--speed), filter var(--speed), transform var(--speed);
   }
-  .btn:hover { border-color: var(--ink-3); text-decoration: none; }
-  .btn:active { filter: brightness(0.95); box-shadow: none; }
-  .btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--gold); }
+  .btn:hover { border-color: var(--ink-3); filter: brightness(1.1); text-decoration: none; }
+  .btn:active { transform: scale(var(--press)); box-shadow: none; }
+  .btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 
-  /* The one main action on a screen: green with a gold edge (gold with green text in dark mode). */
-  .primary { background: var(--accent); border-color: var(--gold); color: var(--accent-ink); font-weight: 600; }
-  .primary:hover { border-color: var(--gold); filter: brightness(1.08); }
+  /* The one main action on a screen: green with white text (gold with green text in dark mode), 44px tall to tap. */
+  .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .primary:not(.small) { min-height: 44px; padding: 0 18px; }
+  .primary:hover { border-color: var(--accent); }
   .danger { color: var(--bad); }
   .danger:hover { border-color: var(--bad); }
   /* No border or fill: for "More", "Cancel" and other quiet choices. */

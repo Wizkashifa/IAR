@@ -50,7 +50,7 @@ export default async function FeedbackItemPage({ params, searchParams }: { param
         }
       />
       <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
-      <Panel title={FEEDBACK_KIND_LABEL[f.kind]} right={<Pill tone={f.status === "done" ? "ok" : "warn"} dot>{f.status === "done" ? "Done" : "Open"}</Pill>}>
+      <Panel title={FEEDBACK_KIND_LABEL[f.kind]} right={<Pill tone={f.status === "done" ? "ok" : "warn"} status>{f.status === "done" ? "Done" : "Open"}</Pill>}>
         <div className="stack">
           <p className={styles.message}>{f.message}</p>
           <KeyValue

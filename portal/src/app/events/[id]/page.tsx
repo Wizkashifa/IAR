@@ -24,7 +24,7 @@ import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
-import { statusText } from "@/lib/status-text";
+import { rowStatusText, statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
 import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
@@ -127,7 +127,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
   const next = nextStepText(card, viewer, names, opts);
-  const tone = ROW_TONE[rowState(card, actor, { today: ctx.today, ctx: { directorsOf: ctx.directorsOf } })];
+  const state = rowState(card, actor, { today: ctx.today, ctx: { directorsOf: ctx.directorsOf } });
+  const tone = ROW_TONE[state];
 
   // The calendar beside the request: its first room on its next date (or its first).
   const calDate = e.dates.find((d) => d >= ctx.today) ?? e.dates[0] ?? e.date;
@@ -171,6 +172,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     </>
   );
 
+  const act = actionParts();
   return (
     <RequestPage
       crumb={{ href: "/events", label: "Events & Rooms" }}
@@ -179,9 +181,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       title={card.title}
       pills={
         <>
-          <Pill tone={tone} dot>{statusText(card)}</Pill>
+          <Pill tone={tone} status>{statusText(card)}</Pill>
           {eventFlags(e).map((f) => (
-            <Pill key={f} tone="gold">{f}</Pill>
+            <Pill key={f} tone="tag">{f}</Pill>
           ))}
         </>
       }
@@ -190,7 +192,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       next={next}
       sent={sent === "1"}
       notes={notes}
-      actions={<Actions />}
+      actions={act.panel}
+      bar={act.main ? { label: rowStatusText(card, state), main: act.main } : undefined}
       main={
         <>
           <Panel title="About the event">
@@ -289,7 +292,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
             <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState icon="receipt">None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (
@@ -368,21 +371,33 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     />
   );
 
-  function Actions() {
+  /**
+   * What the person looking can do now. `main` is the one main button (approve,
+   * or fix and resubmit), shown in the bottom bar; `panel` is the rest, at the
+   * end of the page: the review note, sending back, declining, withdrawing.
+   */
+  function actionParts(): { panel: React.ReactNode; main?: React.ReactNode } {
     const cancel = can("cancel");
     const resubmit = own && can("resubmit");
     const addPurchase = own && (ec.status === "approved" || ec.status === "close_out");
     const renew = renewing?.can && ec.status === "approved";
     const again = canRequestAgain(ec, viewer, ctx.today);
     if (!reviewing && !cancel && !resubmit && !addPurchase && !renew && !again) {
-      if (ec.status !== "in_review" || own) return null;
+      if (ec.status !== "in_review" || own) return { panel: null };
       const why = permission(ec, ev, "approve", directors);
-      if (why.ok) return null;
+      if (why.ok) return { panel: null };
       const who = e.stage === "director" ? reviewersFor(ec.ownerEmail, directors).map(names) : [];
-      return <p className="hint">{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p>;
+      return { panel: <p className="hint">{why.reason}{who.length ? ` (${who.join(", ")})` : ""}</p> };
     }
-    return (
-      <form action={actOnEvent} className="stack">
+    const main = reviewing ? (
+      <Button variant="primary" icon="check" form="act-event" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
+    ) : resubmit ? (
+      <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>
+    ) : undefined;
+    const others = reviewing || addPurchase || renew || again || cancel;
+    if (!others) return { panel: null, main };
+    const panel = (
+      <form id="act-event" action={actOnEvent} className="stack">
         {base}
         {reviewing && (
           <Field label={`${STAGE_LABEL[e.stage]}: note`} hint="Required to send it back or decline it. The requester sees it.">
@@ -390,17 +405,11 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           </Field>
         )}
         <div className="row">
-          {reviewing && (
-            <>
-              <Button variant="primary" icon="check" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
-              <Button formAction={actOnEventWith.bind(null, "return")} type="submit">Send back</Button>
-            </>
-          )}
-          {resubmit && <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>}
+          {reviewing && <Button formAction={actOnEventWith.bind(null, "return")} type="submit">Send back</Button>}
           {addPurchase && <Button href="/purchases/new" icon="receipt">Add a payment request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
-          {(reviewing || resubmit || addPurchase || renew || again) && <span className="grow" />}
+          {(reviewing || addPurchase || renew || again) && <span className="grow" />}
           {reviewing && (
             <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
@@ -414,6 +423,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         </div>
       </form>
     );
+    return { panel, main };
   }
 
   function SeriesPanel() {
@@ -516,7 +526,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     return (
       <Panel
         title={holderIsThis ? `${a.requesterName} asks for your booked time` : `${mine ? "You" : a.requesterName} asked for a booked time`}
-        right={<Pill tone={isOpenAsk(a) ? "warn" : a.status === "released" ? "ok" : "bad"} dot>{SLOT_STATUS_LABEL[a.status]}</Pill>}
+        right={<Pill tone={isOpenAsk(a) ? "warn" : a.status === "released" ? "ok" : "bad"} status>{SLOT_STATUS_LABEL[a.status]}</Pill>}
       >
         <div className="stack">
           <KeyValue

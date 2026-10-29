@@ -144,7 +144,7 @@ export async function RightNow({ cards }: { cards: Card[] }) {
               </tbody>
             </DataTable>
           ) : (
-            <EmptyState icon="receipt">Nothing paid yet this month.</EmptyState>
+            <EmptyState>Nothing paid yet this month.</EmptyState>
           )}
           <PanelFoot>
             <Link href="/purchases/finance">Finance desk</Link> · <Link href="/purchases/finance/statement">Card statements</Link>
@@ -154,7 +154,7 @@ export async function RightNow({ cards }: { cards: Card[] }) {
 
       <Panel title="This week at IAR" right={plural(week.length, "event")} flush>
         {week.length === 0 ? (
-          <EmptyState icon="calendar">No events requested for the next 7 days.</EmptyState>
+          <EmptyState>No events requested for the next 7 days.</EmptyState>
         ) : (
           <Rows>
             {week.map(({ card, date, approved }) => (

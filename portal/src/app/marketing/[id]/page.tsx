@@ -12,7 +12,7 @@ import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
-import { statusText } from "@/lib/status-text";
+import { rowStatusText, statusText } from "@/lib/status-text";
 import { MARKETING_TYPES, answerText, neededBy } from "@/lib/marketing/forms";
 import { canViewMarketing } from "@/lib/marketing/access";
 import { daysUntilNeeded, isMarketingCard, isTight, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
@@ -72,7 +72,8 @@ export default async function MarketingDetail({
   const team = permission(mc, actor, "assign").ok ? await queueTeamMembers("marketing") : [];
   const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
-  const tone = ROW_TONE[rowState(mc, actor, { today })];
+  const state = rowState(mc, actor, { today });
+  const tone = ROW_TONE[state];
   const files = filesOf(m);
   const uploads = Boolean(await marketingFolder());
 
@@ -155,6 +156,23 @@ export default async function MarketingDetail({
     </Panel>
   );
 
+  // The one main button, in the bottom bar. Starting needs nothing else, so it sends the form (id act-mk) straight away;
+  // answering, scheduling and marking it done need fields, so the bar jumps to their own panel (`decide`).
+  const jump = (label: string) => (
+    <Button href="#request-decide" variant="primary" icon="chevD">
+      {label}
+    </Button>
+  );
+  const ownPanel = can("answer") ? { title: "Your answer", button: "Send answer" } : can("schedule") ? { title: "Schedule it", button: "Schedule" } : !can("start") && can("finish") ? { title: "Mark it done", button: "Mark done" } : null;
+  const barMain = ownPanel ? (
+    jump(ownPanel.button)
+  ) : can("start") ? (
+    <Button type="submit" form="act-mk" name="action" value="start" variant="primary">
+      Start
+    </Button>
+  ) : undefined;
+  const actionsBody = Actions() ?? undefined;
+
   return (
     <>
       <RequestPage
@@ -163,7 +181,7 @@ export default async function MarketingDetail({
         id={mc.id}
         title={mc.title}
         pills={
-          <Pill tone={tone} dot>
+          <Pill tone={tone} status>
             {statusText(mc)}
           </Pill>
         }
@@ -172,7 +190,9 @@ export default async function MarketingDetail({
         next={nextStepText(mc, viewer, names, { today })}
         sent={sent === "1"}
         notes={notes}
-        actions={Actions() ?? undefined}
+        actions={ownPanel ? undefined : actionsBody}
+        bar={barMain ? { label: rowStatusText(mc, state), main: barMain } : undefined}
+        decide={ownPanel ? { title: ownPanel.title, body: actionsBody } : undefined}
         main={main}
         side={side}
       />
@@ -204,7 +224,7 @@ export default async function MarketingDetail({
     );
   }
 
-  /** The buttons for the person looking, in one row, with the fields they share underneath. */
+  /** The rest of what the person looking can do, at the end of the page, with the fields the bar's main button sends too (form act-mk). */
   function Actions() {
     const base = (
       <>
@@ -221,7 +241,7 @@ export default async function MarketingDetail({
     // The requester answers marketing's question in place.
     if (can("answer")) {
       return (
-        <form action={actOnMarketing} className="stack">
+        <form id="act-mk" action={actOnMarketing} className="stack">
           {base}
           <div className={styles.answerBox}>
             <Field label="Your answer to marketing" required>
@@ -247,12 +267,14 @@ export default async function MarketingDetail({
 
     if (can("schedule") || can("ask")) {
       return (
-        <form action={actOnMarketing} className="stack">
+        <form id="act-mk" action={actOnMarketing} className="stack">
           {base}
           <div className="row">
-            <Button type="submit" name="action" value="schedule" variant="primary">
-              Schedule
-            </Button>
+            {can("schedule") && (
+              <Button type="submit" name="action" value="schedule" variant="primary">
+                Schedule
+              </Button>
+            )}
             <Button type="submit" name="action" value="ask">
               Ask a question
             </Button>
@@ -272,14 +294,10 @@ export default async function MarketingDetail({
       const others = team.filter((e) => !same(e, m.assignee));
       return (
         <div className="stack">
-          <form action={actOnMarketing} className="stack">
+          <form id="act-mk" action={actOnMarketing} className="stack">
             {base}
             <div className="row">
-              {can("start") && (
-                <Button type="submit" name="action" value="start" variant="primary">
-                  Start
-                </Button>
-              )}
+              {/* Start is the bar's one-tap button; Mark done is this panel's main button when there's nothing to start. */}
               {can("finish") && (
                 <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
                   Mark done
@@ -306,7 +324,7 @@ export default async function MarketingDetail({
                 <input type="hidden" name="action" value="assign" />
                 <PeoplePicker name="assignee" label="Who on the marketing team should work on it" required people={others.map((e) => ({ email: e, name: same(e, viewer.email) ? `Me (${names(e)})` : names(e) }))} />
                 <div>
-                  <Button variant="primary" type="submit">Hand it over</Button>
+                  <Button type="submit">Hand it over</Button>
                 </div>
               </form>
             </Disclosure>

@@ -5,12 +5,13 @@
  */
 import { NOTIFIED, STATUS_LABEL, STEP } from "../glossary";
 import type { NeedsViewer } from "../needs-you";
+import type { RowState } from "../card-row";
 import type { ModuleDef } from "../registry";
 import type { Holder } from "../stuck";
 import { type NameOf, type StepOptions, type Steps, type Viewer, finish, quoted, speaker, track } from "../steps";
 import { same } from "../text";
 import { waitingOn } from "./reminders";
-import { STAGE_LABEL, openExpectedReturns, purchaseTotal } from "./types";
+import { type PurchaseStage, STAGE_LABEL, openExpectedReturns, purchaseTotal } from "./types";
 import { type PurchaseCard, actionableBy, canViewDetail, isPurchaseCard, permission } from "./workflow";
 
 function purchaseSteps(card: PurchaseCard, o: StepOptions): Steps {
@@ -82,6 +83,39 @@ function holder(card: PurchaseCard): Holder | null {
   return who ? { to: [who], step: STAGE_LABEL[p.stage] } : null;
 }
 
+/** The list pill: what's needed from you, or who has it (see ModuleDef.rowStatus). */
+const ACT: Record<PurchaseStage, string> = {
+  chair: "Needs your approval",
+  finance: "Needs your review",
+  executive: "Needs your approval",
+  payment: "Ready for you to pay",
+  books: "Ready to enter in QuickBooks",
+  done: "Needs a refund recorded",
+};
+const WITH: Record<PurchaseStage, string> = {
+  chair: "With the chair",
+  finance: "With finance",
+  executive: "With an executive",
+  payment: "With finance to pay",
+  books: "With finance",
+  done: "Paid",
+};
+
+function rowStatus(card: PurchaseCard, state: RowState): string | undefined {
+  const stage = card.purchase.stage;
+  if (card.status === "denied") return "Turned down";
+  if (card.status === "cancelled") return "Cancelled";
+  if (card.status === "changes_requested") return state === "act" ? "Needs changes from you" : "With the requester";
+  if (state === "act") return ACT[stage];
+  if (state === "wait") return WITH[stage];
+  // Card receipts aren't paid: finance checks them, then enters them in QuickBooks.
+  if (card.purchase.kind === "card" && stage === "books") return "Checked, to enter in QuickBooks";
+  if (card.purchase.kind === "card" && stage === "done") return "Entered in QuickBooks";
+  if (stage === "done" || card.status === "paid" || stage === "books") return "Paid";
+  if (stage === "payment") return "Approved, to pay";
+  return undefined;
+}
+
 export const purchaseModule: ModuleDef<PurchaseCard> = {
   type: "purchase",
   is: isPurchaseCard,
@@ -91,4 +125,5 @@ export const purchaseModule: ModuleDef<PurchaseCard> = {
   next: purchaseNext,
   needs: purchaseNeeds,
   holder,
+  rowStatus,
 };

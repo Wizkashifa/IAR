@@ -141,7 +141,7 @@ function WeekView({ days, byDate, today, href, filtered }: { days: string[]; byD
     <section aria-label="This week" className="stack">
       {!any && (
         <Panel>
-          <EmptyState icon="calendar">Nothing booked this week{filtered ? " for this room or committee" : ""}.</EmptyState>
+          <EmptyState>Nothing booked this week{filtered ? " for this room or committee" : ""}.</EmptyState>
         </Panel>
       )}
       <ol className={styles.week}>
@@ -216,7 +216,7 @@ function MonthView({ date, byDate, today, href, filtered, dayLink }: { date: str
       <div className={styles.monthList}>
         {listDays.length === 0 ? (
           <Panel>
-            <EmptyState icon="calendar">Nothing booked this month{filtered ? " for this room or committee" : ""}.</EmptyState>
+            <EmptyState>Nothing booked this month{filtered ? " for this room or committee" : ""}.</EmptyState>
           </Panel>
         ) : (
           <ol className={styles.week}>

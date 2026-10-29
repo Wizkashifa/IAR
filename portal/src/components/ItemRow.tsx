@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ROW_TONE, type RowData, type RowState } from "@/lib/card-row";
-import { Icon, type IconName } from "./Icon";
+import type { Accent } from "@/lib/modules";
+import { Icon, IconTile, type IconName } from "./Icon";
 import { Pill } from "./Pill";
 import styles from "./ItemRow.module.css";
 
@@ -15,13 +16,17 @@ export type ItemRowProps = {
   submit?: { action: (form: FormData) => Promise<void>; fields: Record<string, string> };
   /** An icon before the title (a file's kind). */
   icon?: IconName;
+  /** In a list that mixes modules: the module's icon tile before the title, and `when` in its colour. */
+  accent?: Accent;
+  /** A time or date at the start of the supporting line. */
+  when?: string;
   /** The supporting line. */
   sub?: ReactNode;
   /** Who has it now; shown in bold after the supporting line. */
   who?: ReactNode;
   /** More under the supporting line: a description, reasons, notes. */
   extra?: ReactNode;
-  /** Things to notice, as gold pills under the title (an event's food, outside speaker, …). */
+  /** Things to notice, as outlined tags under the title (an event's food, outside speaker, …). */
   flags?: string[];
   /** The status in words, as a pill in the row's tone. */
   status?: string;
@@ -39,18 +44,20 @@ export type ItemRowProps = {
  * act. The whole row opens what it's about. Requests, files, teams, rooms and
  * notifications all use it, so every list in the portal reads the same.
  */
-export function ItemRow({ title, id, href, external, submit, icon, sub, who, extra, flags, status, right, state = "wait", lead }: ItemRowProps) {
+export function ItemRow({ title, id, href, external, submit, icon, accent, when, sub, who, extra, flags, status, right, state = "wait", lead }: ItemRowProps) {
   const body = (
     <>
-      {icon && <Icon name={icon} className={styles.icon} />}
+      {accent ? <IconTile accent={accent} name={icon} /> : icon && <Icon name={icon} className={styles.icon} />}
       <div className={styles.text}>
         <div className={styles.t}>
           {title}
           {id && <span className={styles.id}>{id}</span>}
           {external && <span className="sr-only"> (opens in {external})</span>}
         </div>
-        {(sub || who) && (
-          <div className={styles.s}>
+        {(when || sub || who) && (
+          <div className={styles.s} data-mod={accent}>
+            {when && <span className={styles.when}>{when}</span>}
+            {when && sub && " · "}
             {sub}
             {sub && who && " · "}
             {who && <strong>{who}</strong>}
@@ -60,7 +67,7 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
         {flags && flags.length > 0 && (
           <div className={styles.flags}>
             {flags.map((f) => (
-              <Pill key={f} tone="gold" small>
+              <Pill key={f} tone="tag" small>
                 {f}
               </Pill>
             ))}
@@ -70,7 +77,7 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
       {(status || right) && (
         <div className={styles.r}>
           {status && state !== "plain" && (
-            <Pill tone={ROW_TONE[state]} dot>
+            <Pill tone={ROW_TONE[state]} status>
               {status}
             </Pill>
           )}
@@ -80,7 +87,7 @@ export function ItemRow({ title, id, href, external, submit, icon, sub, who, ext
     </>
   );
   const opens = Boolean(href || submit);
-  const linkCls = [styles.link, icon && styles.withIcon, !opens && styles.still].filter(Boolean).join(" ");
+  const linkCls = [styles.link, accent ? styles.withTile : icon && styles.withIcon, !opens && styles.still].filter(Boolean).join(" ");
   const chev = <Icon name="chevR" className={styles.chev} />;
   const cls = [styles.item, opens && styles.opens, state !== "plain" && styles[state], lead && styles.withLead].filter(Boolean).join(" ");
   return (

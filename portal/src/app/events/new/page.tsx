@@ -39,11 +39,11 @@ export default async function NewEvent({ searchParams }: { searchParams: Promise
     <div className="stack loose">
       <div className="stack tight">
         <Crumb trail={[{ href: "/events", label: "Events & Rooms" }]} here="New request" />
-        <ModuleHead title="New event request" lead="The room, approval, marketing and A/V in one request. The checks run against the IAR room calendars as you fill it in." />
+        <ModuleHead accent="events" title="New event request" lead="The room, approval, marketing and A/V in one request. The checks run against the IAR room calendars as you fill it in." />
       </div>
       {props.committees.length === 0 ? (
         <Panel>
-          <EmptyState icon="calendar" action={<Button href="/events">Back to Events &amp; Rooms</Button>}>
+          <EmptyState action={<Button href="/events">Back to Events &amp; Rooms</Button>}>
             You can request events for the committees and teams you&apos;re on. You aren&apos;t on one yet; ask your committee&apos;s chair to add you to its group.
           </EmptyState>
         </Panel>

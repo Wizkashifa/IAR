@@ -54,7 +54,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
         <span className={styles.id}>{card.id}</span>
       </div>
       <div className={styles.pills}>
-        <Pill tone={working ? "info" : t.status === "waiting_parts" ? "warn" : "neutral"} dot>
+        <Pill tone={working ? "info" : t.status === "waiting_parts" ? "warn" : "neutral"} status>
           {STATUS_LABEL[t.status]}
         </Pill>
         {t.urgency !== "normal" && <Pill tone={t.urgency === "urgent" ? "bad" : t.urgency === "high" ? "warn" : "neutral"}>{URGENCY[t.urgency].label}</Pill>}
@@ -154,8 +154,8 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
   if (teams.length === 0) {
     return (
       <div className="stack">
-        <ModuleHead title="My work today" />
-        <EmptyState icon="wrench" action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
+        <ModuleHead accent="it" title="My work today" />
+        <EmptyState action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
           This page is for the IT Services and Facility Maintenance teams. To report a problem, use AV/IT/Maintenance.
         </EmptyState>
       </div>
@@ -173,7 +173,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
 
   return (
     <div className="stack">
-      <ModuleHead
+      <ModuleHead accent="it"
         title="My work today"
         lead={`${fmtDay(today)}. Yours first, then what nobody on your team has taken, then this week's preventive work.`}
         actions={

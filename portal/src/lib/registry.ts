@@ -12,6 +12,7 @@ import { marketingModule } from "./marketing/module";
 import type { NeedsContext, NeedsViewer } from "./needs-you";
 import { purchaseModule } from "./purchases/module";
 import type { NameOf, StepOptions, Steps, Viewer } from "./steps";
+import type { RowState } from "./card-row";
 import type { Holder, StuckContext } from "./stuck";
 import { ticketModule } from "./tickets/module";
 
@@ -23,6 +24,11 @@ export type ModuleDef<C extends Card = Card> = {
   canView(card: C, v: Viewing): boolean;
   /** Its status in words, from the module's own steps where they say more. */
   statusText(card: C): string;
+  /**
+   * The words on a list row's pill, saying who has it for the person looking: what's needed from them ("Needs your
+   * approval"), who it's with ("With finance"), or how it ended ("Paid"). Undefined falls back to statusText.
+   */
+  rowStatus?(card: C, state: RowState): string | undefined;
   /** The step bar: the module's steps, which one it's on, and any flag. */
   steps(card: C, o: StepOptions): Steps;
   /** One sentence on who acts next, for the person looking. Empty when nothing more happens. */

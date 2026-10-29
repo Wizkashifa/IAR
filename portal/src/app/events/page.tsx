@@ -62,7 +62,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="stack loose">
-      <ModuleHead
+      <ModuleHead accent="events"
         title="Events & Rooms"
         lead="Request a program or event and book its room. Rooms are checked against the IAR calendar as you fill in the request."
         actions={<Button href="/events/new" variant="primary" icon="plus">New event request</Button>}
@@ -76,9 +76,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <ItemList
         title="Your requests"
         sections={sectionsOf(groupedRows(groupForViewer(myEvents, actor, needs), actor, o))}
-        legend={myEvents.length > 0}
         empty="You haven't requested an event yet."
-        emptyAction={<Button href="/events/new" variant="primary" size="small">New event request</Button>}
+        emptyAction={<Button href="/events/new" size="small">New event request</Button>}
       />
 
       <ItemList title="Upcoming at IAR" rows={rowsFor(soon, actor, o)} right={<span>{soon.length}</span>} empty="Nothing else booked through the portal yet." />

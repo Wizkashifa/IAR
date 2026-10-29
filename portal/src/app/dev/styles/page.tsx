@@ -7,7 +7,7 @@ import { Note } from "@/components/Note";
 import { KeyValue } from "@/components/KeyValue";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, FormActions } from "@/components/Field";
-import { Icon, ICON_NAMES } from "@/components/Icon";
+import { Icon, IconTile, ICON_NAMES } from "@/components/Icon";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { Widgets } from "./Widgets";
 import { Pieces } from "./Pieces";
@@ -22,6 +22,10 @@ const COLOURS: [string, string[]][] = [
   ["Brand", ["--accent", "--accent-text", "--accent-soft", "--gold", "--gold-light", "--cream", "--brand-green"]],
   ["Meaning", ["--ok", "--ok-soft", "--warn", "--warn-soft", "--bad", "--bad-soft", "--info", "--info-soft"]],
   ["Calendar", ["--hold-booking", "--hold-request"]],
+  ["Controls and focus", ["--ctl", "--focus", "--gold-text", "--empty-stroke"]],
+  ["Menu and header", ["--nav-bg", "--nav-on", "--nav-text", "--nav-group", "--nav-on-text", "--header-input-bg", "--header-placeholder"]],
+  ["Page heads", ["--head-band", "--news-bg", "--news-line"]],
+  ["Module accents", ["--mod-events", "--mod-events-soft", "--mod-pay", "--mod-pay-soft", "--mod-mkt", "--mod-mkt-soft", "--mod-it", "--mod-it-soft"]],
 ];
 const TONES: Tone[] = ["neutral", "ok", "warn", "bad", "info", "accent"];
 
@@ -88,20 +92,33 @@ export default function StylesPage() {
         </div>
       </Panel>
 
-      <Panel title="Status pills" right="Rust = you need to act · teal = waiting on others · green = done · red = stopped">
+      <Panel title="Module accents" right="IconTile in components/Icon.tsx: menu chip, item tile, page-head tile">
+        <div className="row">
+          {(["events", "pay", "mkt", "it"] as const).map((a) => (
+            <span key={a} className="row">
+              <IconTile accent={a} size={56} tone="solid" />
+              <IconTile accent={a} size={44} />
+              <IconTile accent={a} />
+            </span>
+          ))}
+          <IconTile name="book" />
+        </div>
+      </Panel>
+
+      <Panel title="Status pills" right="Triangle = you need to act · clock = waiting on others · check = done · slashed circle = stopped or late">
         <div className="stack">
           <div className="row">
             {TONES.map((t) => (
-              <Pill key={t} tone={t} dot>
+              <Pill key={t} tone={t} status>
                 {t}
               </Pill>
             ))}
           </div>
           <div className="row">
-            <Pill tone="warn" dot>Changes requested</Pill>
-            <Pill tone="info" dot>Chair approval</Pill>
-            <Pill tone="ok" dot>Approved</Pill>
-            <Pill tone="bad" dot>Declined</Pill>
+            <Pill tone="warn" status>Changes requested</Pill>
+            <Pill tone="info" status>Chair approval</Pill>
+            <Pill tone="ok" status>Approved</Pill>
+            <Pill tone="bad" status>Declined</Pill>
             <Pill>3</Pill>
           </div>
         </div>
@@ -133,7 +150,10 @@ export default function StylesPage() {
       </Panel>
 
       <Panel title="Empty state" flush>
-        <EmptyState action={<Button size="small" variant="primary">New event request</Button>}>You haven&apos;t asked for anything here yet.</EmptyState>
+        <div className={styles.two}>
+          <EmptyState title="All caught up">Nothing is waiting on you right now.</EmptyState>
+          <EmptyState action={<Button size="small">New event request</Button>}>You haven&apos;t asked for anything here yet.</EmptyState>
+        </div>
       </Panel>
 
       <Panel title="Form fields">

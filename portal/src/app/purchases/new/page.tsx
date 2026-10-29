@@ -35,7 +35,7 @@ export default async function NewPurchase({ searchParams }: { searchParams: Prom
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here="New" />
-      <ModuleHead title="New payment request" lead="It goes to your committee's chair, then the finance office. Split it across as many sub-accounts as you need, and link it to an event so its cost shows up there." />
+      <ModuleHead accent="pay" title="New payment request" lead="It goes to your committee's chair, then the finance office. Split it across as many sub-accounts as you need, and link it to an event so its cost shows up there." />
       {copy && source && <Note tone="info">{copiedNote(source.id)} Add this time&apos;s receipts.</Note>}
       <PurchaseForm
         initial={copy}

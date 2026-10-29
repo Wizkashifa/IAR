@@ -18,15 +18,17 @@ export type Kind = {
   many: string;
   /** Its id in lib/modules.ts, for who can see it. */
   module: string;
-  /** The "new request" button. */
+  /** The "new request" button and tile. */
   newLabel: string;
+  /** One line under it on the tile. */
+  blurb: string;
 };
 
 export const KINDS: Kind[] = [
-  { type: "event", path: "/events", one: "Event", many: "Events", module: "events", newLabel: "New event request" },
-  { type: "purchase", path: "/purchases", one: "Payment", many: "Payments", module: "purchase-requests", newLabel: "New payment request" },
-  { type: "marketing", path: "/marketing", one: "Marketing", many: "Marketing", module: "marketing-requests", newLabel: "New marketing request" },
-  { type: "ticket", path: "/it-maintenance", one: "AV/IT/Maintenance", many: "AV/IT/Maintenance", module: "it-maintenance", newLabel: "AV/IT/Maintenance" },
+  { type: "event", path: "/events", one: "Event", many: "Events", module: "events", newLabel: "New event request", blurb: "A program or event, and its room." },
+  { type: "purchase", path: "/purchases", one: "Payment", many: "Payments", module: "purchase-requests", newLabel: "New payment request", blurb: "Pay a vendor, get reimbursed or send card receipts." },
+  { type: "marketing", path: "/marketing", one: "Marketing", many: "Marketing", module: "marketing-requests", newLabel: "New marketing request", blurb: "Graphics, signs, announcements and more." },
+  { type: "ticket", path: "/it-maintenance", one: "AV/IT/Maintenance", many: "AV/IT/Maintenance", module: "it-maintenance", newLabel: "AV/IT/Maintenance", blurb: "Something broken or needed: building, IT or A/V." },
 ];
 
 export const kindOf = (type: CardType): Kind | undefined => KINDS.find((k) => k.type === type);

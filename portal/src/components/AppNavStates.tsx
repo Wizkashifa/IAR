@@ -34,7 +34,6 @@ export function PageError({ retry, digest }: { retry: () => void; digest?: strin
     <div className={styles.error}>
       <h1>Something went wrong</h1>
       <EmptyState
-        icon="alert"
         action={
           <div className="row">
             <Button variant="primary" onClick={retry}>

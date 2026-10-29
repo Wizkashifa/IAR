@@ -83,7 +83,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </p>
       {teams.length === 0 ? (
         <Panel>
-          <EmptyState icon="info">No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
+          <EmptyState>No portal-team groups found in Google yet. Create them in Google Admin → Groups (see docs/setup.md).</EmptyState>
         </Panel>
       ) : (
         <DataTable framed>
@@ -144,7 +144,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </p>
       {pillarsOf(dir).length === 0 ? (
         <Panel>
-          <EmptyState icon="info">No portal-pillar groups found yet.</EmptyState>
+          <EmptyState>No portal-pillar groups found yet.</EmptyState>
         </Panel>
       ) : (
         <DataTable framed>
@@ -198,7 +198,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </p>
       {rooms.length === 0 ? (
         <Panel>
-          <EmptyState icon="info">No room resources found in Google yet.</EmptyState>
+          <EmptyState>No room resources found in Google yet.</EmptyState>
         </Panel>
       ) : (
         <DataTable framed>
@@ -346,7 +346,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <input name="holderEmail" type="email" placeholder={`name@${ORG.domain}`} required />
         </Field>
         <div>
-          <Button type="submit" variant="primary">Add card</Button>
+          <Button type="submit">Add card</Button>
         </div>
       </form>
       </Panel>
@@ -372,7 +372,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 hint="Everyone who can use the portal."
               />
               <div>
-                <Button type="submit" variant="primary">Sign in as them</Button>
+                <Button type="submit">Sign in as them</Button>
               </div>
             </form>
           </Panel>

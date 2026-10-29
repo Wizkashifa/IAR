@@ -39,11 +39,13 @@ export default async function MyRequests({ searchParams }: { searchParams: Promi
       <ModuleHead
         title="My Requests"
         lead="Everything you've asked for, and who it's waiting on."
-        actions={kinds.map((k) => (
-          <Button key={k.type} href={`${k.path}/new`}>
-            {k.newLabel}
-          </Button>
-        ))}
+        actions={
+          kinds.length > 0 && (
+            <Button href="/requests/new" variant="primary" icon="plus">
+              New request
+            </Button>
+          )
+        }
       />
       {deleted && <Note tone="ok">{deleted} was deleted.</Note>}
       {problem && <Note tone="warn">{problem}</Note>}
@@ -52,8 +54,7 @@ export default async function MyRequests({ searchParams }: { searchParams: Promi
         title="Your requests"
         sections={sections}
         chips={chips.length > 2 ? chips : undefined}
-        legend
-        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet. Start with one of the buttons above."}
+        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet. Start with the New request button above."}
       />
     </div>
   );

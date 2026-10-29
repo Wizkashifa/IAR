@@ -18,12 +18,14 @@
   }
   a { color: var(--accent-text); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   h1 { font-family: var(--font-head); font-weight: 700; font-size: var(--t-h1); letter-spacing: -0.015em; line-height: 1.25; margin: 0 0 var(--s-1); text-wrap: balance; }
-  /* The home greeting: the one place for the italic serif. */
+  /* The home greeting, and the title of an empty list: the italic serif. */
   .greet { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: var(--t-greet); letter-spacing: -0.01em; line-height: 1.2; }
   h2 { font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); margin: var(--s-6) 0 var(--s-3); }
+  /* A section title in the page's own flow gets a short gold line under it (decoration only). */
+  .stack > h2::after { content: ""; display: block; width: 32px; height: 2px; margin-top: 6px; background: var(--gold); }
   h3 { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin: 0; }
   .lead { color: var(--ink-2); margin: var(--s-1) 0 var(--s-2); max-width: 68ch; }
   .muted { color: var(--ink-2); }
@@ -50,7 +52,7 @@
   .grow { flex: 1 1 260px; min-width: 0; }
   .push { margin-left: auto; }
   /* Mantine's inputs share the portal's focus look. */
-  .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   /* The room picker's typing field sits inside a box that already shows the ring: no second outline. */
   .mantine-PillsInputField-field:focus-visible { outline: none; }
   /*
@@ -59,17 +61,18 @@
    * summaries padded to 24px. Module styles (later layers) can still adjust.
    */
   input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; margin: 2px; accent-color: var(--accent); flex: none; }
-  label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
+  label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 6px; min-height: max(24px, var(--tap)); }
   nav[aria-label="Breadcrumb"] a { display: inline-block; padding-block: 4px; }
-  summary { min-height: 24px; padding-block: 2px; cursor: pointer; }
+  summary { min-height: max(24px, var(--tap)); padding-block: 2px; cursor: pointer; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
   /* Form controls. Mantine's inputs (class mantine-…) style themselves. */
   input:not([type="checkbox"], [type="radio"], [type="file"], [class*="mantine-"]), select:not([class*="mantine-"]), textarea:not([class*="mantine-"]) {
-    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
-    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--field-bg);
+    border: 1px solid var(--ctl); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
   }
-  :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
+  ::placeholder { color: var(--ink-3); opacity: 1; }
   /* Our own arrow, so a dropdown is the same height as the inputs beside it in every browser (Safari ignores a native one's height). */
   select:not([class*="mantine-"], [multiple]) {
     appearance: none; height: var(--control-h); padding-right: 30px;
@@ -77,6 +80,18 @@
     background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
     background-size: 5px 5px; background-repeat: no-repeat;
   }
+
+  /* Home's sections arrive one after another (.enter): fade in and rise 10px, 80ms apart. Work pages appear at once. Before only, so nothing stays moved. */
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+  .enter > * { animation: rise var(--enter) var(--ease) backwards; }
+  .enter > :nth-child(2) { animation-delay: 80ms; }
+  .enter > :nth-child(3) { animation-delay: 160ms; }
+  .enter > :nth-child(4) { animation-delay: 240ms; }
+  .enter > :nth-child(5) { animation-delay: 320ms; }
+  .enter > :nth-child(n + 6) { animation-delay: 400ms; }
+
+  /* A page with a sticky bar at the bottom (a form's Send bar, a request's action bar): keep what has focus, and what a link jumps to, above it. */
+  html:has([data-sticky-actions]) { scroll-padding-bottom: 160px; }
 
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }
@@ -93,6 +108,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-delay: 0s !important; }
   }
 }

@@ -69,7 +69,15 @@ export function RequiredKey() {
 /** The id Field gives an error message, for the control's aria-describedby. */
 export const errorId = (controlId: string) => `${controlId}-error`;
 
-/** The row of buttons at the end of a form. With `sticky`, it stays at the bottom of the screen on phones. */
+/**
+ * The row of buttons at the end of a form. With `sticky`, it stays at the
+ * bottom of the screen on phones, and the phone's bottom bar steps aside for
+ * it (AppNav.module.css looks for data-sticky-actions).
+ */
 export function FormActions({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) {
-  return <div className={[styles.actions, sticky && styles.sticky].filter(Boolean).join(" ")}>{children}</div>;
+  return (
+    <div className={[styles.actions, sticky && styles.sticky].filter(Boolean).join(" ")} data-sticky-actions={sticky || undefined}>
+      {children}
+    </div>
+  );
 }

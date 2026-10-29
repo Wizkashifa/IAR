@@ -5,6 +5,7 @@
  */
 import { FLAG, STATUS_LABEL as CARD_STATUS, STEP } from "../glossary";
 import type { NeedsViewer } from "../needs-you";
+import type { RowState } from "../card-row";
 import type { ModuleDef } from "../registry";
 import type { Holder } from "../stuck";
 import { type NameOf, type Steps, type Viewer, speaker, stopAt, track } from "../steps";
@@ -65,6 +66,26 @@ function holder(card: TicketCard): Holder | null {
   return { to: [t.assigneeEmail ? { email: t.assigneeEmail } : { role: TEAM_ROLE[t.team] }], step: STATUS_LABEL[t.status] };
 }
 
+/** The list pill: what's needed from you, or who has it (see ModuleDef.rowStatus). Late tickets keep their own words. */
+function rowStatus(card: TicketCard, state: RowState): string | undefined {
+  const t = card.ticket;
+  const team = TICKET_TEAM_NAME[t.team];
+  if (state === "bad") return t.status === "reopened" ? undefined : `Late: with ${team}`;
+  switch (t.status) {
+    case "new":
+      return state === "act" ? "Needs picking up" : `With ${team}`;
+    case "assigned":
+    case "in_progress":
+      return state === "act" ? "Needs your work" : `With ${team}`;
+    case "waiting_parts":
+      return state === "act" ? "Needs your work: waiting on parts" : `With ${team}: waiting on parts`;
+    case "resolved":
+      return state === "act" ? "Fixed: needs your OK" : "Fixed: with the reporter to confirm";
+    default:
+      return undefined;
+  }
+}
+
 export const ticketModule: ModuleDef<TicketCard> = {
   type: "ticket",
   is: isTicketCard,
@@ -74,4 +95,5 @@ export const ticketModule: ModuleDef<TicketCard> = {
   next: ticketNext,
   needs: ticketNeeds,
   holder,
+  rowStatus,
 };

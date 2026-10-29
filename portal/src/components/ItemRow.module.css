@@ -16,7 +16,10 @@
   .still { grid-template-columns: minmax(0, 1fr) auto; padding-right: var(--s-4); }
   .withIcon { grid-template-columns: 20px minmax(0, 1fr) auto 16px; }
   .withIcon.still { grid-template-columns: 20px minmax(0, 1fr) auto; }
+  .withTile { grid-template-columns: 40px minmax(0, 1fr) auto 16px; gap: 4px 12px; }
+  .withTile.still { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .icon { color: var(--ink-3); }
+  .when { color: var(--mod, var(--ink-2)); font-weight: 700; }
   .withLead .link { padding-left: var(--s-3); }
   .link:hover { text-decoration: none; }
   .link:focus-visible { outline: none; box-shadow: inset var(--ring); border-radius: var(--r-sm); }
@@ -31,13 +34,14 @@
   .extra { color: var(--ink-3); font-size: var(--t-sm); overflow-wrap: anywhere; margin-top: 2px; }
   .flags { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-1); }
   .r { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
-  .chev { color: var(--ink-3); opacity: 0; transition: opacity 0.12s, transform 0.12s; }
-  .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(2px); }
+  .chev { color: var(--ink-3); opacity: 0; transition: opacity var(--speed-2), transform var(--speed-2) var(--ease); }
+  .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(var(--nudge)); }
   /* Phones: the status goes under the title, and there's no hover to show the chevron. */
   @media (max-width: 520px) {
     .link, .still { grid-template-columns: minmax(0, 1fr); gap: 6px; padding-right: var(--s-4); }
     .withIcon, .withIcon.still { grid-template-columns: 20px minmax(0, 1fr); align-items: start; }
-    .withIcon .r { grid-column: 2; }
+    .withTile, .withTile.still { grid-template-columns: 40px minmax(0, 1fr); align-items: start; }
+    .withIcon .r, .withTile .r { grid-column: 2; }
     .r { flex-direction: row; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
     .chev { display: none; }
   }

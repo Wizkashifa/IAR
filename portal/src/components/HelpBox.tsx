@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { helpGuide, type HelpKey } from "@/lib/help";
+import { findModule } from "@/lib/modules";
 import { Icon } from "./Icon";
 import styles from "./HelpBox.module.css";
 
@@ -33,6 +34,7 @@ function writeHidden(key: HelpKey, hidden: boolean) {
  */
 export function HelpBox({ module }: { module: HelpKey }) {
   const guide = helpGuide(module);
+  const accent = guide?.module ? findModule(guide.module)?.accent : undefined;
   const [hidden, setHidden] = useState<boolean | null>(null);
   useEffect(() => setHidden(readHidden(module)), [module]);
   if (!guide || hidden === null) return null;
@@ -44,7 +46,7 @@ export function HelpBox({ module }: { module: HelpKey }) {
 
   if (hidden) {
     return (
-      <p className={styles.reopen}>
+      <p className={styles.reopen} data-mod={accent}>
         <button type="button" className={styles.reopenBtn} onClick={() => set(false)} aria-expanded="false">
           <Icon name="help" size="sm" />
           How this works
@@ -55,7 +57,7 @@ export function HelpBox({ module }: { module: HelpKey }) {
 
   const id = `help-${module}`;
   return (
-    <section className={styles.box} aria-labelledby={id}>
+    <section className={styles.box} aria-labelledby={id} data-mod={accent}>
       <div className={styles.head}>
         <Icon name="book" />
         <h2 id={id} className={styles.title}>

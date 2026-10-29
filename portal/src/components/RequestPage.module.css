@@ -9,10 +9,36 @@
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); padding: var(--s-4); min-width: 0; }
   .next { display: flex; gap: var(--s-2); align-items: flex-start; margin: 14px 0 0; padding-top: var(--s-3); border-top: 1px solid var(--line); font-size: 14px; }
   .next.alone { margin-top: 0; padding-top: 0; border-top: 0; }
-  .next > :first-child { color: var(--gold); margin-top: 2px; flex: none; }
-  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-2); }
+  .next > :first-child { color: var(--gold-text); margin-top: 2px; flex: none; }
+  /* Jumping here from the bar ("Other options") leaves room for the bar below it. */
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-2); scroll-margin-bottom: 120px; }
   /* A form or group of actions laid out as a stack takes the whole row. */
   .actions > :global(.stack) { flex: 1 1 100%; min-width: 0; }
+  .actionsTitle { flex: 1 1 100%; margin: 0; font-size: var(--t-h2); }
+
+  /* The main action, stuck to the bottom of the screen until the end of the page: what's needed on the left, the button on the right. */
+  .bar {
+    position: sticky; bottom: max(var(--s-3), env(safe-area-inset-bottom, 0px)); z-index: 6;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2) var(--s-4);
+    padding: var(--s-3) var(--s-4); background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-2);
+  }
+  .bar[hidden] { display: none; }
+  .barLabel { flex: 1 1 auto; margin: 0; font-weight: 700; color: var(--ink); }
+  .barButtons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2) var(--s-4); }
+  .barMain { display: flex; }
+  .barMore { display: inline-flex; align-items: center; min-height: max(36px, var(--tap)); font-weight: 600; font-size: var(--t-md); }
+  /* Phones: what's needed on top, then the link and a full-width button; the bar sits at the very bottom. */
+  @media (max-width: 600px) {
+    .bar { bottom: 0; margin: 0 calc(-1 * var(--s-4)); border-radius: 0; border-width: 1px 0 0; padding-bottom: max(var(--s-3), env(safe-area-inset-bottom, 0px)); }
+    .barLabel { flex-basis: 100%; font-size: var(--t-md); }
+    .barButtons { flex: 1 1 100%; flex-wrap: nowrap; }
+    .barMain { flex: 1 1 auto; }
+    .barMain > :not([hidden]) { width: 100%; }
+  }
+  @media print {
+    .bar { display: none; }
+  }
   /* The main column and a 340px side column, as in the demo; one column on narrow screens, details after the request. */
   .issue { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
   .main, .side { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }

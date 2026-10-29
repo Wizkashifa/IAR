@@ -67,7 +67,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="stack">
-      <ModuleHead
+      <ModuleHead accent="it"
         title="IT & Maintenance"
         lead="Ask once for anything broken or needed in the building, IT or A/V. It goes to the right team, and you can follow it until it's done."
         actions={
@@ -130,10 +130,9 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           <ItemList
             title="Your requests"
             sections={sectionsOf(groupedRows(groupForViewer(myTickets, needsActor), needsActor, rowOpts))}
-            legend
             empty="Nothing yet. Use “AV/IT/Maintenance” when something breaks or you need something from IT, A/V or maintenance."
             emptyAction={
-              <Button size="small" variant="primary" href="/it-maintenance/new">
+              <Button size="small" href="/it-maintenance/new">
                 AV/IT/Maintenance
               </Button>
             }

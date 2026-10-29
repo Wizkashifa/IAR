@@ -10,6 +10,7 @@ import { WHATS_NEW } from "@/lib/whats-new";
 import { GUIDE_ICON } from "./icons";
 import styles from "./help.module.css";
 import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { findModule } from "@/lib/modules";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Help" };
@@ -39,7 +40,7 @@ export default async function HelpPage() {
 
       <LinkCards label="Guides">
         {guides.map((g) => (
-          <LinkCard key={g.key} href={`/help/${g.key}`} icon={GUIDE_ICON[g.key]} title={g.title}>
+          <LinkCard key={g.key} href={`/help/${g.key}`} icon={GUIDE_ICON[g.key]} accent={g.module ? findModule(g.module)?.accent : undefined} title={g.title}>
             {g.summary}
           </LinkCard>
         ))}

@@ -6,7 +6,7 @@
   .stacked .list { grid-template-columns: 1fr; }
   .choice {
     display: flex; gap: var(--s-2); align-items: flex-start; min-height: 44px; padding: 10px 12px;
-    border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink);
+    border: 1px solid var(--ctl); border-radius: var(--r-sm); background: var(--field-bg); color: var(--ink);
     font-size: var(--t-md); font-weight: 400; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
   }
   .choice:hover { border-color: var(--ink-3); }
@@ -20,14 +20,14 @@
 
   /* A plain list: just the buttons and their labels. */
   .plain .list { display: flex; flex-direction: column; gap: var(--s-2); }
-  .plain .choice { min-height: 28px; padding: 0; border: 0; background: none; }
+  .plain .choice { min-height: max(28px, var(--tap)); padding: 0; border: 0; background: none; }
   .plain .choice:has(input:checked) { background: none; }
 
   /* A plain tick box with its label. */
-  .tick { display: flex; gap: var(--s-2); align-items: flex-start; min-height: 28px; font-size: var(--t-md); color: var(--ink); cursor: pointer; }
+  .tick { display: flex; gap: var(--s-2); align-items: flex-start; min-height: max(28px, var(--tap)); font-size: var(--t-md); color: var(--ink); cursor: pointer; }
   .tick input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
   .tick a { font-weight: 700; }
   .tick small { color: var(--ink-2); }
-  .quiet { align-items: center; min-height: 24px; font-size: var(--t-sm); color: var(--ink-2); }
+  .quiet { align-items: center; min-height: max(24px, var(--tap)); font-size: var(--t-sm); color: var(--ink-2); }
   .quiet input { margin: 0; }
 }

@@ -144,7 +144,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
           return (
             <Panel key={type} title={MEASURED_LABEL[type]} level={3} flush>
               {steps.length === 0 ? (
-                <EmptyState icon="clock">No finished steps yet.</EmptyState>
+                <EmptyState>No finished steps yet.</EmptyState>
               ) : (
                 <DataTable>
                   <caption className="sr-only">Time at each step for {MEASURED_LABEL[type]}</caption>

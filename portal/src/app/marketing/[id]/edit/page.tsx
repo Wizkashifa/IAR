@@ -30,7 +30,7 @@ export default async function EditMarketing({ params }: { params: Promise<{ id: 
     <div className="stack loose">
       <div className="stack tight">
         <Crumb trail={[{ href: "/marketing", label: "Marketing Requests" }, { href: `/marketing/${id}`, label: id }]} here={answering ? "Answer" : "Edit"} />
-        <ModuleHead title={answering ? "Answer marketing's question" : "Edit your request"} lead={card.title} />
+        <ModuleHead accent="mkt" title={answering ? "Answer marketing's question" : "Edit your request"} lead={card.title} />
       </div>
       <MarketingForm
         action={editMarketing.bind(null, id, card.updatedAt)}

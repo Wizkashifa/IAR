@@ -13,22 +13,24 @@
 
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea):not([class*="mantine-"]) {
     width: 100%; min-width: 0; min-height: var(--control-h); padding: 6px 10px;
-    background-color: var(--surface); color: var(--ink);
-    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background-color: var(--field-bg); color: var(--ink);
+    border: 1px solid var(--ctl); border-radius: var(--r-sm);
     transition: border-color var(--speed), box-shadow var(--speed);
   }
   .field textarea { min-height: 72px; resize: vertical; }
   /* Room for the dropdown arrow (base.css). Same selector weight as the rule above. */
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select):is(select):not([class*="mantine-"], [multiple]) { padding-right: 30px; }
-  .field :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .field :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
 
   /* The Send row: on phones it stays at the bottom of the screen while a long form scrolls. */
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
   @media (max-width: 640px) {
     .actions.sticky {
-      position: sticky; bottom: 0; z-index: 5;
+      position: sticky; bottom: var(--bottom-bar, 0px); z-index: 5;
       margin: 0 calc(-1 * var(--s-4)); padding: var(--s-3) var(--s-4) max(var(--s-3), env(safe-area-inset-bottom, 0px));
       background: var(--bg); border-top: 1px solid var(--line);
     }
+    /* The main button last and widest, the others beside it. */
+    .actions.sticky > :last-child { flex: 1 1 auto; }
   }
 }

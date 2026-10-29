@@ -19,15 +19,16 @@
      * See docs/brand.md.
      */
     --brand-green: #0b3a24;
-    --brand-green-2: #124a30;
     --gold: #c7a154;
     --gold-light: #e6cf9c;
-    --gold-dark: #8a6a2c;
     --cream: #f6eedb;
 
     --bg: #faf6ea;
     --surface: #ffffff;
     --surface-2: #f3ecd6;
+    /* Fields, menus and popovers: on the card colour in light mode, a step up in dark mode. */
+    --field-bg: var(--surface);
+    --popover-bg: var(--surface);
     --ink: #13241b;
     --ink-2: #4f5b53;
     --ink-3: #636b63;
@@ -36,11 +37,41 @@
     --accent-ink: #ffffff;
     --accent-text: #007038;
     --accent-soft: #e1f0e7;
-    --nav-on: #e1f0e7;
+    /* Control edges (inputs, selects, chips, secondary buttons): 3:1 or more, where --line is too faint. */
+    --ctl: #857a60;
+    /* The focus ring; on the green header and menu it's light gold instead (--ring-on-green). */
+    --focus: #8a6a2c;
+    /* Small gold text (dates, links) on cream and the page: the brand gold is too light to read there. */
+    --gold-text: #7a5d22;
+    /* The menu (sidebar and phone drawer): dark green in both themes. */
+    --nav-bg: #0e3f27;
+    --nav-on: #18492f;
+    --nav-text: #f6eedb;
+    --nav-group: #e6cf9c;
+    --nav-on-text: #e6cf9c;
+    /* The menu's right edge: none on the green menu, a line on the dark one. */
+    --nav-edge: transparent;
+    /* The search field in the green header. */
+    --header-input-bg: #124a30;
+    --header-placeholder: #d8cfb9;
+    /* IAR's geometric pattern in gold, one 56px tile: faint on the header and menu, stronger where a page head fades it in. */
+    --pattern-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.07' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='1' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    /* How strongly the pattern (page heads) and the gold illustrations show: halved in dark mode. */
+    --pattern-opacity: 0.2;
+    /* The band behind a page's title, and the "What's new" box. */
+    --head-band: #f6eedb;
+    --news-bg: #fffaf0;
+    --news-line: #e6cf9c;
+    /* The lantern drawn on empty lists. */
+    --empty-stroke: #8a6a2c;
     --ok: #007038;
     --ok-soft: #e3f2e8;
     --warn: #9a4820;
     --warn-soft: #fae9de;
+    /* Counts on menu items ("Home 2"). */
+    --count-bg: var(--warn-soft);
+    --count-ink: var(--warn);
     --bad: #a1302a;
     --bad-soft: #f7e0dd;
     --info: #004d4e;
@@ -52,7 +83,28 @@
     --gold-line: rgba(199, 161, 84, 0.55);
     --gold-wash: rgba(199, 161, 84, 0.14);
     --cream-wash: rgba(246, 238, 219, 0.1);
-    --cream-dim: rgba(246, 238, 219, 0.72);
+
+    /*
+     * Module accents: one colour per module, used only for its menu icon, its page head and its item icons, never for
+     * status. -soft is an icon tile, -tint a page head, -nav the icon on the green menu. [data-mod] below picks one.
+     */
+    --mod-events: #007038;
+    --mod-events-soft: #e1f0e7;
+    --mod-events-tint: #e9f3ec;
+    --mod-events-nav: #8fd3a4;
+    /* Payments: IAR's taupe, deepened for text. Not gold, which means "needs you" and "selected". */
+    --mod-pay: #6b5a44;
+    --mod-pay-soft: #f1ebe2;
+    --mod-pay-tint: #f3eee7;
+    --mod-pay-nav: #d6c6ab;
+    --mod-mkt: #2a52a0;
+    --mod-mkt-soft: #e3eaf8;
+    --mod-mkt-tint: #ebf0fa;
+    --mod-mkt-nav: #9db9f2;
+    --mod-it: #4d5866;
+    --mod-it-soft: #e8ebee;
+    --mod-it-tint: #eef0f2;
+    --mod-it-nav: #c3ccd6;
 
     /* Fonts: next/font sets the three --font-*-face variables (app/fonts.ts). */
     --font: var(--font-body-face), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -79,28 +131,72 @@
     --r-sm: 8px;
     --shadow-1: 0 1px 2px rgba(19, 36, 27, 0.06), 0 1px 1px rgba(19, 36, 27, 0.03);
     --shadow-2: 0 12px 32px rgba(11, 58, 36, 0.16), 0 2px 6px rgba(11, 58, 36, 0.08);
-    --ring: 0 0 0 3px rgba(199, 161, 84, 0.45);
+    --ring: 0 0 0 3px var(--focus);
+    --ring-on-green: 0 0 0 3px var(--gold-light);
     --control-h: 36px;
     --control-h-sm: 30px;
+    /* The smallest tap target: nothing extra on a wide screen, 44px on a phone (below). */
+    --tap: 0px;
     --speed: 0.12s;
+    /* Motion: how things settle, a card's hover, a section arriving. */
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --speed-2: 0.16s;
+    --enter: 0.55s;
+    --lift: -3px;
+    --nudge: 3px;
+    --press: 0.97;
 
     color-scheme: light;
   }
 
   /* Dark: warm charcoal surfaces; the dark brand green stays on the header, gold is the accent. */
   :root[data-mantine-color-scheme="dark"] {
-    --bg: #111513;
-    --surface: #181d1a;
-    --surface-2: #1f2621;
-    --ink: #ece6d6;
-    --ink-2: #a7ab9c;
-    --ink-3: #8a8f80;
-    --line: #2c342f;
-    --accent: #c7a154;
-    --accent-ink: #0b3a24;
-    --accent-text: #e2c98f;
-    --accent-soft: #29271c;
-    --nav-on: #262619;
+    --bg: #121513;
+    --surface: #1b1f1c;
+    --surface-2: #252a26;
+    --ink: #e6e1d3;
+    --ink-2: #aeb1a5;
+    --ink-3: #959a8c;
+    --line: #2e342f;
+    /* Green for actions in dark mode too; gold stays for "needs you" and "selected". */
+    --accent: #52c285;
+    --accent-ink: #0b2416;
+    --accent-text: #5fcb8e;
+    --accent-soft: #1d2e23;
+    --ctl: #747d75;
+    --focus: #c7a154;
+    --gold-text: #e2c98f;
+    /* The menu in dark mode: neutral, a step up from the page, with a line on its right. */
+    --nav-bg: #1b1f1c;
+    --nav-on: #252a26;
+    --nav-text: #e6e1d3;
+    --nav-group: #e2c98f;
+    --nav-on-text: #e6cf9c;
+    --nav-edge: var(--line);
+    /* Fields, menus and popovers sit a step above the cards. */
+    --field-bg: var(--surface-2);
+    --popover-bg: var(--surface-2);
+    /* Counts on menu items are gold in dark mode. */
+    --count-bg: var(--gold);
+    --count-ink: var(--brand-green);
+    --head-band: #151b17;
+    --pattern-opacity: 0.1;
+    --pattern-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.035' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
+    --mod-events: #5fcb8e;
+    --mod-events-soft: #17301f;
+    --mod-events-tint: #13201a;
+    --mod-pay: #cdb99d;
+    --mod-pay-soft: #2a241c;
+    --mod-pay-tint: #1d1a16;
+    --mod-mkt: #93b4f5;
+    --mod-mkt-soft: #1a2440;
+    --mod-mkt-tint: #151a26;
+    --mod-it: #b5bfca;
+    --mod-it-soft: #232a31;
+    --mod-it-tint: #181c20;
+    --news-bg: #1d1f17;
+    --news-line: #4a4128;
+    --empty-stroke: #c7a154;
     --ok: #5fcb8e;
     --ok-soft: #17301f;
     --warn: #f0a070;
@@ -114,5 +210,21 @@
     --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
     color-scheme: dark;
+  }
+
+  /* Any element with data-mod="events" (pay, mkt, it) gets --mod, --mod-soft, --mod-tint and --mod-nav for that module. */
+  [data-mod="events"] { --mod: var(--mod-events); --mod-soft: var(--mod-events-soft); --mod-tint: var(--mod-events-tint); --mod-nav: var(--mod-events-nav); }
+  [data-mod="pay"] { --mod: var(--mod-pay); --mod-soft: var(--mod-pay-soft); --mod-tint: var(--mod-pay-tint); --mod-nav: var(--mod-pay-nav); }
+  [data-mod="mkt"] { --mod: var(--mod-mkt); --mod-soft: var(--mod-mkt-soft); --mod-tint: var(--mod-mkt-tint); --mod-nav: var(--mod-mkt-nav); }
+  [data-mod="it"] { --mod: var(--mod-it); --mod-soft: var(--mod-it-soft); --mod-tint: var(--mod-it-tint); --mod-nav: var(--mod-it-nav); }
+
+  /* Less motion: nothing lifts, slides or shrinks (base.css also cuts every animation and transition short). */
+  @media (prefers-reduced-motion: reduce) {
+    :root { --lift: 0px; --nudge: 0px; --press: 1; }
+  }
+
+  /* Phones: taller controls (48px, so iOS doesn't zoom into a field) and 44px tap targets. */
+  @media (max-width: 600px) {
+    :root { --control-h: 48px; --control-h-sm: 44px; --tap: 44px; }
   }
 }

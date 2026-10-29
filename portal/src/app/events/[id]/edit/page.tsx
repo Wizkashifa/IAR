@@ -27,7 +27,7 @@ export default async function EditEvent({ params }: { params: Promise<{ id: stri
     <div className="stack loose">
       <div className="stack tight">
         <Crumb trail={[{ href: "/events", label: "Events & Rooms" }, { href: `/events/${id}`, label: id }]} here={moved ? "New time" : "Edit"} />
-        <ModuleHead title={moved ? "Pick a new time" : "Update and resend"} lead={card.title} />
+        <ModuleHead accent="events" title={moved ? "Pick a new time" : "Update and resend"} lead={card.title} />
       </div>
       {card.event.returnNote && !moved && (
         <Note tone="warn">

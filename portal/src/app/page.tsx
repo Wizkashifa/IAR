@@ -6,7 +6,6 @@ import { ItemList, rowsFor } from "@/components/ItemList";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
-import type { IconName } from "@/components/Icon";
 import { agendaBetween, type AgendaItem } from "@/lib/agenda";
 import { rangeText } from "@/lib/agenda-core";
 import { isActive, isCurrentOrUpcoming } from "@/lib/away";
@@ -23,20 +22,15 @@ import { WhatsNewNote } from "@/components/WhatsNewNote";
 import styles from "./home.module.css";
 import { todayLocal } from "@/lib/dates";
 import { ItemRow, Rows } from "@/components/ItemRow";
+import { ModuleHead } from "@/components/ModuleHead";
+import { NewRequestTiles } from "@/components/LinkCard";
+import { KINDS } from "@/lib/kinds";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Home" };
 
 const fmtDay = (d: string, weekday = false) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { ...(weekday ? { weekday: "short" as const } : {}), month: "short", day: "numeric", timeZone: "UTC" });
-
-/** The quick buttons, for the live modules this person can use. */
-const QUICK: { module: string; href: string; label: string; icon: IconName }[] = [
-  { module: "events", href: "/events/new", label: "New event request", icon: "calendar" },
-  { module: "purchase-requests", href: "/purchases/new", label: "New payment request", icon: "receipt" },
-  { module: "marketing-requests", href: "/marketing/new", label: "Marketing request", icon: "megaphone" },
-  { module: "it-maintenance", href: "/it-maintenance/new", label: "AV/IT/Maintenance", icon: "wrench" },
-];
 
 /** "MPH A&B – full gym", or the first two rooms and how many more. */
 const roomsText = (rooms: string[]) => (rooms.length === 0 ? "Off-site" : rooms.length <= 2 ? rooms.join(", ") : `${rooms.slice(0, 2).join(", ")} and ${rooms.length - 2} more`);
@@ -80,27 +74,14 @@ export default async function Home() {
     state: "act",
   }));
   const allRows = [...askRows, ...rows];
-  const quick = QUICK.filter((q) => live.has(q.module));
+  const kinds = KINDS.filter((k) => live.has(k.module));
   const later = modules.filter((m) => m.status !== "live");
   const runSheet = live.has("run-sheet");
   const firstName = viewer.name.split(" ")[0];
 
   return (
-    <div className="stack">
-      <header className={styles.hero}>
-        <h1 className="greet">Assalamu alaikum, {firstName}</h1>
-        <p className="lead">Here&apos;s what needs you today, {fmtDay(today, true)}.</p>
-        {quick.length > 0 && (
-          <div className="row">
-            {quick.map((q) => (
-              <Button key={q.href} href={q.href} icon={q.icon}>
-                {q.label}
-              </Button>
-            ))}
-          </div>
-        )}
-      </header>
-      <WhatsNewNote />
+    <div className="stack enter">
+      <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
 
       {myAway &&isCurrentOrUpcoming(myAway, today) && (
         <Note>
@@ -118,8 +99,13 @@ export default async function Home() {
         title="Waiting on you"
         right={allRows.length > 0 ? <Pill tone="warn">{allRows.length}</Pill> : undefined}
         rows={allRows}
+        emptyTitle="All caught up"
         empty="Nothing is waiting on you right now. When a request needs you, it shows up here and in Google Chat."
       />
+
+      {/* What needs you comes first; then ways to start something, and what's new. */}
+      {kinds.length > 0 && <NewRequestTiles kinds={kinds} compact />}
+      <WhatsNewNote />
 
       <Panel
         title={
@@ -131,9 +117,9 @@ export default async function Home() {
         flush
       >
         {agenda === null ? (
-          <EmptyState icon="calendar">The IAR calendar couldn&apos;t be read just now. Try again in a minute.</EmptyState>
+          <EmptyState>The IAR calendar couldn&apos;t be read just now. Try again in a minute.</EmptyState>
         ) : agenda.length === 0 ? (
-          <EmptyState icon="calendar">Nothing booked at IAR today.</EmptyState>
+          <EmptyState>Nothing booked at IAR today.</EmptyState>
         ) : (
           <Rows>
             {agenda.map((a) => (
@@ -145,7 +131,9 @@ export default async function Home() {
                     {a.title} {a.pending && <Pill tone="info">Waiting for approval</Pill>}
                   </>
                 }
-                sub={`${rangeText(a.start, a.end)} · ${roomsText(a.rooms)} · ${a.committee ?? SOURCE[a.source]}`}
+                accent="events"
+                when={rangeText(a.start, a.end)}
+                sub={`${roomsText(a.rooms)} · ${a.committee ?? SOURCE[a.source]}`}
               />
             ))}
           </Rows>

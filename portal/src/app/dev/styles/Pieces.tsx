@@ -6,7 +6,8 @@ import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
 import { Crumb } from "@/components/Crumb";
-import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { LinkCard, LinkCards, NewRequestTiles } from "@/components/LinkCard";
+import { KINDS } from "@/lib/kinds";
 import { Stat, Stats } from "@/components/Stat";
 import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
 import { SearchForm } from "@/components/SearchForm";
@@ -20,7 +21,7 @@ export function Pieces() {
     <>
       <Panel title="Rows that aren't requests" right="components/ItemRow.tsx: state=plain" flush>
         <Rows>
-          <ItemRow state="plain" icon="book" title="Room reservation policy" href="https://drive.google.com" external="Google Drive" sub="Google Doc · Facilities · updated Oct 2, 2026" right={<Pill tone="warn" dot>Review due Nov 1, 2026</Pill>} />
+          <ItemRow state="plain" icon="book" title="Room reservation policy" href="https://drive.google.com" external="Google Drive" sub="Google Doc · Facilities · updated Oct 2, 2026" right={<Pill tone="warn" status>Review due Nov 1, 2026</Pill>} />
           <ItemRow state="plain" href="/dev/styles" title={<>Youth <Pill tone="accent">You&apos;re on it</Pill></>} sub="Chair: Sample Chair · Vice chair: Sample Vice Chair" extra="Programs, trips and halaqas for IAR's youth." right="12 people" />
           <ItemRow state="done" title="MPH A" sub="Holds 75 · Main · Food allowed" right={<Button size="small">Request this room</Button>} />
           <ItemRow state="act" title="PO-12007 is waiting on you" sub="Oct 24, 10:00 AM" href="/dev/styles" />
@@ -118,7 +119,7 @@ export function Pieces() {
         </Stats>
       </Panel>
 
-      <Panel title="Page pieces" right="Crumb, LinkCard, Pill small, PanelNote, PanelFoot, .hint">
+      <Panel title="Page pieces" right="Crumb, LinkCard (and the new-request tiles), Pill small, PanelNote, PanelFoot, .hint">
         <div className="stack">
           <Crumb trail={[{ href: "/dev/styles", label: "Payments" }, { href: "/dev/styles", label: "PO-12007" }]} here="Make changes" />
           <LinkCards label="Examples">
@@ -129,6 +130,7 @@ export function Pieces() {
               How to pay a vendor, get reimbursed or send card receipts.
             </LinkCard>
           </LinkCards>
+          <NewRequestTiles kinds={KINDS} />
           <div className="row">
             <Pill tone="gold" small>Today</Pill>
             <Pill tone="warn" small>3 new</Pill>

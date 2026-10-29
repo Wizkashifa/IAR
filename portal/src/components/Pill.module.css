@@ -1,5 +1,7 @@
 @layer components {
   .pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+  /* A status: tall enough to read and tap past, bold, with its icon. */
+  .status { min-height: 30px; height: auto; padding: 4px 12px; font-size: var(--t-md); font-weight: 700; white-space: normal; text-align: left; line-height: 1.2; }
   .dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
   .ok { background: var(--ok-soft); color: var(--ok); }
   .warn { background: var(--warn-soft); color: var(--warn); }
@@ -7,5 +9,8 @@
   .info { background: var(--info-soft); color: var(--info); }
   .accent { background: var(--accent-soft); color: var(--accent-text); }
   .gold { background: var(--gold); color: var(--brand-green); }
+  .tag { background: var(--surface); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--ctl); }
   .small { height: 18px; padding: 0 7px; font-size: 11px; font-weight: 700; }
+  /* Dark mode: meaning pills are outlined in their colour, so they don't glow as filled blocks on a dark page. */
+  :global(:root[data-mantine-color-scheme="dark"]) :is(.ok, .warn, .bad, .info, .accent) { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
 }

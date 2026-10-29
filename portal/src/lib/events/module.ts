@@ -7,6 +7,7 @@ import type { Viewing } from "../access";
 import { todayLocal } from "../dates";
 import { NOTIFIED, STATUS_LABEL, STEP } from "../glossary";
 import type { NeedsContext, NeedsViewer } from "../needs-you";
+import type { RowState } from "../card-row";
 import type { ModuleDef } from "../registry";
 import type { Holder, StuckContext } from "../stuck";
 import { type NameOf, type StepOptions, type Steps, type Viewer, finish, quoted, speaker, track } from "../steps";
@@ -107,6 +108,20 @@ function holder(card: EventCard, ctx: StuckContext): Holder | null {
   }
 }
 
+/** The list pill: what's needed from you, or who has it (see ModuleDef.rowStatus). */
+function rowStatus(card: EventCard, state: RowState): string | undefined {
+  const reviewing = card.status === "submitted" || card.status === "in_review";
+  if (card.status === "denied") return "Turned down";
+  if (card.status === "cancelled") return "Cancelled";
+  if (card.status === "changes_requested") return state === "act" ? "Needs changes from you" : "With the requester";
+  if (card.status === "close_out") return state === "act" ? "Needs your close-out" : "With the requester to close out";
+  if (reviewing && card.event.stage === "slot") return state === "act" ? "Needs your answer on the room" : "Waiting on a room answer";
+  if (reviewing && card.event.stage === "director") return state === "act" ? "Needs your approval" : "With the director";
+  if (reviewing && card.event.stage === "mission") return state === "act" ? "Needs your approval" : "With the executives";
+  if (card.status === "approved") return state === "act" ? "Needs you" : "Approved";
+  return undefined;
+}
+
 export const eventModule: ModuleDef<EventCard> = {
   type: "event",
   is: isEventCard,
@@ -116,4 +131,5 @@ export const eventModule: ModuleDef<EventCard> = {
   next: eventNext,
   needs: eventNeeds,
   holder,
+  rowStatus,
 };

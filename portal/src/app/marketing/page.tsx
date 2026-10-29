@@ -53,7 +53,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="stack loose">
-      <ModuleHead
+      <ModuleHead accent="mkt"
         title="Marketing Requests"
         lead="Graphics, signs, announcements, highlights, webpages, short links and staff badges."
         actions={

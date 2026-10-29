@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
 import * as pw from "./workflow";
-import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey, statementReceipts } from "./finance-desk";
+import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey, statementReceipts, cardChecklist } from "./finance-desk";
 import { QB_COLUMNS, csvCell, qbCsv, qbRows } from "./qb-csv";
 import { cardHistory, cardTotals } from "./card-history";
 import { TEST_UPLOADS, testCharges } from "./statement-sample";
@@ -192,4 +192,18 @@ test("a card's history: each statement's charges matched to the receipt lines, n
   assert.equal(totals.missing, 0);
   sent.purchase.lines[1].hasReceipt = false;
   assert.equal(cardTotals(cardHistory([sept], [sent], "2093")).missing, 1);
+});
+
+test("card receipts checklist: the latest statement's month and cards, sent or not", () => {
+  const charge = (date: string) => [{ date, description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } }];
+  const oct = cardReceipts("2026-10", charge("2026-10-02"));
+  const sept = cardReceipts("2026-09", charge("2026-09-02"));
+  const statement = { month: "2026-10", cards: [{ last4: "2093", holderName: "VOL UNTEER" }, { last4: "4120", holderName: "CHAIR" }] };
+  const list = cardChecklist(statement, [sept, oct]);
+  assert.equal(list.month, "2026-10");
+  // Receipts sent for the October statement count, whatever the calendar says; September's don't.
+  assert.deepEqual(list.rows.map((r) => [r.last4, r.request?.id ?? null]), [["2093", oct.id], ["4120", null]]);
+  // A cancelled request doesn't count as sent.
+  const gone = { ...oct, status: "cancelled" as const };
+  assert.equal(cardChecklist(statement, [gone]).rows[0]!.request, undefined);
 });

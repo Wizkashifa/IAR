@@ -5,9 +5,9 @@
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
     color: var(--ink); text-decoration: none;
   }
-  .link { transition: border-color var(--speed); }
-  .link:hover { border-color: var(--gold); text-decoration: none; }
-  .link:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
+  .link { transition: border-color var(--speed-2), box-shadow var(--speed-2), transform var(--speed-2) var(--ease); }
+  .link:hover { border-color: var(--ctl); box-shadow: var(--shadow-2); transform: translateY(var(--lift)); text-decoration: none; }
+  .link:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   .label { font-size: var(--t-sm); color: var(--ink-2); }
   .value { font-family: var(--font-head); font-weight: 700; font-size: var(--t-greet); line-height: 1.1; font-variant-numeric: tabular-nums; }
   .ok { color: var(--ok); }

@@ -55,7 +55,7 @@ export default async function CardPage({ params }: { params: Promise<{ last4: st
   return (
     <div className="stack">
       <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here={`Card ···${last4}`} />
-      <ModuleHead title={`Card ···${last4}`} lead={`${holder}. Every charge on IAR's card statements, with the sub-account, why it was bought and whether its receipt is in.`} />
+      <ModuleHead accent="pay" title={`Card ···${last4}`} lead={`${holder}. Every charge on IAR's card statements, with the sub-account, why it was bought and whether its receipt is in.`} />
       <Panel>
         <KeyValue
           items={[
@@ -69,7 +69,7 @@ export default async function CardPage({ params }: { params: Promise<{ last4: st
       </Panel>
       {months.length === 0 && (
         <Panel>
-          <EmptyState icon="receipt">No statements with charges on this card yet. They show here once the finance office uploads the month&apos;s statement.</EmptyState>
+          <EmptyState>No statements with charges on this card yet. They show here once the finance office uploads the month&apos;s statement.</EmptyState>
         </Panel>
       )}
       {months.map((m) => {

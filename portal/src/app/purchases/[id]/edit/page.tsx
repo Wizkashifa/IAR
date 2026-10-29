@@ -30,7 +30,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: `/purchases/${id}`, label: id }]} here="Make changes" />
-      <ModuleHead title="Make the changes and send it again" lead={card.title} />
+      <ModuleHead accent="pay" title="Make the changes and send it again" lead={card.title} />
       {p.returnNote && (
         <div className={styles.body}>
           <Note tone="warn">

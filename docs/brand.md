@@ -29,15 +29,15 @@ The portal loads both fonts with `next/font` (`portal/src/app/fonts.ts`), so the
 
 | Colour | Hex | In the portal |
 |---|---|---|
-| Brand green | #008040 | Main buttons, the step bar, selected states (`--accent`) |
-| Dark green | #0B3A24 | Header and menu background (`--brand-green`), calendar holds |
-| Gold | #C7A154 | Header rule and pattern, the main button's edge, focus ring, the "needs you" edge (`--gold`). Accent colour in dark mode |
+| Brand green | #008040 | The one main button on a page (a lighter #52C285 in dark mode), the step bar, selected states (`--accent`), and Events' module colour |
+| Dark green | #0B3A24 | Header and menu background (`--brand-green`, with `--nav-bg` for the menu), calendar holds |
+| Gold | #C7A154 | Means "needs you" and "selected": the "needs you" row edge and current step, the selected menu icon, today on the calendar. Also the header rule and pattern, and section-title lines (`--gold`). Never a module colour or a button |
 
 ### Complementary colours
 
 | Colour | Hex | In the portal |
 |---|---|---|
-| Taupe | #A38C71 | Booked time on room calendars |
+| Taupe | #A38C71 | Booked time on room calendars; deepened, the Payments module colour (`--mod-pay`, #6B5A44 for text) |
 | Orange | #F37621 | Not used yet; a lighter tint is the dark-mode "needs attention" colour |
 | Yellow | #FFD23E | Not used yet (too light for text on light backgrounds) |
 | Mauve | #A78B8C | Not used yet |
@@ -46,7 +46,7 @@ The portal loads both fonts with `next/font` (`portal/src/app/fonts.ts`), so the
 
 ### Text needs enough contrast
 
-Gold, taupe, orange, yellow and mauve are all under 4.5:1 against white and cream, the minimum for readable text. Use them for lines, edges, fills and icons on light backgrounds, not for text. Gold is fine as text on the dark green header (5.3:1).
+Gold, taupe, orange, yellow and mauve are all under 4.5:1 against white and cream, the minimum for readable text. Use them for lines, edges, fills and icons on light backgrounds, not for text. Gold is fine as text on the dark green header (5.3:1). Small gold text on cream uses `--gold-text` (#7A5D22), and the focus ring uses a darker gold, `--focus` (#8A6A2C), to stay 3:1 on white; on the green header and menu the ring is light gold.
 
 The guide's brand green and rust are just under 4.5:1 on the tinted pill backgrounds, so text uses slightly deeper shades of them. Fills and buttons keep the guide's own values.
 
@@ -56,8 +56,11 @@ The guide's brand green and rust are just under 4.5:1 on the tinted pill backgro
 | `--warn` ("needs attention" text) | #9A4820 | Rust #AA5125 | 5.4:1 on the rust tint |
 | `--info` ("waiting" text) | #004D4E | Teal, as is | 8.1:1 on the teal tint |
 | White on `--accent` (main button) | #FFFFFF on #008040 | — | 5.1:1 |
+| `--mod-pay` (Payments text and icons) | #6B5A44 | Taupe #A38C71 | 5.6:1 on its tint, 6.6:1 on white |
 
-Dark mode keeps warm charcoal surfaces and the dark green header. Gold is the accent there, and every text colour is 5:1 or more on its background.
+`guard.test.ts` checks every text and control colour pair in light and dark, so a token that drops below these fails the build.
+
+Dark mode ("Dark v2") keeps warm charcoal surfaces and the dark green header with its gold line; the menu turns neutral charcoal with a thin line on its right. Fields, menus and popovers sit a step lighter than cards. Gold in dark mode is for the header line, menu counts and the selected menu item, plus "needs you". The pattern and the gold illustrations show at half strength (`--pattern-opacity`). Actions stay green there (`--accent` #52C285, with dark green text on the main button), gold keeps meaning "needs you" and "selected", status pills are outlined in their colour, and every text colour is 5:1 or more on its background.
 
 ## When the guide changes
 

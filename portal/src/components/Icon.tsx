@@ -1,3 +1,4 @@
+import type { Accent } from "@/lib/modules";
 import styles from "./Icon.module.css";
 
 /** The demo's line icons (24px grid, 2px stroke, drawn in the current text colour). To add one, copy its path from a Lucide icon (lucide.dev, ISC licence). */
@@ -28,6 +29,8 @@ const PATHS = {
   x: "M18 6L6 18M6 6l12 12",
   check: "M20 6L9 17l-5-5",
   alert: "M12 7v6M12 17h.01",
+  triangle: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
+  ban: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM4.93 4.93l14.14 14.14",
   info: "M12 11v6M12 7h.01",
   help: "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01",
   chevR: "M9 18l6-6-6-6",
@@ -61,5 +64,22 @@ export function Icon({ name, size = "md", label, className }: { name: IconName; 
     >
       <path d={PATHS[name]} />
     </svg>
+  );
+}
+
+/** Each request module's icon, wherever it shows (menu, page head, tiles, lists). */
+export const MODULE_ICON: Record<Accent, IconName> = { events: "calendar", pay: "receipt", mkt: "megaphone", it: "wrench" };
+
+/**
+ * An icon in a rounded tile: in its module's colours when `accent` is given
+ * (the icon defaults to the module's), otherwise neutral. "nav" is the chip on
+ * the green menu; "solid" fills the tile with the module colour (a page head).
+ */
+export function IconTile({ name, accent, size = 40, tone = "soft", className }: { name?: IconName; accent?: Accent; size?: 28 | 40 | 44 | 56; tone?: "soft" | "solid" | "nav"; className?: string }) {
+  const icon = name ?? (accent ? MODULE_ICON[accent] : "box");
+  return (
+    <span className={[styles.tile, styles[`t${size}`], styles[tone], className].filter(Boolean).join(" ")} data-mod={accent} aria-hidden="true">
+      <Icon name={icon} size={size >= 56 ? "xl" : size >= 40 ? "lg" : "md"} />
+    </span>
   );
 }

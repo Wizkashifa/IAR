@@ -38,7 +38,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here="Saved vendors" />
-      <ModuleHead
+      <ModuleHead accent="pay"
         title="Saved vendors"
         lead="Every committee shares this list. Once a vendor is paid, the next request to them fills in their address and W-9 status. A W-9 is needed only for labor, and only once."
         actions={
@@ -109,7 +109,7 @@ function VendorSelect({ name, shared, restricted }: { name: string; shared: Vend
 }
 
 function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
-  if (list.length === 0) return <EmptyState icon="search">No saved vendors match.</EmptyState>;
+  if (list.length === 0) return <EmptyState>No saved vendors match.</EmptyState>;
   return (
     <DataTable>
       <thead>

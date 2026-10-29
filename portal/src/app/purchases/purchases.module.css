@@ -6,7 +6,6 @@
   .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 
   /* The action row on a request page. */
-  .actHead { margin: 0; font-family: var(--font-head); font-size: var(--t-h2); font-weight: 600; }
 
   /* Comments and history. */
   .said { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }

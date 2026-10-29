@@ -1,13 +1,25 @@
 @layer components {
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .card {
     display: flex; gap: var(--s-3); align-items: flex-start; height: 100%; padding: var(--s-4);
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
-    color: var(--ink); text-decoration: none; transition: border-color var(--speed), background-color var(--speed);
+    color: var(--ink); text-decoration: none; transition: border-color var(--speed-2), box-shadow var(--speed-2), transform var(--speed-2) var(--ease);
   }
-  .card:hover { border-color: var(--gold); text-decoration: none; }
-  .card:focus-visible { outline: none; border-color: var(--gold); box-shadow: var(--ring); }
-  .icon { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); }
+  .card:hover { border-color: var(--ctl); box-shadow: var(--shadow-2); transform: translateY(var(--lift)); text-decoration: none; }
+  .card:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
+  .body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
   .title { display: block; margin-bottom: 4px; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
   .text { display: block; font-size: var(--t-md); color: var(--ink-2); }
+  .cta { display: inline-flex; align-items: center; gap: 4px; margin-top: auto; padding-top: var(--s-2); font-weight: 700; font-size: var(--t-md); color: var(--mod, var(--accent-text)); }
+  .tiles .card { flex-direction: column; }
+  /* Phones: the new-request tiles two across. On Home (compact) just the icon, name and Start, so what's waiting stays near the top. */
+  @media (max-width: 600px) {
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+    .tiles .card { min-height: 88px; padding: var(--s-3); gap: var(--s-2); }
+    .tiles .title { font-size: var(--t-md); }
+    .tiles .text { font-size: var(--t-sm); }
+    .compact .title { margin-bottom: 0; }
+    .compact .text { display: none; }
+  }
 }
