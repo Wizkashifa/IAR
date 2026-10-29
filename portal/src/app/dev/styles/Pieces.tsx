@@ -6,7 +6,8 @@ import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
 import { Crumb } from "@/components/Crumb";
-import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { LinkCard, LinkCards, NewRequestTiles } from "@/components/LinkCard";
+import { KINDS } from "@/lib/kinds";
 import { Stat, Stats } from "@/components/Stat";
 import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
 import { SearchForm } from "@/components/SearchForm";
@@ -118,7 +119,7 @@ export function Pieces() {
         </Stats>
       </Panel>
 
-      <Panel title="Page pieces" right="Crumb, LinkCard, Pill small, PanelNote, PanelFoot, .hint">
+      <Panel title="Page pieces" right="Crumb, LinkCard (and the new-request tiles), Pill small, PanelNote, PanelFoot, .hint">
         <div className="stack">
           <Crumb trail={[{ href: "/dev/styles", label: "Payments" }, { href: "/dev/styles", label: "PO-12007" }]} here="Make changes" />
           <LinkCards label="Examples">
@@ -129,6 +130,7 @@ export function Pieces() {
               How to pay a vendor, get reimbursed or send card receipts.
             </LinkCard>
           </LinkCards>
+          <NewRequestTiles kinds={KINDS} />
           <div className="row">
             <Pill tone="gold" small>Today</Pill>
             <Pill tone="warn" small>3 new</Pill>
