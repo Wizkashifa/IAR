@@ -13,7 +13,7 @@ import { canViewMarketing } from "./access";
 import { marketingCommentNotices, marketingNotices } from "./notices";
 import { isMonday, planDaily } from "./reminders";
 import * as wf from "./workflow";
-import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf } from "./files";
+import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf, requestFolderPath } from "./files";
 
 const volunteer: wf.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const mk: wf.Actor = { email: "mk@x.org", name: "Mark Eting", roles: ["member", "marketing"] };
@@ -519,3 +519,8 @@ test("files: the requester and the marketing team add files; nobody adds to a cl
   assert.throws(() => wf.addFiles(full, mk, T(2), [{ name: "one-more.png", size: 1 }]), /up to 20 files/);
 });
 
+test("a request's files go in one folder, by type then the year it was sent in Raleigh", () => {
+  assert.deepEqual(requestFolderPath("graphic", "MK-1004", "2026-10-27T15:00:00.000Z"), ["Graphic design", "2026", "MK-1004"]);
+  // New Year's Eve evening in Raleigh is already January in UTC: still last year's folder.
+  assert.deepEqual(requestFolderPath("highlight", "MK-1010", "2027-01-01T02:00:00.000Z"), ["Highlight an event, accomplishment or team member", "2026", "MK-1010"]);
+});

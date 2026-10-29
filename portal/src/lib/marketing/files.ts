@@ -9,6 +9,8 @@
  * for anything too big, or too many, to upload.
  */
 import type { MarketingFile, MarketingKind } from "./types";
+import { MARKETING_TYPES } from "./forms";
+import { todayLocal } from "../dates";
 
 /** Types whose work starts from the requester's own material. */
 export const FILE_KINDS: MarketingKind[] = ["graphic", "signage", "highlight", "webpage", "badge", "custom"];
@@ -83,3 +85,14 @@ export function checkFiles(files: { name: string; size: number }[], already = 0,
 
 /** The files on a request, oldest first (older requests have none). */
 export const filesOf = (m: { files?: MarketingFile[] }): MarketingFile[] => m.files ?? [];
+
+/**
+ * Where a request's files go in the Marketing Files drive: by type, then the
+ * year it was sent (in Raleigh), then the request ("Graphic design / 2026 /
+ * MK-1004"). Files added later go to the same folder, whatever the date.
+ */
+export const requestFolderPath = (kind: MarketingKind, cardId: string, sentAt: string): string[] => [
+  MARKETING_TYPES[kind].label,
+  todayLocal(new Date(sentAt)).slice(0, 4),
+  cardId,
+];
