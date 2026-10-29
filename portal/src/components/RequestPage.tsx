@@ -105,7 +105,7 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
       {admin}
 
       {bar && (
-        <div className={styles.bar} data-sticky-actions>
+        <div className={styles.bar} data-sticky-actions role="region" aria-label="Main action">
           {bar.label && <p className={styles.barLabel}>{bar.label}</p>}
           <div className={styles.barButtons}>
             {actions && (

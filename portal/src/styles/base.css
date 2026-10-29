@@ -90,6 +90,9 @@
   .enter > :nth-child(5) { animation-delay: 320ms; }
   .enter > :nth-child(n + 6) { animation-delay: 400ms; }
 
+  /* A page with a sticky bar at the bottom (a form's Send bar, a request's action bar): keep what has focus, and what a link jumps to, above it. */
+  html:has([data-sticky-actions]) { scroll-padding-bottom: 160px; }
+
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }
   /* A button that reads as a link ("Undo" in a toast). */

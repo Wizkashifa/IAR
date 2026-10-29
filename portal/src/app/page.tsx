@@ -82,7 +82,7 @@ export default async function Home() {
   return (
     <div className="stack enter">
       <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
-      {kinds.length > 0 && <NewRequestTiles kinds={kinds} />}
+      {kinds.length > 0 && <NewRequestTiles kinds={kinds} compact />}
       <WhatsNewNote />
 
       {myAway &&isCurrentOrUpcoming(myAway, today) && (

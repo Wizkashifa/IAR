@@ -47,3 +47,8 @@ test("request pages and alerts keep the plain status", () => {
   assert.equal(statusText(purchase("finance")), "In review");
   assert.equal(statusText(event("director")), "Director review");
 });
+
+test("payments: approved but not paid yet says so to everyone who isn't paying it", () => {
+  assert.equal(rowStatusText(purchase("payment", { status: "approved" }), "done"), "Approved, to pay");
+  assert.equal(rowStatusText(purchase("books", { status: "paid" }), "done"), "Paid");
+});

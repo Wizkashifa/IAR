@@ -31,18 +31,22 @@ export function LinkCard({ href, icon, title, children, accent, cta }: { href: s
 }
 
 /** A grid of LinkCards. `tiles`: the narrower tiles of the new-request choices (two across on a phone). */
-export function LinkCards({ label, tiles, children }: { label: string; tiles?: boolean; children: ReactNode }) {
+export function LinkCards({ label, tiles, compact, children }: { label: string; tiles?: boolean; compact?: boolean; children: ReactNode }) {
   return (
-    <ul className={`${styles.grid}${tiles ? ` ${styles.tiles}` : ""}`} aria-label={label}>
+    <ul className={[styles.grid, tiles && styles.tiles, compact && styles.compact].filter(Boolean).join(" ")} aria-label={label}>
       {children}
     </ul>
   );
 }
 
-/** The kinds of request someone can start, as tiles (home, /requests/new). `kinds`: the ones whose module they can use. */
-export function NewRequestTiles({ kinds }: { kinds: Kind[] }) {
+/**
+ * The kinds of request someone can start, as tiles (home, /requests/new).
+ * `kinds`: the ones whose module they can use. `compact` (Home): on a phone,
+ * just the name, so what's waiting stays near the top; the picker keeps the line.
+ */
+export function NewRequestTiles({ kinds, compact }: { kinds: Kind[]; compact?: boolean }) {
   return (
-    <LinkCards label="Start a request" tiles>
+    <LinkCards label="Start a request" tiles compact={compact}>
       {kinds.map((k) => (
         <LinkCard key={k.type} href={`${k.path}/new`} accent={findModule(k.module)?.accent} title={k.newLabel} cta="Start">
           {k.blurb}
