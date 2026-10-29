@@ -19,6 +19,7 @@ import { FlashNote } from "@/components/FlashNote";
 import { RequestPage } from "@/components/RequestPage";
 import { ROW_TONE, rowState } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
+import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { actorFor } from "@/lib/people";
@@ -295,7 +296,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         </div>
       </Panel>
 
-      <CommentsPanel id={card.id} comments={card.comments} names={nameOf} action={commentOnTicket} noun="ticket" replies={team ? REPLIES : undefined} />
+      <CommentsPanel id={card.id} comments={card.comments} names={nameOf} action={commentOnTicket} noun="ticket" replies={team ? REPLIES : undefined} people={await mentionablePeople(card)} me={viewer.email} />
       <HistoryPanel entries={t.history} names={nameOf} />
     </>
   );

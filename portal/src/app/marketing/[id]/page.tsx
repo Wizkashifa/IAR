@@ -8,6 +8,7 @@ import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { todayLocal } from "@/lib/dates";
+import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
@@ -132,7 +133,7 @@ export default async function MarketingDetail({
         </div>
       </Panel>
       <FilesPanel />
-      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} />
+      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} people={await mentionablePeople(mc)} me={viewer.email} />
       <HistoryPanel entries={m.history} names={names} />
     </>
   );

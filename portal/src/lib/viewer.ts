@@ -30,6 +30,9 @@ async function build(email: string, name: string, groups: string[], dev: boolean
   return { email, name, roles: rolesFromGroups(groups, fromTeams), actingRoles: directRolesFromGroups(groups, fromTeams), teams, directs: directedTeamGroups(dir, email), dev, tester: groups.some((g) => g.toLowerCase() === ORG.testersGroup) };
 }
 
+/** Someone else as the portal would see them, from their groups (who can be named in a comment, lib/mentions.ts). */
+export const viewerFrom = (email: string, name: string, groups: string[]) => build(email, name, groups, isDevAuth());
+
 // The groups of someone an admin is signed in as (they have no session of their own to carry them), for 15 minutes.
 const targetGroups = new Map<string, { at: number; groups: string[] }>();
 async function groupsOf(email: string): Promise<string[]> {

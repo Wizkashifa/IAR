@@ -388,6 +388,16 @@ test("comment notices: requester, earlier commenters and whoever has it; never a
   assert.match(n2[0].text, /Vol Unteer commented on MK-1001 .*: “Thanks!”/);
 });
 
+test("comment notices: someone named with @ hears first, with an alert", () => {
+  const c = withComment(submitted(), { at: T(1), by: mk.email, name: mk.name, text: "@Exec can you approve the wording?", mentions: [{ email: exec.email, name: exec.name }, { email: volunteer.email, name: volunteer.name }] });
+  const n = marketingCommentNotices(c, mk, "@Exec can you approve the wording?");
+  assert.deepEqual(n.map((x) => [x.to, x.alert]), [[{ email: exec.email }, true], [{ email: volunteer.email }, true], [{ role: "marketing" }, false]]);
+  assert.match(n[0].text, /Mark Eting mentioned you on MK-1001 .*: “@Exec can you approve the wording\?”/);
+  // Only the newest comment's mentions, and only when it's the commenter's own.
+  const later = withComment(c, { at: T(2), by: volunteer.email, name: volunteer.name, text: "Thanks" });
+  assert.ok(marketingCommentNotices(later, volunteer, "Thanks").every((x) => !x.alert));
+});
+
 // ---- Daily job ---------------------------------------------------------------
 
 test("daily: Monday lists the requests waiting for the weekly review", () => {

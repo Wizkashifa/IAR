@@ -16,6 +16,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { canRequestAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
+import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { requireViewer } from "@/lib/viewer";
@@ -277,7 +278,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </div>
       </Panel>
 
-      <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} />
+      <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnPurchase} people={await mentionablePeople(card)} me={viewer.email} />
       <HistoryPanel entries={p.history} names={names} />
     </>
   );

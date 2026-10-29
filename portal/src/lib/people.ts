@@ -4,7 +4,7 @@ import { clean, firestore } from "./db";
 import { isDevAuth } from "./dev";
 import type { Alert } from "./alerts";
 import { cleanPrefs, type NotifyPrefs } from "./notify-prefs";
-import { personFunds, purchaseContext } from "./purchases/settings";
+import { type PurchaseContext, personFunds, purchaseContext } from "./purchases/settings";
 import type { Actor } from "./purchases/workflow";
 import type { Viewer } from "./viewer";
 import { todayLocal } from "./dates";
@@ -137,7 +137,13 @@ export async function actorFor(viewer: Viewer): Promise<Actor> {
     // Covering is a convenience; a lookup failure must not lock anyone out of their own approvals.
     console.error("away lookup failed", err);
   }
-  const f = personFunds(await purchaseContext(), email);
+  return actorWith(viewer, await purchaseContext(), covering);
+}
+
+/** The same, from the funds settings already loaded and without looking up who they cover for. */
+export function actorWith(viewer: Viewer, ctx: PurchaseContext, covering: string[] = []): Actor {
+  const email = viewer.email.toLowerCase();
+  const f = personFunds(ctx, email);
   const leads = [...viewer.teams.filter((t) => t.role !== "member").map((t) => t.group), ...viewer.directs];
   return { email, name: viewer.name, roles: viewer.actingRoles, covering, oversees: f.oversees, directs: f.directs, chairs: f.chairs, leads: [...new Set(leads)] };
 }

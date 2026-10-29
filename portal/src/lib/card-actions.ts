@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { canOpenCard } from "./access";
 import { type Card, cardStore, ConflictError } from "./cards";
-import { checkComment, withComment } from "./comments";
+import { checkComment, findMentions, withComment } from "./comments";
+import { mentionablePeople } from "./mentions";
 import type { Notice } from "./notices";
 import { deliver } from "./notifications";
 import { actorFor } from "./people";
@@ -38,8 +39,9 @@ type Module<C extends Card> = {
 /**
  * Adds a comment. Anyone who can open the request can comment. If someone
  * saved the request at the same moment it tries once more: a comment never
- * needs to wait. `after` lets a module note the comment on the card itself
- * (a ticket's first response).
+ * needs to wait. "@Name" for someone who can open the request names them
+ * (lib/notices.ts tells them). `after` lets a module note the comment on the
+ * card itself (a ticket's first response).
  */
 export async function commentOnCard<C extends Card>(
   form: FormData,
@@ -56,7 +58,8 @@ export async function commentOnCard<C extends Card>(
       const card = await store.get(id);
       if (!m.is(card) || !(await (m.canOpen ?? mayOpen)(card, viewer))) redirect(m.path);
       const now = nowIso();
-      const commented = withComment(card, { at: now, by, name: viewer.name, text: check.text });
+      const mentions = check.text.includes("@") ? findMentions(check.text, await mentionablePeople(card), by) : [];
+      const commented = withComment(card, { at: now, by, name: viewer.name, text: check.text, mentions });
       const next = m.after ? m.after(commented, now) : commented;
       try {
         await store.save(next, card.updatedAt);

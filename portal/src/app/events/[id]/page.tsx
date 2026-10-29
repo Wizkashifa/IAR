@@ -21,6 +21,7 @@ import { cardStore } from "@/lib/cards";
 import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
+import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver } from "@/lib/names";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { statusText } from "@/lib/status-text";
@@ -312,7 +313,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </section>
           )}
 
-          <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnEvent} />
+          <CommentsPanel id={card.id} comments={card.comments} names={names} action={commentOnEvent} people={await mentionablePeople(card)} me={viewer.email} />
           <HistoryPanel entries={e.history} names={names} />
         </>
       }
