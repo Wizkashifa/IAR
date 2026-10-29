@@ -56,6 +56,13 @@ export function AppFrame({
   // The one menu link for this page: the longest that matches, so /purchases/finance lights up Finance desk, not Payments too.
   const current = groups.flatMap((g) => g.links.map((l) => l.href)).filter((h) => isCurrent(path, h)).sort((a, b) => b.length - a.length)[0];
   const menuBtn = useRef<HTMLButtonElement>(null);
+  const moreBtn = useRef<HTMLButtonElement>(null);
+  // The button that opened the menu (the header's, or More in the bottom bar) gets the keyboard back when it closes.
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const toggle = (from: HTMLButtonElement | null) => {
+    opener.current = from;
+    setOpen(!open);
+  };
   const rail = useRef<HTMLElement>(null);
   useEffect(() => setOpen(false), [path]);
   // Keep this page's link in view when the menu is longer than the screen. Scrolls only the menu, never the page.
@@ -75,7 +82,7 @@ export function AppFrame({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
-        menuBtn.current?.focus();
+        (opener.current ?? menuBtn.current)?.focus();
         return;
       }
       if (e.key !== "Tab" || !rail.current) return;
@@ -99,6 +106,9 @@ export function AppFrame({
     };
   }, [open]);
   const bellLabel = unread ? `Notifications, ${unread} unread` : "Notifications";
+  // The phone's bottom bar: Home, My requests, New request in the middle, Calendar when it's live, and More (the menu).
+  const hrefs = new Set(groups.flatMap((g) => g.links.map((l) => l.href)));
+  const tab = (href: string) => (open ? false : href === "/requests" ? path === "/requests" : isCurrent(path, href));
 
   return (
     <>
@@ -114,7 +124,7 @@ export function AppFrame({
             aria-label={open ? "Close menu" : "Menu"}
             aria-expanded={open}
             aria-controls="portal-menu"
-            onClick={() => setOpen(!open)}
+            onClick={() => toggle(menuBtn.current)}
           >
             <Icon name={open ? "x" : "menu"} size="lg" />
           </button>
@@ -167,6 +177,32 @@ export function AppFrame({
           </div>
         </nav>
         {open && <div className={styles.scrim} onClick={() => setOpen(false)} aria-hidden="true" />}
+        <nav className={styles.bar} aria-label="Shortcuts">
+          <Link href="/" className={styles.tab} aria-current={tab("/") ? "page" : undefined}>
+            <Icon name="home" size="lg" />
+            <span>Home</span>
+          </Link>
+          <Link href="/requests" className={styles.tab} aria-current={tab("/requests") ? "page" : undefined}>
+            <Icon name="inbox" size="lg" />
+            <span>My requests</span>
+          </Link>
+          <Link href="/requests/new" className={`${styles.tab} ${styles.newTab}`} aria-current={tab("/requests/new") ? "page" : undefined}>
+            <span className={styles.plus}>
+              <Icon name="plus" size="lg" />
+            </span>
+            <span>New request</span>
+          </Link>
+          {hrefs.has("/calendar") && (
+            <Link href="/calendar" className={styles.tab} aria-current={tab("/calendar") ? "page" : undefined}>
+              <Icon name="calendar" size="lg" />
+              <span>Calendar</span>
+            </Link>
+          )}
+          <button ref={moreBtn} type="button" className={styles.tab} aria-expanded={open} aria-controls="portal-menu" onClick={() => toggle(moreBtn.current)}>
+            <Icon name="menu" size="lg" />
+            <span>More</span>
+          </button>
+        </nav>
         <main id="main" className={styles.main} tabIndex={-1}>
           <div className={styles.mainInner}>{children}</div>
         </main>

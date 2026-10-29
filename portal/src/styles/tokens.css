@@ -127,6 +127,8 @@
     --ring-on-green: 0 0 0 3px var(--gold-light);
     --control-h: 36px;
     --control-h-sm: 30px;
+    /* The smallest tap target: nothing extra on a wide screen, 44px on a phone (below). */
+    --tap: 0px;
     --speed: 0.12s;
     /* Motion: how things settle, a card's hover, a section arriving. */
     --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -198,5 +200,10 @@
   /* Less motion: nothing lifts, slides or shrinks (base.css also cuts every animation and transition short). */
   @media (prefers-reduced-motion: reduce) {
     :root { --lift: 0px; --nudge: 0px; --press: 1; }
+  }
+
+  /* Phones: taller controls (48px, so iOS doesn't zoom into a field) and 44px tap targets. */
+  @media (max-width: 600px) {
+    :root { --control-h: 48px; --control-h-sm: 44px; --tap: 44px; }
   }
 }

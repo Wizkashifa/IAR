@@ -26,7 +26,7 @@
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
   @media (max-width: 640px) {
     .actions.sticky {
-      position: sticky; bottom: 0; z-index: 5;
+      position: sticky; bottom: var(--bottom-bar, 0px); z-index: 5;
       margin: 0 calc(-1 * var(--s-4)); padding: var(--s-3) var(--s-4) max(var(--s-3), env(safe-area-inset-bottom, 0px));
       background: var(--bg); border-top: 1px solid var(--line);
     }

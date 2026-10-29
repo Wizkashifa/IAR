@@ -35,7 +35,7 @@
   .rowList { margin: 0; padding: 0; }
   .scheduleActions { display: inline-flex; align-items: center; gap: var(--s-3); }
   .scheduleActions > a { display: inline-block; padding: 4px 2px; }
-  .linkBtn { border: 0; background: none; padding: 4px 2px; min-height: 24px; font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
+  .linkBtn { border: 0; background: none; padding: 4px 2px; min-height: max(24px, var(--tap)); font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
   .linkBtn:hover { text-decoration: underline; }
   .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 

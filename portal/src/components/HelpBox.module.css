@@ -9,7 +9,7 @@
   .head { display: flex; align-items: center; gap: var(--s-2); color: var(--mod, var(--accent-text)); }
   .title { margin: 0; flex: 1; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); color: var(--ink); }
   .close {
-    display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -4px -8px -4px 0;
+    display: inline-flex; align-items: center; justify-content: center; width: max(32px, var(--tap)); height: max(32px, var(--tap)); margin: -4px -8px -4px 0;
     border: 0; border-radius: var(--r-sm); background: none; color: var(--ink-3); cursor: pointer;
     transition: background-color var(--speed), color var(--speed);
   }
@@ -18,7 +18,7 @@
   .steps { margin: var(--s-2) 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: var(--t-md); color: var(--ink-2); max-width: 78ch; }
   .steps li::marker { color: var(--mod, var(--accent-text)); font-weight: 700; }
   .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); }
-  .more { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; font-size: var(--t-md); font-weight: 600; color: var(--mod, var(--accent-text)); text-decoration: none; }
+  .more { display: inline-flex; align-items: center; gap: 4px; min-height: max(24px, var(--tap)); font-size: var(--t-md); font-weight: 600; color: var(--mod, var(--accent-text)); text-decoration: none; }
   .more:hover { text-decoration: underline; }
   .got {
     border: 0; background: none; padding: 4px 0; font: inherit; font-size: var(--t-md); color: var(--ink-2); cursor: pointer;
