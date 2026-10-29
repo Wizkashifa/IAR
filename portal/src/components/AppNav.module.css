@@ -126,6 +126,9 @@
 
     /* The bottom bar. The page, and a form's bottom bar, sit above it (--bottom-bar). */
     .shell { --bottom-bar: calc(64px + env(safe-area-inset-bottom, 0px)); }
+    /* On a form, its own Send bar is the bottom bar: one main action, and no way to leave a half-filled form by accident. */
+    .shell:has([data-sticky-actions]) { --bottom-bar: 0px; }
+    .shell:has([data-sticky-actions]) .bar { display: none; }
     .main { padding-bottom: calc(var(--bottom-bar) + var(--s-6)); }
     .bar {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
