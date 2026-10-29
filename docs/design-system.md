@@ -55,7 +55,7 @@ The demo first used Source Sans 3, Outfit and Fraunces. The brand guide replaced
 About 40 line icons (Lucide/Feather style, 16px, 2px stroke) mark navigation, buttons and empty states. They make scanning faster.
 
 ### 6. Dark mode done as a palette, not a filter
-Dark mode uses warm charcoal surfaces. The brand green stays on the header and the menu, and gold becomes the accent. A theme switch (Match my device, Light, Dark) in the account menu and at the bottom of the phone menu overrides the system setting.
+Dark mode uses warm charcoal surfaces, each layer a clear step lighter. The brand green stays on the header and the menu, actions stay green (a lighter green, #52C285), gold keeps meaning "needs you" and "selected", and status pills are outlined rather than filled. A theme switch (Match my device, Light, Dark) in the account menu and at the bottom of the phone menu overrides the system setting.
 
 ## How the portal does styling
 

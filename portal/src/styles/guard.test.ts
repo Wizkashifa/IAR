@@ -153,6 +153,11 @@ const PAIRS: [string, string, number][] = [
   ["--warn", "--warn-soft", 4.5],
   ["--bad", "--bad-soft", 4.5],
   ["--info", "--info-soft", 4.5],
+  // Outlined pills in dark mode put the status colour straight on the card or the page
+  ...["--ok", "--warn", "--bad", "--info", "--accent-text"].flatMap((t): [string, string, number][] => [
+    [t, "--surface", 4.5],
+    [t, "--bg", 4.5],
+  ]),
   // The menu and the header
   ["--nav-text", "--nav-bg", 4.5],
   ["--nav-group", "--nav-bg", 4.5],

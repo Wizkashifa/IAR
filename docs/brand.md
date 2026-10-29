@@ -29,9 +29,9 @@ The portal loads both fonts with `next/font` (`portal/src/app/fonts.ts`), so the
 
 | Colour | Hex | In the portal |
 |---|---|---|
-| Brand green | #008040 | The one main button on a page, the step bar, selected states (`--accent`), and Events' module colour |
+| Brand green | #008040 | The one main button on a page (a lighter #52C285 in dark mode), the step bar, selected states (`--accent`), and Events' module colour |
 | Dark green | #0B3A24 | Header and menu background (`--brand-green`, with `--nav-bg` for the menu), calendar holds |
-| Gold | #C7A154 | Means "needs you" and "selected": the "needs you" row edge and current step, the selected menu icon, today on the calendar. Also the header rule and pattern, section-title lines, and the main button in dark mode (`--gold`). Never a module colour |
+| Gold | #C7A154 | Means "needs you" and "selected": the "needs you" row edge and current step, the selected menu icon, today on the calendar. Also the header rule and pattern, and section-title lines (`--gold`). Never a module colour or a button |
 
 ### Complementary colours
 
@@ -60,7 +60,7 @@ The guide's brand green and rust are just under 4.5:1 on the tinted pill backgro
 
 `guard.test.ts` checks every text and control colour pair in light and dark, so a token that drops below these fails the build.
 
-Dark mode keeps warm charcoal surfaces and the dark green header. Gold is the accent there, and every text colour is 5:1 or more on its background.
+Dark mode keeps warm charcoal surfaces and the dark green header and menu. Actions stay green there (`--accent` #52C285, with dark green text on the main button), gold keeps meaning "needs you" and "selected", status pills are outlined in their colour, and every text colour is 5:1 or more on its background.
 
 ## When the guide changes
 
