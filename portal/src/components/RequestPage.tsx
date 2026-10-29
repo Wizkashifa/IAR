@@ -3,6 +3,7 @@ import type { Steps } from "@/lib/steps";
 import { Crumb } from "./Crumb";
 import { Icon } from "./Icon";
 import { Note } from "./Note";
+import { RequestBar } from "./RequestBar";
 import { Stages } from "./Stages";
 import styles from "./RequestPage.module.css";
 
@@ -36,6 +37,14 @@ export type RequestPageProps = {
    * `form="<the form's id>"`. On phones it takes the bottom bar's place.
    */
   bar?: { label?: ReactNode; main: ReactNode };
+  /**
+   * The main action's own panel, when it needs something typed or chosen
+   * (a payment reference, an answer, what was fixed): its fields and its
+   * button, titled by what it does ("Record the payment"). It comes last, just
+   * above the bar, and the bar's button is then a link to it
+   * (`href="#request-decide"`).
+   */
+  decide?: { title: string; body: ReactNode };
   /** The request itself, then comments and history. */
   main: ReactNode;
   /** Details, checks, calendar. Below the main column on phones. */
@@ -51,7 +60,7 @@ export type RequestPageProps = {
  * and the other actions after it. The main action waits in a bar at the
  * bottom right, so people decide after reading, with the button in reach.
  */
-export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, bar, main, side, admin }: RequestPageProps) {
+export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, notes, actions, bar, decide, main, side, admin }: RequestPageProps) {
   const leadText = (lead ?? []).filter(Boolean).join(" · ");
   return (
     <div className={styles.page}>
@@ -104,18 +113,19 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
       )}
       {admin}
 
+      {decide && (
+        <section id="request-decide" className={`${styles.panel} ${styles.actions}`} aria-labelledby="request-decide-title">
+          <h2 id="request-decide-title" className={styles.actionsTitle}>
+            {decide.title}
+          </h2>
+          {decide.body}
+        </section>
+      )}
+
       {bar && (
-        <div className={styles.bar} data-sticky-actions role="region" aria-label="Main action">
-          {bar.label && <p className={styles.barLabel}>{bar.label}</p>}
-          <div className={styles.barButtons}>
-            {actions && (
-              <a href="#request-actions" className={styles.barMore}>
-                Other options
-              </a>
-            )}
-            <div className={styles.barMain}>{bar.main}</div>
-          </div>
-        </div>
+        <RequestBar label={bar.label} more={Boolean(actions)}>
+          {bar.main}
+        </RequestBar>
       )}
     </div>
   );

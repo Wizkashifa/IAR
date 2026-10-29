@@ -348,18 +348,21 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       notes={notes}
       actions={act.panel}
       bar={act.main ? { label: rowStatusText(card, rowState(card, actor)), main: act.main } : undefined}
+      decide={act.decide}
       main={main}
       side={side}
     />
   );
 
   /**
-   * What the person looking can do now. `main` is the one main button (approve,
-   * record the payment, mark it entered), shown in the bottom bar and sending
-   * its form by id; `panel` is the rest, at the end of the page: the note,
+   * What the person looking can do now. `main` is the one main button in the
+   * bottom bar: approving or marking it entered sends its form straight away;
+   * recording a payment (and approving when a W-9 has to be confirmed) needs
+   * fields first, so the bar jumps to `decide`, a panel with those fields and
+   * the real button. `panel` is the rest, at the end of the page: the note,
    * sending back, declining, cancelling.
    */
-  function actionParts(): { panel: React.ReactNode; main?: React.ReactNode } {
+  function actionParts(): { panel: React.ReactNode; main?: React.ReactNode; decide?: { title: string; body: React.ReactNode } } {
     const approve = can("approve");
     const pay = can("pay");
     const books = can("books");
@@ -390,14 +393,23 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       return { panel: why && !why.ok ? <p className="hint">{why.reason}</p> : null };
     }
     const approveLabel = p.stage === "chair" ? `Approve for ${shortFund(p.fund)}` : p.stage === "finance" ? (isCard ? "Approve the charges" : "Approve for payment") : "Approve";
-    const main = approve ? (
-      <Button type="submit" form="act-approve" name="action" value="approve" variant="primary" icon="check">
-        {approveLabel}
+    // Approving at the finance step can need the W-9 box ticked first: then the approve form is the action's own panel.
+    const w9First = approve && p.stage === "finance" && p.w9Required;
+    const jump = (label: string) => (
+      <Button href="#request-decide" variant="primary" icon="chevD">
+        {label}
       </Button>
+    );
+    const main = approve ? (
+      w9First ? (
+        jump(approveLabel)
+      ) : (
+        <Button type="submit" form="act-approve" name="action" value="approve" variant="primary" icon="check">
+          {approveLabel}
+        </Button>
+      )
     ) : pay ? (
-      <ConfirmButton form="act-pay" variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
-        Record payment
-      </ConfirmButton>
+      jump("Record payment")
     ) : books ? (
       <form action={actOnPurchase}>
         {base}
@@ -407,54 +419,63 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </Button>
       </form>
     ) : undefined;
+    const approveForm = approve && (
+      <form id="act-approve" action={actOnPurchase} className="stack">
+        {base}
+        <div className="grid">
+          <Field label="Note" hint="Optional with Approve; needed to send it back or decline it. Everyone on the request sees it.">
+            <textarea name="note" rows={2} maxLength={1000} />
+          </Field>
+          {returnTo}
+        </div>
+        {p.stage === "finance" && p.w9Required && (
+          <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
+        )}
+        <div className="row">
+          {w9First && (
+            <Button type="submit" name="action" value="approve" variant="primary" icon="check">
+              {approveLabel}
+            </Button>
+          )}
+          <Button type="submit" name="action" value="return">
+            Send back
+          </Button>
+          <ConfirmButton variant="danger" danger name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
+            Decline
+          </ConfirmButton>
+        </div>
+      </form>
+    );
+    const payForm = pay && (
+      <form id="act-pay" action={actOnPurchase} className="stack">
+        {base}
+        {p.payment && (
+          <Note tone="warn">
+            It was already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.
+          </Note>
+        )}
+        <div className="grid">
+          <Field label="How it was paid">
+            <select name="method" defaultValue={p.delivery === "ach" ? "ACH" : "Check"}>
+              <option>Check</option>
+              <option>ACH</option>
+              <option>Bill pay</option>
+            </select>
+          </Field>
+          <Field label="Check number or ACH reference" required>
+            <input name="reference" required maxLength={60} />
+          </Field>
+        </div>
+        <div className="row end">
+          <ConfirmButton variant="primary" name="action" value="pay" title="Record this payment?" message={`${fmtMoney(total)} to ${p.payee ?? names(pc.ownerEmail)}. The requester is told it is paid.`} confirmLabel="Record payment" cancelLabel="Go back">
+            Record payment
+          </ConfirmButton>
+        </div>
+      </form>
+    );
     const panel = (
       <div className="stack">
-        {approve && (
-          <form id="act-approve" action={actOnPurchase} className="stack">
-            {base}
-            <div className="grid">
-              <Field label="Note" hint="Optional with Approve; needed to send it back or decline it. Everyone on the request sees it.">
-                <textarea name="note" rows={2} maxLength={1000} />
-              </Field>
-              {returnTo}
-            </div>
-            {p.stage === "finance" && p.w9Required && (
-              <Checkbox name="w9Received">The W-9 is on file in the restricted W-9 drive</Checkbox>
-            )}
-            <div className="row">
-              <Button type="submit" name="action" value="return">
-                Send back
-              </Button>
-              <ConfirmButton variant="danger" danger name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
-                Decline
-              </ConfirmButton>
-            </div>
-          </form>
-        )}
-
-        {pay && (
-          <form id="act-pay" action={actOnPurchase} className="stack">
-            {base}
-            <h2 className={styles.actHead}>Record the payment</h2>
-            {p.payment && (
-              <Note tone="warn">
-                It was already paid once: {p.payment.method} {p.payment.reference} on {fmtDate(p.payment.at)}. Don&apos;t pay it again; record that same payment.
-              </Note>
-            )}
-            <div className="grid">
-              <Field label="How it was paid">
-                <select name="method" defaultValue={p.delivery === "ach" ? "ACH" : "Check"}>
-                  <option>Check</option>
-                  <option>ACH</option>
-                  <option>Bill pay</option>
-                </select>
-              </Field>
-              <Field label="Check number or ACH reference" required>
-                <input name="reference" required maxLength={60} />
-              </Field>
-            </div>
-          </form>
-        )}
+        {approve && !w9First && approveForm}
 
         {sendBack && !approve && (
           <Disclosure summary="Something wrong? Send it back" open={!pay && !books}>
@@ -487,8 +508,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </div>
     );
     // Marking it entered needs nothing else: with no other options, there's no panel, just the bar.
-    const other = approve || pay || (sendBack && !approve) || cancel || again;
-    return { panel: other ? panel : null, main };
+    const other = (approve && !w9First) || (sendBack && !approve) || cancel || again;
+    const decide = payForm ? { title: "Record the payment", body: payForm } : w9First ? { title: "Approve it", body: approveForm } : undefined;
+    return { panel: other ? panel : null, main, decide };
   }
 }
 

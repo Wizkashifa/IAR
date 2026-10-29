@@ -15,7 +15,16 @@ export function ConfirmButton({ children, title, message, confirmLabel = "Yes", 
   const submit = useRef<HTMLButtonElement>(null);
   return (
     <>
-      <Button variant={variant} size={size} onClick={() => setOpen(true)}>
+      <Button
+        variant={variant}
+        size={size}
+        onClick={() => {
+          // A required field still empty: say so at the field, before asking "Are you sure?".
+          const f = submit.current?.form;
+          if (f && !f.checkValidity()) f.reportValidity();
+          else setOpen(true);
+        }}
+      >
         {children}
       </Button>
       <button ref={submit} type="submit" name={name} value={value} form={form} hidden />

@@ -156,26 +156,22 @@ export default async function MarketingDetail({
     </Panel>
   );
 
-  // The one main button, in the bottom bar; it sends the actions form (id act-mk) at the end of the page.
-  const barMain = can("answer") ? (
-    <Button type="submit" form="act-mk" name="action" value="answer" variant="primary">
-      Send answer
+  // The one main button, in the bottom bar. Starting needs nothing else, so it sends the form (id act-mk) straight away;
+  // answering, scheduling and marking it done need fields, so the bar jumps to their own panel (`decide`).
+  const jump = (label: string) => (
+    <Button href="#request-decide" variant="primary" icon="chevD">
+      {label}
     </Button>
-  ) : can("schedule") || can("ask") ? (
-    can("schedule") && (
-      <Button type="submit" form="act-mk" name="action" value="schedule" variant="primary">
-        Schedule
-      </Button>
-    )
+  );
+  const ownPanel = can("answer") ? { title: "Your answer", button: "Send answer" } : can("schedule") ? { title: "Schedule it", button: "Schedule" } : !can("start") && can("finish") ? { title: "Mark it done", button: "Mark done" } : null;
+  const barMain = ownPanel ? (
+    jump(ownPanel.button)
   ) : can("start") ? (
     <Button type="submit" form="act-mk" name="action" value="start" variant="primary">
       Start
     </Button>
-  ) : can("finish") ? (
-    <Button type="submit" form="act-mk" name="action" value="finish" variant="primary">
-      Mark done
-    </Button>
   ) : undefined;
+  const actionsBody = Actions() ?? undefined;
 
   return (
     <>
@@ -194,8 +190,9 @@ export default async function MarketingDetail({
         next={nextStepText(mc, viewer, names, { today })}
         sent={sent === "1"}
         notes={notes}
-        actions={Actions() ?? undefined}
+        actions={ownPanel ? undefined : actionsBody}
         bar={barMain ? { label: rowStatusText(mc, state), main: barMain } : undefined}
+        decide={ownPanel ? { title: ownPanel.title, body: actionsBody } : undefined}
         main={main}
         side={side}
       />
@@ -252,6 +249,9 @@ export default async function MarketingDetail({
             </Field>
           </div>
           <div className="row">
+            <Button type="submit" name="action" value="answer" variant="primary">
+              Send answer
+            </Button>
             <Button href={`/marketing/${mc.id}/edit`}>Edit the request too</Button>
             {can("cancel") && (
               <span className="push">
@@ -270,6 +270,11 @@ export default async function MarketingDetail({
         <form id="act-mk" action={actOnMarketing} className="stack">
           {base}
           <div className="row">
+            {can("schedule") && (
+              <Button type="submit" name="action" value="schedule" variant="primary">
+                Schedule
+              </Button>
+            )}
             <Button type="submit" name="action" value="ask">
               Ask a question
             </Button>
@@ -292,9 +297,9 @@ export default async function MarketingDetail({
           <form id="act-mk" action={actOnMarketing} className="stack">
             {base}
             <div className="row">
-              {/* Start, or else Mark done, is the bar's main button. */}
-              {can("finish") && can("start") && (
-                <Button type="submit" name="action" value="finish">
+              {/* Start is the bar's one-tap button; Mark done is this panel's main button when there's nothing to start. */}
+              {can("finish") && (
+                <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
                   Mark done
                 </Button>
               )}

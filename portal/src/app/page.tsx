@@ -82,8 +82,6 @@ export default async function Home() {
   return (
     <div className="stack enter">
       <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
-      {kinds.length > 0 && <NewRequestTiles kinds={kinds} compact />}
-      <WhatsNewNote />
 
       {myAway &&isCurrentOrUpcoming(myAway, today) && (
         <Note>
@@ -104,6 +102,10 @@ export default async function Home() {
         emptyTitle="All caught up"
         empty="Nothing is waiting on you right now. When a request needs you, it shows up here and in Google Chat."
       />
+
+      {/* What needs you comes first; then ways to start something, and what's new. */}
+      {kinds.length > 0 && <NewRequestTiles kinds={kinds} compact />}
+      <WhatsNewNote />
 
       <Panel
         title={

@@ -108,7 +108,9 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   // The first main action goes in the bottom bar, sending its form here by id; the rest stay below as plain buttons.
   const BAR_ACTIONS = ["confirm", "assign", "start", "resolve"];
   const barAction = primary.find((a) => BAR_ACTIONS.includes(a) && (a !== "assign" || (team && t.assigneeEmail !== actor.email)));
-  const inBar = (a: string) => a === barAction;
+  // Marking it fixed needs "What did you do?" first: the bar jumps to its own panel (decide) instead of sending it.
+  const resolveOwn = barAction === "resolve";
+  const inBar = (a: string) => a === barAction && !resolveOwn;
   const variantFor = (a: Action): "primary" | "default" => (primary.includes(a) && !barAction ? "primary" : "default");
   const startLabel = t.status === "waiting_parts" ? "Parts are in: back to work" : "Start work";
   const resolveLabel = preventive ? "Mark done" : "Mark fixed";
@@ -116,6 +118,10 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     barAction === "confirm" ? (
       <Button variant="primary" type="submit" form="ticket-confirm" formAction={actOnTicketWith.bind(null, "confirm")}>
         Yes, it&apos;s fixed
+      </Button>
+    ) : resolveOwn ? (
+      <Button href="#request-decide" variant="primary" icon="chevD">
+        {resolveLabel}
       </Button>
     ) : barAction ? (
       <Button variant="primary" type="submit" form={`ticket-${barAction}`}>
@@ -213,7 +219,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         </Field>
         {!inBar("resolve") && (
           <div>
-            <Button variant={variantFor("resolve")} type="submit">
+            <Button variant={resolveOwn ? "primary" : variantFor("resolve")} type="submit">
               {resolveLabel}
             </Button>
           </div>
@@ -254,12 +260,13 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     </form>
   );
 
+  const rowActions = primary.filter((a) => !(resolveOwn && a === "resolve"));
   const actions =
-    primary.length || more.length || cancel ? (
+    rowActions.length || more.length || cancel ? (
       <div className="stack">
-        {primary.length > 0 && <div className="row bottom">{primary.map((a) => forms[a])}</div>}
+        {rowActions.length > 0 && <div className="row bottom">{rowActions.map((a) => forms[a])}</div>}
         {(more.length > 0 || cancel) && (
-          <Disclosure summary="More" divided={primary.length > 0}>
+          <Disclosure summary="More" divided={rowActions.length > 0}>
             <div className="grid">
               {more.map((a) => forms[a])}
               {cancel}
@@ -403,6 +410,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       notes={notes}
       actions={actions}
       bar={barMain ? { label: rowStatusText(card, state), main: barMain } : undefined}
+      decide={resolveOwn ? { title: preventive ? "Mark it done" : "Mark it fixed", body: forms.resolve } : undefined}
       main={main}
       side={side}
     />
