@@ -101,6 +101,7 @@ export default async function Home() {
         title="Waiting on you"
         right={allRows.length > 0 ? <Pill tone="warn">{allRows.length}</Pill> : undefined}
         rows={allRows}
+        emptyTitle="All caught up"
         empty="Nothing is waiting on you right now. When a request needs you, it shows up here and in Google Chat."
       />
 
@@ -114,9 +115,9 @@ export default async function Home() {
         flush
       >
         {agenda === null ? (
-          <EmptyState icon="calendar">The IAR calendar couldn&apos;t be read just now. Try again in a minute.</EmptyState>
+          <EmptyState>The IAR calendar couldn&apos;t be read just now. Try again in a minute.</EmptyState>
         ) : agenda.length === 0 ? (
-          <EmptyState icon="calendar">Nothing booked at IAR today.</EmptyState>
+          <EmptyState>Nothing booked at IAR today.</EmptyState>
         ) : (
           <Rows>
             {agenda.map((a) => (

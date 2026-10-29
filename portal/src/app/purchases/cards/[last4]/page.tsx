@@ -69,7 +69,7 @@ export default async function CardPage({ params }: { params: Promise<{ last4: st
       </Panel>
       {months.length === 0 && (
         <Panel>
-          <EmptyState icon="receipt">No statements with charges on this card yet. They show here once the finance office uploads the month&apos;s statement.</EmptyState>
+          <EmptyState>No statements with charges on this card yet. They show here once the finance office uploads the month&apos;s statement.</EmptyState>
         </Panel>
       )}
       {months.map((m) => {

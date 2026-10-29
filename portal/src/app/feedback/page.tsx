@@ -54,7 +54,7 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
 
 /** Feedback as rows: each opens its own page, with the replies. `who` adds who sent it (for the admins' list). */
 function FeedbackRows({ items, who, empty }: { items: Feedback[]; who?: boolean; empty: string }) {
-  if (items.length === 0) return <EmptyState icon="message">{empty}</EmptyState>;
+  if (items.length === 0) return <EmptyState>{empty}</EmptyState>;
   return (
     <Rows>
       {items.map((f) => {

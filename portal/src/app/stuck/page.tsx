@@ -131,7 +131,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
 
       <Panel title="Waiting on someone" right={<span>{shown.length} open</span>} flush>
         {shown.length === 0 ? (
-          <EmptyState icon="check">{all.length ? "Nothing waiting here. Try another filter." : "Nothing is waiting on anyone right now."}</EmptyState>
+          <EmptyState>{all.length ? "Nothing waiting here. Try another filter." : "Nothing is waiting on anyone right now."}</EmptyState>
         ) : (
           (Object.keys(AGE_LABEL) as AgeGroup[])
             .filter((g) => groups[g].length > 0)

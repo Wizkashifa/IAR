@@ -155,7 +155,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
     return (
       <div className="stack">
         <ModuleHead accent="it" title="My work today" />
-        <EmptyState icon="wrench" action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
+        <EmptyState action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
           This page is for the IT Services and Facility Maintenance teams. To report a problem, use AV/IT/Maintenance.
         </EmptyState>
       </div>

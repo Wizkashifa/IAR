@@ -43,7 +43,7 @@ export default async function NewEvent({ searchParams }: { searchParams: Promise
       </div>
       {props.committees.length === 0 ? (
         <Panel>
-          <EmptyState icon="calendar" action={<Button href="/events">Back to Events &amp; Rooms</Button>}>
+          <EmptyState action={<Button href="/events">Back to Events &amp; Rooms</Button>}>
             You can request events for the committees and teams you&apos;re on. You aren&apos;t on one yet; ask your committee&apos;s chair to add you to its group.
           </EmptyState>
         </Panel>

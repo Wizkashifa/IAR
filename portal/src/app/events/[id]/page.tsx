@@ -289,7 +289,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
             <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState icon="receipt">None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (

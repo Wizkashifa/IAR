@@ -52,7 +52,7 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       <div className="stack">
         {head}
         <Panel>
-          <EmptyState icon="tasks">
+          <EmptyState>
             You&apos;re not on a team that gets event tasks (Marketing, IT Services, Facility Maintenance or Safety &amp; Security). The IAR office sees every queue.
           </EmptyState>
         </Panel>
@@ -122,7 +122,7 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
 
       <Panel title={`${TEAM_NAME[team]}: open tasks`} right={<span>{allOpen.length} open</span>} flush>
         {allOpen.length === 0 ? (
-          <EmptyState icon="tasks">Nothing open for {TEAM_NAME[team]}. New tasks show up here when an event is approved.</EmptyState>
+          <EmptyState>Nothing open for {TEAM_NAME[team]}. New tasks show up here when an event is approved.</EmptyState>
         ) : (
           <Rows>{open.map((q) => row(q, true))}</Rows>
         )}

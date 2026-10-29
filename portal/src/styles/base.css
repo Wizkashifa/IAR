@@ -21,7 +21,7 @@
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   h1 { font-family: var(--font-head); font-weight: 700; font-size: var(--t-h1); letter-spacing: -0.015em; line-height: 1.25; margin: 0 0 var(--s-1); text-wrap: balance; }
-  /* The home greeting: the one place for the italic serif. */
+  /* The home greeting, and the title of an empty list: the italic serif. */
   .greet { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: var(--t-greet); letter-spacing: -0.01em; line-height: 1.2; }
   h2 { font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); margin: var(--s-6) 0 var(--s-3); }
   /* A section title in the page's own flow gets a short gold line under it (decoration only). */

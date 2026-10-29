@@ -58,6 +58,8 @@
     --head-band: #f6eedb;
     --news-bg: #fffaf0;
     --news-line: #e6cf9c;
+    /* The lantern drawn on empty lists. */
+    --empty-stroke: #8a6a2c;
     --ok: #007038;
     --ok-soft: #e3f2e8;
     --warn: #9a4820;
@@ -164,6 +166,7 @@
     --mod-it-tint: #181c20;
     --news-bg: #1d1f17;
     --news-line: #4a4128;
+    --empty-stroke: #c7a154;
     --ok: #5fcb8e;
     --ok-soft: #17301f;
     --warn: #f0a070;

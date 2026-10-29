@@ -42,7 +42,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
         {crumb}
         <ModuleHead accent="it" title="Preventive schedules" />
         <Panel flush>
-          <EmptyState icon="repeat">Schedules belong to the IT Services and Facility Maintenance teams. If you think you should be on one, ask its chair.</EmptyState>
+          <EmptyState>Schedules belong to the IT Services and Facility Maintenance teams. If you think you should be on one, ask its chair.</EmptyState>
         </Panel>
       </div>
     );
@@ -76,7 +76,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
 
         <Panel title="Schedules" right={<span>{list.length}</span>} flush>
           {list.length === 0 ? (
-            <EmptyState icon="repeat">No schedules yet.</EmptyState>
+            <EmptyState>No schedules yet.</EmptyState>
           ) : (
             <ul className={styles.rowList}>
               {list.map((s) => (

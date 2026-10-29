@@ -109,7 +109,7 @@ function VendorSelect({ name, shared, restricted }: { name: string; shared: Vend
 }
 
 function VendorTable({ list, finance }: { list: Vendor[]; finance: boolean }) {
-  if (list.length === 0) return <EmptyState icon="search">No saved vendors match.</EmptyState>;
+  if (list.length === 0) return <EmptyState>No saved vendors match.</EmptyState>;
   return (
     <DataTable>
       <thead>

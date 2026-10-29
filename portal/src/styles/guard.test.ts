@@ -175,6 +175,7 @@ const PAIRS: [string, string, number][] = [
   ["--focus", "--bg", 3],
   ["--gold-light", "--nav-bg", 3],
   ["--gold-light", "--brand-green", 3],
+  ["--empty-stroke", "--surface", 3],
 ];
 
 test("token colours have enough contrast, light and dark", () => {

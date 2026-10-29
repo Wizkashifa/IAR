@@ -36,7 +36,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       <div className="stack">
         {head}
         <Panel>
-          <EmptyState icon="folder" action={admin ? <Button href="/admin?open=library#library">Connect the Policies drive</Button> : undefined}>
+          <EmptyState action={admin ? <Button href="/admin?open=library#library">Connect the Policies drive</Button> : undefined}>
             The Policies drive isn&apos;t connected yet. {admin ? "Add it in Portal Settings." : "A portal admin connects it in Portal Settings."}
           </EmptyState>
         </Panel>
@@ -72,7 +72,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       )}
       <Panel title={title} right={<span>{shown.length} {shown.length === 1 ? "file" : "files"}</span>} flush>
         {shown.length === 0 ? (
-          <EmptyState icon="search" action={q ? <Button href="/library">Show all policies</Button> : undefined}>
+          <EmptyState action={q ? <Button href="/library">Show all policies</Button> : undefined}>
             {q ? `No policy matches “${q}”.` : "This folder is empty."}
           </EmptyState>
         ) : (

@@ -68,7 +68,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
         <>
           <Panel title={`Free on ${dayText(need.date)}, ${timeText(need.start)}–${timeText(need.end)}`} right={<span>{free.length} {free.length === 1 ? "room" : "rooms"}</span>} flush>
             {free.length === 0 ? (
-              <EmptyState icon="calendar" action={<Button href="/calendar">See the calendar</Button>}>
+              <EmptyState action={<Button href="/calendar">See the calendar</Button>}>
                 No room fits that time and size. Try another time, or fewer people.
               </EmptyState>
             ) : (

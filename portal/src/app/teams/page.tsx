@@ -49,7 +49,7 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
                 ))}
               </Rows>
             ) : (
-              <EmptyState icon="search">
+              <EmptyState>
                 No team matches that. Try another word, or ask the IAR office.
               </EmptyState>
             )}
@@ -57,7 +57,7 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
         </div>
       ) : teams.length === 0 ? (
         <Panel>
-          <EmptyState icon="building">The committees and teams couldn&apos;t be read from Google Groups just now. Try again in a few minutes.</EmptyState>
+          <EmptyState>The committees and teams couldn&apos;t be read from Google Groups just now. Try again in a few minutes.</EmptyState>
         </Panel>
       ) : (
         <div className="stack">

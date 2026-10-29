@@ -51,7 +51,7 @@ export default async function NotificationsPage() {
       />
       <Panel title="Latest" right={unread > 0 ? <Pill tone="warn">{unread} unread</Pill> : items.length > 0 ? <span>All read</span> : undefined} flush>
         {items.length === 0 ? (
-          <EmptyState icon="bell">Nothing yet. You&apos;ll see requests here when they reach you or change.</EmptyState>
+          <EmptyState>Nothing yet. You&apos;ll see requests here when they reach you or change.</EmptyState>
         ) : (
           <Rows>
             {items.map((n) => (

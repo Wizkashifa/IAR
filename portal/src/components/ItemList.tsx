@@ -47,6 +47,7 @@ export function ItemList({
   rows,
   chips,
   empty = "Nothing here yet.",
+  emptyTitle,
   emptyAction,
 }: {
   title: ReactNode;
@@ -57,6 +58,8 @@ export function ItemList({
   rows?: RowData[];
   chips?: Chip[];
   empty?: ReactNode;
+  /** A title over the empty sentence ("All caught up"). */
+  emptyTitle?: string;
   emptyAction?: ReactNode;
 }) {
   const secs = sections ?? [{ label: "", rows: rows ?? [] }];
@@ -72,7 +75,7 @@ export function ItemList({
       )}
       <Panel title={title} right={right ?? <span>{open} open</span>} flush>
         {total === 0 ? (
-          <EmptyState action={emptyAction}>{empty}</EmptyState>
+          <EmptyState title={emptyTitle} action={emptyAction}>{empty}</EmptyState>
         ) : (
           secs
             .filter((s) => s.rows.length > 0)
