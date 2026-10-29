@@ -14,8 +14,8 @@ import { groupForViewer, type NeedsViewer } from "@/lib/needs-you";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
-import { mayViewDesk } from "@/lib/purchases/finance-desk";
-import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
+import { cardChecklist, mayViewDesk } from "@/lib/purchases/finance-desk";
+import { statementStore, type ImportedStatement } from "@/lib/purchases/statements";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { FlashNote } from "@/components/FlashNote";
@@ -49,13 +49,13 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const store = await cardStore();
-  const since = new Date(Date.now() - 75 * 864e5).toISOString();
   // Finance works the desk and card receipts; executives see them too.
   const desk = mayViewDesk(viewer.roles);
-  const [mine, open, recent] = await Promise.all([
+  const [mine, open, latest, cardReceipts] = await Promise.all([
     store.listByOwner(viewer.email),
     store.listOpenPurchases(),
-    desk ? store.listPurchasesSince(since) : Promise.resolve([]),
+    desk ? statementStore().then((s) => s.list(1)) : Promise.resolve([]),
+    desk ? store.listCardReceipts() : Promise.resolve([]),
   ]);
   const myPurchases = mine.filter(isPurchaseCard);
   const openPurchases = open.filter(isPurchaseCard);
@@ -147,7 +147,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           </section>
         )}
 
-        {desk && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
+        {desk && <CardChecklist statement={latest[0]} receipts={cardReceipts.filter(isPurchaseCard)} />}
       </div>
     </>
   );
@@ -171,15 +171,24 @@ function PurchaseList({ title, right, cards, rows, redact, empty, note }: { titl
   );
 }
 
-/** Which IAR cards have receipts in for last month. */
-function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCard[] }) {
-  if (list.length === 0) return null;
-  const d = new Date();
-  d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() - 1);
-  const month = d.toISOString().slice(0, 7);
+/** Which cards on the latest uploaded statement have their receipts in (lib/purchases/finance-desk.ts cardChecklist). */
+function CardChecklist({ statement, receipts }: { statement?: ImportedStatement; receipts: PurchaseCard[] }) {
+  const foot = (
+    <PanelFoot>
+      <Link href="/purchases/finance/statement">See the card statements</Link>
+    </PanelFoot>
+  );
+  if (!statement) {
+    return (
+      <Panel title="Card receipts" flush>
+        <PanelNote>No card statement is in yet. The finance office uploads it each month.</PanelNote>
+        {foot}
+      </Panel>
+    );
+  }
+  const { month, rows } = cardChecklist(statement, receipts);
   return (
-    <Panel title={`Card receipts for ${fmtMonth(month)}`} right={`${list.length} card${list.length === 1 ? "" : "s"}`} flush>
+    <Panel title={`Card receipts for the ${fmtMonth(month)} statement`} right={`${rows.length} card${rows.length === 1 ? "" : "s"}`} flush>
       <DataTable>
         <thead>
           <tr>
@@ -189,31 +198,26 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
           </tr>
         </thead>
         <tbody>
-          {list.map((c) => {
-            const sub = cards.find((x) => x.purchase.card?.last4 === c.last4 && x.purchase.card.statementMonth === month && x.status !== "cancelled");
-            return (
-              <tr key={c.last4}>
-                <td data-label="Card">
-                  <Link href={`/purchases/cards/${c.last4}`}>···{c.last4}</Link>
-                </td>
-                <td data-label="Cardholder">{c.holderName}</td>
-                <td data-label="Receipts">
-                  {sub ? (
-                    <>
-                      <Link href={`/purchases/${sub.id}`}>{sub.id}</Link> <Pill tone="ok">Sent</Pill>
-                    </>
-                  ) : (
-                    <Pill tone="warn">Not sent yet</Pill>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+          {rows.map((c) => (
+            <tr key={c.last4}>
+              <td data-label="Card">
+                <Link href={`/purchases/cards/${c.last4}`}>···{c.last4}</Link>
+              </td>
+              <td data-label="Cardholder">{c.holderName}</td>
+              <td data-label="Receipts">
+                {c.request ? (
+                  <>
+                    <Link href={`/purchases/${c.request.id}`}>{c.request.id}</Link> <Pill tone="ok">Sent</Pill>
+                  </>
+                ) : (
+                  <Pill tone="warn">Not sent yet</Pill>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </DataTable>
-      <PanelFoot>
-        <Link href="/purchases/finance/statement">See the card statements</Link>
-      </PanelFoot>
+      {foot}
     </Panel>
   );
 }

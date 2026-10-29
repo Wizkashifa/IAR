@@ -108,6 +108,9 @@ function rowStatus(card: PurchaseCard, state: RowState): string | undefined {
   if (card.status === "changes_requested") return state === "act" ? "Needs changes from you" : "With the requester";
   if (state === "act") return ACT[stage];
   if (state === "wait") return WITH[stage];
+  // Card receipts aren't paid: finance checks them, then enters them in QuickBooks.
+  if (card.purchase.kind === "card" && stage === "books") return "Checked, to enter in QuickBooks";
+  if (card.purchase.kind === "card" && stage === "done") return "Entered in QuickBooks";
   if (stage === "done" || card.status === "paid" || stage === "books") return "Paid";
   if (stage === "payment") return "Approved, to pay";
   return undefined;

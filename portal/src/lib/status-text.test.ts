@@ -52,3 +52,10 @@ test("payments: approved but not paid yet says so to everyone who isn't paying i
   assert.equal(rowStatusText(purchase("payment", { status: "approved" }), "done"), "Approved, to pay");
   assert.equal(rowStatusText(purchase("books", { status: "paid" }), "done"), "Paid");
 });
+
+test("card receipts are never called paid: checked, then entered in QuickBooks", () => {
+  const receipts = (stage: string, status: Card["status"]) => card({ type: "purchase", status, purchase: { stage, kind: "card" } as never });
+  assert.equal(rowStatusText(receipts("books", "paid"), "done"), "Checked, to enter in QuickBooks");
+  assert.equal(rowStatusText(receipts("done", "closed"), "done"), "Entered in QuickBooks");
+  assert.equal(rowStatusText(receipts("books", "paid"), "act"), "Ready to enter in QuickBooks");
+});

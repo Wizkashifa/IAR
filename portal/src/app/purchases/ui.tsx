@@ -12,6 +12,9 @@ export function purchaseStatus(card: PurchaseCard): string {
   if (card.status === "changes_requested") return "Sent back";
   if (card.status === "denied") return "Declined";
   if (card.status === "cancelled") return "Cancelled";
+  // Card receipts aren't paid: finance checks them, then enters them in QuickBooks.
+  if (p.kind === "card" && (card.status === "closed" || p.stage === "done")) return "Entered in QuickBooks";
+  if (p.kind === "card" && p.stage === "books") return "Checked, to enter in QuickBooks";
   if (card.status === "closed" || p.stage === "done") return "Complete";
   if (card.status === "paid") return "Paid";
   if (p.stage === "payment") return "Approved, to pay";
