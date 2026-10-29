@@ -6,6 +6,7 @@ import { parsePurchaseInput, type LineInput, type PurchaseInput } from "./input"
 import { purchaseContext } from "./settings";
 import { merchantName, type StatementCard } from "./statement";
 import { cardOn, sampleStatement } from "./statements";
+import type { ReceiptUpload } from "./types";
 import * as wf from "./workflow";
 
 /**
@@ -46,7 +47,7 @@ export async function samplePurchases(): Promise<Card[]> {
     return d.toISOString();
   };
   let n = 12001;
-  const make = (owner: wf.Actor, input: Omit<PurchaseInput, "attestationName">, daysAgo: number, files: string[] = [], statement?: StatementCard) => {
+  const make = (owner: wf.Actor, input: Omit<PurchaseInput, "attestationName">, daysAgo: number, files: string[] = [], statement?: StatementCard, uploads: ReceiptUpload[] = []) => {
     const cards = [
       { last4: "2093", fund: "Imam's Office Fund Expenses" },
       { last4: "1003", fund: "Cleaning Committee Expenses" },
@@ -54,11 +55,12 @@ export async function samplePurchases(): Promise<Card[]> {
     ];
     // "ach" samples stand for older requests: new ones are always paid by check.
     const ach = input.delivery === "ach";
-    const r = parsePurchaseInput({ ...input, ...(ach ? { delivery: "mail", mailingAddress: "Sample address, Raleigh, NC" } : {}), attestationName: owner.name }, { requesterName: owner.name, cards, vendors, statement });
+    const r = parsePurchaseInput({ ...input, ...(ach ? { delivery: "mail", mailingAddress: "Sample address, Raleigh, NC" } : {}), attestationName: owner.name }, { requesterName: owner.name, cards, vendors, statement, uploads, requesterEmail: owner.email });
     if (!r.ok) throw new Error(`Bad sample: ${r.errors.join("; ")}`);
     const details = ach ? { ...r.details, delivery: "ach" as const, mailingAddress: undefined } : r.details;
     const at = t(daysAgo);
-    const draft = wf.newPurchase(details, owner.email, at, files.map((name) => ({ name, size: 180_000 })));
+    // Card receipts carry their receipts on their charges; other samples a few named files.
+    const draft = wf.newPurchase(details, owner.email, at, r.receipts.length ? r.receipts : files.map((name) => ({ name, size: 180_000 })));
     draft.id = `PO-${n++}`;
     return wf.submit(draft, owner, s, at);
   };
@@ -132,25 +134,35 @@ export async function samplePurchases(): Promise<Card[]> {
   // Card receipts, from the sample statement (statements.ts): the Amazon charges lumped together, a refund still owed, at finance review.
   const statement = sampleStatement();
   const month = statement.month;
-  const fromStatement = (last4: string, choose: (merchant: string) => Partial<LineInput>) => {
+  // Each charge (or lumped group) has one receipt, uploaded as the form would.
+  const fromStatement = (last4: string, owner: wf.Actor, choose: (merchant: string) => Partial<LineInput>) => {
     const sc = cardOn(statement, last4)!;
-    return { sc, lines: sc.charges.map((ch) => ({ ref: ch.ref, accountId: "", amount: ch.amount, ...choose(merchantName(ch.description)) })) };
+    const uploads: ReceiptUpload[] = [];
+    const lines = sc.charges.map((ch) => {
+      const merchant = merchantName(ch.description);
+      const picked = choose(merchant);
+      const id = `sample-${last4}-${picked.group ?? ch.ref}`;
+      if (!uploads.some((u) => u.id === id))
+        uploads.push({ id, ownerEmail: owner.email, last4, month, at: statement.importedAt, attachment: { name: `${merchant.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-receipt.jpg`, size: 180_000 } });
+      return { ref: ch.ref, accountId: "", amount: ch.amount, receipts: [id], ...picked };
+    });
+    return { sc, lines, uploads };
   };
-  const vol = fromStatement("2093", (m) =>
+  const vol = fromStatement("2093", volunteer, (m) =>
     m === "Amazon" ? { group: "Amazon", accountId: "a78", note: "Certificates, seals and folders for nikah certificates" } :
     m === "USPS" ? { accountId: "a76", note: "Mailing signed certificates" } :
     m === "Sample Print Shop" ? { accountId: "a78", note: "Marriage certificate jackets" } :
     { accountId: "a75", note: "Imam's conference registration", flag: "repay", repayBy: "Da'wah Committee" },
   );
-  c = make(volunteer, { kind: "card", fund: "", description: "Card statement receipts", cardLast4: "2093", statementMonth: month, lines: vol.lines }, 2, ["amazon-orders.pdf", "usps.pdf", "print-shop.jpg"], vol.sc);
+  c = make(volunteer, { kind: "card", fund: "", description: "Card statement receipts", cardLast4: "2093", statementMonth: month, lines: vol.lines }, 2, [], vol.sc, vol.uploads);
   out.push(c);
 
   // Card receipts that went all the way through; one refund still outstanding.
-  const ch = fromStatement("4120", (m) =>
+  const ch = fromStatement("4120", chair, (m) =>
     m === "Target" ? { accountId: "a38", note: "Prizes for game night (returned, refund pending)", flag: "refund" } :
     { accountId: "a38", note: m === "Costco" ? "Snacks and drinks for youth night" : "Dinner for youth volunteers" },
   );
-  c = make(chair, { kind: "card", fund: "", description: "Card statement receipts", cardLast4: "4120", statementMonth: month, lines: ch.lines }, 6, ["costco.jpg", "kitchen.jpg", "target.jpg"], ch.sc);
+  c = make(chair, { kind: "card", fund: "", description: "Card statement receipts", cardLast4: "4120", statementMonth: month, lines: ch.lines }, 6, [], ch.sc, ch.uploads);
   c = wf.approve(c, finance, s, t(4));
   c = wf.recordBooks(c, finance, t(3));
   out.push(c);

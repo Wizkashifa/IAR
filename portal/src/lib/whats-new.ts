@@ -16,6 +16,18 @@ export type WhatsNew = {
 
 export const WHATS_NEW: WhatsNew[] = [
   {
+    date: "2026-10-28",
+    title: "Card charges autopopulate",
+    text: "The finance office uploads IAR's card statement each month, and your charges are filled in for you. Choose a sub-account for each charge (from any committee), say why it was bought and add its receipt right on the charge. Amazon and other repeat stores can be lumped under one receipt.",
+    href: "/purchases/new",
+  },
+  {
+    date: "2026-10-28",
+    title: "Add receipts after sending",
+    text: "Have more receipts than fit in one go? Open the request and add more, as many times as you need, until it's done.",
+    href: "/purchases",
+  },
+  {
     date: "2026-10-26",
     title: "Updates come to Google Chat",
     text: "When one of your requests moves or someone comments, you now get a Chat message right away. Prefer a morning digest, or only the bell? Change it in Notification settings.",

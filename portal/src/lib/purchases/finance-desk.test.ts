@@ -5,7 +5,7 @@ import { parsePurchaseInput, type PurchaseInput } from "./input";
 import * as pw from "./workflow";
 import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey } from "./finance-desk";
 import { QB_COLUMNS, csvCell, qbCsv, qbRows } from "./qb-csv";
-import { testCharges } from "./statement-sample";
+import { TEST_UPLOADS, testCharges } from "./statement-sample";
 
 const vol: pw.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
 const chair: pw.Actor = { email: "chair@x.org", name: "Chair", roles: ["member", "chairs"] };
@@ -33,7 +33,7 @@ function purchase(over: Partial<PurchaseInput> = {}, statement?: ReturnType<type
     attestationName: vol.name,
     ...over,
   };
-  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }], statement });
+  const r = parsePurchaseInput(input, { requesterName: vol.name, cards: [{ last4: "2093" }], vendors: [{ name: "Known Vendor", w9OnFile: true }], statement, uploads: TEST_UPLOADS, requesterEmail: vol.email });
   if (!r.ok) throw new Error(r.errors.join("; "));
   const c = pw.newPurchase(r.details, vol.email, T(0));
   c.id = `PO-${++seq}`;

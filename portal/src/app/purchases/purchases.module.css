@@ -22,6 +22,16 @@
   .lineBody { display: grid; gap: var(--s-2); min-width: 0; }
   .charge { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--s-1) var(--s-3); margin: 0; }
   .chargeMeta { color: var(--ink-3); font-size: var(--t-sm); overflow-wrap: anywhere; }
+  /* A charge's own receipts: on the request page, under the charge. */
+  .chargeFiles { margin-top: var(--s-1); font-size: var(--t-sm); }
+  /* A charge's own receipts (ChargeReceipt.tsx). */
+  .receipt { display: grid; gap: var(--s-1); justify-items: start; }
+  .receiptFiles { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-1); font-size: var(--t-sm); }
+  .receiptFiles li { display: flex; align-items: center; gap: var(--s-2); min-width: 0; color: var(--ok); }
+  .receiptName { color: var(--ink); overflow-wrap: anywhere; }
+  .receiptAdd { cursor: pointer; }
+  .receipt:focus-within .receiptAdd { box-shadow: var(--ring); }
+  .receiptError { margin: 0; color: var(--bad); font-size: var(--t-sm); }
   .chargeAmount { display: inline-flex; gap: var(--s-2); align-items: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
   @media (max-width: 640px) {
     .line { grid-template-columns: minmax(0, 1fr) auto; }

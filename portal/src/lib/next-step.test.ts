@@ -12,7 +12,7 @@ import { fallbackName, type Steps } from "./steps";
 import { groupForViewer, needsViewer } from "./needs-you";
 import { parsePurchaseInput, type PurchaseInput } from "./purchases/input";
 import * as pw from "./purchases/workflow";
-import { testCharges } from "./purchases/statement-sample";
+import { TEST_UPLOADS, testCharges } from "./purchases/statement-sample";
 import type { EventInput } from "./events/types";
 import * as ew from "./events/workflow";
 import { startCloseOut } from "./events/closeout";
@@ -62,7 +62,7 @@ function purchase(over: Partial<PurchaseInput> = {}, owner = vol, statement?: Re
     attestationName: owner.name,
     ...over,
   };
-  const r = parsePurchaseInput(input, { ...pctx, requesterName: owner.name, statement });
+  const r = parsePurchaseInput(input, { ...pctx, requesterName: owner.name, statement, uploads: TEST_UPLOADS, requesterEmail: owner.email });
   if (!r.ok) throw new Error(r.errors.join("; "));
   const c = pw.newPurchase(r.details, owner.email, T(0));
   c.id = "PO-1";

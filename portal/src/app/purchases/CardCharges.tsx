@@ -8,6 +8,7 @@ import { accountLabel, shortFund, type Account } from "@/lib/purchases/accounts"
 import { fmtMoney as money, fmtShortDay as day } from "@/lib/format";
 import { merchantName, type ChargeGroup, type StatementCharge } from "@/lib/purchases/statement";
 import styles from "./purchases.module.css";
+import { ChargeReceipt, filesOn, type ChargeFile } from "./ChargeReceipt";
 
 /** What the cardholder fills in for a charge. */
 export type ChargeInput = { accountId: string; note: string; flag: "" | "refund" | "repay"; repayBy: string };
@@ -25,7 +26,18 @@ type Props = {
   onCharge: (ref: string, patch: Partial<ChargeInput>) => void;
   onGroup: (name: string, patch: Partial<ChargeInput>) => void;
   onLump: (name: string, lump: boolean) => void;
+  /** The card and statement month the receipts are for. */
+  last4: string;
+  month: string;
+  /** Each charge's receipts, by its ref. */
+  receipts: Record<string, ChargeFile[]>;
+  /** Add a receipt to these charges (one, or a lumped group's). */
+  onReceipt: (refs: string[], f: ChargeFile) => void;
+  /** Take a receipt off these charges (one, or a lumped group's). */
+  onRemoveReceipt: (refs: string[], id: string) => void;
+  onBusy: (delta: number) => void;
 };
+
 
 /** The sub-account choices (the fund first when every fund is shown). */
 export function AccountOptions({ accounts, allFunds }: { accounts: Account[]; allFunds: boolean }) {
@@ -42,9 +54,12 @@ export function AccountOptions({ accounts, allFunds }: { accounts: Account[]; al
  * The charges on a card's statement, for card receipts. Date, merchant and
  * amount are the statement's and can't be changed; each charge (or each
  * lumped merchant, such as Amazon) gets a sub-account from any fund and
- * why it was bought. Every charge needs its receipt, attached below.
+ * why it was bought, and its receipt, uploaded right there.
  */
-export function CardCharges({ charges, groups, values, lumped, accounts, allFunds, placeholder, onCharge, onGroup, onLump }: Props) {
+export function CardCharges({ charges, groups, values, lumped, accounts, allFunds, placeholder, onCharge, onGroup, onLump, last4, month, receipts, onReceipt, onRemoveReceipt, onBusy }: Props) {
+  const receiptFor = (refs: string[], label: string) => (
+    <ChargeReceipt last4={last4} month={month} files={filesOn(receipts, refs)} label={label} onAdd={(f) => onReceipt(refs, f)} onRemove={(id) => onRemoveReceipt(refs, id)} onBusy={onBusy} />
+  );
   const groupOf = (c: StatementCharge) => groups.find((g) => g.refs.includes(c.ref));
   const shown = new Set<string>();
   let n = 0;
@@ -106,10 +121,11 @@ export function CardCharges({ charges, groups, values, lumped, accounts, allFund
                   {accountSelect(first?.accountId ?? "", (v) => onGroup(g.name, { accountId: v }), label)}
                   {whyField(first?.note ?? "", (v) => onGroup(g.name, { note: v }), label, `e.g. supplies for the month's ${g.name === "Amazon" ? "programs" : "work"}`)}
                 </div>
+                {receiptFor(g.refs, label)}
                 <p className="hint">One receipt can cover them all, such as your {g.name} order history for the month.</p>
               </div>
               <div className={styles.lineRemove}>
-                <Button variant="quiet" size="small" onClick={() => onLump(g.name, false)} aria-label={`Split the ${g.name} charges into single charges`}>
+                <Button size="small" onClick={() => onLump(g.name, false)} aria-label={`Split the ${g.name} charges into single charges`}>
                   Split up
                 </Button>
               </div>
@@ -155,10 +171,11 @@ export function CardCharges({ charges, groups, values, lumped, accounts, allFund
                   </Field>
                 )}
               </div>
+              {receiptFor([c.ref], label)}
             </div>
             <div className={styles.lineRemove}>
               {firstOfGroup && (
-                <Button variant="quiet" size="small" onClick={() => onLump(g.name, true)} aria-label={`Lump the ${g.refs.length} ${g.name} charges together`}>
+                <Button size="small" onClick={() => onLump(g.name, true)} aria-label={`Lump the ${g.refs.length} ${g.name} charges together`}>
                   Lump {g.refs.length} together
                 </Button>
               )}
