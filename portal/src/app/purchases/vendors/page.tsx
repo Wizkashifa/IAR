@@ -57,7 +57,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
         {restricted.length > 0 && (
           <Panel title="Social & Welfare payees" right={<Pill tone="bad">Restricted</Pill>} flush>
-            <PanelNote>Only Social &amp; Welfare and the finance office see these. They&apos;re never offered on other committees&apos; requests, so nobody can find out who received help.</PanelNote>
+            <PanelNote>Only Social &amp; Welfare, the finance office and executives see these. They&apos;re never offered on other committees&apos; requests, so nobody else can find out who received help.</PanelNote>
             <VendorTable list={restricted.filter(match)} finance={finance} />
           </Panel>
         )}

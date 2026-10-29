@@ -40,8 +40,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const viewer = await requireViewer();
   const actor = ticketActor(viewer);
   const office = actor.roles.includes("office");
-  // The office sees both teams' queues; everyone else only the teams they're on.
-  const teams: TicketTeam[] = office ? ["facilities", "it"] : teamsOf(actor);
+  // The office and executives see both teams' tickets (executives to look, not to work them); everyone else only the teams they're on.
+  const teams: TicketTeam[] = office || actor.roles.includes("executive") ? ["facilities", "it"] : teamsOf(actor);
   const worker = teams.length > 0;
   const store = await cardStore();
   const [mine, open, needsActor] = await Promise.all([store.listByOwner(viewer.email), store.listByType("ticket"), actorFor(viewer)]);
@@ -92,9 +92,11 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
             {teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill>}
           </Link>
           <span className={styles.spacer} />
-          <Link href="/it-maintenance/schedules" className={styles.quiet}>
-            Preventive schedules
-          </Link>
+          {(office || teamsOf(actor).length > 0) && (
+            <Link href="/it-maintenance/schedules" className={styles.quiet}>
+              Preventive schedules
+            </Link>
+          )}
           {canImportJira(actor) && (
             <Link href="/it-maintenance/import" className={styles.quiet}>
               Import from Jira

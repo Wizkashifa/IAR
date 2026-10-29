@@ -1,6 +1,6 @@
 # Launching and running the portal
 
-The portal is live at https://portal.islam1.org for everyone at IAR. Purchase requests are still a demo: only the testers (`portal-role-beta@`) use them for real, and an admin makes them live for everyone with one switch in Portal Settings.
+The portal is live at https://portal.islam1.org for everyone at IAR, payment requests included.
 
 This is how the portal was put on IAR's Google Cloud, and how to set it up again or check it. One command, **go-live** (`ops/go-live/`, see its [README](../ops/go-live/README.md)), does the setup. It runs on an IAR super admin's computer, shows every change before making it, and is safe to run again. [setup.md](setup.md) describes each step by hand, as a reference and a fallback.
 
@@ -17,14 +17,14 @@ This is how the portal was put on IAR's Google Cloud, and how to set it up again
 | --- | --- |
 | Sign-in with @islam1.org for everyone; alerts in Google Chat, with each person's notification choices and quiet overnight | Facility rentals and the public rental page |
 | Home ("Waiting on you", Today at IAR, What's new), My Requests, Search, Help, Feedback, Out of office | Budget and Shura dashboard: still being designed |
-| Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest and the Finance desk: a demo for everyone but the testers until an admin turns demo mode off | Library beyond policies (Shura documents, each committee's drive) |
+| Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest and the Finance desk | Library beyond policies (Shura documents, each committee's drive) |
 | Events & Rooms on IAR's room calendars, with asks for a booked time; the Calendar and Find a room | Asset tracker |
 | Marketing Requests with file uploads, Team Queues, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
 | IT & Maintenance, with the open Jira issues imported, and My work today for the facilities and IT teams | |
 | Who's who, the Library (IAR's policies), What's stuck (office and executives), "Request this again" | |
 | Portal measures for the portal admins (counts only) | |
 
-Social & Welfare aid goes through Purchase Requests, restricted to S&W and finance; there's no separate module. People show by their names from IAR's Workspace directory, never by email address.
+Social & Welfare aid goes through Purchase Requests, restricted to S&W, finance and the executives; there's no separate module. People show by their names from IAR's Workspace directory, never by email address.
 
 ## Setting it up from scratch
 
@@ -38,7 +38,7 @@ Only needed to rebuild the portal in a new project. For the live portal, go-live
 | IAR's **billing account** ID | Treasurer | go-live links it after asking |
 | Project ID and region | Super admin | Defaults: `iar-portal`, `us-east1` |
 | The **members Sheet**, filled in | Office admins | `go-live --template --apply` makes it in your Drive, or upload `ops/go-live/members-template.xlsx`. Tabs: Groups, Pillars, Funds, Cards (last 4 only), Testers, Rooms. It's used once; after launch Google Groups is the record |
-| **Testers**: 5–10 people | Super admin | They try what's still a demo for real. At least one chair, one finance person and one regular requester |
+| **Testers**: 5–10 people | Super admin | They try new parts of the portal first. At least one chair, one finance person and one regular requester |
 | The **room list** checked against IAR's room resources, and interim answers on the room-policy gaps (committee room 240 or 280, lead times, which rooms can be booked) | Office | Go in the Sheet's Rooms tab |
 | The facilities lead's **Jira CSV export** of open issues, and a one-hour **session with the facilities team** using the questions in [facilities-move.md](facilities-move.md) | Facilities lead, super admin | The export is imported after deploy; the session decides what else they need before Jira is retired |
 | The **Policies Shared Drive**, with the room reservation policy in it | Office, Shura secretary | The Library lists it read-only. Put "Review by YYYY-MM-DD" in a file's Drive description to show its review date |
@@ -67,7 +67,7 @@ Only needed to rebuild the portal in a new project. For the live portal, go-live
 
 ## Smoke test
 
-Use people in these roles: A (a committee member), B (that committee's chair), D (its director), E (an executive), F (finance), M (marketing), S (facilities), O (office). For purchase requests in demo mode, A must be a tester (in `portal-role-beta@`), so the alerts go out.
+Use people in these roles: A (a committee member), B (that committee's chair), D (its director), E (an executive), F (finance), M (marketing), S (facilities), O (office).
 
 **Sign-in and alerts**
 - [ ] Someone signed in to Google with an @islam1.org account goes straight in, with no account picker; a personal Gmail account is turned away.
@@ -114,7 +114,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] O sees a request waiting over a week in What's stuck, sends a reminder, and the person it waits on gets a Chat message.
 - [ ] Who's who lists every committee with its chair; the Library lists the policies, and searching the Library for a word from inside one finds it.
 - [ ] Someone sets updates to "In the morning digest" in Notification settings; the next morning's digest includes them.
-- [ ] Portal measures (`/admin/measures`) shows the test requests in this week's counts.
+- [ ] Portal measures (`/measures`) shows the test requests in this week's counts.
 - [ ] The daily job ran this morning (`gcloud scheduler jobs describe portal-daily --location us-east1` shows a recent success).
 - [ ] Cloud Run logs (`gcloud run services logs read iar-portal --region us-east1`) show no "failed" lines.
 
@@ -122,9 +122,8 @@ Delete the test requests' Drive files afterwards; the requests themselves stay a
 
 ## Running it
 
-- **Every week:** read the feedback at `/feedback` (reply there; the sender hears in Chat) and the counts at `/admin/measures`: where requests wait longest, how often they're sent back, and which forms people start but don't send. Check What's stuck for anything over a week.
+- **Every week:** read the feedback at `/feedback` (reply there; the sender hears in Chat) and the counts at `/measures`: where requests wait longest, how often they're sent back, and which forms people start but don't send. Check What's stuck for anything over a week.
 - **Changes:** merging a pull request that changes `portal/` deploys it (Cloud Build → History shows each one). Add a line to What's new (`portal/src/lib/whats-new.ts`) for anything people will notice.
-- **Purchase requests:** when finance is ready, turn off "Purchase requests are a demo" in Portal Settings. Every request is then real, and alerts go out for everyone.
 - **Facilities:** run IT & Maintenance and Jira side by side for two weeks, with My work today on their phones, then retire Jira. If the facilities lead needs boards, sprints or reports, those come next.
 - **People:** Google Groups is the record. A Members page in the portal, where chairs manage their own committee, is the planned next step, so nobody needs the Admin console for it.
 

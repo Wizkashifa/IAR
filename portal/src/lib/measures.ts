@@ -1,7 +1,7 @@
 /**
  * Portal measures: how the portal is being used, counted from the portal's own
  * requests and feedback. No outside analytics, and nothing about who did what:
- * only counts and times. Plain functions; the admin page (app/admin/measures)
+ * only counts and times. Plain functions; the Portal measures page (app/measures)
  * reads the stores and passes the data in.
  */
 import type { CardType } from "./cards";

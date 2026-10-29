@@ -3,7 +3,6 @@ import { revalidatePath } from "next/cache";
 import { requireViewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { purchaseContext } from "@/lib/purchases/settings";
-import { purchaseAlertsForPeople } from "@/lib/purchases/demo";
 import { saveStatementPdf } from "@/lib/purchases/drive";
 import { statementNotices } from "@/lib/purchases/notices";
 import { matchCards, parseStatement } from "@/lib/purchases/statement";
@@ -110,12 +109,7 @@ async function confirmStatement(month: string): Promise<StatementState> {
 
   const ctx = await purchaseContext();
   const notices = statementNotices(imported, ctx.cards, viewer.email);
-  // In demo mode only testers get a Chat message; everyone else sees it on the bell.
-  const sends = await purchaseAlertsForPeople(notices.flatMap((n) => ("email" in n.to ? [n.to.email] : [])));
-  await deliver(
-    notices.map((n) => ("email" in n.to && sends(n.to.email) ? n : { ...n, alert: false, bellOnly: true })),
-    viewer.email,
-  );
+  await deliver(notices, viewer.email);
   revalidatePath("/purchases/finance/statement");
   return { stage: "done", month: imported.month, told: notices.length, unknown: matchCards(imported, ctx.cards).unknown.length };
 }

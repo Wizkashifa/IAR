@@ -7,6 +7,7 @@ import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
 import { Crumb } from "@/components/Crumb";
 import { LinkCard, LinkCards } from "@/components/LinkCard";
+import { Stat, Stats } from "@/components/Stat";
 import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
 import { SearchForm } from "@/components/SearchForm";
 import { Pill } from "@/components/Pill";
@@ -106,6 +107,15 @@ export function Pieces() {
           <FileList files={[{ name: "receipt-costco.jpg", url: "https://drive.google.com", size: 180_000, by: "you", at: "2026-10-24T14:00:00Z" }, { name: "flyer-draft.pdf", size: 2_400_000 }]} empty="No files yet." />
           <FileList files={[]} empty="No photos yet." />
         </div>
+      </Panel>
+
+      <Panel title="Headline numbers" right="components/Stat.tsx">
+        <Stats label="Examples">
+          <Stat label="Open requests" value={42} note="Across every module" href="/dev/styles" />
+          <Stat label="Waiting over a week" value={3} note="Oldest: 12 days" tone="warn" />
+          <Stat label="Paid this month" value="$4,210" note="18 requests" tone="ok" />
+          <Stat label="Late tickets" value={1} tone="bad" />
+        </Stats>
       </Panel>
 
       <Panel title="Page pieces" right="Crumb, LinkCard, Pill small, PanelNote, PanelFoot, .hint">

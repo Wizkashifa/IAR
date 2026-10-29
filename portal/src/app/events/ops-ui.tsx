@@ -63,7 +63,7 @@ export function TaskButtons({ card, task, roles, email, back, people = [] }: { c
             <Field label="Note for the requester (optional)">
               <input name="note" maxLength={1000} placeholder={task.team === "marketing" ? "e.g. Flyer posted; link to the listing" : "e.g. Set up and tested"} />
         </Field>
-            <div><Button size="small" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
+            <div><Button size="small" variant="primary" type="submit">Done{mine || !task.assignee ? "" : ` (for ${task.assignee})`}</Button></div>
           </form>
         </Disclosure>
       )}
@@ -73,7 +73,7 @@ export function TaskButtons({ card, task, roles, email, back, people = [] }: { c
             {base}
             <input type="hidden" name="step" value="assign" />
             <PeoplePicker name="assignee" label={`Who on ${TEAM_NAME[task.team]} should have it`} required people={people.filter((p) => p.email !== task.assignee?.toLowerCase())} />
-            <div><Button size="small" type="submit">Hand it over</Button></div>
+            <div><Button size="small" variant="primary" type="submit">Hand it over</Button></div>
           </form>
         </Disclosure>
       )}

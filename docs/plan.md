@@ -237,7 +237,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | Phase | Scope | Gate to start the next phase |
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
-| 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. Phase 1 also brought in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; piloted with a small group of testers, now live for everyone. Purchase requests stay a demo until finance is ready | Live; old Program Request form retired, Requisition form retired once purchase requests go live |
+| 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. Phase 1 also brought in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; piloted with a small group of testers, now live for everyone. Purchase requests live for everyone too | Live; old Program Request form retired, Requisition form ready to retire |
 | 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
 | 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
@@ -279,13 +279,13 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [x] Google Cloud project, Firestore, OAuth client and domain-wide delegation: run `go-live` (`ops/go-live/`, `docs/launch.md`)
 - [x] Purchase Requests module on the shell
 - [x] Portal-wide notifications (bell plus a Google Chat message to whoever acts next, email as the fallback), search by request number or words, a feedback button on every page, with replies, and out-of-office handoff of approvals
-- [ ] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6)
+- [x] Set up the IAR Portal Chat app, its spaces, and the portal mailbox (go-live steps 3 and 6): the Chat app sends people their alerts
 - [x] Event cards with calendar holds and rule flags, and asking for a booked time
 - [x] Marketing Requests, Team Queues, the daily run sheet, event close-out and IT & Maintenance (with a one-time Jira import), built ahead of their phases
 - [x] The daily job: purchase reminders and morning digest, ask reminders and escalation, close-out, preventive maintenance
 - [x] `go-live`: one command that sets up Workspace and Cloud after showing every change, and the members template
-- [ ] Office fills in the members Sheet; go-live creates the groups and service accounts
-- [ ] Office checks the room list against IAR's room resources; go-live shares the room calendars with the portal
+- [x] Members added to the portal's Google Groups (by hand in Google Groups rather than through the members Sheet)
+- [x] Room list checked against IAR's room resources, and the room calendars shared with the portal
 - [ ] Review the rules table and approvers with the office
 - [ ] Draft the policy refresh for the Shura
 - [ ] Create the shared drives and add the access groups as members (Library)

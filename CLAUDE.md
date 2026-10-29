@@ -12,7 +12,7 @@ Internal portal for the Islamic Association of Raleigh. Read `README.md`, then `
 - **Owned by IAR, not a person.** Admin access comes from Google Groups (`portal-role-admin@`), and the Cloud project needs at least two owners.
 - **Facilities moves into the portal.** The paid facilities team works in Jira today. The goal is to bring them into the portal's IT & Maintenance module, so requesters can follow their requests. Keeping Jira and syncing with it is the fallback only if moving doesn't work out.
 - **Budget and Shura dashboard aren't ready for production.** They stay "planned" in the live portal until they're picked up again.
-- **Live, except purchase requests.** Everyone at islam1.org uses the portal. Purchase requests stay a demo (a banner, and alerts only for the testers in `portal-role-beta@`) until an admin turns demo mode off in Portal Settings. Only modules marked `live` in `portal/src/lib/modules.ts` are usable. Merging a change to `portal/` deploys it.
+- **Live, including purchase requests.** Everyone at islam1.org uses the portal, payment requests included: there is no demo mode. Only modules marked `live` in `portal/src/lib/modules.ts` are usable. Merging a change to `portal/` deploys it.
 
 ## Working in the code
 

@@ -8,7 +8,7 @@ import { audit } from "./audit";
 import { authOptions } from "./auth";
 import { DEV_PERSONAS, isDevAuth } from "./dev";
 import { directory, lookupGroups } from "./groups";
-import { ORG, directRolesFromGroups, mayUsePortal, rolesFromGroups, type Role } from "./org";
+import { directRolesFromGroups, mayUsePortal, rolesFromGroups, type Role } from "./org";
 import { portalSettings } from "./portal-settings";
 import { type Membership, directedTeamGroups, membershipsOf, teamRoles } from "./teams";
 
@@ -20,14 +20,14 @@ import { type Membership, directedTeamGroups, membershipsOf, teamRoles } from ".
  * set when a portal admin is signed in as this person to troubleshoot: the
  * portal is theirs, and what's saved says the admin did it (lib/act-as.ts).
  */
-export type Viewer = { email: string; name: string; roles: Role[]; actingRoles: Role[]; teams: Membership[]; directs: string[]; dev: boolean; supportAdmin?: { email: string; name: string }; tester: boolean };
+export type Viewer = { email: string; name: string; roles: Role[]; actingRoles: Role[]; teams: Membership[]; directs: string[]; dev: boolean; supportAdmin?: { email: string; name: string } };
 
 async function build(email: string, name: string, groups: string[], dev: boolean): Promise<Viewer> {
   const [dir, settings] = await Promise.all([directory(), portalSettings()]);
   const teams = membershipsOf(dir, email);
   const fromTeams: Role[] = [...teamRoles(teams)];
   if (settings.cards.some((c) => c.holderEmail === email.toLowerCase())) fromTeams.push("cardholders");
-  return { email, name, roles: rolesFromGroups(groups, fromTeams), actingRoles: directRolesFromGroups(groups, fromTeams), teams, directs: directedTeamGroups(dir, email), dev, tester: groups.some((g) => g.toLowerCase() === ORG.testersGroup) };
+  return { email, name, roles: rolesFromGroups(groups, fromTeams), actingRoles: directRolesFromGroups(groups, fromTeams), teams, directs: directedTeamGroups(dir, email), dev };
 }
 
 /** Someone else as the portal would see them, from their groups (who can be named in a comment, lib/mentions.ts). */

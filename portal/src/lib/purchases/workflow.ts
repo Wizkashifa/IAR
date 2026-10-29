@@ -8,7 +8,7 @@
  * - A chair's own request goes to another chair, then a vice chair; it is never skipped.
  * - Requests at or above the executive threshold need executive approval.
  * - Card receipts get an after-the-fact finance review (the money is spent).
- * - Social & Welfare requests are restricted to S&W and finance.
+ * - Social & Welfare requests are restricted to S&W, finance and executives.
  * - A fund's chairs, vice chairs and directors can see its requests (directors not S&W's).
  * - Co-chairs: the request names one chair; any other chair of the fund's team can act too.
  * - A director can take the chair step for their committees, alongside the
@@ -96,7 +96,7 @@ export function canViewDetail(card: PurchaseCard, viewer: Actor & { seeAll?: boo
     same(p.approverEmail, viewer.email) ||
     Boolean(coveringApprover(card, viewer)) ||
     p.approvals.some((a) => same(a.by, viewer.email));
-  if (p.restricted) return involved || viewer.roles.includes("finance") || viewer.roles.includes("sw");
+  if (p.restricted) return involved || viewer.roles.includes("finance") || viewer.roles.includes("sw") || viewer.roles.includes("executive");
   return (
     involved ||
     Boolean(viewer.oversees?.includes(p.fund)) ||

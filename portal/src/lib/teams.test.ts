@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FUNDS } from "./purchases/accounts";
 import { directRolesFromGroups, ORG, roleMailbox } from "./org";
-import { checkCard, checkTeamFund, purchaseAlertsSend, purchasesDemoOn } from "./settings-rules";
+import { checkCard, checkTeamFund } from "./settings-rules";
 import {
   type Directory,
   type DirectoryGroup,
@@ -184,13 +184,4 @@ test("portal people: everyone in the portal's groups; with an access group only 
   const groups = [g("portal-team-youth@x.org", ["Chair@x.org", "member@x.org"]), g("portal-role-beta@x.org", ["chair@x.org", "tester@x.org"]), g("portal-role-admin@x.org", ["admin@x.org"]), g("portal-team-women@x.org", ["portal-role-beta@x.org"], "GROUP")];
   assert.deepEqual(portalPeopleFrom(groups), ["admin@x.org", "chair@x.org", "member@x.org", "tester@x.org"]);
   assert.deepEqual(portalPeopleFrom(groups, { group: "portal-role-beta@x.org", admins: "portal-role-admin@x.org" }), ["admin@x.org", "chair@x.org", "tester@x.org"]);
-});
-
-test("payment requests demo: on until an admin turns it off; then only testers' requests send alerts", () => {
-  assert.equal(purchasesDemoOn({}), true);
-  assert.equal(purchasesDemoOn({ purchasesDemo: true }), true);
-  assert.equal(purchasesDemoOn({ purchasesDemo: false }), false);
-  assert.equal(purchaseAlertsSend({ demo: true, ownerIsTester: false }), false);
-  assert.equal(purchaseAlertsSend({ demo: true, ownerIsTester: true }), true);
-  assert.equal(purchaseAlertsSend({ demo: false, ownerIsTester: false }), true);
 });

@@ -44,7 +44,8 @@ const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: 
 export default async function QueuesPage({ searchParams }: { searchParams: Promise<{ team?: string; all?: string; ok?: string; error?: string }> }) {
   const sp = await searchParams;
   const viewer = await requireViewer();
-  const teams = queueTeamsFor(viewer.actingRoles, viewer.roles.includes("admins"));
+  // Admins and executives see every queue; only the teams themselves (and the office) work them.
+  const teams = queueTeamsFor(viewer.actingRoles, viewer.roles.includes("admins") || viewer.roles.includes("executive"));
   const head = <ModuleHead title="Team Queues" lead="Your team's open tasks across every approved event, soonest due first. Tasks unlock when an event is approved." />;
   if (!teams.length) {
     return (

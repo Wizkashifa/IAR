@@ -306,7 +306,7 @@ export default async function MarketingDetail({
                 <input type="hidden" name="action" value="assign" />
                 <PeoplePicker name="assignee" label="Who on the marketing team should work on it" required people={others.map((e) => ({ email: e, name: same(e, viewer.email) ? `Me (${names(e)})` : names(e) }))} />
                 <div>
-                  <Button type="submit">Hand it over</Button>
+                  <Button variant="primary" type="submit">Hand it over</Button>
                 </div>
               </form>
             </Disclosure>

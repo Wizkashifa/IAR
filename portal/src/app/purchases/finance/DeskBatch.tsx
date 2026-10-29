@@ -39,7 +39,8 @@ const ACTION: Record<DeskTab, { value: string; label: string; title: (n: number)
  * ticked ones. The form posts to the finance desk action, which runs each
  * request through the workflow on its own.
  */
-export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; rows: DeskRow[]; back: string; action: (form: FormData) => Promise<void>; title: string }) {
+/** `readOnly`: the list alone, without tick boxes or actions, for executives (and admins) who can see the desk but not work it. */
+export function DeskBatch({ tab, rows, back, action, title, readOnly }: { tab: DeskTab; rows: DeskRow[]; back: string; action: (form: FormData) => Promise<void>; title: string; readOnly?: boolean }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const on = rows.filter((r) => picked.has(r.key));
   const all = rows.length > 0 && on.length === rows.length;
@@ -56,7 +57,7 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
       <Panel
         title={title}
         right={
-          rows.length > 0 ? (
+          rows.length > 0 && !readOnly ? (
             <Checkbox checked={all} onChange={() => setPicked(all ? new Set() : new Set(rows.map((r) => r.key)))} quiet>Select all {rows.length}</Checkbox>
           ) : undefined
         }
@@ -76,14 +77,14 @@ export function DeskBatch({ tab, rows, back, action, title }: { tab: DeskTab; ro
                 status={r.status}
                 state="act"
                 right={<span className={styles.amount}>{r.amountText}</span>}
-                lead={<label className={styles.pick}><input type="checkbox" name="pick" value={r.key} checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Select ${r.id}, ${r.title}`} /></label>}
+                lead={readOnly ? undefined : <label className={styles.pick}><input type="checkbox" name="pick" value={r.key} checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Select ${r.id}, ${r.title}`} /></label>}
               />
             ))}
           </ul>
         )}
       </Panel>
 
-      {rows.length > 0 && (
+      {rows.length > 0 && !readOnly && (
         <Panel title={on.length ? `${on.length} selected · ${money(total)}` : "Nothing selected yet"} level={3}>
           {on.length === 0 ? (
             <p className="hint">Tick the requests above, or Select all, then choose what to do with them.</p>

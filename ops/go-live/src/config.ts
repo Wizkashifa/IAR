@@ -100,6 +100,8 @@ export const DRIVES: DriveDef[] = [
       { email: sa, type: "user", role: DRIVE_ROLE.contentManager },
       { email: role("finance", d), type: "group", role: DRIVE_ROLE.contentManager },
       { email: role("office", d), type: "group", role: DRIVE_ROLE.contentManager },
+      // Executives can see every card receipt and statement in the portal (read only), so they can open the files too.
+      { email: role("executive", d), type: "group", role: "reader" },
     ],
   },
   {

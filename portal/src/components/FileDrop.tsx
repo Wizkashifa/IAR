@@ -58,7 +58,7 @@ export function FileDrop({ name, label, hint, error, required, accept, multiple 
       {camera && (
         <div>
           <input ref={cam} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden="true" aria-label="Take a photo" onChange={(e) => add(Array.from(e.currentTarget.files ?? []))} />
-          <Button size="small" icon="plus" onClick={() => cam.current?.click()}>
+          <Button icon="plus" onClick={() => cam.current?.click()}>
             Take a photo
           </Button>
         </div>

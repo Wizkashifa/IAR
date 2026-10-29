@@ -19,9 +19,9 @@ export function vendorKey(name: string, restricted: boolean): string {
   return restricted ? `sw-${vendorSlug(name)}` : vendorSlug(name);
 }
 
-/** S&W and finance see Social & Welfare payees. Pass the person's own group roles. */
+/** S&W, finance and executives see Social & Welfare payees. Pass the person's own group roles. */
 export function seesRestrictedVendors(roles: Role[]): boolean {
-  return roles.includes("finance") || roles.includes("sw");
+  return roles.includes("finance") || roles.includes("sw") || roles.includes("executive");
 }
 
 /** Split the store's list into the shared one and the S&W one (empty unless the person may see it). */

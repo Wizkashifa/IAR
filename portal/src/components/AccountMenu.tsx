@@ -7,7 +7,7 @@ import { Icon } from "./Icon";
 import { ThemeSwitch } from "./ThemeSwitch";
 import styles from "./AccountMenu.module.css";
 import { initials } from "@/lib/text";
-import { stopActingAs } from "@/app/admin/actions";
+import { STOP_ACT_AS } from "@/lib/links";
 
 /** `supportAdmin`: the admin's name, when an admin is signed in as this person (lib/act-as.ts). */
 export type Account = { name: string; email: string; away: boolean; dev: boolean; supportAdmin?: string };
@@ -67,7 +67,7 @@ export function AccountLinks({ account, onPick, withAway = true }: { account: Ac
         <ThemeSwitch />
       </div>
       {account.supportAdmin && (
-        <form action={stopActingAs} className={styles.form}>
+        <form action={STOP_ACT_AS} method="post" className={styles.form}>
           <button type="submit" className={styles.link}>
             <Icon name="x" />
             <span>Stop signing in as {account.name}</span>

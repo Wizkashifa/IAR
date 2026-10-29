@@ -26,6 +26,7 @@ import {
 } from "@/lib/measures";
 import { requireViewer } from "@/lib/viewer";
 import styles from "./measures.module.css";
+import { RightNow } from "./RightNow";
 import { historyOf } from "@/lib/kinds";
 import { DataTable, cell } from "@/components/DataTable";
 
@@ -53,13 +54,14 @@ function Bar({ value, of, label }: { value: number; of: number; label: string })
 }
 
 /**
- * Admins only: how the portal is being used, counted from its own requests
+ * Admins and executives: how the portal is being used, counted from its own requests
  * and feedback (lib/measures.ts), over the last 6 weeks, 3 months or 12
  * months (?range=). Counts and times only; nothing here says who did what.
  */
 export default async function MeasuresPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const viewer = await requireViewer();
-  if (!viewer.actingRoles.includes("admins")) redirect("/");
+  const admin = viewer.actingRoles.includes("admins");
+  if (!admin && !viewer.roles.includes("executive")) redirect("/");
 
   const range = rangeOf((await searchParams).range);
   const rangeLabel = RANGES.find((r) => r.id === range)!.label;
@@ -67,12 +69,12 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
   const { by, periods, start } = periodsFor(range, now);
   const since = todayLocal(new Date(start));
   const [all, feedback, started] = await Promise.all([
-    (await cardStore()).listRecent(RECENT).then((xs) => xs.map(toMeasure)),
+    (await cardStore()).listRecent(RECENT),
     (await feedbackStore()).list(1000),
     (await formStartStore()).since(since),
   ]);
-  // Every panel looks at the same range: requests sent in it, and feedback sent in it.
-  const cards = all.filter((c) => sentSince(c, start));
+  // Every panel over time looks at the same range: requests sent in it, and feedback sent in it.
+  const cards = all.map(toMeasure).filter((c) => sentSince(c, start));
 
   const rows = requestsPer(cards, periods);
   const rowTotal = (w: (typeof rows)[number]) => MEASURED.reduce((a, t) => a + w.counts[t], 0);
@@ -86,9 +88,11 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
     <>
       <ModuleHead
         title="Portal measures"
-        lead="How the portal is being used, counted from its own requests and feedback. Counts and times only: nothing here says who did what."
+        lead="Everything moving through the portal right now, then how it's being used over time, counted from its own requests and feedback. Every number opens the requests behind it."
       />
-      <Chips label="Show" chips={RANGES.map((r) => ({ label: r.label, href: r.id === "6w" ? "/admin/measures" : `/admin/measures?range=${r.id}`, on: r.id === range }))} />
+      <RightNow cards={all} />
+      <h2>Over time</h2>
+      <Chips label="Show" chips={RANGES.map((r) => ({ label: r.label, href: r.id === "6w" ? "/measures" : `/measures?range=${r.id}`, on: r.id === range }))} />
 
       <Panel title={by === "month" ? "Requests sent each month" : "Requests sent each week"} right={rangeLabel} flush className={styles.first}>
           <DataTable>
@@ -244,7 +248,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
           </PanelFoot>
         </Panel>
 
-        <Panel title="Feedback" right={<Link href="/feedback">See the feedback</Link>} flush>
+        <Panel title="Feedback" right={admin ? <Link href="/feedback">See the feedback</Link> : undefined} flush>
           <DataTable>
             <caption className="sr-only">Feedback received, by kind</caption>
             <thead>

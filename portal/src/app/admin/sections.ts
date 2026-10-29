@@ -1,2 +1,2 @@
 /** The Portal Settings sections a save can leave open (?open=…). */
-export type AdminSection = "teams" | "rooms" | "rules" | "library" | "cards" | "support" | "purchases";
+export type AdminSection = "teams" | "rooms" | "rules" | "library" | "cards" | "support";

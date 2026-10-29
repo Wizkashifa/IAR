@@ -286,7 +286,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               Receipts for this card and month were already sent as <Link href={`/purchases/${choice.sentAs}`}>{choice.sentAs}</Link>. Choose another statement, or open that request.
             </Note>
           )}
-          {chargeFund === SOCIAL_WELFARE_FUND && <Note>Social &amp; Welfare requests are visible only to Social &amp; Welfare and the finance office.</Note>}
+          {chargeFund === SOCIAL_WELFARE_FUND && <Note>Social &amp; Welfare requests are visible only to Social &amp; Welfare, the finance office and executives.</Note>}
         </div>
       </Panel>
 

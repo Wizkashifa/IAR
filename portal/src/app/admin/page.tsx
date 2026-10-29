@@ -10,12 +10,12 @@ import { directory, portalPeople } from "@/lib/groups";
 import { namesFor } from "@/lib/names";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import { ORG } from "@/lib/org";
-import { portalSettings, purchasesDemoOn } from "@/lib/portal-settings";
+import { portalSettings } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, savePurchasesDemo, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
+import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
 import { auditStore } from "@/lib/audit";
 import { isDevAuth } from "@/lib/dev";
 import { libraryReader, policiesLibrary } from "@/lib/library";
@@ -64,7 +64,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <ModuleHead
         title="Portal Settings"
-        actions={<Button href="/admin/measures" icon="pie">Measures</Button>}
+        actions={<Button href="/measures" icon="pie">Measures</Button>}
         lead={
           <>
         Who is on each committee or team, who chairs it and who directs it all come from Google Groups. Change people in{" "}
@@ -243,19 +243,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       )}
       </Section>
 
-      <Section open={open === "purchases"} title={<>Payment requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
-      <p className="hint">
-        While payment requests are a demo, every purchase page says so, and only requests from testers (people in {ORG.testersGroup}) alert their chair and
-        finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make payment requests live for everyone.
-      </p>
-      <Panel>
-        <form action={savePurchasesDemo} className="stack">
-          <Checkbox name="demo" defaultChecked={purchasesDemoOn(settings)}>Payment requests are a demo</Checkbox>
-          <div><Button type="submit">Save</Button></div>
-        </form>
-      </Panel>
-      </Section>
-
       <Section open={open === "rules"} title="Event rules">
       <p className="hint">Room policy rules the event form checks. They flag requests for the reviewers; turning one off removes that flag. The calendar check can&apos;t be turned off.</p>
       <Panel>
@@ -376,7 +363,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <Note>In dev mode, switch sample users at /dev instead.</Note>
         ) : (
           <Panel title="Sign in as">
-            <form action={startActingAs} className="grid">
+            <form action={startActingAs} className="stack">
               <PeoplePicker
                 name="email"
                 label="Who"

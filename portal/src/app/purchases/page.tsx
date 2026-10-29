@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Panel, PanelNote } from "@/components/Panel";
+import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { cardStore } from "@/lib/cards";
 import { emailsIn, type RowData } from "@/lib/card-row";
@@ -14,6 +14,7 @@ import { groupForViewer, type NeedsViewer } from "@/lib/needs-you";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
+import { mayViewDesk } from "@/lib/purchases/finance-desk";
 import { type CreditCard, purchaseContext } from "@/lib/purchases/settings";
 import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
@@ -49,10 +50,12 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const actor = await actorFor(viewer);
   const store = await cardStore();
   const since = new Date(Date.now() - 75 * 864e5).toISOString();
+  // Finance works the desk and card receipts; executives see them too.
+  const desk = mayViewDesk(viewer.roles);
   const [mine, open, recent] = await Promise.all([
     store.listByOwner(viewer.email),
     store.listOpenPurchases(),
-    viewer.roles.includes("finance") ? store.listPurchasesSince(since) : Promise.resolve([]),
+    desk ? store.listPurchasesSince(since) : Promise.resolve([]),
   ]);
   const myPurchases = mine.filter(isPurchaseCard);
   const openPurchases = open.filter(isPurchaseCard);
@@ -81,7 +84,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={
           <>
-            {finance && <Button href="/purchases/finance">Finance desk</Button>}
+            {desk && <Button href="/purchases/finance">Finance desk</Button>}
             <Button href="/purchases/vendors">Saved vendors</Button>
             <Button href="/purchases/new" variant="primary" icon="plus">
               New payment request
@@ -144,7 +147,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           </section>
         )}
 
-        {finance && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
+        {desk && <CardChecklist cards={recent.filter(isPurchaseCard)} list={(await purchaseContext()).cards} />}
       </div>
     </>
   );
@@ -190,7 +193,9 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
             const sub = cards.find((x) => x.purchase.card?.last4 === c.last4 && x.purchase.card.statementMonth === month && x.status !== "cancelled");
             return (
               <tr key={c.last4}>
-                <td data-label="Card">···{c.last4}</td>
+                <td data-label="Card">
+                  <Link href={`/purchases/cards/${c.last4}`}>···{c.last4}</Link>
+                </td>
                 <td data-label="Cardholder">{c.holderName}</td>
                 <td data-label="Receipts">
                   {sub ? (
@@ -206,6 +211,9 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
           })}
         </tbody>
       </DataTable>
+      <PanelFoot>
+        <Link href="/purchases/finance/statement">See the card statements</Link>
+      </PanelFoot>
     </Panel>
   );
 }

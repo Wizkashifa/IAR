@@ -3,8 +3,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
 import * as pw from "./workflow";
-import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey } from "./finance-desk";
+import { batchSummary, deskCards, deskDate, deskOptions, filterDesk, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, runBatch, splitKey, lineKey, statementReceipts } from "./finance-desk";
 import { QB_COLUMNS, csvCell, qbCsv, qbRows } from "./qb-csv";
+import { cardHistory, cardTotals } from "./card-history";
 import { TEST_UPLOADS, testCharges } from "./statement-sample";
 
 const vol: pw.Actor = { email: "vol@x.org", name: "Vol Unteer", roles: ["member"] };
@@ -151,4 +152,44 @@ test("QuickBooks CSV: an aid request shows no payee or line notes; card rows use
   // A credit is a plain negative number, not text.
   assert.equal(credit[8], "-12.30");
   assert.ok(qbCsv([card]).includes(",-12.30,"));
+});
+
+test("executives see the desk and card statements; only finance works them", () => {
+  assert.equal(mayViewDesk(["member", "finance"]), true);
+  assert.equal(mayViewDesk(["member", "executive"]), true);
+  assert.equal(mayViewDesk(["member", "office"]), false);
+  assert.equal(mayViewDesk(["member", "chairs"]), false);
+  assert.equal(mayWorkDesk(["member", "finance"]), true);
+  assert.equal(mayWorkDesk(["member", "executive"]), false);
+});
+
+test("a statement's receipts: that month's card receipts, not cancelled ones or other requests", () => {
+  const charge = (date: string) => [{ date, description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } }];
+  const sept = cardReceipts("2026-09", charge("2026-09-02"));
+  const aug = cardReceipts("2026-08", charge("2026-08-02"));
+  const gone = { ...cardReceipts("2026-09", charge("2026-09-03")), status: "cancelled" as const };
+  const pay = purchase();
+  assert.deepEqual(statementReceipts([sept, aug, gone, pay], "2026-09").map((c) => c.id), [sept.id]);
+});
+
+test("a card's history: each statement's charges matched to the receipt lines, newest month first", () => {
+  const t = testCharges([
+    { date: "2026-09-02", description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } },
+    { date: "2026-09-05", description: "COSTCO WHSE #1234", amount: 40, line: { accountId: "a76" } },
+  ]);
+  const sent = purchase({ kind: "card", fund: "", payee: undefined, delivery: undefined, paymentMethod: undefined, mailingAddress: undefined, cardLast4: "2093", statementMonth: "2026-09", lines: t.lines }, t.statement);
+  const aug = { month: "2026-08", cards: [{ ...t.statement, charges: [] as typeof t.statement.charges, total: 0 }] };
+  const sept = { month: "2026-09", cards: [t.statement, { ...t.statement, last4: "4120" }] };
+  const h = cardHistory([aug, sept], [sent], "2093");
+  assert.deepEqual(h.map((m) => m.month), ["2026-09", "2026-08"]);
+  assert.equal(h[0].request?.id, sent.id);
+  assert.equal(h[0].charges[0].line?.accountId, "a76");
+  assert.equal(h[1].request, undefined);
+  assert.equal(cardHistory([sept], [sent], "9999").length, 0);
+  const totals = cardTotals(h);
+  assert.equal(totals.charges, 2);
+  assert.equal(totals.total, 49.57);
+  assert.equal(totals.missing, 0);
+  sent.purchase.lines[1].hasReceipt = false;
+  assert.equal(cardTotals(cardHistory([sept], [sent], "2093")).missing, 1);
 });
