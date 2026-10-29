@@ -1,7 +1,7 @@
 import { Button } from "@/components/Button";
 import { Note } from "@/components/Note";
 import { getViewer } from "@/lib/viewer";
-import { stopActingAs } from "./admin/actions";
+import { STOP_ACT_AS } from "@/lib/links";
 
 /**
  * Wraps every page, and unlike the layout it's drawn again on each move
@@ -14,7 +14,7 @@ export default async function Template({ children }: { children: React.ReactNode
   return (
     <div className="stack loose">
       <Note tone="warn">
-        <form action={stopActingAs} className="row">
+        <form action={STOP_ACT_AS} method="post" className="row">
           <span>
             You&apos;re signed in as <strong>{viewer.name}</strong> to troubleshoot. Anything you save is marked as done by you ({viewer.supportAdmin.name}) on their behalf.
           </span>

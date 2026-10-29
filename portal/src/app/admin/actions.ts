@@ -14,7 +14,7 @@ import { checkCard, checkRoomSetting, checkTeamFund } from "@/lib/settings-rules
 import { googleRooms } from "@/lib/rooms-google";
 import { RULES } from "@/lib/events/rules";
 import { parseDriveId } from "@/lib/library-core";
-import { currentActAs, requireViewer } from "@/lib/viewer";
+import { requireViewer } from "@/lib/viewer";
 import type { AdminSection } from "./sections";
 
 async function requireAdmin() {
@@ -151,13 +151,4 @@ export async function startActingAs(form: FormData): Promise<void> {
   await audit({ admin: viewer.email.toLowerCase(), target, action: "Started signing in as them" });
   revalidatePath("/", "layout");
   redirect("/");
-}
-
-/** Back to being the admin. Works from any page while signed in as someone. */
-export async function stopActingAs(): Promise<void> {
-  const as = await currentActAs();
-  (await cookies()).delete(ACT_AS_COOKIE);
-  if (as) await audit({ admin: as.admin, target: as.target, action: "Stopped signing in as them" });
-  revalidatePath("/", "layout");
-  redirect(as ? "/admin?open=support" : "/");
 }
