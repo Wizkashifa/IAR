@@ -6,6 +6,7 @@
 const SCREENS = [
   { name: "Home", path: "/", as: "chair" },
   { name: "My Requests", path: "/requests", as: "chair" },
+  { name: "New request", path: "/requests/new", as: "chair" },
   { name: "Events", path: "/events", as: "chair" },
   { name: "New event", path: "/events/new", as: "chair" },
   { name: "Event request", path: "/events/EV-1101", as: "chair" },

@@ -149,6 +149,7 @@
     --nav-bg: #0a2a1b;
     --nav-on: #173726;
     --head-band: #151b17;
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23c7a154' stroke-opacity='0.12' stroke-width='1'%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3Cpath d='M0 0l11 11M56 0L45 11M0 56l11-11M56 56L45 45'/%3E%3C/g%3E%3C/svg%3E");
     --mod-events: #5fcb8e;
     --mod-events-soft: #17301f;
     --mod-events-tint: #13201a;

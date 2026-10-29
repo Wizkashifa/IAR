@@ -44,7 +44,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
         </Note>
         <LinkCards label="Kinds of marketing request">
           {MARKETING_KINDS.map((k) => (
-            <LinkCard key={k} href={`/marketing/new?type=${k}`} icon={TYPE_ICON[k]} title={MARKETING_TYPES[k].label}>
+            <LinkCard key={k} href={`/marketing/new?type=${k}`} icon={TYPE_ICON[k]} accent="mkt" title={MARKETING_TYPES[k].label}>
               {MARKETING_TYPES[k].blurb}
             </LinkCard>
           ))}
