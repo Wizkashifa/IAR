@@ -4,9 +4,9 @@
   .card {
     display: flex; gap: var(--s-3); align-items: flex-start; height: 100%; padding: var(--s-4);
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1);
-    color: var(--ink); text-decoration: none; transition: border-color var(--speed), background-color var(--speed);
+    color: var(--ink); text-decoration: none; transition: border-color var(--speed-2), box-shadow var(--speed-2), transform var(--speed-2) var(--ease);
   }
-  .card:hover { border-color: var(--ctl); text-decoration: none; }
+  .card:hover { border-color: var(--ctl); box-shadow: var(--shadow-2); transform: translateY(var(--lift)); text-decoration: none; }
   .card:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   .body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
   .title { display: block; margin-bottom: 4px; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }

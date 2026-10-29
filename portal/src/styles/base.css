@@ -81,6 +81,15 @@
     background-size: 5px 5px; background-repeat: no-repeat;
   }
 
+  /* A page's sections arrive one after another: fade in and rise 10px, 80ms apart. Before only, so nothing stays moved. */
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+  #main > div > .stack > * { animation: rise var(--enter) var(--ease) backwards; }
+  #main > div > .stack > :nth-child(2) { animation-delay: 80ms; }
+  #main > div > .stack > :nth-child(3) { animation-delay: 160ms; }
+  #main > div > .stack > :nth-child(4) { animation-delay: 240ms; }
+  #main > div > .stack > :nth-child(5) { animation-delay: 320ms; }
+  #main > div > .stack > :nth-child(n + 6) { animation-delay: 400ms; }
+
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }
   /* A button that reads as a link ("Undo" in a toast). */
@@ -96,6 +105,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-delay: 0s !important; }
   }
 }

@@ -128,6 +128,13 @@
     --control-h: 36px;
     --control-h-sm: 30px;
     --speed: 0.12s;
+    /* Motion: how things settle, a card's hover, a section arriving. */
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --speed-2: 0.16s;
+    --enter: 0.55s;
+    --lift: -3px;
+    --nudge: 3px;
+    --press: 0.97;
 
     color-scheme: light;
   }
@@ -187,4 +194,9 @@
   [data-mod="pay"] { --mod: var(--mod-pay); --mod-soft: var(--mod-pay-soft); --mod-tint: var(--mod-pay-tint); --mod-nav: var(--mod-pay-nav); }
   [data-mod="mkt"] { --mod: var(--mod-mkt); --mod-soft: var(--mod-mkt-soft); --mod-tint: var(--mod-mkt-tint); --mod-nav: var(--mod-mkt-nav); }
   [data-mod="it"] { --mod: var(--mod-it); --mod-soft: var(--mod-it-soft); --mod-tint: var(--mod-it-tint); --mod-nav: var(--mod-it-nav); }
+
+  /* Less motion: nothing lifts, slides or shrinks (base.css also cuts every animation and transition short). */
+  @media (prefers-reduced-motion: reduce) {
+    :root { --lift: 0px; --nudge: 0px; --press: 1; }
+  }
 }

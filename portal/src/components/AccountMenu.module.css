@@ -22,7 +22,9 @@
     width: min(320px, calc(100vw - 32px)); padding: 6px;
     background: var(--surface); color: var(--ink);
     border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-2);
+    animation: drop var(--speed-2) var(--ease) backwards;
   }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
   .me { display: flex; flex-direction: column; padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
   .me span { font-size: var(--t-sm); color: var(--ink-3); overflow-wrap: anywhere; }
 

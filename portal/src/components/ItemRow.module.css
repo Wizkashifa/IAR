@@ -34,8 +34,8 @@
   .extra { color: var(--ink-3); font-size: var(--t-sm); overflow-wrap: anywhere; margin-top: 2px; }
   .flags { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-1); }
   .r { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
-  .chev { color: var(--ink-3); opacity: 0; transition: opacity 0.12s, transform 0.12s; }
-  .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(2px); }
+  .chev { color: var(--ink-3); opacity: 0; transition: opacity var(--speed-2), transform var(--speed-2) var(--ease); }
+  .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(var(--nudge)); }
   /* Phones: the status goes under the title, and there's no hover to show the chevron. */
   @media (max-width: 520px) {
     .link, .still { grid-template-columns: minmax(0, 1fr); gap: 6px; padding-right: var(--s-4); }
