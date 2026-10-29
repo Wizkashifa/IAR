@@ -41,16 +41,10 @@ export function WhatsNewNote() {
       <Icon name="x" />
     </button>
   );
-  const spark = (
-    <span className={styles.spark} aria-hidden="true">
-      <Icon name="star" size="sm" />
-    </span>
-  );
 
   return (
     <section className={styles.note} aria-labelledby="whats-new">
       <div className={styles.line}>
-        {spark}
         <Link href="/help/whats-new" className={styles.lineLink}>
           {items.length} new {items.length === 1 ? "thing" : "things"} in the portal
         </Link>
@@ -58,8 +52,7 @@ export function WhatsNewNote() {
       </div>
       <div className={styles.full}>
         <div className={styles.head}>
-          {spark}
-          <h2 id="whats-new" className={styles.title}>
+            <h2 id="whats-new" className={styles.title}>
             What&apos;s new in the portal
           </h2>
           {close}
