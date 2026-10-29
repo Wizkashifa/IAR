@@ -40,12 +40,17 @@ export function collector(cardId: string, actorEmail: string, href: string) {
 /**
  * A new comment: the requester, earlier commenters and whoever else the
  * module names (who has the request now, people following it) hear about it
- * in the portal. No alert: a comment asks nothing of anyone by itself.
- * `quote: false` leaves the words out (restricted requests).
+ * in the portal. No alert: a comment asks nothing of anyone by itself. People
+ * it names with @ (on the card's newest comment) hear first, with an alert:
+ * a mention asks something of them. `quote: false` leaves the words out
+ * (restricted requests).
  */
 export function commentNotices(card: Card, by: { email: string; name: string }, text: string, o: { href: string; what: string; also?: Recipient[]; quote?: boolean }): Notice[] {
   const { out, add } = collector(card.id, by.email, `${o.href}#comments`);
-  const msg = o.quote === false ? `${by.name} commented on ${o.what}` : `${by.name} commented on ${o.what}: “${preview(text)}”`;
+  const words = o.quote === false ? "" : `: “${preview(text)}”`;
+  const last = card.comments?.at(-1);
+  if (last && same(last.by, by.email)) for (const m of last.mentions ?? []) add({ email: m.email }, `${by.name} mentioned you on ${o.what}${words}`, true);
+  const msg = `${by.name} commented on ${o.what}${words}`;
   for (const r of [{ email: card.ownerEmail }, ...commenters(card).map((email) => ({ email })), ...(o.also ?? [])]) add(r, msg, false);
   return out;
 }

@@ -108,7 +108,17 @@ export async function directory(): Promise<Directory> {
   return loading;
 }
 
-const peopleCache = globalThis as unknown as { __iarPortalPeople?: { at: number; people: string[] } };
+const peopleCache = globalThis as unknown as { __iarPortalPeople?: { at: number; people: string[]; roles: DirectoryGroup[] } };
+
+async function portalGroups(): Promise<{ people: string[]; roles: DirectoryGroup[] }> {
+  const c = peopleCache.__iarPortalPeople;
+  if (c && Date.now() - c.at < DIRECTORY_REFRESH_MS) return c;
+  const [dir, roles] = await Promise.all([directory(), directoryToken().then((t) => groupsWithPrefix(t, ROLE_PREFIX))]);
+  const gate = process.env.PORTAL_ACCESS_GROUP?.trim().toLowerCase();
+  const people = portalPeopleFrom([...dir.teams, ...dir.pillars, ...roles], gate ? { group: gate, admins: String(ORG.roleGroups.admins) } : undefined);
+  peopleCache.__iarPortalPeople = { at: Date.now(), people, roles };
+  return { people, roles };
+}
 
 /**
  * Everyone who can use the portal, as addresses, for an admin picking whom to
@@ -117,13 +127,19 @@ const peopleCache = globalThis as unknown as { __iarPortalPeople?: { at: number;
  */
 export async function portalPeople(): Promise<string[]> {
   if (isDevAuth()) return DEV_PERSONAS.map((p) => p.email);
-  const c = peopleCache.__iarPortalPeople;
-  if (c && Date.now() - c.at < DIRECTORY_REFRESH_MS) return c.people;
-  const [dir, roles] = await Promise.all([directory(), directoryToken().then((t) => groupsWithPrefix(t, ROLE_PREFIX))]);
-  const gate = process.env.PORTAL_ACCESS_GROUP?.trim().toLowerCase();
-  const people = portalPeopleFrom([...dir.teams, ...dir.pillars, ...roles], gate ? { group: gate, admins: String(ORG.roleGroups.admins) } : undefined);
-  peopleCache.__iarPortalPeople = { at: Date.now(), people };
-  return people;
+  return (await portalGroups()).people;
+}
+
+/**
+ * Everyone who can use the portal with the groups they're directly in (team,
+ * pillar and role groups), refreshed every 15 minutes: enough to tell what
+ * each can open without asking Google about each person.
+ */
+export async function portalPeopleGroups(): Promise<{ email: string; groups: string[] }[]> {
+  if (isDevAuth()) return DEV_PERSONAS.map((p) => ({ email: p.email, groups: p.groups }));
+  const [{ people, roles }, dir] = await Promise.all([portalGroups(), directory()]);
+  const all = [...dir.teams, ...dir.pillars, ...roles];
+  return people.map((email) => ({ email, groups: all.filter((g) => g.members.some((m) => m.type === "USER" && m.email === email)).map((g) => g.email) }));
 }
 
 /** Everyone in the team group behind a queue role (portal-team-marketing@ for "marketing"), by email: who its work can be handed to. */
