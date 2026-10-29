@@ -193,7 +193,9 @@ function CardChecklist({ cards, list }: { cards: PurchaseCard[]; list: CreditCar
             const sub = cards.find((x) => x.purchase.card?.last4 === c.last4 && x.purchase.card.statementMonth === month && x.status !== "cancelled");
             return (
               <tr key={c.last4}>
-                <td data-label="Card">···{c.last4}</td>
+                <td data-label="Card">
+                  <Link href={`/purchases/cards/${c.last4}`}>···{c.last4}</Link>
+                </td>
                 <td data-label="Cardholder">{c.holderName}</td>
                 <td data-label="Receipts">
                   {sub ? (

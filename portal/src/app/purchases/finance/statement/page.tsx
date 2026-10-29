@@ -79,9 +79,7 @@ export default async function StatementPage() {
                               {got.map((c, i) => (
                                 <span key={c.id}>
                                   {i > 0 && ", "}
-                                  <Link href={`/purchases/${c.id}`}>
-                                    ···{c.purchase.card!.last4}: {c.id}
-                                  </Link>
+                                  <Link href={`/purchases/cards/${c.purchase.card!.last4}`}>···{c.purchase.card!.last4}</Link>: <Link href={`/purchases/${c.id}`}>{c.id}</Link>
                                 </span>
                               ))}
                             </span>

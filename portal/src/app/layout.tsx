@@ -43,6 +43,7 @@ const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admi
   "whos-who": { group: "iar", label: "Who's who", icon: "building" },
   library: { group: "files", label: "Library", icon: "folder" },
   "finance-desk": { group: "team", label: "Finance desk", icon: "receipt" },
+  measures: { group: "team", label: "Portal measures", icon: "pie" },
   admin: { group: "admin", label: "Portal Settings", icon: "sliders" },
 };
 

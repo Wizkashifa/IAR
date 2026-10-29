@@ -53,13 +53,14 @@ function Bar({ value, of, label }: { value: number; of: number; label: string })
 }
 
 /**
- * Admins only: how the portal is being used, counted from its own requests
+ * Admins and executives: how the portal is being used, counted from its own requests
  * and feedback (lib/measures.ts), over the last 6 weeks, 3 months or 12
  * months (?range=). Counts and times only; nothing here says who did what.
  */
 export default async function MeasuresPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const viewer = await requireViewer();
-  if (!viewer.actingRoles.includes("admins")) redirect("/");
+  const admin = viewer.actingRoles.includes("admins");
+  if (!admin && !viewer.roles.includes("executive")) redirect("/");
 
   const range = rangeOf((await searchParams).range);
   const rangeLabel = RANGES.find((r) => r.id === range)!.label;
@@ -244,7 +245,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
           </PanelFoot>
         </Panel>
 
-        <Panel title="Feedback" right={<Link href="/feedback">See the feedback</Link>} flush>
+        <Panel title="Feedback" right={admin ? <Link href="/feedback">See the feedback</Link> : undefined} flush>
           <DataTable>
             <caption className="sr-only">Feedback received, by kind</caption>
             <thead>

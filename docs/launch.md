@@ -24,7 +24,7 @@ This is how the portal was put on IAR's Google Cloud, and how to set it up again
 | Who's who, the Library (IAR's policies), What's stuck (office and executives), "Request this again" | |
 | Portal measures for the portal admins (counts only) | |
 
-Social & Welfare aid goes through Purchase Requests, restricted to S&W and finance; there's no separate module. People show by their names from IAR's Workspace directory, never by email address.
+Social & Welfare aid goes through Purchase Requests, restricted to S&W, finance and the executives; there's no separate module. People show by their names from IAR's Workspace directory, never by email address.
 
 ## Setting it up from scratch
 

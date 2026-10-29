@@ -38,7 +38,7 @@ export function WaitingPill({ card }: { card: PurchaseCard }) {
  */
 export function PurchaseRow({ row, card, redacted, days }: { row: RowData; card: PurchaseCard; redacted?: boolean; days?: boolean }) {
   if (redacted) {
-    return <ItemRow title="Social & Welfare request" id={row.id} sub="Details are for Social & Welfare and the finance office" status={row.status} state={row.state} />;
+    return <ItemRow title="Social & Welfare request" id={row.id} sub="Details are for Social & Welfare, the finance office and executives" status={row.status} state={row.state} />;
   }
   return <ItemRow title={row.title} id={row.id} href={row.href} sub={row.sub} who={row.who} status={row.status} state={row.state} right={days ? <WaitingPill card={card} /> : undefined} />;
 }

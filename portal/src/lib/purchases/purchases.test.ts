@@ -391,7 +391,7 @@ test("card receipts: finance review only, then QuickBooks; refunds and repayment
   assert.throws(() => wf.resolveLine(c, finance, T(5), "L1"), WorkflowError);
 });
 
-test("Social & Welfare requests are restricted to S&W, finance and the people on the request", () => {
+test("Social & Welfare requests are restricted to S&W, finance, executives and the people on the request", () => {
   const c = submitted({ fund: "Social & Welfare", payee: "Aid Recipient", lines: [{ accountId: "a55", amount: "950" }] });
   assert.equal(c.purchase.restricted, true);
   assert.equal(wf.canViewDetail(c, volunteer), true);
@@ -399,7 +399,7 @@ test("Social & Welfare requests are restricted to S&W, finance and the people on
   assert.equal(wf.canViewDetail(c, finance), true);
   assert.equal(wf.canViewDetail(c, sw), true);
   assert.equal(wf.canViewDetail(c, office), false);
-  assert.equal(wf.canViewDetail(c, exec), false);
+  assert.equal(wf.canViewDetail(c, exec), true);
   assert.equal(wf.canViewDetail(c, { ...admin, seeAll: true }), false);
 });
 
