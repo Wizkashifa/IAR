@@ -109,8 +109,8 @@ export default function MarketingForm({ action, kind, committees, initial, quest
       </Panel>
 
       <FormActions>
-        <Submit label={submitLabel} />
         <Button href={cancelHref}>Cancel</Button>
+        <Submit label={submitLabel} />
       </FormActions>
     </form>
   );

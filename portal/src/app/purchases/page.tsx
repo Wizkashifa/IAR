@@ -111,7 +111,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
           sections={sectionsOf(mineRows)}
           empty="You haven't sent a payment request yet."
           emptyAction={
-            <Button href="/purchases/new" variant="primary" size="small">
+            <Button href="/purchases/new" size="small">
               New payment request
             </Button>
           }

@@ -13,9 +13,10 @@
   .btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 
-  /* The one main action on a screen: green with a gold edge (gold with green text in dark mode). */
-  .primary { background: var(--accent); border-color: var(--gold); color: var(--accent-ink); font-weight: 600; }
-  .primary:hover { border-color: var(--gold); filter: brightness(1.08); }
+  /* The one main action on a screen: green with white text (gold with green text in dark mode), 44px tall to tap. */
+  .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .primary:not(.small) { min-height: 44px; padding: 0 18px; }
+  .primary:hover { border-color: var(--accent); }
   .danger { color: var(--bad); }
   .danger:hover { border-color: var(--bad); }
   /* No border or fill: for "More", "Cancel" and other quiet choices. */

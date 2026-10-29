@@ -11,7 +11,7 @@ export function SearchForm({ action, label, placeholder, value, clear, autoFocus
   return (
     <form action={action} className={styles.form} role="search">
       <input type="search" name="q" defaultValue={value} placeholder={placeholder} aria-label={label} maxLength={100} autoFocus={autoFocus} />
-      <Button type="submit" variant="primary" icon="search">
+      <Button type="submit" icon="search">
         Search
       </Button>
       {clear && value && (

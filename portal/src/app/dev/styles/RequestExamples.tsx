@@ -72,7 +72,7 @@ export async function RequestExamples() {
         ]}
         legend
         empty="You haven't asked for anything yet."
-        emptyAction={<Button size="small" variant="primary" href="/events/new">New event request</Button>}
+        emptyAction={<Button size="small" href="/events/new">New event request</Button>}
       />
 
       <ItemList title="An empty list" rows={[]} empty="Nothing waiting for review." />

@@ -346,7 +346,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <input name="holderEmail" type="email" placeholder={`name@${ORG.domain}`} required />
         </Field>
         <div>
-          <Button type="submit" variant="primary">Add card</Button>
+          <Button type="submit">Add card</Button>
         </div>
       </form>
       </Panel>
@@ -372,7 +372,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 hint="Everyone who can use the portal."
               />
               <div>
-                <Button type="submit" variant="primary">Sign in as them</Button>
+                <Button type="submit">Sign in as them</Button>
               </div>
             </form>
           </Panel>

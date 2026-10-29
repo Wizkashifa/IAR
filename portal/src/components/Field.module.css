@@ -30,5 +30,7 @@
       margin: 0 calc(-1 * var(--s-4)); padding: var(--s-3) var(--s-4) max(var(--s-3), env(safe-area-inset-bottom, 0px));
       background: var(--bg); border-top: 1px solid var(--line);
     }
+    /* The main button last and widest, the others beside it. */
+    .actions.sticky > :last-child { flex: 1 1 auto; }
   }
 }

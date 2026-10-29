@@ -208,7 +208,6 @@ export default function EventForm(p: EventFormProps) {
               </span>
               <Button
                 size="small"
-                variant="primary"
                 onClick={() => {
                   setD({ ...saved.d, agree: false });
                   touched.current = true;
