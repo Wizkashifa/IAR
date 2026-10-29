@@ -17,6 +17,12 @@ export type WhatsNew = {
 export const WHATS_NEW: WhatsNew[] = [
   {
     date: "2026-10-29",
+    title: "Payment requests are live",
+    text: "Payment requests are real now, for everyone: your chair and the finance office get them, and approved requests are paid. Use them instead of the old Requisition Form to pay a vendor, get reimbursed or send in card receipts.",
+    href: "/purchases/new",
+  },
+  {
+    date: "2026-10-29",
     title: "Name someone in a comment",
     text: "Type @ in a comment box and pick a name to bring someone in. They get a notice and a Chat message, and their name stands out in the comment. You can name anyone who can already open the request.",
   },

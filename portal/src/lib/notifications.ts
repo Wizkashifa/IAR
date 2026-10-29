@@ -158,14 +158,10 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
   const updates: Alert[] = [];
   const today = todayLocal();
   let people: Awaited<ReturnType<typeof peopleStore>> | null = null;
-  // Payment requests in demo mode: only testers' requests reach Chat or email (lib/purchases/demo.ts).
-  const sends = await purchaseAlerts(notices.map((n) => n.cardId ?? ""));
 
   try {
     for (const n of notices) {
-      // A demo payment request: on the bell only, never Chat or email.
-      const live = !n.bellOnly && (!n.cardId || sends(n.cardId));
-      const alert = n.alert && live;
+      const alert = n.alert;
       const base = { cardId: n.cardId, href: n.href, at: now, by: actor, readBy: [] as string[] };
       if ("role" in n.to) {
         items.push({ ...base, to: `role:${n.to.role}`, text: n.text });
@@ -175,7 +171,7 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
       const to = n.to.email.toLowerCase();
       items.push({ ...base, to, text: n.text });
       if (alert) alerts.push({ to, text: n.text, href: n.href, cardId: n.cardId });
-      else if (to !== actor && live) updates.push({ to, text: n.text, href: n.href, cardId: n.cardId, fyi: true });
+      else if (to !== actor) updates.push({ to, text: n.text, href: n.href, cardId: n.cardId, fyi: true });
       if (n.delegable) {
         people ??= await peopleStore();
         const away = await people.getAway(to);
@@ -191,12 +187,6 @@ export async function deliver(notices: Notice[], by: string, now = new Date().to
     console.error("notification write failed", err);
   }
   await sendAlerts([...alerts, ...(await wantedUpdates(updates))], { now: new Date(now) });
-}
-
-/** Which cards' alerts may go out (payment requests in demo mode only for testers). Loaded on first use, as it reads the card store. */
-async function purchaseAlerts(cardIds: string[]): Promise<(cardId: string) => boolean> {
-  const { purchaseAlertsFor } = await import("./purchases/demo");
-  return purchaseAlertsFor(cardIds);
 }
 
 /** The updates whose person chose "Right away in Chat". A lookup failure sends none: they're still on the bell. */
@@ -291,9 +281,7 @@ export async function sendDigests(now = new Date()): Promise<number> {
   const digests: Alert[] = [];
   for (const email of emails) {
     const listed = (await s.listFor([email], 50)).filter((n) => n.at >= since && n.by !== email && !n.readBy.includes(email));
-    const sends = await purchaseAlerts(listed.map((n) => n.cardId ?? ""));
-    const recent = listed.filter((n) => !n.cardId || sends(n.cardId));
-    const text = digestText(recent);
+    const text = digestText(listed);
     if (text) digests.push({ to: email, text, href: "/notifications", fyi: true });
   }
   await sendAlerts(digests, { now, hold: false });

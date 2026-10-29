@@ -168,7 +168,7 @@ To change a director, change the pillar's Owner. To move a committee to another 
 | portal-role-finance@ | Finance review, payment, QuickBooks entry, restricted S&W requests; can submit for any fund |
 | portal-role-executive@ | Whoever holds an executive office (Head Imam, Shura chair, CEO; one person can hold several): final mission review of events, and executive approvals. When an office changes hands, change the group's members |
 | portal-role-admin@ | Every module and Portal Settings, for support. Never approves or pays. Keep to two or three people |
-| portal-role-beta@ | The testers ("Portal: Testers"): their purchase requests are real while purchase requests are a demo. While `PORTAL_ACCESS_GROUP` is set, only this group and the admins can sign in. Add testers directly, not through nested groups |
+| portal-role-beta@ | The testers ("Portal: Testers"). While `PORTAL_ACCESS_GROUP` is set, only this group and the admins can sign in. Add testers directly, not through nested groups |
 
 **Group settings.** In every team and pillar group, set "Who can manage members" to owners only (or admins only). Otherwise a manager could add people to a committee, which would let them request from its fund.
 

@@ -10,12 +10,12 @@ import { directory, portalPeople } from "@/lib/groups";
 import { namesFor } from "@/lib/names";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 import { ORG } from "@/lib/org";
-import { portalSettings, purchasesDemoOn } from "@/lib/portal-settings";
+import { portalSettings } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDateTime } from "../purchases/ui";
-import { addCard, removeCard, saveEventRules, savePurchasesDemo, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
+import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
 import { auditStore } from "@/lib/audit";
 import { isDevAuth } from "@/lib/dev";
 import { libraryReader, policiesLibrary } from "@/lib/library";
@@ -241,19 +241,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </tbody>
           </DataTable>
       )}
-      </Section>
-
-      <Section open={open === "purchases"} title={<>Payment requests: {purchasesDemoOn(settings) ? "demo" : "live"}</>}>
-      <p className="hint">
-        While payment requests are a demo, every purchase page says so, and only requests from testers (people in {ORG.testersGroup}) alert their chair and
-        finance in Google Chat. Everyone else&apos;s stay on the bell, and nothing is paid. Turn it off to make payment requests live for everyone.
-      </p>
-      <Panel>
-        <form action={savePurchasesDemo} className="stack">
-          <Checkbox name="demo" defaultChecked={purchasesDemoOn(settings)}>Payment requests are a demo</Checkbox>
-          <div><Button type="submit">Save</Button></div>
-        </form>
-      </Panel>
       </Section>
 
       <Section open={open === "rules"} title="Event rules">
