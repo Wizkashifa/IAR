@@ -142,6 +142,11 @@ const PAIRS: [string, string, number][] = [
     [t, "--surface", 4.5],
   ]),
   ["--ink-3", "--surface-2", 4.5],
+  // Page heads and the "What's new" box
+  ...["--ink", "--ink-2", "--gold-text", "--accent-text"].flatMap((t): [string, string, number][] => [
+    [t, "--head-band", 4.5],
+    [t, "--news-bg", 4.5],
+  ]),
   ["--accent-ink", "--accent", 4.5],
   // Status pills and notes
   ["--ok", "--ok-soft", 4.5],

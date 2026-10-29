@@ -162,7 +162,7 @@ export function AppFrame({
           ))}
           <div className={`${styles.mob} ${styles.foot}`}>
             <div className={styles.groupLabel}>{account.name}</div>
-            <AccountLinks account={account} withAway={false} onPick={() => setOpen(false)} />
+            <AccountLinks account={account} withAway={false} onNav onPick={() => setOpen(false)} />
           </div>
         </nav>
         {open && <div className={styles.scrim} onClick={() => setOpen(false)} aria-hidden="true" />}

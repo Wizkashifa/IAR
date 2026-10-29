@@ -1,5 +1,3 @@
 @layer pages {
-  .hero { display: grid; gap: var(--s-3); }
-  .hero :global(.lead) { margin: 0; }
-  .date { color: var(--ink-3); font-family: var(--font); font-weight: 400; font-size: var(--t-sm); }
+  .date { color: var(--gold-text); font-family: var(--font); font-weight: 400; font-size: var(--t-sm); }
 }

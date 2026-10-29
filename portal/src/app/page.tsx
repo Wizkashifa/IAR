@@ -23,6 +23,7 @@ import { WhatsNewNote } from "@/components/WhatsNewNote";
 import styles from "./home.module.css";
 import { todayLocal } from "@/lib/dates";
 import { ItemRow, Rows } from "@/components/ItemRow";
+import { ModuleHead } from "@/components/ModuleHead";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Home" };
@@ -87,19 +88,16 @@ export default async function Home() {
 
   return (
     <div className="stack">
-      <header className={styles.hero}>
-        <h1 className="greet">Assalamu alaikum, {firstName}</h1>
-        <p className="lead">Here&apos;s what needs you today, {fmtDay(today, true)}.</p>
-        {quick.length > 0 && (
-          <div className="row">
-            {quick.map((q) => (
-              <Button key={q.href} href={q.href} icon={q.icon}>
-                {q.label}
-              </Button>
-            ))}
-          </div>
-        )}
-      </header>
+      <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
+      {quick.length > 0 && (
+        <div className="row">
+          {quick.map((q) => (
+            <Button key={q.href} href={q.href} icon={q.icon}>
+              {q.label}
+            </Button>
+          ))}
+        </div>
+      )}
       <WhatsNewNote />
 
       {myAway &&isCurrentOrUpcoming(myAway, today) && (

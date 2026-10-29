@@ -1,6 +1,23 @@
 @layer components {
-  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+  .head {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap;
+    padding: var(--s-5); border-radius: var(--r); background: var(--head-band);
+  }
+  /* IAR's pattern, fading in from the right. Decoration only. */
+  .head::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: var(--pattern) right top / 56px 56px;
+    -webkit-mask-image: linear-gradient(to left, black, transparent 65%); mask-image: linear-gradient(to left, black, transparent 65%);
+  }
   .text { min-width: 0; flex: 1 1 320px; }
   .text :global(.lead) { margin-bottom: 0; }
   .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  @media (max-width: 600px) {
+    .head { padding: var(--s-4); }
+  }
+  @media print {
+    .head { padding: 0; background: none; }
+    .head::after { display: none; }
+  }
 }

@@ -24,6 +24,8 @@
   /* The home greeting: the one place for the italic serif. */
   .greet { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: var(--t-greet); letter-spacing: -0.01em; line-height: 1.2; }
   h2 { font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); margin: var(--s-6) 0 var(--s-3); }
+  /* A section title in the page's own flow gets a short gold line under it (decoration only). */
+  .stack > h2::after { content: ""; display: block; width: 32px; height: 2px; margin-top: 6px; background: var(--gold); }
   h3 { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin: 0; }
   .lead { color: var(--ink-2); margin: var(--s-1) 0 var(--s-2); max-width: 68ch; }
   .muted { color: var(--ink-2); }
