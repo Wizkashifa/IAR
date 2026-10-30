@@ -5,7 +5,7 @@
     height: var(--control-h); max-width: 260px; padding: 0 10px 0 4px;
     background: transparent; color: var(--cream);
     border: 1px solid var(--gold-line); border-radius: var(--r-sm);
-    font: inherit; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
+    font: inherit; cursor: pointer; transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease);
   }
   .btn:hover { border-color: var(--gold); background: var(--gold-wash); }
   .btn:focus-visible { outline: none; border-color: var(--gold-light); box-shadow: var(--ring-on-green); }

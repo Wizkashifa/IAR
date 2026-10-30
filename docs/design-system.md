@@ -51,7 +51,7 @@ The demo first used Source Sans 3, Outfit and Fraunces. The brand guide replaced
 - **Inputs:** a `--ctl` border; focus shows a `--focus` border and ring. They're `--control-h` tall with `--field-font` text (16px on touch, so iOS doesn't zoom), Mantine's fields included (`components/theme.ts`).
 - **Chips** for filters, and a **toast** with Undo for quick confirmations.
 - **Tabs** for the requester's and the team's views of a module ("Your requests" and "Team work" or "Team tickets"), with the team's other pages as quiet links at the end.
-- **Motion:** Home's sections fade in and rise 10px, 80ms apart (`.enter`); work pages appear at once; link cards lift 3px on hover; row chevrons slide; buttons press in; the drawer slides and the account menu drops in. All of it switches off with the system's reduce-motion setting.
+- **Motion:** Home's sections fade in and rise 10px, 80ms apart (`.enter`); work pages appear at once; link cards lift 3px on hover; row chevrons slide; buttons press in; the drawer slides and the account menu drops in. Everything eases out with `--ease`: it starts quickly and settles, never easing in. Each CSS transition and animation names `var(--ease)` (the browser's default `ease` starts slowly), Mantine's pop-ups take it from `components/theme.ts`, and `guard.test.ts` fails anything else. All of it switches off with the system's reduce-motion setting.
 
 ### 4b. Helper text: when to use which
 

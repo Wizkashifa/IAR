@@ -7,7 +7,7 @@
     background: var(--surface); color: var(--ink);
     font: inherit; font-weight: 500; line-height: var(--lh-tight); white-space: nowrap; text-decoration: none;
     box-shadow: var(--shadow-1); cursor: pointer;
-    transition: border-color var(--speed), background-color var(--speed), box-shadow var(--speed), filter var(--speed), transform var(--speed);
+    transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease), filter var(--speed) var(--ease), transform var(--speed) var(--ease);
   }
   .btn:hover { border-color: var(--ink-3); background-color: var(--surface-2); text-decoration: none; }
   .btn:active { transform: scale(var(--press)); box-shadow: none; }

@@ -17,6 +17,9 @@ const dark: MantineColorsTuple = [
   "var(--line)", "var(--surface-2)", "var(--surface)", "var(--bg)", "var(--bg)",
 ];
 
+/** Mantine's own animations use the portal's ease-out curve, not Mantine's default "ease". */
+const EASE_OUT = { timingFunction: "var(--ease)" };
+
 export const theme = createTheme({
   primaryColor: "iar",
   colors: { iar, dark },
@@ -33,6 +36,13 @@ export const theme = createTheme({
   components: {
     // Mantine's fields are as tall as the portal's own, and as large on a phone (16px, so iOS doesn't zoom).
     Input: Input.extend({ vars: () => ({ wrapper: { "--input-height": "var(--control-h)", "--input-fz": "var(--field-font)" } }) }),
+    // Every pop-up eases out like the rest of the portal (tokens.css --ease): it starts quickly and settles.
+    Modal: { defaultProps: { transitionProps: EASE_OUT } },
+    Popover: { defaultProps: { transitionProps: EASE_OUT } },
+    Combobox: { defaultProps: { transitionProps: EASE_OUT } },
+    Menu: { defaultProps: { transitionProps: EASE_OUT } },
+    Tooltip: { defaultProps: { transitionProps: EASE_OUT } },
+    SpotlightRoot: { defaultProps: { transitionProps: { ...EASE_OUT, duration: 200, transition: "pop" } } },
   },
 });
 

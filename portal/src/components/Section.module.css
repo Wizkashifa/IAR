@@ -4,7 +4,7 @@
   .head::-webkit-details-marker { display: none; }
   .head:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r-sm); }
   .head > h2 { margin: 0; }
-  .chev { flex: none; color: var(--ink-3); transition: transform var(--speed); }
+  .chev { flex: none; color: var(--ink-3); transition: transform var(--speed) var(--ease); }
   .s[open] > .head .chev { transform: rotate(90deg); }
   .body { display: grid; gap: var(--s-3); padding-bottom: var(--s-4); }
 }

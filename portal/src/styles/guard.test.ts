@@ -111,6 +111,33 @@ test("media queries use the portal's breakpoints", () => {
   assert.deepEqual(bad, [], "Use 520px, 640px or 999.98px (tokens.css), or an @container page query inside the page.");
 });
 
+/**
+ * Motion eases out (tokens.css --ease): it starts quickly and settles. A
+ * transition or animation without a curve gets the browser's "ease", which
+ * starts slowly, so each one names var(--ease); ease-in, ease-in-out, plain
+ * ease and linear are never used.
+ */
+test("every transition and animation eases out with var(--ease)", () => {
+  const bad: string[] = [];
+  for (const p of files(SRC, [".css"])) {
+    const css = readFileSync(p, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of css.matchAll(/(?<![-\w])(transition|animation)\s*:\s*([^;{}]+);/g)) {
+      const value = m[2]!.trim();
+      if (value === "none") continue;
+      // Each comma-separated part (one property or one animation) names the curve.
+      const parts = value.split(/,(?![^(]*\))/).map((s) => s.trim());
+      for (const part of parts) {
+        const other = /\b(?:ease|ease-in|ease-out|ease-in-out|linear|cubic-bezier|steps)\b/.test(part.replaceAll("var(--ease)", ""));
+        if (!part.includes("var(--ease)") || other) bad.push(`${rel(p)}: ${m[1]}: ${part}`);
+      }
+    }
+    for (const m of css.matchAll(/(?:transition|animation)-timing-function\s*:\s*([^;{}]+);/g)) {
+      if (!m[1]!.includes("var(--ease)")) bad.push(`${rel(p)}: timing ${m[1]}`);
+    }
+  }
+  assert.deepEqual(bad, [], "Add var(--ease) to each part (tokens.css): every motion in the portal eases out.");
+});
+
 test("the only global stylesheets are tokens.css and base.css", () => {
   const sheets = files(join(SRC, "styles"), [".css"]).map(rel).sort();
   assert.deepEqual(sheets, ["styles/base.css", "styles/tokens.css"], "Put page styles in a co-located .module.css.");

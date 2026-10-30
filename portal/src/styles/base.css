@@ -54,6 +54,8 @@
   .row.bottom { align-items: flex-end; gap: var(--s-2) var(--s-3); }
   .grow { flex: 1 1 260px; min-width: 0; }
   .push { margin-left: auto; }
+  /* Toasts ease out too: Mantine sets a springy curve inline, so only !important reaches it. */
+  .mantine-Notification-root { transition-timing-function: var(--ease) !important; }
   /* Mantine's inputs: the portal's field text size (16px on touch, so iOS doesn't zoom) and focus look. */
   .mantine-Input-input { font-size: var(--field-font); }
   .mantine-Input-input:focus, .mantine-Input-input:focus-within { outline: none; border-color: var(--focus); box-shadow: var(--ring); }

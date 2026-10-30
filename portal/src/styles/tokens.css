@@ -150,7 +150,7 @@
     /* The smallest tap target: nothing extra with a mouse, 44px on a touch screen (below). */
     --tap: 0px;
     --speed: 0.12s;
-    /* Motion: how things settle, a card's hover, a section arriving. */
+    /* Motion: the one curve for everything, an ease-out (it starts quickly and settles). Every transition and animation names it; guard.test.ts checks. */
     --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     --speed-2: 0.16s;
     --enter: 0.55s;

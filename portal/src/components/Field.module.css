@@ -15,7 +15,7 @@
     width: 100%; min-width: 0; min-height: var(--control-h); padding: var(--s-1h) 10px; font-size: var(--field-font);
     background-color: var(--field-bg); color: var(--ink);
     border: 1px solid var(--ctl); border-radius: var(--r-sm);
-    transition: border-color var(--speed), box-shadow var(--speed);
+    transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
   }
   .field textarea { min-height: 72px; resize: vertical; }
   /* Room for the dropdown arrow (base.css). Same selector weight as the rule above. */

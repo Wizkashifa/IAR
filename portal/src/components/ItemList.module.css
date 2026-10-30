@@ -9,7 +9,7 @@
   .folded > summary { cursor: pointer; list-style: none; }
   .folded > summary::-webkit-details-marker { display: none; }
   .folded:not([open]) > summary { border-bottom: 0; }
-  .turn { transition: transform var(--speed); }
+  .turn { transition: transform var(--speed) var(--ease); }
   .folded[open] .turn { transform: rotate(90deg); }
   .folded li { opacity: 0.85; }
 }

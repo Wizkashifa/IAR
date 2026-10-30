@@ -3,7 +3,7 @@
   .d > summary::-webkit-details-marker { display: none; }
   .link { display: inline-flex; align-items: center; gap: var(--s-1h); min-height: max(32px, var(--tap)); color: var(--accent-text); font-weight: 600; font-size: var(--t-md); }
   .link:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r-sm); }
-  .chev { color: var(--ink-3); transition: transform var(--speed); }
+  .chev { color: var(--ink-3); transition: transform var(--speed) var(--ease); }
   .d[open] > summary .chev { transform: rotate(90deg); }
   .body { margin-top: var(--s-2); }
   .divided { align-self: stretch; width: 100%; border-top: 1px solid var(--line); padding-top: var(--s-3); }
