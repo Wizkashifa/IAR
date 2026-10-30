@@ -164,7 +164,7 @@ To change a director, change the pillar's Owner. To move a committee to another 
 
 | Group | Unlocks |
 | --- | --- |
-| portal-role-office@ | Rentals, run sheet; can submit for any committee |
+| portal-role-office@ | Sees every request and What's Stuck. Events: submits for any committee, books restricted rooms, helps with any team's event tasks and close-out. Purchases: submits for any fund and records payments. (Facility rentals, once built) |
 | portal-role-finance@ | Finance review, payment, QuickBooks entry, restricted S&W requests; can submit for any fund |
 | portal-role-executive@ | Whoever holds an executive office (Head Imam, Shura chair, CEO; one person can hold several): final mission review of events, and executive approvals. When an office changes hands, change the group's members |
 | portal-role-admin@ | Every module and Portal Settings, for support. Never approves or pays. Keep to two or three people |

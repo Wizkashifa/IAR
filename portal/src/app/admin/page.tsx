@@ -36,7 +36,7 @@ const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
 const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", sw: "Restricted S&W payment requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
 const SPACE_LABEL: Record<string, string> = { office: "IAR office", finance: "Finance", executive: "Executive", admins: "Portal admins", marketing: "Marketing", it: "IT", av: "A/V", facilities: "Facilities" };
 const ROLE_LABEL: Record<string, string> = {
-  office: "Rentals, run sheet; submits for any committee",
+  office: "Sees every request and What's Stuck; submits events for any committee, books restricted rooms, helps with any team's event tasks; submits for any fund and records payments",
   finance: "Finance review, payment, QuickBooks, restricted S&W requests; submits for any fund",
   executive: "Executive offices (Head Imam, Shura chair, CEO): final mission review of events, and executive approvals. One person can hold several",
   admins: "Sees everything and this page; never approves or pays",
