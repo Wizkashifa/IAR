@@ -27,6 +27,18 @@ export type MarketingField = {
 
 export type MarketingType = { label: string; blurb: string; note?: string; fields: MarketingField[] };
 
+/** The pieces of marketing an event can ask for, one request each. */
+export const PIECES: { value: string; label: string }[] = [
+  { value: "flyer", label: "Flyer" },
+  { value: "social", label: "Social media posts" },
+  { value: "video", label: "Video" },
+  { value: "banner", label: "Banner or sign" },
+  { value: "announce", label: "Announcement" },
+  { value: "website", label: "Website listing" },
+  { value: "newsletter", label: "Newsletter" },
+  { value: "other", label: "Other" },
+];
+
 const DUE_HINT = "Marketing takes 1–2 weeks. Give at least 2 weeks if you can.";
 
 export const ANNOUNCE_EXAMPLE =
@@ -115,7 +127,29 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     blurb: "Any other request or project for marketing or multimedia.",
     fields: [{ key: "desc", label: "Share all the details of your request.", kind: "textarea", required: true }],
   },
+  // Added from the event's page, never from the type picker (lib/marketing/linked.ts).
+  event: {
+    label: "Marketing for an event",
+    blurb: "One piece of marketing for an event: a flyer, posts, a video, a banner and so on.",
+    fields: [
+      { key: "piece", label: "What do you need?", kind: "radio", required: true, options: PIECES },
+      { key: "desc", label: "What it's for and any special asks", kind: "textarea", hint: "Marketing already sees the event's details, brief and images. Add only what's special about this piece: size, wording, where it goes." },
+      { key: "due", label: "When is it needed by?", kind: "date", required: true, hint: "Marketing takes 1–2 weeks. We suggest 10 days before the event." },
+    ],
+  },
 };
+
+/** The kinds the type picker offers: a piece of marketing for an event is added from the event's page. */
+export const PICKER_KINDS = MARKETING_KINDS.filter((k) => k !== "event");
+
+/** A marketing piece's title: the piece, then the event ("Flyer: Community Fall Dinner"). */
+export const pieceTitle = (piece: string | undefined, eventTitle: string) => `${pieceLabel(piece)}: ${eventTitle}`;
+
+/** The event's part of a piece's title. */
+export const eventPartOf = (title: string) => (title.includes(": ") ? title.slice(title.indexOf(": ") + 2) : title);
+
+/** The words for a piece ("Social media posts"). */
+export const pieceLabel = (piece: string | undefined) => PIECES.find((p) => p.value === piece)?.label ?? "Marketing";
 
 /** Types that ask for comments: the rest have an open question for everything, so a second box would repeat it. */
 export const NOTES_KINDS: MarketingKind[] = ["redirect", "badge"];
@@ -263,6 +297,7 @@ export function titleFor(kind: MarketingKind, answers: Record<string, string>): 
   if (kind === "badge") return `Staff badge: ${answers.first ?? ""} ${answers.last ?? ""}`.trim();
   if (kind === "redirect") return `Redirect ${answers.from ?? ""}`.trim();
   if (kind === "webedit") return `Website update: ${short(answers.desc)}`;
+  if (kind === "event") return pieceLabel(answers.piece);
   return short(answers.desc || answers.text) || MARKETING_TYPES[kind].label;
 }
 

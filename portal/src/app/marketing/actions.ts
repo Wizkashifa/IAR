@@ -15,6 +15,8 @@ import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import { isEventCard, type EventCard } from "@/lib/events/workflow";
+import { mayAddPiece, newPiece, pieceAddedNotices } from "@/lib/marketing/linked";
 import type { FormState } from "@/components/FormErrors";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
@@ -51,15 +53,29 @@ export async function createMarketing(prev: MarketingFormState, form: FormData):
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const raw = inputFrom(form);
-  const parsed = parseMarketingInput(raw, { today: todayLocal(), committees: await committeesFor(viewer) });
+  const store = await cardStore();
+  // A piece of marketing for an event: added from the event's page, by someone who may add one now. Its committee is the event's.
+  const eventId = String(form.get("event") ?? "");
+  let event: EventCard | null = null;
+  if (raw.kind === "event" || eventId) {
+    const found = eventId ? await store.get(eventId) : null;
+    if (!isEventCard(found)) return { errors: ["Add marketing for an event from the event's page."], values: raw, n: prev.n + 1 };
+    const may = mayAddPiece(found, actor);
+    if (!may.ok) return { errors: [may.reason], values: raw, n: prev.n + 1 };
+    event = found;
+    raw.kind = "event";
+    raw.committee = found.event.committeeName;
+  }
+  const parsed = parseMarketingInput(raw, { today: todayLocal(), committees: event ? [event.event.committeeName] : await committeesFor(viewer) });
   const files = isMarketingKind(raw.kind) && asksForFiles(raw.kind) ? filesFrom(form, "files") : [];
   const fileErrors = files.length === 0 ? [] : (await marketingFolder()) ? checkFiles(files) : [NOT_SET_UP];
   if (!parsed.ok || fileErrors.length) return { errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors], values: raw, n: prev.n + 1 };
 
-  const store = await cardStore();
-  const { id: _blank, ...toCreate } = wf.newMarketing(parsed.details, actor, nowIso());
+  const now = nowIso();
+  const { id: _blank, ...toCreate } = event ? newPiece(event, parsed.details, actor, now) : wf.newMarketing(parsed.details, actor, now);
   const created = (await store.create(toCreate, "MK")) as wf.MarketingCard;
-  await deliver(marketingNotices(null, created, actor), actor.email);
+  await deliver([...marketingNotices(null, created, actor), ...pieceAddedNotices(created, actor)], actor.email);
+  if (event) revalidatePath(`/events/${event.id}`);
   if (files.length) {
     try {
       const saved = await saveMarketingFiles({ id: created.id, kind: created.marketing.kind, sentAt: created.createdAt ?? created.updatedAt }, files);
@@ -135,7 +151,8 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
   const allowed = wf.permission(card, actor, answering ? "answer" : "edit");
   if (!allowed.ok) return fail([allowed.reason]);
 
-  // A request keeps its committee even if the person has since left it.
+  // A request keeps its committee even if the person has since left it; a piece for an event keeps the event's.
+  if (card.marketing.eventCardId) raw.committee = card.committee;
   const committees = [...new Set([...(await committeesFor(viewer)), card.committee])];
   const parsed = parseMarketingInput(raw, { today: todayLocal(), committees });
   const answer = String(form.get("answer") ?? "").slice(0, 2000);

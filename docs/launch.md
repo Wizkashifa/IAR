@@ -95,12 +95,15 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] 30 days before a series ends, its requester gets a Chat message; "Request the next period" opens the form with the next dates filled in.
 - [ ] A asks for a time someone else booked. They give it up; the dates leave the calendar at once and A's request moves on.
 - [ ] Food in a room that doesn't allow it, or attendance over capacity, is flagged to the reviewers.
-- [ ] Once approved, the event's A/V task appears in Team Queues and its marketing task in Marketing Requests → Team work. There is no Security task.
+- [ ] Once approved, the event's A/V task appears in Team Queues. A public event gets one marketing piece, "Flyer and announcement", in Marketing Requests → Team work, and the Marketing space gets a post. There is no Security task and no Marketing task.
 - [ ] The run sheet for that day lists it, with the calendar's other bookings.
 - [ ] After the event, the daily job moves it to close-out; A records attendance; the linked purchase shows as actual spend.
 - [ ] The approved event shows on the Calendar's week view for its room and committee.
 
 **Marketing Requests**
+- [ ] On an event still in review, A opens the event and adds three marketing pieces with "Add a marketing piece" (a video, a banner, social media posts). Each shows "Event not approved yet" on its page and in Team work; "By event" lists them together. The event's chair (B) and M can add pieces too; another committee's member can't.
+- [ ] E declines that event: its open pieces are cancelled, with "The event was declined" in their history.
+- [ ] A approved event's date changes (A gives up the time and picks a new one): whoever has each open piece gets a Chat message, and the piece's stage doesn't change.
 - [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `Graphic design / <year> / MK-…`. It shows as New in Marketing Requests → Team work for M; M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
 
 **IT & Maintenance**

@@ -13,7 +13,7 @@ import { MARKETING_TYPES } from "./forms";
 import { todayLocal } from "../dates";
 
 /** Types whose work starts from the requester's own material. */
-export const FILE_KINDS: MarketingKind[] = ["graphic", "signage", "highlight", "webpage", "badge", "custom"];
+export const FILE_KINDS: MarketingKind[] = ["graphic", "signage", "highlight", "webpage", "badge", "custom", "event"];
 export const asksForFiles = (kind: MarketingKind) => FILE_KINDS.includes(kind);
 
 /** What the form says about files, per type. */
@@ -24,6 +24,7 @@ export const FILE_HINT: Partial<Record<MarketingKind, string>> = {
   webpage: "The page's wording, photos and any documents to link to.",
   badge: "A clear head-and-shoulders photo for the badge.",
   custom: "Anything marketing needs to start.",
+  event: "Only what this piece needs beyond the event's own images: a sponsor's logo, a speaker's photo, exact wording.",
 };
 
 /** What the form says under the Drive link, per type, after how to share it. */

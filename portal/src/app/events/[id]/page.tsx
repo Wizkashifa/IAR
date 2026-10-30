@@ -13,10 +13,15 @@ import { Panel, PanelFoot } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
-import { ItemRow, Rows } from "@/components/ItemRow";
+import { CardRow, ItemRow, Rows } from "@/components/ItemRow";
+import { rowsFor } from "@/components/ItemList";
+import { canViewMarketing } from "@/lib/marketing/access";
+import { pieceLabel } from "@/lib/marketing/forms";
+import { mayAddPiece } from "@/lib/marketing/linked";
+import { OPEN_STAGES, isMarketingCard } from "@/lib/marketing/workflow";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
-import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
+import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
 import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
@@ -109,6 +114,11 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const linked = linkedPurchases(await store.listPurchasesForEvent(card.id), card.id);
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
+  // Its marketing pieces: one marketing request each, linked to this event.
+  const pieces = (await store.listMarketingForEvent(card.id)).filter(isMarketingCard).sort((a, b) => (a.createdAt ?? a.updatedAt).localeCompare(b.createdAt ?? b.updatedAt));
+  const viewing = { ...actor, seeAll: viewer.roles.includes("admins") };
+  const piecesVisible = pieces.filter((p) => canViewMarketing(p, viewing));
+  const addPiece = mayAddPiece(card, actor).ok;
   const office = ev.roles.includes("office");
   const images = imagesOf(card);
   const canAddImages = imagesPermission(card, ev).ok;
@@ -119,7 +129,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const teamMembers = new Map(await Promise.all(myTeams.map(async (t) => [t, await queueTeamMembers(t)] as const)));
 
   // Everyone this page shows, by name.
-  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
+  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...emailsIn(piecesVisible), ...piecesVisible.map((p) => p.marketing.assignee ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
   const names = await nameResolver(emails);
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
@@ -253,6 +263,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {e.recur && <SeriesPanel />}
 
           {(card.status === "close_out" || card.status === "closed") && <CloseOutPanel />}
+
+          {(pieces.length > 0 || addPiece) && <MarketingPanel />}
 
           {tasks.length > 0 && (
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
@@ -400,6 +412,46 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       </form>
     );
     return { panel, main };
+  }
+
+  /** The event's marketing pieces, each with its status and who has it, and a way to add one. */
+  function MarketingPanel() {
+    const rows = rowsFor(piecesVisible, actor, { names, today: ctx.today }).map((r, i) => {
+      const p = piecesVisible[i];
+      const due = p.marketing.answers.due;
+      return {
+        ...r,
+        sub: [pieceLabel(p.marketing.answers.piece), due && `needed by ${dayText(due)}`].filter(Boolean).join(" · "),
+        who: p.marketing.assignee && OPEN_STAGES.includes(p.marketing.stage) ? `With ${names(p.marketing.assignee)}` : r.who,
+      };
+    });
+    const hidden = pieces.length - piecesVisible.length;
+    const empty = !e.isPublic
+      ? "Nothing yet. Private events usually don't need marketing, but you can ask for a sign or an announcement."
+      : isLive
+        ? "No marketing pieces yet."
+        : "Nothing yet. Once the event is approved, marketing gets a flyer and announcement. Add pieces that take longer now: a video, a banner, social media posts.";
+    return (
+      <Panel title="Marketing" right={pieces.length ? `${pieces.length}` : undefined} flush id="marketing">
+        {pieces.length === 0 ? (
+          <EmptyState>{empty}</EmptyState>
+        ) : (
+          <Rows label="Marketing pieces">
+            {rows.map((r) => (
+              <CardRow key={r.id} row={r} />
+            ))}
+            {hidden > 0 && <ItemRow state="plain" title={`${hidden} more you can't open`} sub="Marketing pieces for this event" />}
+          </Rows>
+        )}
+        {addPiece && (
+          <PanelFoot>
+            <Button href={`/marketing/new?event=${ec.id}`} icon="plus" size="small">
+              Add a marketing piece
+            </Button>
+          </PanelFoot>
+        )}
+      </Panel>
+    );
   }
 
   function SeriesPanel() {

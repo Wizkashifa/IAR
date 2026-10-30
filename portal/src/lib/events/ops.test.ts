@@ -67,17 +67,18 @@ const newCard = (input = base()) => ({ ...wf.newEvent(input, owner, NOW, []), id
 /** Submitted with no director, so it goes straight to the executive. */
 const submitted = (input = base()) => wf.submit(newCard(input), owner, [], NOW);
 const approved = (input = base()) => wf.approve(submitted(input), exec, [], NOW);
+/** An event approved before marketing pieces, still carrying its Marketing task. */
+const oldMk = (c: wf.EventCard): wf.EventCard => ({
+  ...c,
+  event: { ...c.event, tasks: [{ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing", status: "todo", dueDate: c.event.dates[0], history: [] }, ...(c.event.tasks ?? [])] },
+});
 
 // ---- Tasks ------------------------------------------------------------------
 
-test("tasks: each team the event needs, with due dates; never a Security task; nothing for a private event without A/V", () => {
+test("tasks: each team the event needs, with due dates; never a Security or Marketing task; nothing for a private event without A/V", () => {
   const t = planTasks(wf.newEvent(full(), owner, NOW, []).event);
-  assert.deepEqual(t.map((x) => [x.id, x.team, x.dueDate]), [
-    ["marketing", "marketing", "2026-11-14"],
-    ["av", "av", "2026-11-14"],
-  ]);
-  assert.match(t[0].title, /Games Night/);
-  assert.match(t[1].title, /projector/i);
+  assert.deepEqual(t.map((x) => [x.id, x.team, x.dueDate]), [["av", "av", "2026-11-14"]], "marketing gets marketing pieces instead (lib/marketing/linked.ts)");
+  assert.match(t[0].title, /projector/i);
   const late = planTasks(wf.newEvent(full({ end: "22:00" }), owner, NOW, []).event);
   assert.ok(!late.some((x) => (x.team as string) === "security"), "after hours doesn't add a task either");
   assert.deepEqual(planTasks(wf.newEvent(base(), owner, NOW, []).event), []);
@@ -86,14 +87,14 @@ test("tasks: each team the event needs, with due dates; never a Security task; n
 test("tasks: a series gets one task per team", () => {
   const series = full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" } });
   const t = planTasks(wf.newEvent(series, owner, NOW, []).event);
-  assert.deepEqual(t.map((x) => [x.team, x.dueDate]), [["marketing", "2026-11-03"], ["av", "2026-11-03"]]);
+  assert.deepEqual(t.map((x) => [x.team, x.dueDate]), [["av", "2026-11-03"]]);
 });
 
 test("tasks: a Security task left on an older event isn't shown or worked", () => {
   const ok = approved(full());
   const old = { id: "security-2026-11-14", team: "security", title: "Room check before and after", status: "todo", dueDate: "2026-11-14", history: [] } as unknown as EventTask;
   const withOld = { ...ok, event: { ...ok.event, tasks: [...ok.event.tasks!, old] } };
-  assert.deepEqual(tasksFor(withOld).map((t) => t.team), ["marketing", "av"]);
+  assert.deepEqual(tasksFor(withOld).map((t) => t.team), ["av"]);
   assert.equal(taskPermission(withOld, old.id, office, "done").ok, false);
   assert.deepEqual(queueItems([withOld], "av", "2026-10-23").length, 1);
 });
@@ -102,11 +103,11 @@ test("tasks: locked until approval, added as to-do on approval, dropped on cance
   const sub = submitted(full());
   assert.equal(sub.event.tasks, undefined);
   assert.ok(tasksFor(sub).every((t) => t.status === "locked"));
-  assert.equal(tasksFor(sub).length, 2);
+  assert.equal(tasksFor(sub).length, 1);
   const ok = wf.approve(sub, exec, [], NOW);
-  assert.equal(ok.event.tasks?.length, 2);
+  assert.equal(ok.event.tasks?.length, 1);
   assert.ok(ok.event.tasks!.every((t) => t.status === "todo"));
-  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: Marketing and A\/V/.test(h.action)));
+  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: A\/V/.test(h.action)));
   const gone = wf.cancel(ok, owner, [], NOW);
   assert.equal(gone.event.tasks, undefined);
   assert.deepEqual(tasksFor(gone), []);
@@ -116,15 +117,15 @@ test("tasks: approval tells each team once, in its Chat space; giving up a date 
   const sub = submitted(full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" } }));
   const ok = wf.approve(sub, exec, [], NOW);
   const n = taskUnlockNotices(sub, ok);
-  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["marketing", true], ["av", true]]);
-  assert.match(n[1].text, /Due Tue, Nov 3|Due .*Nov 3/);
+  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["av", true]]);
+  assert.match(n[0].text, /Due Tue, Nov 3|Due .*Nov 3/);
   const dropped = wf.dropDates(ok, [], NOW, "SR-1001", ["2026-11-24"]);
   assert.deepEqual(taskUnlockNotices(ok, dropped), []);
 });
 
 test("tasks: anyone on the team hands a task to a teammate; they get an alert", () => {
   const members = [marketer.email, `mk2@${D}`];
-  const ok = approved(full());
+  const ok = oldMk(approved(full()));
   assert.throws(() => assignTask(submitted(full()), "marketing", marketer, `mk2@${D}`, members, NOW), /unlock|approved/);
   assert.throws(() => assignTask(ok, "marketing", av, `mk2@${D}`, members, NOW), /Only the Marketing team/);
   assert.throws(() => assignTask(ok, "marketing", marketer, `av@${D}`, members, NOW), /isn't on the Marketing team/);
@@ -160,18 +161,19 @@ test("images: the requester and marketing add images to a public event; its stag
   assert.equal(wf.resubmit(sentBack, full(), owner, [], NOW, []).event.brief?.files, "https://drive.google.com/old");
 });
 
-test("tasks: re-approval after a move keeps work already done", () => {
-  const ok = approved(full());
+test("tasks: re-approval after a move keeps work already done, and an older event's Marketing task", () => {
+  const ok = oldMk(approved(full()));
   const done = actOnTask(ok, "av", av, "done", NOW, "Projector tested");
   const moved = wf.releaseToMove(done, [], NOW, "SR-1002", done.event.dates);
   const back = wf.resubmit(moved, { ...moved.event, date: "2026-11-21" }, owner, [], NOW, []);
   assert.equal(back.status, "approved");
   assert.equal(back.event.tasks!.find((t) => t.id === "av")!.status, "done");
-  assert.equal(back.event.tasks!.find((t) => t.id === "marketing")!.dueDate, "2026-11-21", "due dates follow the new date");
+  assert.equal(back.event.tasks!.find((t) => t.id === "av")!.dueDate, "2026-11-21", "due dates follow the new date");
+  assert.equal(back.event.tasks!.find((t) => t.id === "marketing")?.status, "todo", "an older Marketing task stays until it's finished");
 });
 
 test("tasks: only the team (or the office) works them; take, start, done, and a question for the requester", () => {
-  const ok = approved(full());
+  const ok = oldMk(approved(full()));
   assert.equal(taskPermission(ok, "av", marketer, "take").ok, false);
   assert.equal(taskPermission(submitted(full()), "av", av, "take").ok, false, "locked before approval");
   assert.throws(() => actOnTask(ok, "av", marketer, "start", NOW), TaskError);
@@ -206,8 +208,8 @@ test("queues: each person sees their teams' queues; the office sees all; open ta
   assert.deepEqual(queueTeamsFor(["member", "office"]), ["marketing", "av"]);
   assert.deepEqual(queueTeamsFor(["member"]), []);
 
-  const later = approved(full({ date: "2026-12-05" }));
-  const sooner = approved(full({ date: "2026-11-07" }));
+  const later = oldMk(approved(full({ date: "2026-12-05" })));
+  const sooner = oldMk(approved(full({ date: "2026-11-07" })));
   const finished = actOnTask(approved(full()), "av", av, "done", NOW);
   const pending = submitted(full());
   const cards = [later, sooner, finished, pending];

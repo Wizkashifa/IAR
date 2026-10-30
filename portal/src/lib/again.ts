@@ -28,6 +28,8 @@ export function canRequestAgain(card: Card, viewer: { email: string; teams?: { g
   if (card.type !== "event" && card.type !== "purchase" && card.type !== "marketing") return false;
   // Card receipts come from each month's statement: there's nothing to copy.
   if (card.purchase?.kind === "card") return false;
+  // A piece of marketing for an event is added from its event's page.
+  if (card.marketing?.kind === "event") return false;
   const over =
     OVER.includes(card.status) ||
     (card.event != null && card.status === "approved" && lastDate(card.event) < today) ||
