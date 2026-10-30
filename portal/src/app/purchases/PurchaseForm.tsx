@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountsForFund, findAccount, isLaborAccount, shortFund } from "@/lib/purchases/accounts";
 import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, type DeliveryMethod, type PurchaseKind } from "@/lib/purchases/types";
-import type { VendorChoice } from "@/lib/purchases/vendors";
+import { findVendor, type VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { EventChoice } from "@/lib/events/link";
 import { Button } from "@/components/Button";
@@ -129,15 +129,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
   const delivery: DeliveryMethod | "" = checkTo;
   // S&W requests match only S&W payees; everything else only the shared list. The two never mix.
   const vendorList = chargeFund === SOCIAL_WELFARE_FUND ? restrictedVendors : vendors;
-  const findVendor = (name: string) => vendorList.find((v) => v.name.toLowerCase() === name.trim().toLowerCase());
-  const vendor = findVendor(payee);
+  const vendor = findVendor(vendorList, payee);
   const laborLine = lines.some((l) => isLaborAccount(findAccount(l.accountId)));
   const labor = isLabor || laborLine;
   const w9Needed = kind === "pay" && payee.trim() !== "" && labor && !vendor?.w9OnFile;
 
   const choosePayee = (name: string) => {
     setPayee(name);
-    const v = findVendor(name);
+    const v = findVendor(vendorList, name);
     if (v?.address && !mailingAddress.trim()) setMailingAddress(v.address);
   };
   const chooseKind = (k: PurchaseKind) => {

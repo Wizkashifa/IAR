@@ -5,7 +5,7 @@
   /* The team board: one column per status, scrolling sideways on narrow screens. */
   .board { display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: var(--s-1); }
   .col { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; min-height: 140px; display: flex; flex-direction: column; gap: var(--s-2); }
-  .colHead { display: flex; justify-content: space-between; gap: var(--s-2); margin: 0 0 2px; font-family: var(--font-head); font-size: 13px; font-weight: 600; }
+  .colHead { display: flex; justify-content: space-between; gap: var(--s-2); margin: 0 0 2px; font-family: var(--font-head); font-size: var(--t-md); font-weight: 600; }
   .count { color: var(--ink-3); font-weight: 600; }
   .card { display: flex; flex-direction: column; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 10px; font-size: var(--t-md); color: var(--ink); box-shadow: var(--shadow-1); transition: border-color var(--speed); }
   .card:hover { border-color: var(--gold); text-decoration: none; }

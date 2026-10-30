@@ -57,7 +57,7 @@ export const FLAG = {
 } as const;
 
 /** The line under a request that tells the requester they'll hear back. */
-export const NOTIFIED = "You'll get a notification when it's done.";
+export const NOTIFIED = "You'll be notified when it's done.";
 
 /** The shared statuses every request has, in words. */
 export const STATUS_LABEL: Record<CardStatus, string> = {

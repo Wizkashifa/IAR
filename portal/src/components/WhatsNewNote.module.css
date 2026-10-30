@@ -17,7 +17,7 @@
 
   /* On a phone: one line, "13 new things in the portal". */
   .line { display: none; }
-  .lineLink { flex: 1; min-width: 0; display: inline-block; padding-block: 10px; }
+  .lineLink { flex: 1; min-width: 0; display: inline-flex; align-items: center; min-height: max(24px, var(--tap)); }
   @media (max-width: 640px) {
     .note { padding-block: 0; }
     .full { display: none; }

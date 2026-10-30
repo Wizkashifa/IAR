@@ -86,10 +86,10 @@ export function TicketBoard({ cards, showTeam, names }: { cards: TicketCard[]; s
           .sort((a, b) => URGENCY_ORDER.indexOf(a.ticket.urgency) - URGENCY_ORDER.indexOf(b.ticket.urgency) || a.ticket.statusSince.localeCompare(b.ticket.statusSince));
         return (
           <section key={col.title} className={styles.col} aria-label={col.title}>
-            <h3 className={styles.colHead}>
+            <h2 className={styles.colHead}>
               <span>{col.title}</span>
               <span className={styles.count}>{items.length}</span>
-            </h3>
+            </h2>
             {items.length === 0 && <p className="hint">None</p>}
             {items.map((c) => (
               <Link key={c.id} href={`/it-maintenance/${c.id}`} className={styles.card}>

@@ -44,6 +44,8 @@ const SCREENS = [
   { name: "Who's Who", path: "/teams", as: "chair" },
   { name: "Library", path: "/library", as: "chair" },
   { name: "Help", path: "/help", as: "member" },
+  { name: "Help guide", path: "/help/events", as: "member" },
+  { name: "What's new", path: "/help/whats-new", as: "member" },
   { name: "Search", path: "/search?q=youth", as: "chair" },
   { name: "Notifications", path: "/notifications", as: "chair" },
   { name: "Notification settings", path: "/notifications/settings", as: "chair" },
@@ -56,13 +58,20 @@ const SCREENS = [
 const BASE = `http://localhost:${process.env.PORT || 3000}`;
 const SIZES = [
   { tag: "desktop", width: 1280, height: 900 },
-  { tag: "phone", width: 390, height: 844 },
+  { tag: "phone", width: 390, height: 844, touch: true },
 ];
+/** More widths, with --more: a small Android phone, and a tablet held upright (touch, but the menu is a drawer). */
+const MORE_SIZES = [
+  { tag: "small-phone", width: 360, height: 740, touch: true },
+  { tag: "tablet", width: 820, height: 1180, touch: true },
+];
+const sizesFor = (argv) => (argv.includes("--more") ? [...SIZES, ...MORE_SIZES] : SIZES);
 
 /** A browser context signed in as a sample user (the cookie the /dev page sets). */
 async function signedIn(browser, as, size, scheme) {
   // Reduced motion, so pages are captured and measured as they settle, not mid-fade.
-  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme, reducedMotion: "reduce" });
+  // Touch sizes report a coarse pointer, as a real phone or tablet does, so the portal's touch sizing applies.
+  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme, reducedMotion: "reduce", hasTouch: Boolean(size.touch), isMobile: Boolean(size.touch) });
   await ctx.addCookies([{ name: "dev_persona", value: as, url: BASE }]);
   return ctx;
 }
@@ -86,4 +95,4 @@ async function checkServer() {
   }
 }
 
-module.exports = { SCREENS, BASE, SIZES, signedIn, selected, checkServer };
+module.exports = { SCREENS, BASE, SIZES, sizesFor, signedIn, selected, checkServer };

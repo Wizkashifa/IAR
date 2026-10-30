@@ -66,9 +66,6 @@ const LIST_LIMIT = 2000;
 
 export const COUNTER_START: Record<string, number> = { PO: 12001, EV: 1101, MK: 1001, TK: 1001 };
 
-/** Statuses where the owner has to do something. */
-export const NEEDS_OWNER: CardStatus[] = ["draft", "changes_requested", "close_out"];
-
 /** Statuses a card can still move from. */
 export const OPEN_STATUSES: CardStatus[] = ["submitted", "in_review", "changes_requested", "approved", "paid", "close_out"];
 

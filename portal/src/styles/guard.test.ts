@@ -56,7 +56,7 @@ test("the allowed raw colours match the brand tokens", () => {
 
 test("only src/components and the root layout import Mantine", () => {
   const offenders = files(SRC, [".ts", ".tsx"])
-    .filter((p) => /(?:from|import)\s+["']@mantine\//.test(readFileSync(p, "utf8")))
+    .filter((p) => /(?:from|import)\s*\(?\s*["']@mantine\/|require\(\s*["']@mantine\//.test(readFileSync(p, "utf8")))
     .map(rel)
     .filter((p) => !mantineAllowed(p));
   assert.deepEqual(offenders, [], "Pages use the wrappers in src/components (DateField, RoomPicker, FileDrop, …), never @mantine/* directly.");
@@ -92,6 +92,23 @@ test("global class names are defined in base.css", () => {
     }
   }
   assert.deepEqual(bad, [], "Use a class from src/styles/base.css, or a co-located .module.css class.");
+});
+
+/**
+ * The screen widths a layout may change at (tokens.css lists them): 520px small
+ * phone, 640px phone, 1000px menu beside the page, and the calendar's own
+ * 760px and 1100px. Layouts inside the page use @container page instead.
+ */
+const BREAKPOINTS = new Set(["520px", "640px", "760px", "999.98px", "1100px"]);
+
+test("media queries use the portal's breakpoints", () => {
+  const bad = files(SRC, [".css"]).flatMap((p) =>
+    [...readFileSync(p, "utf8").matchAll(/@media[^{]*?\((?:max|min)-width:\s*([\d.]+px)\)/g)]
+      .map((m) => m[1]!)
+      .filter((w) => !BREAKPOINTS.has(w))
+      .map((w) => `${rel(p)}: ${w}`),
+  );
+  assert.deepEqual(bad, [], "Use 520px, 640px or 999.98px (tokens.css), or an @container page query inside the page.");
 });
 
 test("the only global stylesheets are tokens.css and base.css", () => {
@@ -191,6 +208,9 @@ const PAIRS: [string, string, number][] = [
   ["--gold-light", "--nav-bg", 3],
   ["--gold-light", "--brand-green", 3],
   ["--empty-stroke", "--surface", 3],
+  // The event timeline: a booked time's label sits on its block; a requested time's outline on the card
+  ["--surface", "--hold-booking", 4.5],
+  ["--hold-request", "--surface", 3],
 ];
 
 test("token colours have enough contrast, light and dark", () => {
