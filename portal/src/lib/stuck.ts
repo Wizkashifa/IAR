@@ -14,7 +14,7 @@ import { historyOf, hrefOf, stepSinceOf, withHistory } from "./kinds";
 import type { Role } from "./org";
 import type { Notice, Recipient } from "./notices";
 import { moduleFor } from "./registry";
-import { lc } from "./text";
+import { andList, lc } from "./text";
 import { historyEntry, type HistoryEntry } from "./workflow-core";
 
 const DAY = 864e5;
@@ -124,7 +124,7 @@ const ROLE_WHO: Partial<Record<Role, string>> = {
 /** "Sample Director", "the finance office", "Sample Chair or Sample Vice Chair". */
 export function whoWaiting(to: Recipient[], names: (email: string) => string): string {
   const ns = to.map((r) => ("email" in r ? names(r.email) : ROLE_WHO[r.role] ?? r.role));
-  return ns.length > 1 ? `${ns.slice(0, -1).join(", ")} or ${ns[ns.length - 1]}` : ns[0] ?? "nobody yet";
+  return andList(ns, "or") || "nobody yet";
 }
 
 /** The request as notices and Chat name it: Social & Welfare purchases never show their title. */

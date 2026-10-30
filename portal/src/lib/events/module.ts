@@ -11,10 +11,10 @@ import type { RowState } from "../card-row";
 import type { ModuleDef } from "../registry";
 import type { Holder, StuckContext } from "../stuck";
 import { type NameOf, type StepOptions, type Steps, type Viewer, finish, quoted, speaker, track } from "../steps";
-import { same } from "../text";
+import { andList, same } from "../text";
 import { canViewEvent } from "./access";
 import { lastDate } from "./closeout";
-import { TEAM_NAME as TASK_TEAM_NAME } from "./tasks";
+import { TEAM_NAME as TASK_TEAM_NAME, isTeamTask } from "./tasks";
 import { type EventCard, STAGE_LABEL, isEventCard, permission, reviewersFor } from "./workflow";
 
 function eventSteps(card: EventCard, o: StepOptions): Steps {
@@ -74,8 +74,9 @@ function eventNext(card: EventCard, viewer: Viewer, names: NameOf, o: StepOption
         ? "You give final approval as an executive. Then the room is confirmed on the IAR calendar and the teams get their tasks."
         : `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`;
     case "approved": {
-      const open = (e.tasks ?? []).filter((t) => t.status !== "done").map((t) => TASK_TEAM_NAME[t.team]);
-      const teams = open.length ? `${open.length > 1 ? `${open.slice(0, -1).join(", ")} and ${open[open.length - 1]} get` : `${open[0]} gets`} it ready. ` : "";
+      // Only teams that still get tasks: an older event's Security task isn't anyone's to do.
+      const open = (e.tasks ?? []).filter((t) => isTeamTask(t) && t.status !== "done").map((t) => TASK_TEAM_NAME[t.team]);
+      const teams = open.length ? `${andList(open)} ${open.length > 1 ? "get" : "gets"} it ready. ` : "";
       return `${teams}After the event, ${s.does(card.ownerEmail, "add", "adds").replace(/^You /, "you ")} the attendance and ${mine ? "close" : "closes"} it out.`;
     }
     case "done":

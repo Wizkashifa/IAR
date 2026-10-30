@@ -8,7 +8,8 @@ import { syncHolds } from "./holds";
 import { holdKeyOf, isOpenAsk } from "./slot-requests";
 import { slotRequestStore } from "./slot-requests-store";
 import * as wf from "./workflow";
-import { cancelWithEvent, isMarketingCard } from "../marketing/workflow";
+import { piecesOnEventDeleted } from "../marketing/linked";
+import { piecesFor } from "../marketing/pieces";
 
 /**
  * Before a portal admin deletes an event request: take its holds off the room
@@ -73,13 +74,15 @@ export async function beforeDeletingEvent(card: wf.EventCard, by: string): Promi
     }
   }
   // Marketing pieces for it: open ones are cancelled, and none points at a request that's gone.
-  for (const p of (await store.listMarketingForEvent(card.id)).filter(isMarketingCard)) {
+  const pieces = await piecesFor(card.id);
+  const gone = piecesOnEventDeleted(card, pieces, now);
+  for (const next of gone.pieces) {
     try {
-      const cancelled = cancelWithEvent(p, now, `${card.id} was deleted by a portal admin.`);
-      await store.save({ ...cancelled, updatedAt: now, marketing: { ...cancelled.marketing, eventCardId: undefined } }, p.updatedAt);
+      await store.save(next, pieces.find((p) => p.id === next.id)!.updatedAt);
+      notices.push(...gone.notices.filter((n) => n.cardId === next.id));
     } catch (err) {
       console.error("unlinking a marketing piece failed", err);
-      problems.push(`${p.id} is still linked to this event. Open it and cancel it if it's no longer needed.`);
+      problems.push(`${next.id} is still linked to this event. Open it and cancel it if it's no longer needed.`);
     }
   }
   return { notices, problems };

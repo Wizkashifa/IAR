@@ -26,7 +26,7 @@ import type { Notice, Recipient } from "../notices";
 import type { EventCard } from "../events/workflow";
 import { dayText } from "../events/series";
 import { addDays, todayLocal } from "../dates";
-import { same } from "../text";
+import { andList, same } from "../text";
 import { historyEntry, type Permission } from "../workflow-core";
 import { eventPartOf, pieceTitle, type ParsedMarketing } from "./forms";
 import { OPEN_STAGES, cancelWithEvent, isWorkStage, newMarketing, type Actor, type MarketingCard } from "./workflow";
@@ -128,8 +128,6 @@ export function eventChanges(before: EventCard, after: EventCard): string[] {
   return out;
 }
 
-const andList = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
-
 /**
  * The event's pieces after it changed, and who hears about it. Returns only
  * the pieces that changed (to save) and the notices to deliver.
@@ -147,14 +145,8 @@ export function piecesAfterEventChange(before: EventCard | null, after: EventCar
 
   const ended = after.status === "cancelled" || after.status === "denied";
   if (ended && before.status !== after.status) {
-    const why = after.status === "cancelled" ? "The event was cancelled." : "The event was declined.";
-    for (const p of open) {
-      out.pieces.push(cancelWithEvent(p, now, why));
-      // Someone who already scheduled, started or sent a draft should stop; a new one just leaves the list.
-      const working = isWorkStage(p.marketing.stage);
-      out.notices.push(notice(p, `${p.id} “${p.title}” is cancelled: ${what} was ${after.status === "cancelled" ? "cancelled" : "declined"}. Nothing more to do.`, working));
-    }
-    return out;
+    const how = after.status === "cancelled" ? "cancelled" : "declined";
+    return cancelPieces(open, now, `The event was ${how}.`, `${what} was ${how}`);
   }
   if (ended || !ADDABLE.includes(after.status)) return out;
 
@@ -170,6 +162,32 @@ export function piecesAfterEventChange(before: EventCard | null, after: EventCar
     out.notices.push(notice(p, `${what} changed ${andList(changes)}.${changes.some((c) => c.startsWith("the date")) ? when : ""} Check that ${p.id} “${p.title}” still fits.`, true));
   }
   return out;
+}
+
+/**
+ * Open pieces cancelled because their event ended (`why` for their history,
+ * `because` for the notice). Whoever already scheduled, started or sent a
+ * draft gets an alert to stop; a piece nobody picked up just leaves the
+ * team's list with a note.
+ */
+function cancelPieces(open: MarketingCard[], now: string, why: string, because: string): { pieces: MarketingCard[]; notices: Notice[] } {
+  return {
+    pieces: open.map((p) => cancelWithEvent(p, now, why)),
+    notices: open.map((p) => ({ to: holderOf(p), cardId: p.id, href: `/marketing/${p.id}`, text: `${p.id} “${p.title}” is cancelled: ${because}. Nothing more to do.`, alert: isWorkStage(p.marketing.stage), delegable: false })),
+  };
+}
+
+/**
+ * A portal admin deleted the event: its open pieces are cancelled (whoever
+ * has them hears about it, as when an event is cancelled), and every piece
+ * stops pointing at it. Pieces already closed keep their place in lists.
+ */
+export function piecesOnEventDeleted(event: EventCard, pieces: MarketingCard[], now: string): { pieces: MarketingCard[]; notices: Notice[] } {
+  const open = pieces.filter((p) => isPieceOf(p, event.id) && OPEN_STAGES.includes(p.marketing.stage));
+  const cancelled = cancelPieces(open, now, `${event.id} was deleted by a portal admin.`, `${event.id} “${event.title}” was deleted`);
+  const unlink = (p: MarketingCard): MarketingCard => ({ ...p, marketing: { ...p.marketing, eventCardId: undefined } });
+  const closed = pieces.filter((p) => isPieceOf(p, event.id) && !OPEN_STAGES.includes(p.marketing.stage));
+  return { pieces: [...cancelled.pieces.map(unlink), ...closed.map(unlink)], notices: cancelled.notices };
 }
 
 /** The requester hears when someone else adds a piece to their event (in the portal; nothing to do yet). */

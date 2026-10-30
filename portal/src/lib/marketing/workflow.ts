@@ -31,7 +31,7 @@ import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, eventPartOf, neededBy, pieceTitle, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
 import { CHANNELS, CHANNEL_LABEL, type Channel, type MarketingDetails, type MarketingFile, type MarketingKind, type MarketingStage } from "./types";
-import { same } from "../text";
+import { andList, same } from "../text";
 import { addDays, daysBetween, isDate, nextBusinessDay, todayLocal } from "../dates";
 import { fmtDayTime } from "../format";
 import { historyEntry, must, WorkflowError } from "../workflow-core";
@@ -101,8 +101,7 @@ export function latestProof(m: MarketingDetails): MarketingFile[] {
 
 /** "Newsletter, Instagram and WhatsApp". */
 export function channelText(channels: Channel[] | undefined): string {
-  const names = (channels ?? []).map((c) => CHANNEL_LABEL[c]);
-  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+  return andList((channels ?? []).map((c) => CHANNEL_LABEL[c]));
 }
 
 /** What the card is waiting on, in words, for My Requests and the lists. */

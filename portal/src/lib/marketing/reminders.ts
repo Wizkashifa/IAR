@@ -3,11 +3,12 @@
  * can be tested (daily.ts loads the cards, calls this, saves and delivers).
  *
  * - Every day: one alert to the marketing team listing new requests that
- *   reached 2 days without anyone picking them up that day. Each request
- *   is in the list once (again only if it comes back as new after a
- *   question), so nothing needs saving.
- * - Every day: a reminder to the team for scheduled or in-progress work whose
- *   done-by date is tomorrow, today or past. Once per done-by date: a new
+ *   have waited 2 days or more without anyone picking them up. Each request
+ *   is in the list once (marked with `nudgedFor`), and again only if it
+ *   comes back as new after a question. A day the job misses is caught up
+ *   the next day.
+ * - Every day: a reminder to the team for scheduled, in-progress or approved
+ *   work whose done-by date is tomorrow, today or past. Once per done-by date: a new
  *   date (rescheduled) can get its own reminder.
  */
 import type { Notice } from "../notices";
@@ -18,6 +19,8 @@ export type DailyPlan = {
   notices: Notice[];
   /** Cards to save, marked as reminded. */
   reminded: MarketingCard[];
+  /** New requests in today's nudge, marked as nudged (save them before sending it). */
+  nudged: MarketingCard[];
 };
 
 /** Days a new request waits before the team gets a nudge about it. */
@@ -29,7 +32,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
   const reminded: MarketingCard[] = [];
 
   const waiting = cards
-    .filter((c) => c.marketing.stage === "review" && daysBetween(todayLocal(new Date(c.marketing.stageSince)), today) === NUDGE_DAYS)
+    .filter((c) => c.marketing.stage === "review" && c.marketing.nudgedFor !== c.marketing.stageSince && daysBetween(todayLocal(new Date(c.marketing.stageSince)), today) >= NUDGE_DAYS)
     .sort((a, b) => a.marketing.stageSince.localeCompare(b.marketing.stageSince));
   if (waiting.length) {
     const list = waiting.slice(0, 8).map((c) => `${c.id} “${c.title}”`).join(", ");
@@ -37,7 +40,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
     notices.push({
       to: { role: "marketing" },
       href: "/marketing?view=team&f=new",
-      text: `${waiting.length === 1 ? "A new marketing request has" : `${waiting.length} new marketing requests have`} waited ${NUDGE_DAYS} days for someone to pick ${waiting.length === 1 ? "it" : "them"} up: ${list}${more}.`,
+      text: `${waiting.length === 1 ? "A new marketing request has" : `${waiting.length} new marketing requests have`} waited ${NUDGE_DAYS} days or more for someone to pick ${waiting.length === 1 ? "it" : "them"} up: ${list}${more}.`,
       alert: true,
       delegable: false,
     });
@@ -60,5 +63,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
     // Not an action anyone took, so updatedAt stays and lists keep their order.
     reminded.push({ ...c, marketing: { ...m, remindedFor: m.doneBy } });
   }
-  return { notices, reminded };
+  // Not an action anyone took, so updatedAt stays and lists keep their order.
+  const nudged = waiting.map((c) => ({ ...c, marketing: { ...c.marketing, nudgedFor: c.marketing.stageSince } }));
+  return { notices, reminded, nudged };
 }

@@ -422,7 +422,7 @@ test("comment notices: someone named with @ hears first, with an alert", () => {
 
 // ---- Daily job ---------------------------------------------------------------
 
-test("daily: one nudge for new requests nobody has picked up after 2 days, once each", () => {
+test("daily: one nudge for new requests nobody has picked up after 2 days, once each, caught up after a missed day", () => {
   const a = submitted();
   const b = { ...submitted({ answers: { desc: "Second", due: "2026-11-20" } }), id: "MK-1002" };
   const q = { ...wf.ask(submitted(), mk, T(1), "?"), id: "MK-1003" };
@@ -433,10 +433,12 @@ test("daily: one nudge for new requests nobody has picked up after 2 days, once 
   assert.deepEqual(p.notices[0].to, { role: "marketing" });
   assert.equal(p.notices[0].alert, true);
   assert.equal(p.notices[0].href, "/marketing?view=team&f=new");
-  assert.match(p.notices[0].text, /^2 new marketing requests have waited 2 days for someone to pick them up: MK-1001 .*, MK-1002/);
-  assert.deepEqual(planDaily([a, b], "2026-10-25").notices, [], "only on the day it reaches 2 days");
-  assert.match(planDaily([a], "2026-10-24").notices[0].text, /^A new marketing request has waited 2 days for someone to pick it up/);
-  const answered = wf.answer(q, volunteer, T(3), "Yes");
+  assert.match(p.notices[0].text, /^2 new marketing requests have waited 2 days or more for someone to pick them up: MK-1001 .*, MK-1002/);
+  assert.deepEqual(p.nudged.map((c) => [c.id, c.marketing.nudgedFor, c.updatedAt]), [[a.id, a.marketing.stageSince, a.updatedAt], [b.id, b.marketing.stageSince, b.updatedAt]], "marked, without changing updatedAt");
+  assert.deepEqual(planDaily(p.nudged, "2026-10-25").notices, [], "once each");
+  assert.equal(planDaily([a], "2026-10-26").notices.length, 1, "a day the job missed is caught up");
+  assert.match(planDaily([a], "2026-10-24").notices[0].text, /^A new marketing request has waited 2 days or more for someone to pick it up/);
+  const answered = wf.answer(planDaily([q], "2026-10-22").nudged[0] ?? q, volunteer, T(3), "Yes");
   assert.equal(planDaily([answered], "2026-10-27").notices.length, 1, "back as new after a question: nudged again");
 });
 

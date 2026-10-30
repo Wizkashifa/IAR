@@ -5,7 +5,7 @@
  */
 import type { Card } from "./cards";
 import { FLAG } from "./glossary";
-import { same } from "./text";
+import { andList, same } from "./text";
 
 export type StepState = "done" | "now" | "todo" | "skip";
 export type Step = { label: string; state: StepState };
@@ -65,10 +65,7 @@ export function speaker(viewer: Viewer, names: NameOf) {
     /** `who` does `you`/`they` ("approve"/"approves"). */
     does: (email: string, you: string, they: string) => `${name(email)} ${same(email, viewer.email) ? you : they}`,
     /** Several people, any of whom can act: "Ali Khan or Sara Malik". */
-    anyOf: (emails: string[]) => {
-      const ns = emails.map(name);
-      return ns.length > 1 ? `${ns.slice(0, -1).join(", ")} or ${ns[ns.length - 1]}` : ns[0] ?? "";
-    },
+    anyOf: (emails: string[]) => andList(emails.map(name), "or"),
   };
 }
 

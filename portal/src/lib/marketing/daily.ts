@@ -25,7 +25,10 @@ export async function daily(now: Date): Promise<string> {
     const notices = plan.notices.filter((n) => n.cardId === c.id);
     if (await saveThenTell(store, c.updatedAt, c, notices)) reminders += notices.length;
   }
-  const nudge = plan.notices.filter((n) => !n.cardId);
+  // The nudge goes once the requests in it are marked, so none is listed twice.
+  let marked = 0;
+  for (const c of plan.nudged) if (await saveThenTell(store, c.updatedAt, c, [])) marked++;
+  const nudge = marked ? plan.notices.filter((n) => !n.cardId) : [];
   await deliver(nudge, "portal");
   return `${nudge.length ? "Nudge about new requests sent. " : ""}${plural(reminders, "done-by reminder")}.`;
 }

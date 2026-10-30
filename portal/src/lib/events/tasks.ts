@@ -18,7 +18,7 @@ import { AV_KINDS } from "./input";
 import { dayText } from "./series";
 import type { EventDetails, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
-import { lc } from "../text";
+import { andList, lc } from "../text";
 import { historyEntry } from "../workflow-core";
 
 export const TASK_TEAMS: TaskTeam[] = ["marketing", "av"];
@@ -83,7 +83,7 @@ export function tasksFor(card: EventCard): EventTask[] {
 }
 
 /** "Marketing and A/V". */
-export const teamList = (teams: TaskTeam[]) => teams.map((t) => TEAM_NAME[t]).join(", ").replace(/, ([^,]*)$/, " and $1");
+export const teamList = (teams: TaskTeam[]) => andList(teams.map((t) => TEAM_NAME[t]));
 
 /** Each team whose tasks just unlocked gets one alert in its Chat space, for the whole event. */
 export function taskUnlockNotices(before: EventCard | null, after: EventCard): Notice[] {

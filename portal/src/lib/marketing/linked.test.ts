@@ -9,7 +9,7 @@ import type { CardStatus } from "../cards";
 import type { EventInput } from "../events/types";
 import * as ew from "../events/workflow";
 import { parseMarketingInput } from "./forms";
-import { EVENT_NOT_APPROVED, autoPiece, eventChanges, mayAddPiece, newPiece, pieceAddedNotices, piecesAfterEventChange, suggestedDue, waitsOnEvent } from "./linked";
+import { EVENT_NOT_APPROVED, autoPiece, eventChanges, mayAddPiece, newPiece, pieceAddedNotices, piecesAfterEventChange, piecesOnEventDeleted, suggestedDue, waitsOnEvent } from "./linked";
 import * as wf from "./workflow";
 
 const D = "x.org";
@@ -175,6 +175,18 @@ test("cancelled or declined: open pieces are cancelled with why; finished ones s
   const d = piecesAfterEventChange(sub, denied, [piece(sub)], LATER);
   assert.equal(d.pieces[0].marketing.history.at(-1)?.note, "The event was declined.");
   assert.deepEqual(piecesAfterEventChange(denied, denied, d.pieces, LATER), { pieces: [], notices: [] }, "only once");
+});
+
+test("event deleted: open pieces cancelled and the assignee told; every piece unlinked; closed ones keep their place", () => {
+  const ok = approved();
+  const fresh = piece(ok);
+  const working = wf.start(wf.schedule(piece(ok, { piece: "banner", due: "2026-11-11" }), mk, NOW, "2026-11-11"), mk, NOW);
+  const done = wf.finish(wf.approve(wf.sendProof(wf.start(wf.schedule(piece(ok, { piece: "flyer", due: "2026-11-11" }), mk, NOW, "2026-11-11"), mk, NOW), mk, NOW, [{ name: "f.png", size: 1 }]), owner, NOW), mk, NOW);
+  const r = piecesOnEventDeleted(ok, [fresh, working, done], LATER);
+  assert.deepEqual(r.pieces.map((p) => [p.id, p.marketing.stage, p.marketing.eventCardId]), [[fresh.id, "cancelled", undefined], [working.id, "cancelled", undefined], [done.id, "done", undefined]]);
+  assert.equal(r.pieces[2].updatedAt, done.updatedAt, "a finished piece doesn't jump to the top of lists");
+  assert.match(r.pieces[0].marketing.history.at(-1)?.note ?? "", /was deleted by a portal admin/);
+  assert.deepEqual(r.notices.map((n) => ["email" in n.to ? n.to.email : n.to.role, n.alert]), [["marketing", false], [mk.email, true]]);
 });
 
 test("sent back for changes: pieces stay as they are", () => {

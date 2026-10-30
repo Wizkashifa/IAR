@@ -9,6 +9,7 @@ import { directory, queueTeamMembers } from "@/lib/groups";
 import { todayLocal } from "@/lib/dates";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
+import type { Notice } from "@/lib/notices";
 import * as wf from "@/lib/marketing/workflow";
 import { filesFrom } from "@/lib/drive";
 import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
@@ -90,6 +91,42 @@ export async function createMarketing(prev: MarketingFormState, form: FormData):
   redirect(`/marketing/${created.id}?sent=1`);
 }
 
+/**
+ * Uploads files to the request's Drive folder, then applies `apply` to the
+ * latest copy of the request and saves it, with one more try if someone saved
+ * it while the files uploaded. Sends the notices `apply` returns. Returns an
+ * error to show, or null when it's saved.
+ */
+async function uploadThen(
+  by: string,
+  card: wf.MarketingCard,
+  files: File[],
+  apply: (latest: wf.MarketingCard, saved: Awaited<ReturnType<typeof saveMarketingFiles>>) => { next: wf.MarketingCard; notices: Notice[] },
+  failed: string,
+): Promise<string | null> {
+  const store = await cardStore();
+  try {
+    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const latest = attempt === 0 ? card : await store.get(card.id);
+      if (!wf.isMarketingCard(latest)) return "This request was removed while the files uploaded.";
+      try {
+        const { next, notices } = apply(latest, saved);
+        await store.save(next, latest.updatedAt);
+        await deliver(notices, by);
+        return null;
+      } catch (err) {
+        if (!(err instanceof ConflictError) || attempt === 1) throw err;
+      }
+    }
+    return null;
+  } catch (err) {
+    if (err instanceof WorkflowError || err instanceof ConflictError) return err.message;
+    console.error("marketing file upload failed", err);
+    return failed;
+  }
+}
+
 /** Files added from the request page, by the requester or the marketing team. Never changes the stage. */
 export async function addMarketingFiles(form: FormData): Promise<void> {
   const viewer = await requireViewer();
@@ -109,27 +146,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
   const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
   if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
 
-  let error: string | null = null;
-  try {
-    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
-    // Someone may have saved the request while the files uploaded: add them to the latest copy.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const latest = attempt === 0 ? card : await store.get(id);
-      if (!wf.isMarketingCard(latest)) break;
-      try {
-        await store.save(wf.addFiles(latest, actor, nowIso(), saved), latest.updatedAt);
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) throw err;
-      }
-    }
-  } catch (err) {
-    if (err instanceof WorkflowError) error = err.message;
-    else {
-      console.error("marketing file upload failed", err);
-      error = "The files didn't upload. Try again, or share a Google Drive link.";
-    }
-  }
+  const error = await uploadThen(actor.email, card, files, (latest, saved) => ({ next: wf.addFiles(latest, actor, nowIso(), saved), notices: [] }), "The files didn't upload. Try again, or share a Google Drive link.");
   revalidatePath("/marketing");
   back(error ? `error=${encodeURIComponent(error)}` : "ok=files");
 }
@@ -154,29 +171,16 @@ export async function sendMarketingProof(form: FormData): Promise<void> {
   const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
   if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
 
-  let error: string | null = null;
-  try {
-    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
-    // Someone may have saved the request while the files uploaded: send the draft on the latest copy.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const latest = attempt === 0 ? card : await store.get(id);
-      if (!wf.isMarketingCard(latest)) break;
-      try {
-        const next = wf.sendProof(latest, actor, nowIso(), saved, note);
-        await store.save(next, latest.updatedAt);
-        await deliver(marketingNotices(latest, next, actor), actor.email);
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) throw err;
-      }
-    }
-  } catch (err) {
-    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
-    else {
-      console.error("marketing proof upload failed", err);
-      error = "The draft didn't upload. Try again, or share a Google Drive link in a comment.";
-    }
-  }
+  const error = await uploadThen(
+    actor.email,
+    card,
+    files,
+    (latest, saved) => {
+      const next = wf.sendProof(latest, actor, nowIso(), saved, note);
+      return { next, notices: marketingNotices(latest, next, actor) };
+    },
+    "The draft didn't upload. Try again, or share a Google Drive link in a comment.",
+  );
   revalidatePath("/marketing");
   back(error ? `error=${encodeURIComponent(error)}` : "ok=sendProof");
 }

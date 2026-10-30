@@ -97,6 +97,8 @@ export type MarketingDetails = {
   doneNote?: string;
   /** The done-by date a "due soon" reminder was already sent for (so it goes once). */
   remindedFor?: string;
+  /** When the request became new (`stageSince`) the last time the team was nudged about it, so it goes once. */
+  nudgedFor?: string;
   history: HistoryEntry[];
   /** The event this piece is for (kind "event"): its title, dates, brief and images are read from the event, never copied. */
   eventCardId?: string;
