@@ -261,7 +261,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={(teamMembers.get(t.team) ?? []).map((m) => ({ email: m, name: m === viewer.email.toLowerCase() ? `Me (${names(m)})` : names(m) }))} />
                 ))}
               </Rows>
-              {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
+              {tasks.every((t) => t.status === "locked") && <PanelFoot>Once the event is approved, A/V gets its task in IT &amp; Maintenance and marketing in Marketing Requests.</PanelFoot>}
             </Panel>
           )}
 

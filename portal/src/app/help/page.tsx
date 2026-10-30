@@ -15,10 +15,10 @@ import { findModule } from "@/lib/modules";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Help" };
 
-/** The guides for what this person can use: Team Queues only for team members. */
+/** The guides for what this person can use. */
 function guidesFor(roles: Parameters<typeof visibleModules>[0]): HelpGuide[] {
   const live = new Set(visibleModules(roles).filter((m) => m.status === "live").map((m) => m.id));
-  return HELP_GUIDES.filter((g) => !g.module || live.has(g.module) || (g.key === "teams" && live.has("run-sheet")));
+  return HELP_GUIDES.filter((g) => !g.module || live.has(g.module));
 }
 
 export default async function HelpPage() {

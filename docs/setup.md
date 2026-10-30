@@ -137,7 +137,7 @@ The launch list (26; Outreach is part of Da'wah):
 | Health & Wellness | portal-team-hw@ | |
 | IAR Cafe | portal-team-cafe@ | |
 | Imam Office | portal-team-imams@ | |
-| IT Services | portal-team-tech@ | IT & Maintenance (IT), A/V tasks |
+| IT Services | portal-team-tech@ | IT & Maintenance (IT, and A/V tasks for events) |
 | Marketing | portal-team-marketing@ | Marketing requests and event marketing (Marketing Requests → Team work) |
 | Older Adult Community | portal-team-seniors@ | |
 | Page Road | portal-team-page@ | |

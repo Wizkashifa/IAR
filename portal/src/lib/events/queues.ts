@@ -1,20 +1,29 @@
 /**
- * Team Queues: each team's open tasks across every event card, soonest due
- * first (Marketing's also show in Marketing Requests → Team work, lib/marketing/feed.ts).
- * A person sees the queues of the teams they're on; the IAR office sees
- * them all. Plain functions so they can be tested.
+ * Each team's event tasks across every event card, soonest due first. A/V
+ * works them from IT & Maintenance → Team tickets; Marketing from Marketing
+ * Requests → Team work (lib/marketing/feed.ts). Team Queues (/queues) is
+ * retired, and its old links go to those pages. Plain functions so they can
+ * be tested.
  */
 import type { Role } from "../org";
-import { TASK_TEAMS, planTasks } from "./tasks";
+import { planTasks } from "./tasks";
 import type { EventTask, TaskTeam } from "./types";
 import type { EventCard } from "./workflow";
 
 export type QueueItem = { card: EventCard; task: EventTask; overdue: boolean };
 
-/** The queues this person sees: their teams', or all of them for the office (and admins helping out). */
-export function queueTeamsFor(roles: Role[], seeAll = false): TaskTeam[] {
-  if (seeAll || roles.includes("office")) return [...TASK_TEAMS];
-  return TASK_TEAMS.filter((t) => roles.includes(t));
+/** Where each team works its event tasks. */
+export const TEAM_WORK_HREF: Record<TaskTeam, string> = { marketing: "/marketing?view=team", av: "/it-maintenance?view=team" };
+
+/**
+ * Where an old Team Queues link goes: to the team it names, or else to the
+ * team this person is on. Marketing goes to Marketing Requests; A/V, the
+ * office and everyone else to IT & Maintenance.
+ */
+export function retiredQueueHref(team: string | undefined, roles: Role[]): string {
+  if (team === "marketing" || team === "av") return TEAM_WORK_HREF[team];
+  const marketingOnly = roles.includes("marketing") && !roles.includes("av") && !roles.includes("office");
+  return TEAM_WORK_HREF[marketingOnly ? "marketing" : "av"];
 }
 
 const live = (c: EventCard) => c.status === "approved" || c.status === "close_out";

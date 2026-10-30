@@ -65,7 +65,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
           "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
-          "Once it's approved, the room is confirmed on the IAR calendar, and marketing and A/V see their tasks in Team Queues.",
+          "Once it's approved, the room is confirmed on the IAR calendar, marketing sees its task in Marketing Requests and A/V in IT & Maintenance.",
           "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
         ],
       },
@@ -255,6 +255,15 @@ export const HELP_GUIDES: HelpGuide[] = [
           "Preventive schedules create recurring tickets on their own.",
         ],
       },
+      {
+        heading: "A/V for events",
+        steps: [
+          "A/V's tasks from approved events are at the top of Team tickets, soonest due first. My work today lists the ones due today.",
+          "Open a task to see everything the requester gave: the A/V needs, the room and the times.",
+          "Take it, click Start when you begin and Mark done when you finish. The requester can see where it stands.",
+          "Tasks unlock when the event is approved. Events still in review are counted below the list, so you can plan ahead.",
+        ],
+      },
     ],
   },
   {
@@ -321,25 +330,16 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
   {
     key: "teams",
-    title: "Team Queues and the run sheet",
-    summary: "For the marketing, A/V and office teams, and the front desk.",
-    href: "/queues",
-    module: "team-queues",
+    title: "The daily run sheet",
+    summary: "One printable page of what's happening where each day, for the front desk and the office.",
+    href: "/run-sheet",
+    module: "run-sheet",
     short: [
-      "Your team's tasks from every approved event are here, soonest due first.",
-      "Tasks unlock when an event is approved. Open one to see the event's details, then start it and mark it done.",
-      "The run sheet is one printable page of what's happening where each day.",
+      "Pick the day and the campus.",
+      "Each room's bookings are listed in time order, with the contact, the setup plan and notes.",
+      "Print it for the front desk.",
     ],
     sections: [
-      {
-        heading: "Team Queues",
-        steps: [
-          "Each team sees its own tasks across every approved event: the flyer and announcement for marketing, and A/V setup for A/V.",
-          "Tasks unlock when the event is approved. Locked ones are counted so you can plan ahead.",
-          "Open a task to see everything the requester gave: the announcement text, the A/V needs, the room and times.",
-          "Click Start when you begin and Done when you finish. The requester can see where each task stands.",
-        ],
-      },
       {
         heading: "The daily run sheet",
         steps: [

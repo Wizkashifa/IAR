@@ -19,8 +19,8 @@ This is how the portal was put on IAR's Google Cloud, and how to set it up again
 | Home ("Waiting on you", Today at IAR, What's new), My Requests, Search, Help, Feedback, Out of office | Budget and Shura dashboard: still being designed |
 | Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest and the Finance desk | Library beyond policies (Shura documents, each committee's drive) |
 | Events & Rooms on IAR's room calendars, with asks for a booked time; the Calendar and Find a room | Asset tracker |
-| Marketing Requests with file uploads, Team Queues, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
-| IT & Maintenance, with the open Jira issues imported, and My work today for the facilities and IT teams | |
+| Marketing Requests with file uploads and Team work, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
+| IT & Maintenance, with the open Jira issues imported, A/V tasks for events, and My work today for the facilities and IT teams | |
 | Who's who, the Library (IAR's policies), What's stuck (office and executives), "Request this again" | |
 | Portal measures for the portal admins (counts only) | |
 
@@ -95,7 +95,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] 30 days before a series ends, its requester gets a Chat message; "Request the next period" opens the form with the next dates filled in.
 - [ ] A asks for a time someone else booked. They give it up; the dates leave the calendar at once and A's request moves on.
 - [ ] Food in a room that doesn't allow it, or attendance over capacity, is flagged to the reviewers.
-- [ ] Once approved, the event's A/V task appears in Team Queues and its marketing task in Marketing Requests → Team work. There is no Security task.
+- [ ] Once approved, the event's A/V task appears in IT & Maintenance → Team tickets (and in My work today on the day) and its marketing task in Marketing Requests → Team work. There is no Security task.
 - [ ] The run sheet for that day lists it, with the calendar's other bookings.
 - [ ] After the event, the daily job moves it to close-out; A records attendance; the linked purchase shows as actual spend.
 - [ ] The approved event shows on the Calendar's week view for its room and committee.

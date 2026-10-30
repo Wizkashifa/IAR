@@ -9,7 +9,7 @@ import { Stat, Stats } from "@/components/Stat";
 import type { Card } from "@/lib/cards";
 import { todayLocal } from "@/lib/dates";
 import { eventContext } from "@/lib/events/context";
-import { queueItems } from "@/lib/events/queues";
+import { TEAM_WORK_HREF, queueItems } from "@/lib/events/queues";
 import { roomById } from "@/lib/events/rooms";
 import { timeText } from "@/lib/events/series";
 import { TASK_TEAMS, TEAM_NAME as TASK_TEAM_NAME } from "@/lib/events/tasks";
@@ -223,7 +223,7 @@ export async function RightNow({ cards }: { cards: Card[] }) {
               {tasks.map((t) => (
                 <tr key={t.team}>
                   <td data-label="Team">
-                    <Link href={`/queues?team=${t.team}`}>{TASK_TEAM_NAME[t.team]}</Link>
+                    <Link href={TEAM_WORK_HREF[t.team]}>{TASK_TEAM_NAME[t.team]}</Link>
                   </td>
                   <td data-label="Open" className={cell.num}>
                     {t.open}
