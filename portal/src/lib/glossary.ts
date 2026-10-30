@@ -37,6 +37,7 @@ export const STEP = {
   newRequest: "New",
   scheduled: "Scheduled",
   inProgress: "In progress",
+  approval: "Approval",
   done: "Done",
   pickedUp: "Picked up",
   beingWorkedOn: "Being worked on",

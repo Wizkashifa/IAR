@@ -28,16 +28,21 @@ const idOf = (x: FeedItem) => (x.kind === "request" ? x.card.id : `${x.item.card
 /** Who on the team has it, if anyone. */
 const assigneeOf = (x: FeedItem) => (x.kind === "request" ? x.card.marketing.assignee : x.item.task.assignee);
 
-export type FeedFilter = { id: string; label: string; test: (x: FeedItem, me: string) => boolean };
+/** With the requester (a question to answer or a draft to approve), so not the team's to pick up. */
+const withRequester = (x: FeedItem) => x.kind === "request" && (x.card.marketing.stage === "question" || x.card.marketing.stage === "proof");
+
+export type FeedFilter ={ id: string; label: string; test: (x: FeedItem, me: string) => boolean };
 
 /** The filters above the list, in order. */
 export const FEED_FILTERS: FeedFilter[] = [
   { id: "all", label: "All open", test: () => true },
   { id: "new", label: "New", test: (x) => (x.kind === "request" ? x.card.marketing.stage === "review" : x.item.task.status === "todo" && !x.item.task.assignee) },
-  { id: "unassigned", label: "Nobody has it", test: (x) => !assigneeOf(x) && !(x.kind === "request" && x.card.marketing.stage === "question") },
+  { id: "unassigned", label: "Nobody has it", test: (x) => !assigneeOf(x) && !withRequester(x) },
   { id: "mine", label: "Mine", test: (x, me) => same(assigneeOf(x), me) },
   { id: "scheduled", label: "Scheduled", test: (x) => (x.kind === "request" ? x.card.marketing.stage === "scheduled" : x.item.task.status === "todo" && Boolean(x.item.task.assignee)) },
-  { id: "doing", label: "In progress", test: (x) => (x.kind === "request" ? x.card.marketing.stage === "doing" : x.item.task.status === "doing") },
+  // Approved work is still the team's to send out, so it's in progress too.
+  { id: "doing", label: "In progress", test: (x) => (x.kind === "request" ? x.card.marketing.stage === "doing" || x.card.marketing.stage === "ready" : x.item.task.status === "doing") },
+  { id: "approval", label: "Waiting on approval", test: (x) => x.kind === "request" && x.card.marketing.stage === "proof" },
   { id: "waiting", label: "Waiting on the requester", test: (x) => x.kind === "request" && x.card.marketing.stage === "question" },
 ];
 

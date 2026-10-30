@@ -7,7 +7,12 @@
  * someone on the marketing team to pick it up, as it comes in. They schedule
  * it with a done-by date, ask the requester a question (it comes back as new
  * when they answer),
- * or declines it with a reason. Scheduled work is started, then marked done.
+ * or declines it with a reason. Scheduled work is started. Then marketing
+ * sends the requester a draft to approve (everything but short links and
+ * small website updates): the requester approves it or asks for changes,
+ * and once it's approved marketing marks it as marketed, with where it went
+ * out. If the requester doesn't answer by the same time on the next business
+ * day, marketing can go ahead without their approval.
  *
  * - The marketing team is whoever is on portal-team-marketing@ (role "marketing").
  * - A marketing member can submit a request, but someone else on the team
@@ -25,9 +30,10 @@ import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, neededBy, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
-import { type MarketingDetails, type MarketingFile, type MarketingStage } from "./types";
+import { CHANNELS, CHANNEL_LABEL, type Channel, type MarketingDetails, type MarketingFile, type MarketingKind, type MarketingStage } from "./types";
 import { same } from "../text";
-import { addDays, daysBetween, isDate, todayLocal } from "../dates";
+import { addDays, daysBetween, isDate, nextBusinessDay, todayLocal } from "../dates";
+import { fmtDayTime } from "../format";
 import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 export type { Actor };
@@ -54,9 +60,11 @@ export function statusForStage(stage: MarketingStage): CardStatus {
     case "review":
       return "submitted";
     case "question":
+    case "proof":
       return "changes_requested";
     case "scheduled":
     case "doing":
+    case "ready":
       return "approved";
     case "done":
       return "closed";
@@ -68,7 +76,34 @@ export function statusForStage(stage: MarketingStage): CardStatus {
 }
 
 /** Open stages: still waiting on someone. */
-export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled", "doing"];
+export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled", "doing", "proof", "ready"];
+
+/** Stages where the marketing team has the work: someone may be on it, with a done-by date. */
+export const WORK_STAGES: MarketingStage[] = ["scheduled", "doing", "proof", "ready"];
+export const isWorkStage = (stage: MarketingStage) => WORK_STAGES.includes(stage);
+
+// ---- Approval ----------------------------------------------------------------
+
+/** Kinds with nothing for the requester to approve: a short link and a small website update. */
+export const NO_APPROVAL: MarketingKind[] = ["redirect", "webedit"];
+/** Whether marketing sends the requester a draft to approve before it goes out. */
+export const needsApproval = (kind: MarketingKind) => !NO_APPROVAL.includes(kind);
+
+/** When marketing can go ahead without the requester's answer: the same time on the next business day after the draft was sent. */
+export function approvalDue(m: MarketingDetails): string | undefined {
+  return m.stage === "proof" && m.proofSentAt ? nextBusinessDay(m.proofSentAt) : undefined;
+}
+
+/** The files of the latest draft sent for approval. */
+export function latestProof(m: MarketingDetails): MarketingFile[] {
+  return m.proofSentAt ? filesOf(m).filter((f) => f.proof && f.at === m.proofSentAt) : [];
+}
+
+/** "Newsletter, Instagram and WhatsApp". */
+export function channelText(channels: Channel[] | undefined): string {
+  const names = (channels ?? []).map((c) => CHANNEL_LABEL[c]);
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
 
 /** What the card is waiting on, in words, for My Requests and the lists. */
 export function waitingOnFor(card: MarketingCard): string | undefined {
@@ -82,6 +117,10 @@ export function waitingOnFor(card: MarketingCard): string | undefined {
       return m.doneBy ? `Marketing: due ${shortDay(m.doneBy)}` : "Marketing: scheduled";
     case "doing":
       return m.doneBy ? `Marketing: in progress, due ${shortDay(m.doneBy)}` : "Marketing: in progress";
+    case "proof":
+      return "You: approve marketing's draft";
+    case "ready":
+      return "Marketing: approved, ready to go out";
     default:
       return undefined;
   }
@@ -112,13 +151,16 @@ export function isTight(card: MarketingCard, today: string): boolean {
 
 // ---- Who can act -------------------------------------------------------------
 
-export type Action = "schedule" | "ask" | "decline" | "start" | "finish" | "reschedule" | "assign" | "answer" | "edit" | "cancel" | "files";
+export type Action = "schedule" | "ask" | "decline" | "start" | "sendProof" | "approve" | "changes" | "finish" | "reschedule" | "assign" | "answer" | "edit" | "cancel" | "files";
 
 /** Review decisions, which nobody makes on their own request. */
 const REVIEW_ACTIONS: Action[] = ["schedule", "ask", "decline"];
 
-/** Whether `actor` may take `action` now, and if not, why. */
-export function permission(card: MarketingCard, actor: Actor, action: Action): { ok: true } | { ok: false; reason: string } {
+/**
+ * Whether `actor` may take `action` now, and if not, why. `now` (an ISO
+ * time) matters only for going ahead without the requester's approval.
+ */
+export function permission(card: MarketingCard, actor: Actor, action: Action, now: string = new Date().toISOString()): { ok: true } | { ok: false; reason: string } {
   const m = card.marketing;
   const own = same(card.ownerEmail, actor.email);
   const no = (reason: string) => ({ ok: false as const, reason });
@@ -128,10 +170,15 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
     if (m.stage !== "question") return no("Marketing hasn't asked a question.");
     return { ok: true };
   }
+  if (action === "approve" || action === "changes") {
+    if (!own) return no("Only the requester can approve marketing's draft or ask for changes.");
+    if (m.stage !== "proof") return no("Marketing hasn't sent a draft to approve.");
+    return { ok: true };
+  }
   if (action === "edit" || action === "cancel") {
     if (!own) return no(action === "edit" ? "Only the requester can change the request." : "Only the requester can cancel a request.");
     if (m.stage !== "review" && m.stage !== "question")
-      return no(m.stage === "scheduled" || m.stage === "doing" ? "Marketing has already scheduled this. Add a comment to ask for a change." : "This request is closed.");
+      return no(isWorkStage(m.stage) ? "Marketing has already scheduled this. Add a comment to ask for a change." : "This request is closed.");
     return { ok: true };
   }
 
@@ -151,18 +198,44 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
       return m.stage === "review" || m.stage === "question" || m.stage === "scheduled" ? { ok: true } : no("This request can't be declined now.");
     case "start":
       return m.stage === "scheduled" ? { ok: true } : no("Only a scheduled request can be started.");
+    case "sendProof":
+      if (!needsApproval(m.kind)) return no("This kind of request has nothing for the requester to approve.");
+      return m.stage === "doing" ? { ok: true } : no("Start the work before sending a draft for approval.");
     case "finish":
-      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("This request isn't scheduled or in progress.");
+      return finishPermission(m, now);
     case "reschedule":
-      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("Only scheduled work has a done-by date to change.");
+      return isWorkStage(m.stage) ? { ok: true } : no("Only scheduled work has a done-by date to change.");
     case "assign":
-      return m.stage === "doing" || m.stage === "scheduled" ? { ok: true } : no("Only scheduled or in-progress work can be handed to someone.");
+      return isWorkStage(m.stage) ? { ok: true } : no("Only scheduled or in-progress work can be handed to someone.");
   }
   return no("Unknown action.");
 }
 
-function mustDo(card: MarketingCard, actor: Actor, action: Action) {
-  must(permission(card, actor, action));
+/**
+ * Marking it as marketed: once the requester approved the draft; straight
+ * from scheduled or in progress for kinds with nothing to approve; or, while
+ * the requester has the draft, once they haven't answered by the same time
+ * on the next business day.
+ */
+function finishPermission(m: MarketingDetails, now: string): { ok: true } | { ok: false; reason: string } {
+  switch (m.stage) {
+    case "ready":
+      return { ok: true };
+    case "scheduled":
+    case "doing":
+      return needsApproval(m.kind) ? { ok: false, reason: "Send the requester a draft to approve first." } : { ok: true };
+    case "proof": {
+      const due = approvalDue(m);
+      if (due && Date.parse(now) >= Date.parse(due)) return { ok: true };
+      return { ok: false, reason: `The requester has until ${due ? fmtDayTime(due) : "the next business day"} to approve the draft. After that, you can go ahead without their approval.` };
+    }
+    default:
+      return { ok: false, reason: "This request isn't scheduled or in progress." };
+  }
+}
+
+function mustDo(card: MarketingCard, actor: Actor, action: Action, now?: string) {
+  must(permission(card, actor, action, now));
 }
 
 /** New requests that `actor` can pick up (not their own). */
@@ -337,15 +410,72 @@ export function reschedule(card: MarketingCard, actor: Actor, now: string, doneB
   return withStage(card, m, now);
 }
 
-/** The work is finished. `note` can link the finished work. */
-export function finish(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
-  mustDo(card, actor, "finish");
+/**
+ * Marketing sends the requester a draft to approve: at least one file
+ * (already uploaded and checked with checkFiles), kept on the request as
+ * proof files, and an optional note. The requester has until the same time
+ * on the next business day to answer.
+ */
+export function sendProof(card: MarketingCard, actor: Actor, now: string, files: Omit<MarketingFile, "at" | "by" | "proof">[], note?: string): MarketingCard {
+  mustDo(card, actor, "sendProof");
+  if (files.length === 0) throw new WorkflowError("Add the draft for the requester to look at.");
+  const had = filesOf(card.marketing);
+  if (had.length + files.length > MAX_PER_REQUEST) throw new WorkflowError(`A request can have up to ${MAX_PER_REQUEST} files. For more, share a Google Drive folder instead.`);
+  const by = actor.email.toLowerCase();
   const n = note?.trim() || undefined;
   const m: MarketingDetails = {
-    ...moved(card.marketing, "done", now),
+    ...moved(card.marketing, "proof", now),
+    files: [...had, ...files.map((f) => ({ ...f, at: now, by, proof: true }))],
+    proofSentAt: now,
+    proofNote: n,
+    changesAsked: undefined,
+    history: [...card.marketing.history, historyEntry(actor.email, now, "Sent for approval", [n, files.map((f) => f.name).join(", ")].filter(Boolean).join("\n"))],
+  };
+  return withStage(card, m, now);
+}
+
+/** The requester approves marketing's draft. Marketing sends it out next. */
+export function approve(card: MarketingCard, actor: Actor, now: string, note?: string): MarketingCard {
+  mustDo(card, actor, "approve");
+  const m: MarketingDetails = { ...moved(card.marketing, "ready", now), history: [...card.marketing.history, historyEntry(actor.email, now, "Approved the draft", note?.trim() || undefined)] };
+  return withStage(card, m, now);
+}
+
+/** The requester asks for changes to marketing's draft. It goes back to in progress, with what to change. */
+export function askChanges(card: MarketingCard, actor: Actor, now: string, note: string): MarketingCard {
+  mustDo(card, actor, "changes");
+  const n = note.trim();
+  if (!n) throw new WorkflowError("Say what marketing should change.");
+  const m: MarketingDetails = { ...moved(card.marketing, "doing", now), changesAsked: n, history: [...card.marketing.history, historyEntry(actor.email, now, "Asked for changes", n)] };
+  return withStage(card, m, now);
+}
+
+/**
+ * Marketing marks it as marketed: where it went out (none for a badge or a
+ * sign) and an optional note or link. Going ahead while the requester still
+ * has the draft says so in the history.
+ */
+export function finish(card: MarketingCard, actor: Actor, now: string, note?: string, channels: string[] = []): MarketingCard {
+  mustDo(card, actor, "finish", now);
+  const unknown = channels.filter((c) => !(CHANNELS as readonly string[]).includes(c));
+  if (unknown.length) throw new WorkflowError(`Pick where it went out from the list (not “${unknown[0]}”).`);
+  const picked = CHANNELS.filter((c) => channels.includes(c));
+  const n = note?.trim() || undefined;
+  const was = card.marketing;
+  const due = approvalDue(was);
+  const action =
+    was.stage === "proof" && due
+      ? `Went ahead without the requester's approval (no answer by ${fmtDayTime(due)})`
+      : was.stage === "ready"
+        ? "Marked as marketed"
+        : "Marked as marketed (nothing to approve)";
+  const said = [picked.length ? `Went out on ${channelText(picked)}.` : undefined, n].filter(Boolean).join("\n") || undefined;
+  const m: MarketingDetails = {
+    ...moved(was, "done", now),
     doneNote: n,
-    assignee: card.marketing.assignee ?? actor.email.toLowerCase(),
-    history: [...card.marketing.history, historyEntry(actor.email, now, "Done", n)],
+    channels: picked.length ? picked : undefined,
+    assignee: was.assignee ?? actor.email.toLowerCase(),
+    history: [...was.history, historyEntry(actor.email, now, action, said)],
   };
   return withStage(card, m, now);
 }

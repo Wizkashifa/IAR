@@ -45,7 +45,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
 
   for (const c of cards) {
     const m = c.marketing;
-    if ((m.stage !== "scheduled" && m.stage !== "doing") || !m.doneBy || m.remindedFor === m.doneBy) continue;
+    if ((m.stage !== "scheduled" && m.stage !== "doing" && m.stage !== "ready") || !m.doneBy || m.remindedFor === m.doneBy) continue;
     const days = daysBetween(today, m.doneBy);
     if (days > 1) continue;
     const when = days === 1 ? "is due tomorrow" : days === 0 ? "is due today" : `was due ${shortDay(m.doneBy)}`;

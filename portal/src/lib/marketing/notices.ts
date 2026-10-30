@@ -3,13 +3,16 @@
  *
  * Alert only whoever has to act next: the marketing team (a post in its
  * Google Chat space) for a new request or an answer to its question; the
- * requester when marketing asks a question or declines; a team member when
- * work is handed to them. Scheduled and done are in-portal notices only.
+ * requester when marketing asks a question, sends a draft to approve, or
+ * declines; whoever has the work (the team if nobody does) when the
+ * requester approves the draft or asks for changes; a team member when work
+ * is handed to them. Scheduled and marketed are in-portal notices only.
  * Plain functions so they can be tested.
  */
 import { preview } from "../comments";
+import { fmtDayTime } from "../format";
 import { type Notice, type Recipient, commentNotices } from "../notices";
-import { longDay, type Actor, type MarketingCard } from "./workflow";
+import { approvalDue, channelText, isWorkStage, longDay, type Actor, type MarketingCard } from "./workflow";
 import { same } from "../text";
 
 const TEAM: Recipient = { role: "marketing" };
@@ -31,17 +34,19 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
   const owner = { email: after.ownerEmail };
   const m = after.marketing;
   const was = before?.marketing.stage;
+  // Whoever has the work, or the whole team if nobody does.
+  const assignee: Recipient = m.assignee ? { email: m.assignee } : TEAM;
 
   if (!before) {
     add(TEAM, `New marketing request: ${what}.`, true);
     return out;
   }
   // Handed to someone on the team: it's theirs to do now.
-  if (m.assignee && !same(m.assignee, before.marketing.assignee) && (m.stage === "scheduled" || m.stage === "doing"))
+  if (m.assignee && !same(m.assignee, before.marketing.assignee) && isWorkStage(m.stage))
     add({ email: m.assignee }, `${what} is yours: ${actor.name || actor.email} handed it to you.${m.doneBy ? ` Marketing aims to finish by ${longDay(m.doneBy)}.` : ""}`, true);
   if (was === m.stage) {
     // Same stage: only a new done-by date is worth telling the requester.
-    if ((m.stage === "scheduled" || m.stage === "doing") && m.doneBy && m.doneBy !== before.marketing.doneBy)
+    if (isWorkStage(m.stage) && m.doneBy && m.doneBy !== before.marketing.doneBy)
       add(owner, `${what}: marketing now aims to finish by ${longDay(m.doneBy)}.`, false);
     return out;
   }
@@ -55,9 +60,19 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
     case "scheduled":
       add(owner, `${what} is scheduled. Marketing aims to finish by ${m.doneBy ? longDay(m.doneBy) : "the date on the request"}.`, false);
       break;
-    case "done":
-      add(owner, `${what} is done.${m.doneNote ? ` ${preview(m.doneNote)}` : ""}`, false);
+    case "proof": {
+      const due = approvalDue(m);
+      add(owner, `${what}: marketing sent a draft for your approval. Approve it or ask for changes${due ? ` by ${fmtDayTime(due)}` : ""}.`, true);
       break;
+    }
+    case "ready":
+      add(assignee, `${what}: ${m.requesterName} approved the draft. It's ready to go out.`, true);
+      break;
+    case "done": {
+      const where = channelText(m.channels);
+      add(owner, `${what} ${where ? `went out on ${where}.` : "is done."}${m.doneNote ? ` ${preview(m.doneNote)}` : ""}`, false);
+      break;
+    }
     case "declined":
       add(owner, `${what} was declined: ${preview(m.declineReason ?? "see the request")}`, true);
       break;
@@ -65,6 +80,7 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
       if (was === "review") add(TEAM, `${what} was cancelled by the requester. Nothing more to do.`, false);
       break;
     case "doing":
+      if (was === "proof") add(assignee, `${what}: ${m.requesterName} asked for changes: ${preview(m.changesAsked ?? "see the request")}`, true);
       break;
   }
   return out;
@@ -77,8 +93,10 @@ function nextActor(c: MarketingCard): Recipient | null {
       return TEAM;
     case "scheduled":
     case "doing":
+    case "ready":
       return c.marketing.assignee ? { email: c.marketing.assignee } : TEAM;
     case "question":
+    case "proof":
       return { email: c.ownerEmail };
     default:
       return null;

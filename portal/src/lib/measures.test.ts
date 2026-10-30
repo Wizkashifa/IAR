@@ -77,6 +77,19 @@ test("step names come from the history actions; other entries don't move the clo
   assert.deepEqual(stepOf("marketing", "Scheduled, to finish by Friday, October 30"), { ends: "New", moves: true });
 });
 
+test("marketing's approval step: sent, answered or gone ahead without, then marketed", () => {
+  const ends = (action: string) => stepOf("marketing", action).ends;
+  assert.equal(ends("Sent for approval"), "In progress");
+  assert.equal(ends("Approved the draft"), "Waiting on the requester's approval");
+  assert.equal(ends("Asked for changes"), "Waiting on the requester's approval");
+  assert.equal(ends("Went ahead without the requester's approval (no answer by Mon, Nov 2, 3:00 PM)"), "Waiting on the requester's approval");
+  assert.equal(ends("Marked as marketed"), "Approved");
+  assert.equal(ends("Marked as marketed (nothing to approve)"), "In progress");
+  assert.equal(ends("Done"), "In progress", "requests finished before the approval step");
+  const steps = stepTimes([card("marketing", [[0, "Submitted"], [10, "Scheduled, to finish by Friday, October 30"], [12, "Started"], [20, "Sent for approval"], [26, "Approved the draft"], [28, "Marked as marketed"]])], "marketing");
+  assert.deepEqual(steps.map((s) => s.step), ["New", "Scheduled", "In progress", "Waiting on the requester's approval", "Approved"]);
+});
+
 test("time at each step: median and longest, only finished waits", () => {
   const cards = [
     card("purchase", [[0, "Submitted"], [10, "Approved (Chair approval)"], [11, "Confirmed W-9 on file"], [40, "Approved (Finance review)"], [64, "Paid"]]),

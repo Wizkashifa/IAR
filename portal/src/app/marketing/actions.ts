@@ -118,6 +118,53 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
   back(error ? `error=${encodeURIComponent(error)}` : "ok=files");
 }
 
+/** Marketing sends the requester a draft to approve: uploads the files, then moves the request on (wf.sendProof). */
+export async function sendMarketingProof(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = await actorFor(viewer);
+  const id = String(form.get("id") ?? "");
+  const note = String(form.get("note") ?? "").slice(0, 2000);
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isMarketingCard(card)) redirect("/marketing");
+  const back = (q: string) => {
+    revalidatePath(`/marketing/${id}`);
+    redirect(`/marketing/${id}?${q}`);
+  };
+  const allowed = wf.permission(card, actor, "sendProof");
+  if (!allowed.ok) back(`error=${encodeURIComponent(allowed.reason)}`);
+  const files = filesFrom(form, "files");
+  if (files.length === 0) back(`error=${encodeURIComponent("Add the draft for the requester to look at.")}`);
+  const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
+  if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
+
+  let error: string | null = null;
+  try {
+    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
+    // Someone may have saved the request while the files uploaded: send the draft on the latest copy.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const latest = attempt === 0 ? card : await store.get(id);
+      if (!wf.isMarketingCard(latest)) break;
+      try {
+        const next = wf.sendProof(latest, actor, nowIso(), saved, note);
+        await store.save(next, latest.updatedAt);
+        await deliver(marketingNotices(latest, next, actor), actor.email);
+        break;
+      } catch (err) {
+        if (!(err instanceof ConflictError) || attempt === 1) throw err;
+      }
+    }
+  } catch (err) {
+    if (err instanceof WorkflowError || err instanceof ConflictError) error = err.message;
+    else {
+      console.error("marketing proof upload failed", err);
+      error = "The draft didn't upload. Try again, or share a Google Drive link in a comment.";
+    }
+  }
+  revalidatePath("/marketing");
+  back(error ? `error=${encodeURIComponent(error)}` : "ok=sendProof");
+}
+
 /**
  * The requester's edit page: saves changes, and when marketing asked a
  * question, sends the answer with them (back to the team as new).
@@ -157,7 +204,7 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
 
 const marketing = { path: "/marketing", is: wf.isMarketingCard };
 
-/** Schedule, ask, decline, start, hand to someone, change the date, finish, answer or cancel. */
+/** Schedule, ask, decline, start, hand to someone, change the date, approve or ask for changes, mark as marketed, answer or cancel. */
 export async function actOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
@@ -187,7 +234,13 @@ export async function actOnMarketing(form: FormData): Promise<void> {
           next = wf.assign(card, actor, now, String(form.get("assignee") ?? ""), await queueTeamMembers("marketing"));
           break;
         case "finish":
-          next = wf.finish(card, actor, now, note);
+          next = wf.finish(card, actor, now, note, form.getAll("channels").map(String));
+          break;
+        case "approve":
+          next = wf.approve(card, actor, now, note);
+          break;
+        case "changes":
+          next = wf.askChanges(card, actor, now, note);
           break;
         case "answer":
           next = wf.answer(card, actor, now, note);

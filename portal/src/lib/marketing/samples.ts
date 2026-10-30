@@ -71,6 +71,28 @@ export function sampleMarketing(): Card[] {
   c = wf.ask(c, marketing, t(2), "How many certificates, and should each one have the child's name printed, or a blank line?");
   out.push(c);
 
+  // Marketing sent the volunteer a draft to approve.
+  c = make(volunteer, {
+    kind: "graphic", committee: "Education",
+    answers: { desc: "A flyer for the new adult Arabic class on Tuesday evenings, starting next month. Beginners welcome.", due: ahead(10) },
+  }, 7);
+  c = wf.schedule(c, marketing, t(5), ahead(4));
+  c = wf.start(c, marketing, t(3));
+  c = wf.sendProof(c, marketing, t(0, 9), [{ name: "arabic-class-flyer-draft.png", size: 412_000 }, { name: "arabic-class-flyer-wording.pdf", size: 96_000 }], "Two colour options are on the second page. Let us know which you like.");
+  out.push(c);
+
+  // Approved and marketed: where it went out is on the request.
+  c = make(chair, {
+    kind: "announce", committee: "Imam Office",
+    answers: { text: "Join us for the community iftar this Saturday after Maghrib. Everyone is welcome; please bring a dish to share if you can.", due: ahead(-6) },
+  }, 18);
+  c = wf.schedule(c, marketing, t(16), ahead(-9));
+  c = wf.start(c, marketing, t(15));
+  c = wf.sendProof(c, marketing, t(13), [{ name: "iftar-announcement.pdf", size: 64_000 }]);
+  c = wf.approve(c, chair, t(12));
+  c = wf.finish(c, marketing, t(11), "Read after Jumu'ah too.", ["newsletter", "screens", "instagram", "whatsapp"]);
+  out.push(c);
+
   // New: a staff badge.
   c = make(facilities, { kind: "badge", committee: "Facility Maintenance", answers: { first: "New", last: "Hire", title: "Facilities Technician", photo: "onsite" }, notes: "For the facilities technician starting next week." }, 1);
   out.push(c);

@@ -169,6 +169,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "For anything else, click New marketing request and pick what you need. Each kind asks only its own questions.",
       "Someone on the marketing team picks up new requests as they come in. They schedule it with a done-by date, ask you a question, or decline it.",
       "If they ask a question, answer it right on the request page.",
+      "Before it goes out, marketing sends you a draft. Approve it or ask for changes by the same time the next business day.",
     ],
     sections: [
       {
@@ -194,15 +195,20 @@ export const HELP_GUIDES: HelpGuide[] = [
           "Someone on the marketing team picks it up as it comes in.",
           "They schedule it with a done-by date, ask you a question, or decline it with a reason.",
           "If they ask a question, you'll get a message. Answer it on the request page and it goes back to the team.",
-          "When it's done, you'll get a message.",
+          "When the draft is ready, you'll get a message. Open the request, look at the files at the top, then click Approve, or Ask for changes and say what to change.",
+          "Answer by the same time on the next business day (Monday to Friday: a draft sent on Friday is due Monday). If you don't, marketing can go ahead without your approval.",
+          "Short links and small website updates have nothing to approve, so they go straight out.",
+          "When it's out, you'll get a message saying where: the newsletter, the website, the lobby screens or social media.",
         ],
       },
       {
         heading: "For the marketing team",
         steps: [
           "Open Marketing Requests and click Team work. It lists every open request and the marketing for every approved event, newest first.",
-          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, or Waiting on the requester.",
+          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, Waiting on approval, or Waiting on the requester.",
           "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
+          "When the draft is ready, click Send for approval and add the files. The requester has until the same time on the next business day to answer.",
+          "Once they approve it (or don't answer in time), click Mark as marketed and tick where it went out.",
           "For an event, take its task, start it and mark it done with a note for the requester.",
         ],
       },

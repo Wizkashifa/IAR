@@ -101,7 +101,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] The approved event shows on the Calendar's week view for its room and committee.
 
 **Marketing Requests**
-- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `Graphic design / <year> / MK-…`. It shows as New in Marketing Requests → Team work for M; M asks a question; A answers; M schedules it with a done-by date, starts and finishes it; A hears at each step.
+- [ ] A asks for a graphic with a logo attached. The Marketing space gets a post; the logo is in the Marketing Files drive under `Graphic design / <year> / MK-…`. It shows as New in Marketing Requests → Team work for M; M asks a question; A answers; M schedules it with a done-by date and starts it, then sends a draft for approval with a file attached; A gets an alert, sees the draft at the top of the request and asks for changes; M sends a new draft; A approves it; M marks it as marketed and ticks where it went out; A sees the channels on the request. A hears at each step. A short link has no approval step: M marks it as marketed straight from in progress.
 
 **IT & Maintenance**
 - [ ] A reports a leak with a photo. The Facilities space gets a post; the photo is in the Maintenance Photos drive.
