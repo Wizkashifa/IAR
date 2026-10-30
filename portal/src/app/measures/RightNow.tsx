@@ -12,7 +12,7 @@ import { eventContext } from "@/lib/events/context";
 import { queueItems } from "@/lib/events/queues";
 import { roomById } from "@/lib/events/rooms";
 import { timeText } from "@/lib/events/series";
-import { TASK_TEAMS, TEAM_NAME as TASK_TEAM_NAME } from "@/lib/events/tasks";
+import { TASK_TEAMS, TEAM_NAME as TASK_TEAM_NAME, TEAM_WORK_HREF } from "@/lib/events/tasks";
 import { isEventCard } from "@/lib/events/workflow";
 import { fmtDay, fmtMoney, fmtMonth } from "@/lib/format";
 import { daysText, eventTurnaround, eventsThisWeek, moneyThisMonth, paymentTurnaround, ticketHealth, waitingByKind } from "@/lib/overview";
@@ -223,7 +223,7 @@ export async function RightNow({ cards }: { cards: Card[] }) {
               {tasks.map((t) => (
                 <tr key={t.team}>
                   <td data-label="Team">
-                    <Link href={`/queues?team=${t.team}`}>{TASK_TEAM_NAME[t.team]}</Link>
+                    <Link href={TEAM_WORK_HREF[t.team]}>{TASK_TEAM_NAME[t.team]}</Link>
                   </td>
                   <td data-label="Open" className={cell.num}>
                     {t.open}

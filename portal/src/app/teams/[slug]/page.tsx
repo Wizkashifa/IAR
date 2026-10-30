@@ -119,7 +119,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
           <Panel title="How to ask this team">
             <p className={styles.plain}>
               {team.slug === "marketing"
-                ? "Send a marketing request: graphics, signs, announcements, webpages and more. The team reviews new requests each week."
+                ? "Send a marketing request: graphics, signs, announcements, webpages and more. Someone on the team picks up new requests as they come in."
                 : team.slug === "maintenance" || team.slug === "tech"
                   ? "Send an AV/IT/Maintenance request. It goes to the right team, and you can follow it until it's done."
                   : "Most things go through an event request (a program or a room) or a payment request (paying for something). For anything else, contact the chair."}

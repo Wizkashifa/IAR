@@ -5,6 +5,7 @@
  * what these return.
  */
 import type { Card } from "../cards";
+import type { QueueItem } from "../events/queues";
 import type { TicketSchedule } from "./schedules";
 import type { Urgency } from "./types";
 import { type TicketActor, type TicketCard, isOverdue, isTicketCard, teamsOf, withTeam } from "./workflow";
@@ -55,6 +56,15 @@ export function workToday(cards: Card[], actor: Pick<TicketActor, "email" | "rol
     .filter((s) => !s.paused && teams.includes(s.team) && (!s.assigneeEmail || same(s.assigneeEmail, actor.email)) && s.next > today && s.next <= weekEnd)
     .sort((a, b) => a.next.localeCompare(b.next) || a.name.localeCompare(b.name));
   return { mine, untaken, preventive, upcoming };
+}
+
+/**
+ * A/V's event tasks for "My work today": due today or already overdue, mine
+ * or nobody's yet. `items` are A/V's open tasks, soonest due first
+ * (lib/events/queues.ts queueItems), and keep that order.
+ */
+export function eventTasksToday(items: QueueItem[], email: string, today: string): QueueItem[] {
+  return items.filter((x) => x.task.dueDate <= today && (!x.task.assignee || same(x.task.assignee, email)));
 }
 
 /** Whether this person works tickets (and so has a "My work today"). */

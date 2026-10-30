@@ -108,6 +108,7 @@ export function requestsPerWeek(cards: MeasureCard[], now: Date, weeks = 6): Wee
 type StepRule = { re: RegExp; ends?: string | ((m: RegExpMatchArray) => string); start?: boolean };
 
 const BACK = "Back with the requester";
+const APPROVAL = "Waiting on approval";
 
 const RULES: Record<MeasuredType, StepRule[]> = {
   purchase: [
@@ -133,11 +134,15 @@ const RULES: Record<MeasuredType, StepRule[]> = {
   ],
   marketing: [
     { re: /^Submitted/, start: true },
-    { re: /^Scheduled/, ends: "Weekly review" },
-    { re: /^Asked a question/, ends: "Weekly review" },
-    { re: /^Declined/, ends: "Weekly review" },
+    { re: /^Scheduled/, ends: "New" },
+    { re: /^Asked a question/, ends: "New" },
+    { re: /^Declined/, ends: "New" },
     { re: /^Answered marketing's question/, ends: "Waiting on the requester" },
     { re: /^Started/, ends: "Scheduled" },
+    { re: /^Sent for approval/, ends: "In progress" },
+    { re: /^(Approved the draft|Asked for changes|Went ahead without the requester's approval)/, ends: APPROVAL },
+    { re: /^Marked done \(nothing to approve\)/, ends: "In progress" },
+    { re: /^Marked done$/, ends: "Approved" },
     { re: /^Done$/, ends: "In progress" },
   ],
   ticket: [
@@ -166,7 +171,7 @@ export function stepOf(type: MeasuredType, action: string): { ends: string | nul
 const STEP_ORDER: Record<MeasuredType, string[]> = {
   purchase: ["Chair approval", "Finance review", "Executive approval", BACK, "To pay", "QuickBooks"],
   event: ["Director review", "Executive review", BACK, "Close-out"],
-  marketing: ["Weekly review", "Waiting on the requester", "Scheduled", "In progress"],
+  marketing: ["New", "Waiting on the requester", "Scheduled", "In progress", APPROVAL, "Approved"],
   ticket: ["New, waiting to be picked up", "Picked up, not started", "Being worked on", "Waiting on parts", "Fixed, waiting for the reporter"],
 };
 

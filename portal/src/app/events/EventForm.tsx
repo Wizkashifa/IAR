@@ -379,7 +379,7 @@ export default function EventForm(p: EventFormProps) {
           <legend><span className={styles.sn}>{num("confirmSect")}</span>Confirm</legend>
           <div className={styles.sectionBody}>
             <Field label="Notes for the teams (optional)">
-              <textarea rows={2} value={d.teamNotes} onChange={(e) => set("teamNotes", e.target.value)} placeholder="Anything marketing, A/V or security should know" maxLength={1000} />
+              <textarea rows={2} value={d.teamNotes} onChange={(e) => set("teamNotes", e.target.value)} placeholder="Anything marketing or A/V should know" maxLength={1000} />
             </Field>
             <Checkbox required checked={d.agree} onChange={(e) => set("agree", e.target.checked)}>
               I&apos;ve read the{" "}

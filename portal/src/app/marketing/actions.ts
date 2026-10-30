@@ -9,12 +9,15 @@ import { directory, queueTeamMembers } from "@/lib/groups";
 import { todayLocal } from "@/lib/dates";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
+import type { Notice } from "@/lib/notices";
 import * as wf from "@/lib/marketing/workflow";
 import { filesFrom } from "@/lib/drive";
 import { asksForFiles, checkFiles, filesOf } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveMarketingFiles } from "@/lib/marketing/drive";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import { isEventCard, type EventCard } from "@/lib/events/workflow";
+import { mayAddPiece, newPiece, pieceAddedNotices } from "@/lib/marketing/linked";
 import type { FormState } from "@/components/FormErrors";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
@@ -51,15 +54,29 @@ export async function createMarketing(prev: MarketingFormState, form: FormData):
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const raw = inputFrom(form);
-  const parsed = parseMarketingInput(raw, { today: todayLocal(), committees: await committeesFor(viewer) });
+  const store = await cardStore();
+  // A piece of marketing for an event: added from the event's page, by someone who may add one now. Its committee is the event's.
+  const eventId = String(form.get("event") ?? "");
+  let event: EventCard | null = null;
+  if (raw.kind === "event" || eventId) {
+    const found = eventId ? await store.get(eventId) : null;
+    if (!isEventCard(found)) return { errors: ["Add marketing for an event from the event's page."], values: raw, n: prev.n + 1 };
+    const may = mayAddPiece(found, actor);
+    if (!may.ok) return { errors: [may.reason], values: raw, n: prev.n + 1 };
+    event = found;
+    raw.kind = "event";
+    raw.committee = found.event.committeeName;
+  }
+  const parsed = parseMarketingInput(raw, { today: todayLocal(), committees: event ? [event.event.committeeName] : await committeesFor(viewer) });
   const files = isMarketingKind(raw.kind) && asksForFiles(raw.kind) ? filesFrom(form, "files") : [];
   const fileErrors = files.length === 0 ? [] : (await marketingFolder()) ? checkFiles(files) : [NOT_SET_UP];
   if (!parsed.ok || fileErrors.length) return { errors: [...(parsed.ok ? [] : parsed.errors), ...fileErrors], values: raw, n: prev.n + 1 };
 
-  const store = await cardStore();
-  const { id: _blank, ...toCreate } = wf.newMarketing(parsed.details, actor, nowIso());
+  const now = nowIso();
+  const { id: _blank, ...toCreate } = event ? newPiece(event, parsed.details, actor, now) : wf.newMarketing(parsed.details, actor, now);
   const created = (await store.create(toCreate, "MK")) as wf.MarketingCard;
-  await deliver(marketingNotices(null, created, actor), actor.email);
+  await deliver([...marketingNotices(null, created, actor), ...pieceAddedNotices(created, actor)], actor.email);
+  if (event) revalidatePath(`/events/${event.id}`);
   if (files.length) {
     try {
       const saved = await saveMarketingFiles({ id: created.id, kind: created.marketing.kind, sentAt: created.createdAt ?? created.updatedAt }, files);
@@ -72,6 +89,42 @@ export async function createMarketing(prev: MarketingFormState, form: FormData):
   }
   revalidatePath("/marketing");
   redirect(`/marketing/${created.id}?sent=1`);
+}
+
+/**
+ * Uploads files to the request's Drive folder, then applies `apply` to the
+ * latest copy of the request and saves it, with one more try if someone saved
+ * it while the files uploaded. Sends the notices `apply` returns. Returns an
+ * error to show, or null when it's saved.
+ */
+async function uploadThen(
+  by: string,
+  card: wf.MarketingCard,
+  files: File[],
+  apply: (latest: wf.MarketingCard, saved: Awaited<ReturnType<typeof saveMarketingFiles>>) => { next: wf.MarketingCard; notices: Notice[] },
+  failed: string,
+): Promise<string | null> {
+  const store = await cardStore();
+  try {
+    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const latest = attempt === 0 ? card : await store.get(card.id);
+      if (!wf.isMarketingCard(latest)) return "This request was removed while the files uploaded.";
+      try {
+        const { next, notices } = apply(latest, saved);
+        await store.save(next, latest.updatedAt);
+        await deliver(notices, by);
+        return null;
+      } catch (err) {
+        if (!(err instanceof ConflictError) || attempt === 1) throw err;
+      }
+    }
+    return null;
+  } catch (err) {
+    if (err instanceof WorkflowError || err instanceof ConflictError) return err.message;
+    console.error("marketing file upload failed", err);
+    return failed;
+  }
 }
 
 /** Files added from the request page, by the requester or the marketing team. Never changes the stage. */
@@ -93,34 +146,48 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
   const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
   if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
 
-  let error: string | null = null;
-  try {
-    const saved = await saveMarketingFiles({ id: card.id, kind: card.marketing.kind, sentAt: card.createdAt ?? card.marketing.history[0]?.at ?? card.updatedAt }, files);
-    // Someone may have saved the request while the files uploaded: add them to the latest copy.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const latest = attempt === 0 ? card : await store.get(id);
-      if (!wf.isMarketingCard(latest)) break;
-      try {
-        await store.save(wf.addFiles(latest, actor, nowIso(), saved), latest.updatedAt);
-        break;
-      } catch (err) {
-        if (!(err instanceof ConflictError) || attempt === 1) throw err;
-      }
-    }
-  } catch (err) {
-    if (err instanceof WorkflowError) error = err.message;
-    else {
-      console.error("marketing file upload failed", err);
-      error = "The files didn't upload. Try again, or share a Google Drive link.";
-    }
-  }
+  const error = await uploadThen(actor.email, card, files, (latest, saved) => ({ next: wf.addFiles(latest, actor, nowIso(), saved), notices: [] }), "The files didn't upload. Try again, or share a Google Drive link.");
   revalidatePath("/marketing");
   back(error ? `error=${encodeURIComponent(error)}` : "ok=files");
 }
 
+/** Marketing sends the requester a draft to approve: uploads the files, then moves the request on (wf.sendProof). */
+export async function sendMarketingProof(form: FormData): Promise<void> {
+  const viewer = await requireViewer();
+  const actor = await actorFor(viewer);
+  const id = String(form.get("id") ?? "");
+  const note = String(form.get("note") ?? "").slice(0, 2000);
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isMarketingCard(card)) redirect("/marketing");
+  const back = (q: string) => {
+    revalidatePath(`/marketing/${id}`);
+    redirect(`/marketing/${id}?${q}`);
+  };
+  const allowed = wf.permission(card, actor, "sendProof");
+  if (!allowed.ok) back(`error=${encodeURIComponent(allowed.reason)}`);
+  const files = filesFrom(form, "files");
+  if (files.length === 0) back(`error=${encodeURIComponent("Add the draft for the requester to look at.")}`);
+  const problems = (await marketingFolder()) ? checkFiles(files, filesOf(card.marketing).length) : [NOT_SET_UP];
+  if (problems.length) back(`error=${encodeURIComponent(problems.join(" "))}`);
+
+  const error = await uploadThen(
+    actor.email,
+    card,
+    files,
+    (latest, saved) => {
+      const next = wf.sendProof(latest, actor, nowIso(), saved, note);
+      return { next, notices: marketingNotices(latest, next, actor) };
+    },
+    "The draft didn't upload. Try again, or share a Google Drive link in a comment.",
+  );
+  revalidatePath("/marketing");
+  back(error ? `error=${encodeURIComponent(error)}` : "ok=sendProof");
+}
+
 /**
  * The requester's edit page: saves changes, and when marketing asked a
- * question, sends the answer with them (back to the weekly review).
+ * question, sends the answer with them (back to the team as new).
  */
 export async function editMarketing(id: string, expected: string, prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();
@@ -135,7 +202,8 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
   const allowed = wf.permission(card, actor, answering ? "answer" : "edit");
   if (!allowed.ok) return fail([allowed.reason]);
 
-  // A request keeps its committee even if the person has since left it.
+  // A request keeps its committee even if the person has since left it; a piece for an event keeps the event's.
+  if (card.marketing.eventCardId) raw.committee = card.committee;
   const committees = [...new Set([...(await committeesFor(viewer)), card.committee])];
   const parsed = parseMarketingInput(raw, { today: todayLocal(), committees });
   const answer = String(form.get("answer") ?? "").slice(0, 2000);
@@ -157,7 +225,7 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
 
 const marketing = { path: "/marketing", is: wf.isMarketingCard };
 
-/** Schedule, ask, decline, start, hand to someone, change the date, finish, answer or cancel. */
+/** Schedule, ask, decline, start, hand to someone, change the date, approve or ask for changes, mark it done, answer or cancel. */
 export async function actOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
@@ -187,7 +255,13 @@ export async function actOnMarketing(form: FormData): Promise<void> {
           next = wf.assign(card, actor, now, String(form.get("assignee") ?? ""), await queueTeamMembers("marketing"));
           break;
         case "finish":
-          next = wf.finish(card, actor, now, note);
+          next = wf.finish(card, actor, now, note, form.getAll("channels").map(String));
+          break;
+        case "approve":
+          next = wf.approve(card, actor, now, note);
+          break;
+        case "changes":
+          next = wf.askChanges(card, actor, now, note);
           break;
         case "answer":
           next = wf.answer(card, actor, now, note);

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { cardStore } from "@/lib/cards";
 import { nameResolver } from "@/lib/names";
@@ -10,9 +9,8 @@ import { requireViewer } from "@/lib/viewer";
 import { campusesOf, runSheetRows } from "@/lib/runsheet";
 import { eventContext } from "@/lib/events/context";
 import { timeText } from "@/lib/events/series";
-import { type EventCard, isEventCard } from "@/lib/events/workflow";
+import { isEventCard } from "@/lib/events/workflow";
 import { fmtDay } from "@/lib/format";
-import { RoomCheckCell } from "../events/ops-ui";
 import { RoomDay } from "../events/RoomDay";
 import styles from "../events/events.module.css";
 import { PrintButton } from "./PrintButton";
@@ -22,14 +20,9 @@ import { Pill } from "@/components/Pill";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Daily Run Sheet" };
 
-const MESSAGES: Record<string, string> = {
-  "check-ok": "Room check saved.",
-  "check-problem": "Room check saved. The requester and the IAR office have been told about the problem.",
-};
-
-export default async function RunSheetPage({ searchParams }: { searchParams: Promise<{ date?: string; campus?: string; ok?: string; error?: string }> }) {
+export default async function RunSheetPage({ searchParams }: { searchParams: Promise<{ date?: string; campus?: string }> }) {
   const sp = await searchParams;
-  const viewer = await requireViewer();
+  await requireViewer();
   const ctx = await eventContext();
   const date = isDate(sp.date) ? sp.date : ctx.today;
   const campuses = campusesOf(ctx.rooms);
@@ -40,10 +33,8 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
     here.length ? ctx.calendar.listBusy(here.map((r) => ({ roomId: r.id, calendarId: r.calendarId })), date, date) : Promise.resolve([]),
   ]);
   const events = cards.filter(isEventCard);
-  const byId = new Map<string, EventCard>(events.map((c) => [c.id, c]));
   const rows = runSheetRows(events, busy, ctx.rooms, date, campus);
   const eventCount = rows.filter((r) => r.kind === "event").length;
-  const back = `/run-sheet?date=${date}${campus ? `&campus=${encodeURIComponent(campus)}` : ""}`;
   const names = await nameResolver(rows.flatMap((r) => (r.kind === "event" ? [r.contact] : [])));
 
   return (
@@ -55,8 +46,6 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
           actions={<PrintButton />}
         />
       </div>
-      {sp.ok && MESSAGES[sp.ok] && <Note tone="ok">{MESSAGES[sp.ok]}</Note>}
-      {sp.error && <Note tone="bad">{sp.error}</Note>}
       <div className={styles.noprint}>
         <RoomDay options={campuses.map((c) => ({ id: c, name: c }))} value={campus} param="campus" label="Campus" date={date} today={ctx.today} />
       </div>
@@ -87,13 +76,7 @@ export default async function RunSheetPage({ searchParams }: { searchParams: Pro
                   <div>
                     <div>{r.setupNotes || <span className="hint">No special setup</span>}</div>
                     {r.av && <div className="hint">A/V: {r.av}</div>}
-                    {r.security.length > 0 && <div className="hint">Security: {r.security.join(" ")}</div>}
-                    {byId.get(r.cardId) && (
-                      <div className={styles.cells}>
-                        <RoomCheckCell card={byId.get(r.cardId)!} date={date} when="before" check={r.checks.before} roles={viewer.actingRoles} back={back} />
-                        <RoomCheckCell card={byId.get(r.cardId)!} date={date} when="after" check={r.checks.after} roles={viewer.actingRoles} back={back} />
-                      </div>
-                    )}
+                    {r.notes.length > 0 && <div className="hint">{r.notes.join(" ")}</div>}
                   </div>
                 </li>
               ) : (

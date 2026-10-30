@@ -77,7 +77,7 @@ export const MODULES: PortalModule[] = [
     href: "/marketing",
     accent: "mkt",
     plannedFeatures: [
-      "A board view for the marketing team, alongside event marketing tasks in Team Queues",
+      "A board view of Team work for the marketing team",
     ],
   },
   {
@@ -95,20 +95,6 @@ export const MODULES: PortalModule[] = [
       "Rooms from IAR's Google Calendar instead of a fixed list",
       "Jira-style planning (sprints, backlog, grouped work, reports) if the facilities team uses it after the move",
       "Retire Jira after two weeks side by side",
-    ],
-  },
-  {
-    id: "team-queues",
-    nav: "Queues",
-    name: "Team Queues",
-    summary: "Your team's open tasks across every event and request.",
-    visibleTo: ["office", "marketing", "av", "security", "executive"],
-    phase: 2,
-    status: "live",
-    href: "/queues",
-    plannedFeatures: [
-      "A board view, alongside the list",
-      "Reminders and escalation for overdue tasks",
     ],
   },
   {

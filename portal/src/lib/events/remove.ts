@@ -8,12 +8,14 @@ import { syncHolds } from "./holds";
 import { holdKeyOf, isOpenAsk } from "./slot-requests";
 import { slotRequestStore } from "./slot-requests-store";
 import * as wf from "./workflow";
+import { piecesOnEventDeleted } from "../marketing/linked";
+import { piecesFor } from "../marketing/pieces";
 
 /**
  * Before a portal admin deletes an event request: take its holds off the room
  * calendars, withdraw any ask for a booked time it made, let any request that
- * asked for its time go on to review (the time is free now), and unlink the
- * payment requests linked to it. Returns notices for the people whose
+ * asked for its time go on to review (the time is free now), unlink the
+ * payment requests linked to it, and cancel and unlink its open marketing pieces. Returns notices for the people whose
  * requests moved, and problems to report.
  */
 export async function beforeDeletingEvent(card: wf.EventCard, by: string): Promise<{ notices: Notice[]; problems: string[] }> {
@@ -69,6 +71,18 @@ export async function beforeDeletingEvent(card: wf.EventCard, by: string): Promi
     } catch (err) {
       console.error("unlinking a payment request failed", err);
       problems.push(`${p.id} is still linked to this event. Edit it to pick another event.`);
+    }
+  }
+  // Marketing pieces for it: open ones are cancelled, and none points at a request that's gone.
+  const pieces = await piecesFor(card.id);
+  const gone = piecesOnEventDeleted(card, pieces, now);
+  for (const next of gone.pieces) {
+    try {
+      await store.save(next, pieces.find((p) => p.id === next.id)!.updatedAt);
+      notices.push(...gone.notices.filter((n) => n.cardId === next.id));
+    } catch (err) {
+      console.error("unlinking a marketing piece failed", err);
+      problems.push(`${next.id} is still linked to this event. Open it and cancel it if it's no longer needed.`);
     }
   }
   return { notices, problems };

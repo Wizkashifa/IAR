@@ -35,7 +35,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Click New event request and fill in one form: the event, the room, and marketing's and A/V's questions if you need them.",
       "The checks beside the form compare your times with the IAR room calendars as you type, so you see a clash before you send.",
       "Your committee's director reviews it, then an executive gives final approval. The room is held on the calendar while you wait.",
-      "Once it's approved, marketing, A/V and security each get their task. After the event, you add the attendance and final costs.",
+      "Once it's approved, A/V gets its task and a public event gets a flyer and announcement from marketing. Add more marketing from the event's page. After the event, you add the attendance and final costs.",
     ],
     sections: [
       {
@@ -65,7 +65,18 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
           "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
-          "Once it's approved, the room is confirmed on the IAR calendar, and marketing, A/V and security see their tasks in Team Queues.",
+          "Once it's approved, the room is confirmed on the IAR calendar, A/V sees its task in IT & Maintenance, and a public event gets a flyer and announcement from marketing.",
+          "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
+        ],
+      },
+      {
+        heading: "Marketing for your event",
+        steps: [
+          "Open your event and find Marketing. Click Add a marketing piece for each thing you need: a flyer, social media posts, a video, a banner, a newsletter item.",
+          "You can add pieces once the event is sent, before it's approved, so pieces that take longer can start early. Your committee's chair and the marketing team can add them too.",
+          "Each piece is its own marketing request, with a due date and someone on the team working on it. Marketing sees the event's details, brief and images, so you don't type them again.",
+          "When a public event is approved, the portal adds a flyer and announcement piece for you.",
+          "If the event is cancelled or declined, its pieces are cancelled. If its date, time or room changes, marketing is told.",
         ],
       },
       {
@@ -164,10 +175,11 @@ export const HELP_GUIDES: HelpGuide[] = [
     href: "/marketing",
     module: "marketing-requests",
     short: [
-      "Marketing for an event? Put it on the event request instead: it asks marketing's questions there.",
+      "Marketing for an event? Open the event and click Add a marketing piece, once for each thing you need.",
       "For anything else, click New marketing request and pick what you need. Each kind asks only its own questions.",
-      "The marketing team reviews new requests each week. They schedule it with a done-by date, ask you a question, or decline it.",
+      "Someone on the marketing team picks up new requests as they come in. They schedule it with a done-by date, ask you a question, or decline it.",
       "If they ask a question, answer it right on the request page.",
+      "Before it goes out, marketing sends you a draft. Approve it or ask for changes by the same time the next business day.",
     ],
     sections: [
       {
@@ -182,18 +194,32 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Marketing for an event",
         steps: [
-          "Put marketing for an event on the event request itself. Tick Open to the public and answer marketing's questions there.",
-          "Add images for the flyer (logos, photos, artwork) right on the form, or later on the request page. Image files only, no PDFs or Word documents.",
-          "Marketing sees it as soon as the event is approved. Nothing is advertised before then.",
+          "Open the event from Events & Rooms and click Add a marketing piece in its Marketing section. Add one piece for each thing you need.",
+          "For a public event, answer marketing's questions on the event request, and add images for the flyer (logos, photos, artwork) there or on its page. Image files only, no PDFs or Word documents.",
+          "Marketing can start before the event is approved. Until it is, the piece says Event not approved yet, and nothing is advertised.",
         ],
       },
       {
         heading: "What happens next",
         steps: [
-          "The marketing team reviews new requests each week.",
+          "Someone on the marketing team picks it up as it comes in.",
           "They schedule it with a done-by date, ask you a question, or decline it with a reason.",
           "If they ask a question, you'll get a message. Answer it on the request page and it goes back to the team.",
-          "When it's done, you'll get a message.",
+          "When the draft is ready, you'll get a message. Open the request, look at the files at the top, then click Approve, or Ask for changes and say what to change.",
+          "Answer by the same time on the next business day (Monday to Friday: a draft sent on Friday is due Monday). If you don't, marketing can go ahead without your approval.",
+          "Short links and small website updates have nothing to approve, so they go straight out.",
+          "When it's out, you'll get a message saying where: the newsletter, the website, the lobby screens or social media.",
+        ],
+      },
+      {
+        heading: "For the marketing team",
+        steps: [
+          "Open Marketing Requests and click Team work. It lists every open request, each event's marketing pieces among them, newest first.",
+          "Filter it: New, Nobody has it, Assigned to me, Scheduled, In progress, Waiting on approval or Waiting on the requester. Pick By event to see each event's pieces together.",
+          "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
+          "When the draft is ready, click Send for approval and add the files. The requester has until the same time on the next business day to answer.",
+          "Once they approve it (or don't answer in time), click Mark it done and tick where it went out.",
+          "Older events may still have a Marketing task: take it, start it and mark it done with a note for the requester.",
         ],
       },
     ],
@@ -243,6 +269,15 @@ export const HELP_GUIDES: HelpGuide[] = [
           "Open a ticket and use the next step it shows: take it, start work, waiting on parts, or mark it fixed. Everything else is under More.",
           "Ready-made replies above the comment box save typing for the common answers.",
           "Preventive schedules create recurring tickets on their own.",
+        ],
+      },
+      {
+        heading: "A/V for events",
+        steps: [
+          "A/V's tasks from approved events are at the top of Team tickets, soonest due first. My work today lists the ones due today.",
+          "Open a task to see everything the requester gave: the A/V needs, the room and the times.",
+          "Take it, click Start when you begin and Mark done when you finish. The requester can see where it stands.",
+          "Tasks unlock when the event is approved. Events still in review are counted below the list, so you can plan ahead.",
         ],
       },
     ],
@@ -311,31 +346,22 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
   {
     key: "teams",
-    title: "Team Queues and the run sheet",
-    summary: "For the marketing, A/V, security, facilities and office teams.",
-    href: "/queues",
-    module: "team-queues",
+    title: "The daily run sheet",
+    summary: "One printable page of what's happening where each day, for the front desk and the office.",
+    href: "/run-sheet",
+    module: "run-sheet",
     short: [
-      "Your team's tasks from every approved event are here, soonest due first.",
-      "Tasks unlock when an event is approved. Open one to see the event's details, then start it and mark it done.",
-      "The run sheet is one printable page of what's happening where each day.",
+      "Pick the day and the campus.",
+      "Each room's bookings are listed in time order, with the contact, the setup plan and notes.",
+      "Print it for the front desk.",
     ],
     sections: [
-      {
-        heading: "Team Queues",
-        steps: [
-          "Each team sees its own tasks across every approved event: the flyer and announcement for marketing, A/V setup for A/V, the room check for security.",
-          "Tasks unlock when the event is approved. Locked ones are counted so you can plan ahead.",
-          "Open a task to see everything the requester gave: the announcement text, the A/V needs, the room and times.",
-          "Click Start when you begin and Done when you finish. The requester can see where each task stands.",
-        ],
-      },
       {
         heading: "The daily run sheet",
         steps: [
           "Open Daily Run Sheet (under IAR in the menu; everyone can see it) and pick the day and campus.",
-          "It lists each room's bookings in time order, with the contact, the setup plan and security notes.",
-          "Print it for the front desk or the security team.",
+          "It lists each room's bookings in time order, with the contact, the setup plan and notes such as food or a large crowd. Events after hours are marked.",
+          "Print it for the front desk.",
         ],
       },
     ],

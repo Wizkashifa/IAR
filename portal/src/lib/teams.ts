@@ -175,7 +175,6 @@ export function pillarsOf(dir: Directory): { name: string; group: string; direct
 export const QUEUE_ROLES: Record<string, Role[]> = {
   marketing: ["marketing"],
   maintenance: ["facilities"],
-  security: ["security"],
   welfare: ["sw"],
   shura: ["shura"],
   tech: ["it", "av"],

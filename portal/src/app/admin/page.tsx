@@ -31,8 +31,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Portal Settings" };
 
 const GOOGLE_GROUPS = "https://admin.google.com/ac/groups";
-const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", security: "Security queue", sw: "Restricted S&W payment requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
-const SPACE_LABEL: Record<string, string> = { office: "IAR office", finance: "Finance", executive: "Executive", admins: "Portal admins", marketing: "Marketing", it: "IT", av: "A/V", facilities: "Facilities", security: "Security" };
+const QUEUE_LABEL: Record<string, string> = { marketing: "Marketing queue", facilities: "Facilities queue", sw: "Restricted S&W payment requests", shura: "Shura", it: "IT queue", av: "A/V queue" };
+const SPACE_LABEL: Record<string, string> = { office: "IAR office", finance: "Finance", executive: "Executive", admins: "Portal admins", marketing: "Marketing", it: "IT", av: "A/V", facilities: "Facilities" };
 const ROLE_LABEL: Record<string, string> = {
   office: "Rentals, run sheet; submits for any committee",
   finance: "Finance review, payment, QuickBooks, restricted S&W requests; submits for any fund",

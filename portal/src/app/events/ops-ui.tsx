@@ -1,23 +1,34 @@
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Pill, type Tone } from "@/components/Pill";
-import { type NameOf, fallbackName } from "@/lib/steps";
+import type { NameOf } from "@/lib/steps";
 import type { Role } from "@/lib/org";
-import { WHEN_LABEL, mayCheckRooms } from "@/lib/events/roomchecks";
-import { dayText } from "@/lib/events/series";
+import type { QueueItem } from "@/lib/events/queues";
+import { type Room, roomById } from "@/lib/events/rooms";
+import { dayText, timeText } from "@/lib/events/series";
 import { TASK_STATUS_LABEL, TEAM_NAME, worksTeam } from "@/lib/events/tasks";
-import type { EventTask, RoomCheck } from "@/lib/events/types";
-import type { EventCard } from "@/lib/events/workflow";
-import { saveRoomCheck, workOnTask } from "./ops-actions";
+import type { EventTask } from "@/lib/events/types";
+import { type EventCard, firstDate } from "@/lib/events/workflow";
+import { fmtDay } from "@/lib/format";
+import { same } from "@/lib/text";
+import { workOnTask } from "./ops-actions";
 import { ItemRow } from "@/components/ItemRow";
 import { Disclosure } from "@/components/Disclosure";
 import { Field } from "@/components/Field";
-import { Choice, Choices } from "@/components/Choices";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 
-/** Pieces Team Queues, the run sheet and the event page share. */
+/** Pieces IT & Maintenance, Marketing Requests and the event page share. */
 
 const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
+
+/** What a team member sees after working on a task from a team's page (`?ok=task-…` from workOnTask). */
+export const TASK_FLASH: Record<string, string> = {
+  "task-taken": "It's yours. It shows your name on the event.",
+  "task-started": "Marked in progress.",
+  "task-done": "Marked done. The requester can see it on the event.",
+  "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
+  "task-assigned": "Handed over. They get an alert, and their name shows on the event.",
+};
 
 export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean }) {
   return (
@@ -110,43 +121,28 @@ export function TaskLine({ card, task, roles, email, back, today, names, people 
   );
 }
 
-export function CheckResult({ check }: { check?: RoomCheck }) {
-  if (!check) return <span className="hint">Not recorded</span>;
+/**
+ * One team task as a row in a team's list: the task, its event (committee,
+ * rooms, date and time, requester), who has it, and its buttons when
+ * `withButtons`. `people`: who on the team it can be handed to.
+ */
+export function EventTaskRow({ item, withButtons, names, rooms, email, roles, back, people }: { item: QueueItem; withButtons: boolean; names: NameOf; rooms: Room[]; email: string; roles: Role[]; back: string; people: PersonOption[] }) {
+  const { card, task, overdue } = item;
+  const roomNames = card.event.rooms.map((r) => roomById(rooms, r)?.name ?? r).join(", ") || "Off-site";
+  const series = card.event.dates.length > 1 ? ` (series, ${card.event.dates.length} dates)` : "";
   return (
-    <span>
-      <Pill tone={check.ok ? "ok" : "bad"}>{check.ok ? "OK" : "Problem"}</Pill>
-      {check.note ? ` ${check.note}` : ""}
-      <span className="hint"> · {check.by.includes("@") ? fallbackName(check.by) : check.by}</span>
-    </span>
+    <ItemRow
+      title={<Link href={`/events/${card.id}#tasks`}>{task.title}</Link>}
+      id={card.id}
+      sub={`${card.title} · ${card.event.committeeName} · ${roomNames} · ${dayText(firstDate(card))}${series}, ${timeText(card.event.start)}–${timeText(card.event.end)} · from ${names(card.ownerEmail)}`}
+      who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `Due ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}
+      state={task.status === "done" ? "done" : overdue ? "bad" : same(task.assignee, email) || !task.assignee ? "act" : "wait"}
+      right={
+        <>
+          <TaskPill task={task} overdue={overdue} />
+          {withButtons && <TaskButtons card={card} task={task} roles={roles} email={email} back={back} people={people} />}
+        </>
+      }
+    />
   );
 }
-
-/** Security's before/after check for one date: the result, and a form to record it for security. */
-export function RoomCheckCell({ card, date, when, check, roles, back }: { card: EventCard; date: string; when: RoomCheck["when"]; check?: RoomCheck; roles: Role[]; back: string }) {
-  const can = mayCheckRooms({ roles }) && card.event.rooms.length > 0;
-  return (
-    <div className="stack tight">
-      <div><strong>{WHEN_LABEL[when]}:</strong> <CheckResult check={check} /></div>
-      {can && (
-        <Disclosure summary={check ? "Change" : "Record"} button="quiet" className="noprint">
-          <form action={saveRoomCheck} className="stack">
-            <input type="hidden" name="id" value={card.id} />
-            <input type="hidden" name="date" value={date} />
-            <input type="hidden" name="when" value={when} />
-            <input type="hidden" name="back" value={back} />
-            <Choices legend="How was the room?" legendHidden>
-              <Choice type="radio" name="result" value="ok" defaultChecked={check?.ok !== false} required label="Room OK" />
-              <Choice type="radio" name="result" value="problem" defaultChecked={check?.ok === false} label="Problem" />
-            </Choices>
-            <Field label={<>Note (say what&apos;s wrong if there&apos;s a problem)</>}>
-              <input name="note" maxLength={1000} defaultValue={check?.note ?? ""} placeholder="e.g. Chairs left out, spill by the door" />
-        </Field>
-            <div><Button size="small" type="submit">Save check</Button></div>
-          </form>
-        </Disclosure>
-      )}
-    </div>
-  );
-}
-
-export const eventLink = (card: EventCard) => <Link href={`/events/${card.id}`}>{card.title}</Link>;

@@ -10,13 +10,14 @@ import * as pw from "../purchases/workflow";
 import { startCloseOut } from "./closeout";
 import type { EventContext } from "./context";
 import { syncHolds } from "./holds";
-import { recordRoomCheck } from "./roomchecks";
 import { mergeRooms } from "./rooms";
 import { dayOfWeek } from "./series";
 import { actOnTask } from "./tasks";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
 import { addDays, todayLocal } from "../dates";
+import { autoPiece, newPiece } from "../marketing/linked";
+import * as mw from "../marketing/workflow";
 
 /**
  * Sample event requests for local development, built by running the real
@@ -121,10 +122,7 @@ export async function sampleEvents(): Promise<Card[]> {
   );
   let movie = wf.approve(wf.approve(movie0, director, DIRECTORS, at(28)), exec, DIRECTORS, at(27));
   const it: wf.EventActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
-  const security: wf.EventActor = { email: "security@dev.local", name: "Sample Security", roles: ["member", "security"] };
   movie = actOnTask(movie, "av", it, "done", at(6), "Projector and two speakers set up; returned to the A/V closet.");
-  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "before", ok: true });
-  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "after", ok: false, note: "Pizza boxes left by the back door and the floor needed sweeping." });
   movie = startCloseOut(movie, at(5));
 
   // Yesterday, still approved: the daily job moves it to close-out.
@@ -138,7 +136,7 @@ export async function sampleEvents(): Promise<Card[]> {
     volunteer, 20,
   );
 
-  // Coming up: public, with A/V, a setup plan and after-hours security, so every team has a task.
+  // Coming up: public, with A/V, a setup plan and running after hours. Its marketing pieces are below (samplePieces).
   const dinnerDate = next(6, 29);
   const dinner = approveNoDirector(
     make("EV-1107", input({
@@ -168,7 +166,33 @@ export async function sampleEvents(): Promise<Card[]> {
   const out: Card[] = [];
   for (const c of [gameNight, halaqa, arabic, family, movie, parents, dinner, tonight]) out.push((await syncHolds(c, ctx)).card);
   out.push(await linkedPurchase("EV-1105", at));
+  out.push(...samplePieces(dinner, gameNight, at));
   return out;
+}
+
+/**
+ * Marketing pieces linked to events, made the way the app makes them: the
+ * Fall Dinner's "Flyer and announcement" (added on approval, now in
+ * progress), social media posts (new) and a banner (scheduled); and a video
+ * for Game Night, added while that event is still in review.
+ */
+function samplePieces(dinner: wf.EventCard, gameNight: wf.EventCard, at: (daysAgo: number) => string): Card[] {
+  const marketing: mw.Actor = { email: "marketing@dev.local", name: "Sample Marketing", roles: ["member", "marketing"] };
+  const today = todayLocal();
+  let n = 1050;
+  const piece = (event: wf.EventCard, by: mw.Actor, answers: Record<string, string>, daysAgo: number) => {
+    const c = newPiece(event, { kind: "event", committee: event.event.committeeName, answers }, by, at(daysAgo));
+    c.id = `MK-${n++}`;
+    return c;
+  };
+  const auto = autoPiece(null, dinner, [], at(3));
+  if (!auto) throw new Error("Bad sample: the Fall Dinner should get its flyer and announcement");
+  auto.id = `MK-${n++}`;
+  const flyer = mw.start(mw.schedule(auto, marketing, at(2), auto.marketing.answers.due), marketing, at(1));
+  const posts = piece(dinner, chair, { piece: "social", desc: "Three posts: one when tickets open, one a week before, one on the day. Please include the children's corner.", due: addDays(today, 12) }, 1);
+  const banner = mw.schedule(piece(dinner, marketing, { piece: "banner", desc: "A vinyl banner for the front entrance, 6 by 3 feet.", due: addDays(today, 15) }, 2), marketing, at(1), addDays(today, 15));
+  const video = piece(gameNight, chair, { piece: "video", desc: "A 30-second reel from last year's game night photos, for Instagram and the lobby screens.", due: addDays(today, 10) }, 0);
+  return [flyer, posts, banner, video];
 }
 
 /** A reimbursement for the movie night's food, linked to it, approved by the chair and waiting on finance. */

@@ -7,11 +7,11 @@ import type { Card } from "../cards";
 import { canOpenCard } from "../access";
 import { hrefOf } from "../kinds";
 import { withComment } from "../comments";
-import { MARKETING_KINDS } from "./types";
+import { MARKETING_KINDS, STAGE_LABEL } from "./types";
 import { MARKETING_TYPES, type MarketingInput, asksForNotes, driveLinkOf, parseMarketingInput, redirectSource, titleFor } from "./forms";
 import { canViewMarketing } from "./access";
 import { marketingCommentNotices, marketingNotices } from "./notices";
-import { isMonday, planDaily } from "./reminders";
+import { planDaily } from "./reminders";
 import * as wf from "./workflow";
 import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf, requestFolderPath } from "./files";
 
@@ -39,6 +39,20 @@ function submitted(over: Partial<MarketingInput> = {}, owner: wf.Actor = volunte
   c.id = "MK-1001";
   return c;
 }
+
+const DRAFT = [{ name: "draft.png", size: 1000 }];
+
+/** Through the approval step: started if need be, a draft sent by `by`, approved by the requester. */
+function approvedDraft(c: wf.MarketingCard, by: wf.Actor = mk, at = T(3)): wf.MarketingCard {
+  const started = c.marketing.stage === "scheduled" ? wf.start(c, by, at) : c;
+  const owner: wf.Actor = { email: c.ownerEmail, name: "Requester", roles: ["member"] };
+  return wf.approve(wf.sendProof(started, by, at, DRAFT), owner, at);
+}
+
+/** Marked done after the requester approved the draft. */
+const marketed = (c: wf.MarketingCard, by: wf.Actor = mk, at = T(3)) => wf.finish(approvedDraft(c, by, at), by, at);
+
+const SHORT_LINK: Partial<MarketingInput> = { kind: "redirect", answers: { from: "raleighmasjid.org/rooms", to: "https://forms.gle/example" } };
 
 const errorsOf = (over: Partial<MarketingInput>) => {
   const r = parseMarketingInput(input(over), ctx);
@@ -68,6 +82,7 @@ test("forms: a valid request per type passes; unknown answers are dropped", () =
     redirect: { from: "raleighmasjid.org/pantry", to: "https://forms.gle/abc" },
     badge: { first: "New", last: "Hire", title: "Technician", photo: "onsite" },
     custom: { desc: "A short video for the fundraiser" },
+    event: { piece: "flyer", due: "2026-11-20" },
   };
   for (const k of MARKETING_KINDS) {
     const r = parseMarketingInput({ kind: k, committee: "Youth", answers: { ...ok[k], sneaky: "x" } }, ctx);
@@ -134,12 +149,14 @@ test("forms: titles come from the answers", () => {
 
 // ---- Workflow --------------------------------------------------------------
 
-test("new request: waits for the weekly review, with history, search words and a link", () => {
+test("new request: shows as New for the team to pick up, with history, search words and a link", () => {
   const c = submitted();
   assert.equal(c.type, "marketing");
   assert.equal(c.status, "submitted");
   assert.equal(c.marketing.stage, "review");
-  assert.equal(c.waitingOn, "Marketing: weekly review");
+  assert.equal(c.waitingOn, "Marketing: new request");
+  assert.equal(STAGE_LABEL.review, "New");
+  assert.equal(STAGE_LABEL.question, "Waiting on the requester");
   assert.equal(c.committee, "Youth");
   assert.equal(c.marketing.requesterName, "Vol Unteer");
   assert.deepEqual(c.marketing.history.map((h) => h.action), ["Submitted"]);
@@ -250,7 +267,8 @@ test("work: start, change the date, finish", () => {
   assert.equal(r.marketing.doneBy, "2026-11-09");
   assert.equal(r.marketing.remindedFor, undefined);
   assert.equal(r.marketing.stage, "doing");
-  const f = wf.finish(r, mk, T(3), "https://drive.google.com/file/d/final");
+  assert.throws(() => wf.finish(r, mk, T(3)), /draft to approve first/);
+  const f = wf.finish(approvedDraft(r), mk, T(3), "https://drive.google.com/file/d/final");
   assert.equal(f.marketing.stage, "done");
   assert.equal(f.status, "closed");
   assert.equal(f.waitingOn, undefined);
@@ -260,8 +278,11 @@ test("work: start, change the date, finish", () => {
     assert.equal(wf.permission(f, mk, a).ok, false, a);
     assert.equal(wf.permission(f, volunteer, a).ok, false, a);
   }
-  // Small jobs can be marked done straight from scheduled.
-  assert.equal(wf.finish(s, mk, T(2)).marketing.stage, "done");
+  // A short link has nothing to approve: it can be marked done straight from scheduled.
+  assert.equal(wf.permission(s, mk, "finish").ok, false, "a graphic needs the requester's approval");
+  const link = wf.finish(wf.schedule(submitted(SHORT_LINK), mk, T(1), "2026-11-04"), mk, T(2));
+  assert.equal(link.marketing.stage, "done");
+  assert.equal(link.marketing.history.at(-1)?.action, "Marked done (nothing to approve)");
   assert.equal(wf.permission(submitted(), mk, "finish").ok, false);
 });
 
@@ -325,7 +346,8 @@ test("notices: a new request alerts the marketing team's space", () => {
   assert.deepEqual(n[0].to, { role: "marketing" });
   assert.equal(n[0].alert, true);
   assert.equal(n[0].href, "/marketing/MK-1001");
-  assert.match(n[0].text, /MK-1001 .* is new for the weekly review/);
+  assert.match(n[0].text, /^New marketing request: MK-1001 /);
+  assert.doesNotMatch(n[0].text, /weekly/i);
 });
 
 test("notices: a question alerts the requester; their answer alerts marketing", () => {
@@ -350,8 +372,9 @@ test("notices: scheduled and done tell the requester without an alert; declined 
   assert.deepEqual(marketingNotices(s, d, mk), []);
   const r = wf.reschedule(d, mk, T(2), "2026-11-09");
   assert.match(marketingNotices(d, r, mk)[0].text, /now aims to finish by Monday, November 9/);
-  const f = wf.finish(d, mk, T(3), "Posted.");
-  const n2 = marketingNotices(d, f, mk);
+  const ready = approvedDraft(d);
+  const f = wf.finish(ready, mk, T(3), "Posted.");
+  const n2 = marketingNotices(ready, f, mk);
   assert.deepEqual(n2.map((x) => [x.to, x.alert]), [[{ email: volunteer.email }, false]]);
   assert.match(n2[0].text, /is done\. Posted\./);
   const x = wf.decline(c, mk, T(1), "Not something we do.");
@@ -361,7 +384,7 @@ test("notices: scheduled and done tell the requester without an alert; declined 
 });
 
 test("notices: nobody is told about their own step; a cancel in review tells marketing quietly", () => {
-  const own = submitted({}, mk);
+  const own = submitted(SHORT_LINK, mk);
   const s = wf.schedule(own, mk2, T(1), "2026-11-04");
   const f = wf.finish(s, mk, T(2));
   assert.deepEqual(marketingNotices(s, f, mk), []);
@@ -399,20 +422,24 @@ test("comment notices: someone named with @ hears first, with an alert", () => {
 
 // ---- Daily job ---------------------------------------------------------------
 
-test("daily: Monday lists the requests waiting for the weekly review", () => {
-  assert.ok(isMonday("2026-10-26"));
-  assert.equal(isMonday(TODAY), false);
+test("daily: one nudge for new requests nobody has picked up after 2 days, once each, caught up after a missed day", () => {
   const a = submitted();
   const b = { ...submitted({ answers: { desc: "Second", due: "2026-11-20" } }), id: "MK-1002" };
   const q = { ...wf.ask(submitted(), mk, T(1), "?"), id: "MK-1003" };
-  const p = planDaily([a, b, q], "2026-10-26");
+  const sched = { ...wf.schedule(submitted(), mk, T(1), "2026-11-20"), id: "MK-1004" };
+  assert.deepEqual(planDaily([a, b, q, sched], "2026-10-23").notices, [], "not yet: 1 day");
+  const p = planDaily([a, b, q, sched], "2026-10-24");
   assert.equal(p.notices.length, 1);
   assert.deepEqual(p.notices[0].to, { role: "marketing" });
   assert.equal(p.notices[0].alert, true);
-  assert.equal(p.notices[0].href, "/marketing");
-  assert.match(p.notices[0].text, /2 marketing requests are waiting: MK-1001 .*, MK-1002/);
-  assert.deepEqual(planDaily([a, b], TODAY).notices, []);
-  assert.deepEqual(planDaily([q], "2026-10-26").notices, []);
+  assert.equal(p.notices[0].href, "/marketing?view=team&f=new");
+  assert.match(p.notices[0].text, /^2 new marketing requests have waited 2 days or more for someone to pick them up: MK-1001 .*, MK-1002/);
+  assert.deepEqual(p.nudged.map((c) => [c.id, c.marketing.nudgedFor, c.updatedAt]), [[a.id, a.marketing.stageSince, a.updatedAt], [b.id, b.marketing.stageSince, b.updatedAt]], "marked, without changing updatedAt");
+  assert.deepEqual(planDaily(p.nudged, "2026-10-25").notices, [], "once each");
+  assert.equal(planDaily([a], "2026-10-26").notices.length, 1, "a day the job missed is caught up");
+  assert.match(planDaily([a], "2026-10-24").notices[0].text, /^A new marketing request has waited 2 days or more for someone to pick it up/);
+  const answered = wf.answer(planDaily([q], "2026-10-22").nudged[0] ?? q, volunteer, T(3), "Yes");
+  assert.equal(planDaily([answered], "2026-10-27").notices.length, 1, "back as new after a question: nudged again");
 });
 
 test("daily: done-by reminders for tomorrow, today or past, once per date", () => {
@@ -421,7 +448,7 @@ test("daily: done-by reminders for tomorrow, today or past, once per date", () =
   const todayDue = wf.start(s(TODAY, "MK-2"), mk, T(0));
   const later = s("2026-10-30", "MK-3");
   const late = { ...tomorrow, id: "MK-4", marketing: { ...tomorrow.marketing, doneBy: "2026-10-20" } };
-  const done = wf.finish(s("2026-10-23", "MK-5"), mk, T(0));
+  const done = marketed(s("2026-10-23", "MK-5"), mk, T(0));
   const p = planDaily([tomorrow, todayDue, later, late, done], TODAY);
   assert.deepEqual(p.notices.map((n) => n.cardId), ["MK-1", "MK-2", "MK-4"]);
   assert.ok(p.notices.every((n) => n.alert && "role" in n.to && n.to.role === "marketing"));
@@ -445,7 +472,7 @@ test("daily: done-by reminders for tomorrow, today or past, once per date", () =
 const MB = 1024 * 1024;
 
 test("files: the types that start from the requester's material ask for them", () => {
-  assert.deepEqual([...FILE_KINDS].sort(), ["badge", "custom", "graphic", "highlight", "signage", "webpage"]);
+  assert.deepEqual([...FILE_KINDS].sort(), ["badge", "custom", "event", "graphic", "highlight", "signage", "webpage"]);
   assert.equal(asksForFiles("graphic"), true);
   assert.equal(asksForFiles("redirect"), false);
   assert.equal(asksForFiles("announce"), false);
@@ -492,7 +519,7 @@ test("assign: anyone on the marketing team hands scheduled or in-progress work t
   assert.equal(back.marketing.assignee, mk.email);
   assert.equal(back.marketing.history.at(-1)?.action, `Handed from ${mk2.email} to ${mk.email}`);
   assert.deepEqual(marketingNotices(d, wf.assign(d, mk, T(2), mk.email, members), mk), [], "taking it yourself tells nobody");
-  assert.equal(wf.permission(wf.finish(back, mk, T(3)), mk, "assign").ok, false, "not once it's done");
+  assert.equal(wf.permission(marketed(back), mk, "assign").ok, false, "not once it's done");
 });
 
 test("files: the requester and the marketing team add files; nobody adds to a closed request", () => {
@@ -510,8 +537,8 @@ test("files: the requester and the marketing team add files; nobody adds to a cl
   assert.equal(withFiles.marketing.history.at(-1)?.note, "logo.png, photo.jpg");
 
   // Done work can still get a file; declined and cancelled requests can't.
-  const done = wf.finish(wf.schedule(withFiles, mk2, T(1), "2026-11-10"), mk2, T(2));
-  assert.equal(wf.addFiles(done, mk, T(3), [{ name: "final.pdf", size: 10 }]).marketing.files?.length, 3);
+  const done = marketed(wf.schedule(withFiles, mk2, T(1), "2026-11-10"), mk2, T(2));
+  assert.equal(wf.addFiles(done, mk, T(3), [{ name: "final.pdf", size: 10 }]).marketing.files?.length, 4, "two files, the draft and the final one");
   assert.throws(() => wf.addFiles(wf.cancel(c, volunteer, T(1)), volunteer, T(2), [{ name: "x.png", size: 1 }]), /closed/);
   assert.throws(() => wf.addFiles(c, volunteer, T(1), []), /Choose a file/);
   const full = wf.addFiles(c, volunteer, T(1), Array.from({ length: MAX_PER_REQUEST }, (_, i) => ({ name: `f${i}.png`, size: 1 })));
@@ -532,4 +559,123 @@ test("forms: a highlight sent before the Files section keeps its Drive folder as
   assert.equal(driveLinkOf({ kind: "highlight", answers: { media: "https://drive.google.com/a" } }), "https://drive.google.com/a");
   assert.equal(driveLinkOf({ kind: "highlight", answers: { media: "https://drive.google.com/a" }, driveLink: "https://drive.google.com/b" }), "https://drive.google.com/b");
   assert.equal(driveLinkOf({ kind: "graphic", answers: { media: "https://drive.google.com/a" } }), undefined);
+});
+
+// ---- Approval -------------------------------------------------------------
+
+/** A graphic, scheduled and started by marketing. */
+const inProgress = () => wf.start(wf.schedule(submitted(), mk, T(1), "2026-11-04"), mk2, T(2));
+
+test("approval: every kind but short links and small website updates", () => {
+  assert.deepEqual(MARKETING_KINDS.filter((k) => !wf.needsApproval(k)), ["webedit", "redirect"]);
+});
+
+test("approval: the team sends a draft with at least one file; it waits on the requester", () => {
+  const d = inProgress();
+  assert.equal(wf.permission(d, volunteer, "sendProof").ok, false, "only the marketing team");
+  assert.equal(wf.permission(wf.schedule(submitted(), mk, T(1), "2026-11-04"), mk, "sendProof").ok, false, "start it first");
+  assert.equal(wf.permission(wf.start(wf.schedule(submitted(SHORT_LINK), mk, T(1), "2026-11-04"), mk, T(2)), mk, "sendProof").ok, false, "nothing to approve");
+  assert.throws(() => wf.sendProof(d, mk2, T(3), []), /Add the draft/);
+
+  const p = wf.sendProof(d, mk2, T(3), [{ name: "flyer.png", size: 2000 }], "  Two colour options.  ");
+  assert.equal(p.marketing.stage, "proof");
+  assert.equal(p.status, "changes_requested", "in the requester's Needs you");
+  assert.equal(p.waitingOn, "You: approve marketing's draft");
+  assert.equal(p.marketing.proofSentAt, T(3));
+  assert.equal(p.marketing.proofNote, "Two colour options.");
+  assert.deepEqual(p.marketing.files, [{ name: "flyer.png", size: 2000, at: T(3), by: mk2.email, proof: true }]);
+  assert.deepEqual(wf.latestProof(p.marketing).map((f) => f.name), ["flyer.png"]);
+  assert.deepEqual(p.marketing.history.at(-1), { by: mk2.email, at: T(3), action: "Sent for approval", note: "Two colour options.\nflyer.png" });
+  assert.equal(STAGE_LABEL.proof, "Waiting on approval");
+  assert.ok(wf.OPEN_STAGES.includes("proof") && wf.OPEN_STAGES.includes("ready"));
+});
+
+test("approval: only the requester approves or asks for changes, and changes need a note", () => {
+  const p = wf.sendProof(inProgress(), mk2, T(3), DRAFT);
+  for (const a of ["approve", "changes"] as wf.Action[]) {
+    assert.equal(wf.permission(p, mk, a).ok, false, a);
+    assert.equal(wf.permission(p, chair, a).ok, false, a);
+    assert.equal(wf.permission(p, volunteer, a).ok, true, a);
+    assert.equal(wf.permission(inProgress(), volunteer, a).ok, false, `${a}: no draft yet`);
+  }
+  assert.throws(() => wf.approve(p, mk, T(3)), /Only the requester/);
+
+  const ok = wf.approve(p, volunteer, T(4));
+  assert.equal(ok.marketing.stage, "ready");
+  assert.equal(ok.status, "approved");
+  assert.equal(ok.waitingOn, "Marketing: approved, ready to go out");
+  assert.equal(ok.marketing.history.at(-1)?.action, "Approved the draft");
+
+  assert.throws(() => wf.askChanges(p, volunteer, T(4), "  "), /what marketing should change/);
+  const back = wf.askChanges(p, volunteer, T(4), "Use the green logo.");
+  assert.equal(back.marketing.stage, "doing");
+  assert.equal(back.marketing.changesAsked, "Use the green logo.");
+  assert.deepEqual(back.marketing.history.at(-1), { by: volunteer.email, at: T(4), action: "Asked for changes", note: "Use the green logo." });
+  // The next draft clears what was asked.
+  const again = wf.sendProof(back, mk2, T(5), [{ name: "flyer-v2.png", size: 2000 }]);
+  assert.equal(again.marketing.changesAsked, undefined);
+  assert.deepEqual(wf.latestProof(again.marketing).map((f) => f.name), ["flyer-v2.png"], "only the latest draft");
+  assert.equal(filesOf(again.marketing).length, 2, "earlier drafts stay on the request");
+});
+
+test("mark it done: after approval, with where it went out", () => {
+  const ok = wf.approve(wf.sendProof(inProgress(), mk2, T(3), DRAFT), volunteer, T(4));
+  assert.equal(wf.permission(ok, volunteer, "finish").ok, false, "the marketing team marks it");
+  assert.throws(() => wf.finish(ok, mk2, T(4), "", ["newsletter", "billboard"]), /billboard/);
+  const f = wf.finish(ok, mk2, T(4), " https://instagram.com/p/1 ", ["instagram", "newsletter", "screens"]);
+  assert.equal(f.marketing.stage, "done");
+  assert.deepEqual(f.marketing.channels, ["newsletter", "screens", "instagram"], "in the list's order");
+  assert.equal(f.marketing.doneNote, "https://instagram.com/p/1");
+  assert.deepEqual(f.marketing.history.at(-1), { by: mk2.email, at: T(4), action: "Marked done", note: "Went out on Newsletter, Lobby screens and Instagram.\nhttps://instagram.com/p/1" });
+  // Nothing posted (a badge or a sign): no channels needed.
+  assert.equal(wf.finish(ok, mk2, T(4)).marketing.channels, undefined);
+  assert.equal(wf.channelText(["website"]), "Website");
+  assert.equal(wf.channelText([]), "");
+});
+
+test("mark it done: without an answer, the same time on the next business day", () => {
+  // Sent Thursday 10 AM: marketing can go ahead Friday 10 AM.
+  const p = wf.sendProof(inProgress(), mk2, T(0), DRAFT);
+  assert.equal(wf.approvalDue(p.marketing), T(1));
+  assert.equal(wf.permission(p, mk2, "finish", "2026-10-23T13:59:00.000Z").ok, false);
+  const why = wf.permission(p, mk2, "finish", "2026-10-23T13:59:00.000Z");
+  assert.match(why.ok ? "" : why.reason, /until Fri, Oct 23, 10:00 AM/);
+  assert.equal(wf.permission(p, mk2, "finish", T(1)).ok, true);
+  assert.throws(() => wf.finish(p, mk2, "2026-10-23T12:00:00.000Z"), /has until/);
+
+  // Sent Friday 3 PM: due Monday 3 PM (the clocks go back on the Sunday in between).
+  const fri = "2026-10-30T19:00:00.000Z";
+  const pf = wf.sendProof(inProgress(), mk2, fri, DRAFT);
+  assert.equal(wf.approvalDue(pf.marketing), "2026-11-02T20:00:00.000Z");
+  assert.equal(wf.permission(pf, mk2, "finish", "2026-11-01T20:00:00.000Z").ok, false, "not over the weekend");
+  const f = wf.finish(pf, mk2, "2026-11-02T20:00:00.000Z", "", ["website"]);
+  assert.equal(f.marketing.stage, "done");
+  assert.equal(f.marketing.history.at(-1)?.action, "Went ahead without the requester's approval (no answer by Mon, Nov 2, 3:00 PM)");
+  assert.equal(f.marketing.history.at(-1)?.note, "Went out on Website.");
+});
+
+test("approval notices: draft alerts the requester; their answer alerts whoever has it; marketed is a quiet note", () => {
+  const d = inProgress();
+  const p = wf.sendProof(d, mk2, T(0), DRAFT);
+  const n1 = marketingNotices(d, p, mk2);
+  assert.deepEqual(n1.map((x) => [x.to, x.alert]), [[{ email: volunteer.email }, true]]);
+  assert.match(n1[0].text, /marketing sent a draft for your approval\. Approve it or ask for changes by Fri, Oct 23, 10:00 AM\./);
+
+  const ok = wf.approve(p, volunteer, T(0));
+  const n2 = marketingNotices(p, ok, volunteer);
+  assert.deepEqual(n2.map((x) => [x.to, x.alert]), [[{ email: mk2.email }, true]]);
+  assert.match(n2[0].text, /Vol Unteer approved the draft/);
+
+  const back = wf.askChanges(p, volunteer, T(0), "Bigger date, please.");
+  const n3 = marketingNotices(p, back, volunteer);
+  assert.deepEqual(n3.map((x) => [x.to, x.alert]), [[{ email: mk2.email }, true]]);
+  assert.match(n3[0].text, /asked for changes: Bigger date, please\./);
+  // Nobody has it: the team hears.
+  const loose = { ...p, marketing: { ...p.marketing, assignee: undefined } };
+  assert.deepEqual(marketingNotices(loose, wf.approve(loose, volunteer, T(0)), volunteer).map((x) => x.to), [{ role: "marketing" }]);
+
+  const f = wf.finish(ok, mk2, T(1), "", ["newsletter", "whatsapp"]);
+  const n4 = marketingNotices(ok, f, mk2);
+  assert.deepEqual(n4.map((x) => [x.to, x.alert]), [[{ email: volunteer.email }, false]]);
+  assert.match(n4[0].text, /went out on Newsletter and WhatsApp\./);
 });

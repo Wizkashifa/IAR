@@ -197,7 +197,7 @@ test("event next step: the director is named, or told it's theirs; close-out fal
   assert.equal(nextStepText(c, vol, names, { directors: DIRS }), "Dee Rector (director) reviews it against IAR's mission, then an executive gives final approval. You'll get a notification when it's done.");
   assert.equal(nextStepText(c, director, names, { directors: DIRS }), "You (director) review it against IAR's mission, then an executive gives final approval.");
   const ok = ew.approve(ew.approve(c, director, DIRS, T(1)), exec, DIRS, T(2));
-  assert.equal(nextStepText(ok, vol, names), "Security gets it ready. After the event, you add the attendance and close it out.");
+  assert.equal(nextStepText(ok, vol, names), "After the event, you add the attendance and close it out.", "no Security step any more");
   const closing = startCloseOut(ok, T(50), DIRS);
   assert.equal(nextStepText(closing, vol, names), "You add the attendance and final costs to close it out.");
   assert.equal(nextStepText(closing, exec, names), "Vol Unteer adds the attendance and final costs to close it out.");
@@ -227,9 +227,10 @@ function marketing(): mw.MarketingCard {
   return c;
 }
 
-test("marketing: weekly review, a question back, scheduled, in progress and done", () => {
+test("marketing: new, a question back, scheduled, in progress and done", () => {
   const c = marketing();
-  assert.equal(at(stepsFor(c)), "Weekly review");
+  assert.equal(at(stepsFor(c)), "New");
+  assert.equal(nextStepText(c, mk, names), "The marketing team picks up new requests as they come in.");
   assert.equal(needsViewer(c, mk), true, "the team reviews it");
   assert.equal(needsViewer(c, vol), false);
 
@@ -247,9 +248,35 @@ test("marketing: weekly review, a question back, scheduled, in progress and done
   assert.equal(needsViewer(doing, mk), false);
   assert.equal(nextStepText(doing, mk2, names), "You are working on it, to be done by Nov 20.");
   assert.equal(nextStepText(doing, vol, names), "Mk2 is working on it, to be done by Nov 20.");
-  const done = mw.finish(doing, mk2, T(3));
+  assert.deepEqual(labels(stepsFor(doing)), ["Submitted", "New", "Scheduled", "In progress", "Approval", "Done"]);
+
+  // Sent Sunday: the requester has until Monday, same time.
+  const proof = mw.sendProof(doing, mk2, T(3), [{ name: "draft.png", size: 1 }]);
+  assert.equal(at(stepsFor(proof)), "Approval");
+  assert.equal(needsViewer(proof, vol), true, "the requester approves");
+  assert.equal(needsViewer(proof, mk2), false);
+  assert.equal(nextStepText(proof, vol, names), "You approve marketing's draft or ask for changes by Mon, Oct 5, 10:00 AM. With no answer by then, marketing can go ahead.");
+  assert.equal(nextStepText(proof, mk2, names), "Vol Unteer approves marketing's draft or asks for changes by Mon, Oct 5, 10:00 AM. With no answer by then, marketing can go ahead.");
+
+  const ready = mw.approve(proof, vol, T(3));
+  assert.equal(at(stepsFor(ready)), "Done");
+  assert.equal(needsViewer(ready, mk2), true, "the person working on it sends it out");
+  assert.equal(needsViewer(ready, vol), false);
+  assert.equal(nextStepText(ready, vol, names), "You approved the draft. Mk2 sends it out next.");
+  assert.equal(nextStepText(ready, mk2, names), "The requester approved the draft. You send it out next.");
+
+  const done = mw.finish(ready, mk2, T(3));
   assert.ok(stepsFor(done).steps.every((x) => x.state === "done"));
   assert.equal(nextStepText(done, vol, names), "");
+});
+
+test("marketing: a short link has no Approval step", () => {
+  const r = parseMarketingInput({ kind: "redirect", committee: "Youth", answers: { from: "raleighmasjid.org/youth", to: "https://example.org/youth" } }, { today: "2026-10-01", committees: ["Youth"] });
+  if (!r.ok) throw new Error(r.errors.join("; "));
+  const c = mw.newMarketing(r.details, vol, T(0));
+  assert.deepEqual(labels(stepsFor(c)), ["Submitted", "New", "Scheduled", "In progress", "Done"]);
+  const done = mw.finish(mw.schedule(c, mk, T(1), "2026-11-20"), mk, T(2));
+  assert.ok(stepsFor(done).steps.every((x) => x.state === "done"));
 });
 
 // ---- Tickets ----------------------------------------------------------------------

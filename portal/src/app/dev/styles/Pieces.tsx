@@ -5,6 +5,7 @@ import { Section } from "@/components/Section";
 import { FileList } from "@/components/FileList";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Chips } from "@/components/Chips";
+import { Tabs } from "@/components/Tabs";
 import { Crumb } from "@/components/Crumb";
 import { LinkCard, LinkCards, NewRequestTiles } from "@/components/LinkCard";
 import { KINDS } from "@/lib/kinds";
@@ -94,6 +95,14 @@ export function Pieces() {
             <input placeholder="grid split: a narrow field beside a wide one" />
           </Field>
         </div>
+      </Panel>
+
+      <Panel title="Tabs" right="components/Tabs.tsx: the requester's and the team's views of a module">
+        <Tabs
+          label="Example views"
+          tabs={[{ label: "Your requests", href: "/dev/styles" }, { label: "Team work", href: "/dev/styles?view=team", on: true, extra: <Pill tone="warn" small>3 new</Pill> }]}
+          links={[{ label: "Preventive schedules", href: "/dev/styles?p=1" }]}
+        />
       </Panel>
 
       <Panel title="Search and filter" right="components/SearchForm.tsx, components/Chips.tsx">

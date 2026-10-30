@@ -8,9 +8,9 @@ import { planDaily } from "./reminders";
 import { OPEN_STAGES, isMarketingCard, statusForStage } from "./workflow";
 
 /**
- * This module's part of the daily job (lib/daily.ts): the Monday list for
- * the weekly review and done-by reminders (rules in reminders.ts). Returns a
- * one-line summary for the log.
+ * This module's part of the daily job (lib/daily.ts): the nudge about new
+ * requests nobody has picked up, and done-by reminders (rules in
+ * reminders.ts). Returns a one-line summary for the log.
  */
 export async function daily(now: Date): Promise<string> {
   const store = await cardStore();
@@ -25,7 +25,10 @@ export async function daily(now: Date): Promise<string> {
     const notices = plan.notices.filter((n) => n.cardId === c.id);
     if (await saveThenTell(store, c.updatedAt, c, notices)) reminders += notices.length;
   }
-  const weekly = plan.notices.filter((n) => !n.cardId);
-  await deliver(weekly, "portal");
-  return `${weekly.length ? "Weekly review list sent. " : ""}${plural(reminders, "done-by reminder")}.`;
+  // The nudge goes once the requests in it are marked, so none is listed twice.
+  let marked = 0;
+  for (const c of plan.nudged) if (await saveThenTell(store, c.updatedAt, c, [])) marked++;
+  const nudge = marked ? plan.notices.filter((n) => !n.cardId) : [];
+  await deliver(nudge, "portal");
+  return `${nudge.length ? "Nudge about new requests sent. " : ""}${plural(reminders, "done-by reminder")}.`;
 }

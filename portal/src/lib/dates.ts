@@ -16,3 +16,28 @@ export const addDays = (ymd: string, n: number) => new Date(noon(ymd) + n * 864e
 
 /** Whole days from `a` to `b`. */
 export const daysBetween = (a: string, b: string) => Math.round((noon(b) - noon(a)) / 864e5);
+
+/** Minutes Raleigh's clock is from UTC at an instant (-240 in summer, -300 in winter). */
+function raleighOffset(ms: number): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+      .formatToParts(new Date(ms))
+      .map((x) => [x.type, x.value]),
+  );
+  const local = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute));
+  return Math.round((local - Math.floor(ms / 60000) * 60000) / 60000);
+}
+
+/**
+ * The same time of day (in Raleigh) on the next business day, Monday to
+ * Friday, as an ISO time: Wednesday → Thursday, Friday or Saturday → Monday.
+ * Holidays aren't counted.
+ */
+export function nextBusinessDay(iso: string): string {
+  const t = Date.parse(iso);
+  const weekday = new Date(noon(todayLocal(new Date(t)))).getUTCDay(); // 0 Sunday … 6 Saturday
+  const days = weekday === 5 ? 3 : weekday === 6 ? 2 : 1;
+  // Across a clock change, keep the same time on the clock.
+  const r = t + days * 864e5;
+  return new Date(r + (raleighOffset(t) - raleighOffset(r)) * 60000).toISOString();
+}

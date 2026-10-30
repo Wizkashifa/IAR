@@ -3,12 +3,12 @@
  * everyone, so anyone signed in can open them. Before approval: the
  * requester, the committee's chairs, vice chairs and director, the
  * reviewers (executive), the teams that work events (office, marketing, A/V,
- * facilities, security) and portal admins. Plain functions.
+ * facilities) and portal admins. Plain functions.
  */
 import type { Card } from "../cards";
 import type { Viewing } from "../access";
 
-const SEES_ALL: string[] = ["office", "executive", "marketing", "av", "facilities", "security"];
+const SEES_ALL: string[] = ["office", "executive", "marketing", "av", "facilities"];
 
 export function canViewEvent(card: Card, v: Viewing): boolean {
   if (card.ownerEmail.toLowerCase() === v.email.toLowerCase() || v.seeAll) return true;

@@ -5,7 +5,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ORG } from "../org";
 import type { TicketSchedule } from "./schedules";
-import { workToday, worksTickets } from "./today";
+import { eventTasksToday, workToday, worksTickets } from "./today";
+import type { QueueItem } from "../events/queues";
+import type { EventTask } from "../events/types";
+import type { EventCard } from "../events/workflow";
 import * as wf from "./workflow";
 import { addDays } from "../dates";
 
@@ -69,6 +72,20 @@ test("my work today is for people on a ticket team; the office assigns but doesn
   assert.equal(worksTickets(reporter), false);
   const w = workToday([ticket()], office, NOW, TODAY);
   assert.equal(w.untaken.length, 0);
+});
+
+test("my work today: A/V's event tasks due today or overdue, mine or nobody's, in queue order", () => {
+  const item = (card: string, dueDate: string, extra: Partial<EventTask> = {}): QueueItem =>
+    ({ card: { id: card } as EventCard, task: { id: "av", team: "av", title: "A/V: microphones", dueDate, status: "todo", history: [], ...extra }, overdue: dueDate < TODAY }) as QueueItem;
+  // As queueItems gives them: open tasks, soonest due first.
+  const items = [
+    item("EV-1", addDays(TODAY, -2), { status: "doing", assignee: fac.email.toUpperCase() }),
+    item("EV-2", TODAY, { assignee: fac2.email }),
+    item("EV-3", TODAY),
+    item("EV-4", addDays(TODAY, 1)),
+  ];
+  assert.deepEqual(eventTasksToday(items, fac.email, TODAY).map((x) => x.card.id), ["EV-1", "EV-3"], "someone else's and tomorrow's are left out");
+  assert.deepEqual(eventTasksToday([], fac.email, TODAY), []);
 });
 
 test("late text: days past the target date, or hours not started past the response time", () => {

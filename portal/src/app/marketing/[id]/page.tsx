@@ -13,9 +13,17 @@ import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
-import { MARKETING_TYPES, answerText, driveLinkOf, neededBy } from "@/lib/marketing/forms";
+import { MARKETING_TYPES, answerText, driveLinkOf, neededBy, pieceLabel } from "@/lib/marketing/forms";
+import { BriefFields } from "@/app/events/ui";
 import { canViewMarketing } from "@/lib/marketing/access";
-import { daysUntilNeeded, isMarketingCard, isTight, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
+import { OPEN_STAGES, approvalDue, channelText, daysUntilNeeded, isMarketingCard, isTight, latestProof, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
+import { CHANNELS, CHANNEL_LABEL } from "@/lib/marketing/types";
+import { Choice, Choices } from "@/components/Choices";
+import { EVENT_NOT_APPROVED, waitsOnEvent } from "@/lib/marketing/linked";
+import { firstDate, isEventCard, whenText } from "@/lib/events/workflow";
+import { dayText, timeText } from "@/lib/events/series";
+import { canOpenCard } from "@/lib/access";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/Confirm";
 import { DateField } from "@/components/DateField";
@@ -25,11 +33,11 @@ import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { RequestPage } from "@/components/RequestPage";
-import { fmtDate, fmtDay } from "@/lib/format";
+import { fmtDate, fmtDay, fmtDayTime } from "@/lib/format";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD, filesOf } from "@/lib/marketing/files";
 import { marketingFolder } from "@/lib/marketing/drive";
-import { actOnMarketing, addMarketingFiles, commentOnMarketing } from "../actions";
+import { actOnMarketing, addMarketingFiles, commentOnMarketing, sendMarketingProof } from "../actions";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
 import { OK_MESSAGES } from "../ui";
@@ -56,27 +64,40 @@ export default async function MarketingDetail({
 }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
   const viewer = await requireViewer();
-  const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
+  const store = await cardStore();
+  const [card, actor] = await Promise.all([store.get(id), actorFor(viewer)]);
   // A request someone can't open looks the same as one that doesn't exist.
   if (!isMarketingCard(card) || !canViewMarketing(card, { ...actor, seeAll: viewer.roles.includes("admins") })) notFound();
 
   const mc: MarketingCard = card;
   const m = mc.marketing;
+  // A piece for an event reads the event's title, dates, brief and images from the event itself.
+  const [linked, team, uploads, mentionable] = await Promise.all([
+    m.eventCardId ? store.get(m.eventCardId) : Promise.resolve(null),
+    // Who on the marketing team the work can be handed to.
+    permission(mc, actor, "assign").ok ? queueTeamMembers("marketing") : Promise.resolve([] as string[]),
+    marketingFolder().then(Boolean),
+    mentionablePeople(mc),
+  ]);
+  const event = isEventCard(linked) && canOpenCard(linked, { ...actor, seeAll: viewer.roles.includes("admins") }) ? linked : null;
+  const eventImages = event?.event.isPublic ? event.event.images ?? [] : [];
   const t = MARKETING_TYPES[m.kind];
+  // A piece for an event says which piece it is ("Flyer"), not "Marketing for an event".
+  const typeLabel = m.kind === "event" ? pieceLabel(m.answers.piece) || t.label : t.label;
   const today = todayLocal();
   const can = (a: Action) => permission(mc, actor, a).ok;
   const own = mc.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const due = neededBy(m.answers);
   const days = daysUntilNeeded(mc, today);
-  // Who on the marketing team the work can be handed to.
-  const team = permission(mc, actor, "assign").ok ? await queueTeamMembers("marketing") : [];
-  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
+  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by), ...eventImages.map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
   const state = rowState(mc, actor, { today });
   const tone = ROW_TONE[state];
   const files = filesOf(m);
   const drive = driveLinkOf(m);
-  const uploads = Boolean(await marketingFolder());
+  const channels = channelText(m.channels);
+  const proof = latestProof(m);
+  const approvalBy = approvalDue(m);
 
   // Why a marketing member can't review this one (their own request).
   const why = m.stage === "review" && actor.roles.includes("marketing") ? permission(mc, actor, "schedule") : null;
@@ -95,9 +116,24 @@ export default async function MarketingDetail({
           <strong>Declined:</strong> <span className="pre">{m.declineReason}</span>
         </Note>
       )}
-      {m.stage === "done" && m.doneNote && (
+      {m.stage === "doing" && m.changesAsked && (
+        <Note tone="warn">
+          <strong>{own ? "You asked for changes:" : `${names(mc.ownerEmail)} asked for changes:`}</strong> <span className="pre">{m.changesAsked}</span>
+        </Note>
+      )}
+      {m.stage === "proof" && <ProofPanel />}
+      {m.stage === "done" && (m.doneNote || channels) && (
         <Note tone="ok">
-          <strong>Done:</strong> <span className="pre">{m.doneNote}</span>
+          {channels && (
+            <p>
+              <strong>Went out on:</strong> {channels}
+            </p>
+          )}
+          {m.doneNote && (
+            <p>
+              <strong>{channels ? "Note:" : "Done:"}</strong> <span className="pre">{m.doneNote}</span>
+            </p>
+          )}
         </Note>
       )}
       {isTight(mc, today) && days !== null && (
@@ -106,11 +142,17 @@ export default async function MarketingDetail({
         </Note>
       )}
       {whyNot && <Note>{whyNot}</Note>}
+      {waitsOnEvent(event) && OPEN_STAGES.includes(m.stage) && (
+        <Note>
+          <strong>{EVENT_NOT_APPROVED}.</strong> Marketing can schedule and start this piece now. If the event is cancelled or declined, this piece is cancelled too.
+        </Note>
+      )}
     </>
   );
 
   const main = (
     <>
+      {event ? <EventPanels /> : m.eventCardId ? <p className="hint">For event {m.eventCardId}.</p> : null}
       <Panel title="The request">
         <div className="stack">
           <KeyValue
@@ -135,7 +177,7 @@ export default async function MarketingDetail({
         </div>
       </Panel>
       <FilesPanel />
-      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} people={await mentionablePeople(mc)} me={viewer.email} />
+      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} people={mentionable} me={viewer.email} />
       <HistoryPanel entries={m.history} names={names} />
     </>
   );
@@ -146,7 +188,7 @@ export default async function MarketingDetail({
         items={[
           { label: "Requested by", value: names(mc.ownerEmail) },
           { label: "Committee", value: mc.committee },
-          { label: "Type", value: t.label },
+          { label: "Type", value: typeLabel },
           { label: "Submitted", value: fmtDate(mc.createdAt ?? m.history[0]?.at ?? mc.updatedAt) },
           { label: "Needed by", value: due ? fmtDay(due) : null },
           { label: m.stage === "done" ? "Was due" : "Marketing aims to finish", value: m.doneBy && m.stage !== "declined" ? fmtDay(m.doneBy) : null },
@@ -158,13 +200,23 @@ export default async function MarketingDetail({
   );
 
   // The one main button, in the bottom bar. Starting needs nothing else, so it sends the form (id act-mk) straight away;
-  // answering, scheduling and marking it done need fields, so the bar jumps to their own panel (`decide`).
+  // answering, approving, scheduling, sending a draft and marking it done need fields, so the bar jumps to their own panel (`decide`).
   const jump = (label: string) => (
     <Button href="#request-decide" variant="primary" icon="chevD">
       {label}
     </Button>
   );
-  const ownPanel = can("answer") ? { title: "Your answer", button: "Send answer" } : can("schedule") ? { title: "Schedule it", button: "Schedule" } : !can("start") && can("finish") ? { title: "Mark it done", button: "Mark done" } : null;
+  const ownPanel = can("answer")
+    ? { title: "Your answer", button: "Send answer" }
+    : can("approve")
+      ? { title: "Approve the draft", button: "Approve" }
+      : can("schedule")
+        ? { title: "Schedule it", button: "Schedule" }
+        : can("sendProof")
+          ? { title: "Send for approval", button: "Send for approval" }
+          : !can("start") && can("finish")
+            ? { title: "Mark it done", button: "Mark it done" }
+            : null;
   const barMain = ownPanel ? (
     jump(ownPanel.button)
   ) : can("start") ? (
@@ -186,7 +238,7 @@ export default async function MarketingDetail({
             {statusText(mc)}
           </Pill>
         }
-        lead={[t.label, mc.committee, `from ${requester}`, due && `needed by ${fmtDay(due)}`]}
+        lead={[typeLabel, mc.committee, `from ${requester}`, due && `needed by ${fmtDay(due)}`]}
         steps={stepsFor(mc, { today })}
         next={nextStepText(mc, viewer, names, { today })}
         sent={sent === "1"}
@@ -199,6 +251,33 @@ export default async function MarketingDetail({
       />
     </>
   );
+
+  /** The event this piece is for, read live from the event: a link to it, its marketing brief and its images. */
+  function EventPanels() {
+    if (!event) return null;
+    const e = event.event;
+    const b = e.isPublic ? e.brief : undefined;
+    return (
+      <>
+        <LinkCards label="The event" compact>
+          <LinkCard href={`/events/${event.id}`} icon="calendar" accent="events" title={`For event: ${event.title} · ${dayText(firstDate(event))}`}>
+            {[e.committeeName, whenText(event), `${timeText(e.start)}–${timeText(e.end)}`].join(" · ")}
+          </LinkCard>
+        </LinkCards>
+        {(b || eventImages.length > 0) && (
+          <Panel title="From the event">
+            <div className="stack">
+              {b && (
+                <BriefFields brief={b} stacked />
+              )}
+              {eventImages.length > 0 && <FileList files={eventImages.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty="No images yet." />}
+              <p className="hint">Changes on the event show here too. Images are added on the event&apos;s page.</p>
+            </div>
+          </Panel>
+        )}
+      </>
+    );
+  }
 
   /** Files on the request, and a way for the requester and the marketing team to add more. */
   function FilesPanel() {
@@ -220,6 +299,30 @@ export default async function MarketingDetail({
             ) : (
               <p className="hint">File uploads for marketing aren&apos;t set up yet. Share files with a Google Drive link in a comment.</p>
             ))}
+        </div>
+      </Panel>
+    );
+  }
+
+  /** The draft marketing sent for approval, at the top of the page while it waits on the requester. */
+  function ProofPanel() {
+    const by = approvalBy ? fmtDayTime(approvalBy) : "the next business day";
+    const late = !own && can("finish");
+    const lead = own
+      ? `Look at the draft, then approve it or ask for changes at the end of this page by ${by}. With no answer by then, marketing can go ahead.`
+      : late
+        ? `${names(mc.ownerEmail)} didn't answer by ${by}. You can go ahead and mark it done without their approval.`
+        : `Waiting on ${names(mc.ownerEmail)} to approve it or ask for changes, until ${by}. After that, marketing can go ahead without their approval.`;
+    return (
+      <Panel title={own ? "Marketing's draft for you to approve" : "Draft sent for approval"} right={proof.length ? `${proof.length}` : undefined}>
+        <div className="stack">
+          <p className="hint">{lead}</p>
+          {m.proofNote && (
+            <p>
+              <strong>From marketing:</strong> <span className="pre">{m.proofNote}</span>
+            </p>
+          )}
+          <FileList files={proof.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty="No draft files." />
         </div>
       </Panel>
     );
@@ -266,6 +369,34 @@ export default async function MarketingDetail({
       );
     }
 
+    // The requester approves marketing's draft (shown at the top of the page) or asks for changes.
+    if (can("approve")) {
+      return (
+        <div className="stack">
+          <form id="act-mk" action={actOnMarketing} className="row">
+            {base}
+            <Button type="submit" name="action" value="approve" variant="primary">
+              Approve
+            </Button>
+          </form>
+          <Disclosure summary="Ask for changes" button="quiet">
+            <form action={actOnMarketing} className="stack">
+              {base}
+              <input type="hidden" name="action" value="changes" />
+              <div className={styles.answerBox}>
+                <Field label="What should change?" hint="Marketing sees it on the request and sends you a new draft." required>
+                  <textarea name="note" rows={3} maxLength={2000} required />
+                </Field>
+              </div>
+              <div>
+                <Button type="submit">Send to marketing</Button>
+              </div>
+            </form>
+          </Disclosure>
+        </div>
+      );
+    }
+
     if (can("schedule") || can("ask")) {
       return (
         <form id="act-mk" action={actOnMarketing} className="stack">
@@ -291,33 +422,73 @@ export default async function MarketingDetail({
       );
     }
 
-    if (can("start") || can("finish") || can("reschedule")) {
+    if (can("start") || can("finish") || can("reschedule") || can("sendProof")) {
       const others = team.filter((e) => !same(e, m.assignee));
+      const finishing = can("finish");
+      const work = (
+        <form id="act-mk" action={actOnMarketing} className="stack">
+          {base}
+          {finishing && (
+            <Choices legend="Where did it go out?" hint="Tick every place it was posted. Leave them all empty for something that isn't posted, like a badge or a sign.">
+              {CHANNELS.map((c) => (
+                <Choice key={c} type="checkbox" name="channels" value={c} label={CHANNEL_LABEL[c]} />
+              ))}
+            </Choices>
+          )}
+          <div className="grid split">
+            {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
+            <Field label={finishing ? "Link to where it went out, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
+              <input name="note" maxLength={2000} />
+            </Field>
+          </div>
+          <div className="row">
+            {/* Start is the bar's one-tap button; Mark it done is this panel's main button when there's nothing to start. */}
+            {finishing && (
+              <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
+                Mark it done
+              </Button>
+            )}
+            {can("reschedule") && (
+              <Button type="submit" name="action" value="reschedule">
+                Change date
+              </Button>
+            )}
+            {declineButton}
+          </div>
+        </form>
+      );
+      // With only the date left to change (in progress, or waiting on approval), it folds away under the main step.
+      const onlyDate = !finishing && !can("start");
       return (
         <div className="stack">
-          <form id="act-mk" action={actOnMarketing} className="stack">
-            {base}
-            <div className="row">
-              {/* Start is the bar's one-tap button; Mark done is this panel's main button when there's nothing to start. */}
-              {can("finish") && (
-                <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
-                  Mark done
-                </Button>
-              )}
-              {can("reschedule") && (
-                <Button type="submit" name="action" value="reschedule">
-                  Change date
-                </Button>
-              )}
-              {declineButton}
-            </div>
-            <div className="grid split">
-              {can("reschedule") && <DateField name="doneBy" label="Done by" defaultValue={m.doneBy ?? null} min={today} />}
-              <Field label={m.stage === "doing" ? "Link to the finished work, or a note (optional)" : "Note (optional)"} hint="Sent to the requester.">
-                <input name="note" maxLength={2000} />
-              </Field>
-            </div>
-          </form>
+          {can("sendProof") &&
+            (uploads ? (
+              <form action={sendMarketingProof} className="stack">
+                <input type="hidden" name="id" value={mc.id} />
+                <FileDrop name="files" label="The draft" required hint={`What the requester should look at: the design, a photo of the sign, or the wording. Up to ${MAX_PER_UPLOAD} files, ${MAX_FILE_MB} MB each.`} accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} />
+                <div className={styles.answerBox}>
+                  <Field label="Note for the requester (optional)">
+                    <textarea name="note" rows={2} maxLength={2000} />
+                  </Field>
+                </div>
+                <div>
+                  <Button type="submit" variant="primary">
+                    Send for approval
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <Note>File uploads for marketing aren&apos;t set up yet, so a draft can&apos;t be sent from here. Ask a portal admin to set them up.</Note>
+            ))}
+          {onlyDate ? (
+            can("reschedule") && (
+              <Disclosure summary="Change the done-by date" button="quiet">
+                {work}
+              </Disclosure>
+            )
+          ) : (
+            work
+          )}
           {can("assign") && others.length > 0 && (
             <Disclosure summary={m.assignee ? "Hand to someone else" : "Give to someone"} button="quiet">
               <form action={actOnMarketing} className="stack">

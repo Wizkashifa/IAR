@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
@@ -18,6 +17,10 @@ import { FlashNote } from "@/components/FlashNote";
 import styles from "./tickets.module.css";
 import { Chips } from "@/components/Chips";
 import { Pill } from "@/components/Pill";
+import { Tabs } from "@/components/Tabs";
+import { worksTeam } from "@/lib/events/tasks";
+import { TASK_FLASH } from "../events/ops-ui";
+import { AvTasks } from "./AvTasks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "IT & Maintenance" };
@@ -34,6 +37,9 @@ const FILTERS: Filter[] = [
 ];
 
 type Search = { view?: string; layout?: string; team?: string; f?: string; ok?: string; error?: string };
+
+/** Ticket messages, and the ones for A/V's event tasks worked from Team tickets. */
+const MESSAGES = { ...FLASH, ...TASK_FLASH };
 
 export default async function TicketsPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
@@ -60,6 +66,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const shown = queue.filter((c) => filter.test(c, actor.email, now, today));
   const teamNew = queue.filter((c) => c.ticket.status === "new" || c.ticket.status === "reopened").length;
   const qs = (over: Record<string, string>) => `/it-maintenance?${new URLSearchParams({ view: "team", layout, team, f: filter.id, ...over })}`;
+  // A/V's event tasks, for the people who work them (and the office), unless only Facility Maintenance is picked.
+  const showAv = onTeamTab && worksTeam("av", actor.roles) && team !== "facilities";
 
   const assignees = openTickets.map((c) => c.ticket.assigneeEmail).filter((e): e is string => Boolean(e));
   const names = await nameResolver([...emailsIn([...myTickets, ...following, ...queue]), ...assignees]);
@@ -80,33 +88,25 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         }
       />
       <HelpBox module="it-maintenance" />
-      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
 
       {worker && (
-        <nav className={styles.tabs} aria-label="Show">
-          <Link href="/it-maintenance" className={onTeamTab ? styles.tab : `${styles.tab} ${styles.on}`} aria-current={onTeamTab ? undefined : "page"}>
-            Your requests
-          </Link>
-          <Link href="/it-maintenance?view=team" className={onTeamTab ? `${styles.tab} ${styles.on}` : styles.tab} aria-current={onTeamTab ? "page" : undefined}>
-            {team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`}
-            {teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill>}
-          </Link>
-          <span className={styles.spacer} />
-          {(office || teamsOf(actor).length > 0) && (
-            <Link href="/it-maintenance/schedules" className={styles.quiet}>
-              Preventive schedules
-            </Link>
-          )}
-          {canImportJira(actor) && (
-            <Link href="/it-maintenance/import" className={styles.quiet}>
-              Import from Jira
-            </Link>
-          )}
-        </nav>
+        <Tabs
+          label="IT & Maintenance views"
+          tabs={[
+            { label: "Your requests", href: "/it-maintenance", on: !onTeamTab },
+            { label: team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`, href: "/it-maintenance?view=team", on: onTeamTab, extra: teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill> },
+          ]}
+          links={[
+            ...(office || teamsOf(actor).length > 0 ? [{ label: "Preventive schedules", href: "/it-maintenance/schedules" }] : []),
+            ...(canImportJira(actor) ? [{ label: "Import from Jira", href: "/it-maintenance/import" }] : []),
+          ]}
+        />
       )}
 
       {onTeamTab ? (
         <div className="stack">
+          {showAv && <AvTasks email={actor.email} roles={actor.roles} back={qs({})} />}
           <div className={styles.filterBar}>
             {teams.length > 1 && (
               <Chips label="Team" chips={(["all", ...teams] as const).map((t) => ({ label: t === "all" ? "Both teams" : TEAM_LABEL[t], href: qs({ team: t }), on: t === team }))} />

@@ -10,7 +10,7 @@ import { MODULE_TYPES } from "./registry";
 import { internalPath } from "./links";
 import { mayUsePortal } from "./org";
 import { matchCards, requestNumber } from "./search";
-import { todayLocal } from "./dates";
+import { nextBusinessDay, todayLocal } from "./dates";
 
 const me = { email: "chair@x.org", name: "Chair" };
 const ctx = { today: "2026-10-21", domain: "x.org", now: "2026-10-21T14:00:00Z" };
@@ -57,6 +57,20 @@ test("away: covering is active only on the days away, first and last included", 
 test("away: 'today' is Raleigh's date, not UTC's", () => {
   // 11:30 PM in Raleigh on Oct 21 is already Oct 22 in UTC.
   assert.equal(todayLocal(new Date("2026-10-22T03:30:00Z")), "2026-10-21");
+});
+
+test("dates: the next business day is the same time on the next weekday", () => {
+  // Wednesday 9 AM → Thursday 9 AM.
+  assert.equal(nextBusinessDay("2026-10-21T13:00:00Z"), "2026-10-22T13:00:00.000Z");
+  // Friday 3 PM → Monday 3 PM, with the clocks going back on the Sunday.
+  assert.equal(nextBusinessDay("2026-10-30T19:00:00Z"), "2026-11-02T20:00:00.000Z");
+  // Saturday and Sunday → Monday.
+  assert.equal(nextBusinessDay("2026-10-24T15:00:00Z"), "2026-10-26T15:00:00.000Z");
+  assert.equal(nextBusinessDay("2026-10-25T15:00:00Z"), "2026-10-26T15:00:00.000Z");
+  // Friday 11 PM in Raleigh is already Saturday in UTC: still Friday, so Monday 11 PM.
+  assert.equal(nextBusinessDay("2026-10-24T03:00:00Z"), "2026-10-27T03:00:00.000Z");
+  // Clocks forward in March: Friday 10 AM EST → Monday 10 AM EDT.
+  assert.equal(nextBusinessDay("2027-03-12T15:00:00Z"), "2027-03-15T14:00:00.000Z");
 });
 
 const card = (id: string, title: string, over: Partial<Card> = {}): Card => ({

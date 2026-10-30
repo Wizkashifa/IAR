@@ -13,16 +13,21 @@ import { Panel, PanelFoot } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { CommentsPanel, HistoryPanel } from "@/components/Activity";
 import { FlashNote } from "@/components/FlashNote";
-import { ItemRow, Rows } from "@/components/ItemRow";
+import { CardRow, ItemRow, Rows } from "@/components/ItemRow";
+import { rowsFor } from "@/components/ItemList";
+import { canViewMarketing } from "@/lib/marketing/access";
+import { mayAddPiece } from "@/lib/marketing/linked";
+import { OPEN_STAGES } from "@/lib/marketing/workflow";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
-import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
+import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
 import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
-import { nameResolver } from "@/lib/names";
+import { nameResolver, peopleOptions } from "@/lib/names";
+import { piecesFor } from "@/lib/marketing/pieces";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
@@ -35,7 +40,6 @@ import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
-import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { TASK_TEAMS, tasksFor, worksTeam } from "@/lib/events/tasks";
 import { queueTeamMembers } from "@/lib/groups";
 import { imagesOf, imagesPermission } from "@/lib/events/images";
@@ -47,9 +51,9 @@ import { purchaseTotal } from "@/lib/purchases/types";
 import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
-import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
+import { TASK_FLASH, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
-import { ChecksList, Timeline, checksSummary } from "../ui";
+import { BriefFields, ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
@@ -65,13 +69,6 @@ const MESSAGES: Record<string, string> = {
   decided: "Your answer is saved and both requests are updated.",
   withdrawn: "Ask withdrawn. Pick another time or room.",
   commented: "Comment added. The people on this request can see it.",
-  "task-taken": "It's yours. It shows your name on the event.",
-  "task-started": "Marked in progress.",
-  "task-done": "Marked done. The requester can see it here.",
-  "task-asked": "Question sent as a comment on the event. The requester gets an alert.",
-  "task-assigned": "Handed over. They get an alert, and their name shows here.",
-  "check-ok": "Room check saved.",
-  "check-problem": "Room check saved. The requester and the IAR office have been told about the problem.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
   images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
 };
@@ -107,11 +104,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
   const tasks = tasksFor(card);
   const isLive = card.status === "approved" || card.status === "close_out" || card.status === "closed";
-  // Room checks happen on the day: dates so far (and today).
-  const checkDates = isLive && e.rooms.length ? e.dates.filter((d) => d <= ctx.today || (e.roomChecks ?? []).some((r) => r.date === d)) : [];
-  const linked = linkedPurchases(await store.listPurchasesForEvent(card.id), card.id);
+  const [purchases, allPieces] = await Promise.all([store.listPurchasesForEvent(card.id), piecesFor(card.id)]);
+  const linked = linkedPurchases(purchases, card.id);
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
+  // Its marketing pieces: one marketing request each, linked to this event.
+  const pieces = allPieces.sort((a, b) => (a.createdAt ?? a.updatedAt).localeCompare(b.createdAt ?? b.updatedAt));
+  const viewing = { ...actor, seeAll: viewer.roles.includes("admins") };
+  const piecesVisible = pieces.filter((p) => canViewMarketing(p, viewing));
+  const addPiece = mayAddPiece(card, actor).ok;
   const office = ev.roles.includes("office");
   const images = imagesOf(card);
   const canAddImages = imagesPermission(card, ev).ok;
@@ -122,7 +123,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const teamMembers = new Map(await Promise.all(myTeams.map(async (t) => [t, await queueTeamMembers(t)] as const)));
 
   // Everyone this page shows, by name.
-  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
+  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...emailsIn(piecesVisible), ...piecesVisible.map((p) => p.marketing.assignee ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
   const names = await nameResolver(emails);
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
@@ -145,7 +146,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   const notes = (
     <>
-      <FlashNote ok={ok} error={error} messages={MESSAGES} />
+      <FlashNote ok={ok} error={error} messages={{ ...MESSAGES, ...TASK_FLASH }} />
       {card.status === "changes_requested" && (
         <Note tone="warn">
           <strong>{e.releasedFor ? "You gave up this time:" : "Sent back for changes:"}</strong> {e.returnNote}
@@ -203,16 +204,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {e.isPublic && e.brief && (
             <Panel title="Marketing brief">
-              <KeyValue
-                items={[
-                  { label: "Subtitle", value: e.brief.subtitle },
-                  { label: "Announcement", value: <span className="pre">{e.brief.text}</span> },
-                  { label: "On the flyer", value: e.brief.flyer && <span className="pre">{e.brief.flyer}</span> },
-                  { label: "Registration", value: e.brief.regLink },
-                  { label: "Payment", value: e.brief.payment && <span className="pre">{e.brief.payment}</span> },
-                  { label: "Files", value: e.brief.files && <a href={e.brief.files} target="_blank" rel="noreferrer">Drive folder</a> },
-                ]}
-              />
+              <BriefFields brief={e.brief} />
             </Panel>
           )}
 
@@ -236,6 +228,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </Panel>
           )}
 
+          {(pieces.length > 0 || addPiece) && <MarketingPanel />}
+
           {e.av && e.avNeeds && (
             <Panel title="A/V needs">
               <KeyValue
@@ -257,35 +251,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {(card.status === "close_out" || card.status === "closed") && <CloseOutPanel />}
 
+
           {tasks.length > 0 && (
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
               <Rows>
                 {tasks.map((t) => (
-                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={(teamMembers.get(t.team) ?? []).map((m) => ({ email: m, name: m === viewer.email.toLowerCase() ? `Me (${names(m)})` : names(m) }))} />
+                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={peopleOptions(teamMembers.get(t.team) ?? [], viewer.email, names)} />
                 ))}
               </Rows>
-              {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
-            </Panel>
-          )}
-
-          {checkDates.length > 0 && (
-            <Panel title="Room checks" flush id="roomchecks">
-              <Rows>
-                {checkDates.map((d) => (
-                  <ItemRow
-                    key={d}
-                    state="plain"
-                    title={dayText(d)}
-                    right={
-                      <div className={styles.cells}>
-                        <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                        <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                      </div>
-                    }
-                  />
-                ))}
-              </Rows>
-              <PanelFoot>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</PanelFoot>
+              {tasks.every((t) => t.status === "locked") && <PanelFoot>Once the event is approved, A/V gets its task in IT &amp; Maintenance.</PanelFoot>}
             </Panel>
           )}
 
@@ -426,6 +400,46 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     return { panel, main };
   }
 
+  /** The event's marketing pieces, each with its status and who has it, and a way to add one. */
+  function MarketingPanel() {
+    const rows = rowsFor(piecesVisible, actor, { names, today: ctx.today }).map((r, i) => {
+      const p = piecesVisible[i];
+      const due = p.marketing.answers.due;
+      return {
+        ...r,
+        sub: due ? `Needed by ${dayText(due)}` : r.sub,
+        who: p.marketing.assignee && OPEN_STAGES.includes(p.marketing.stage) ? `With ${names(p.marketing.assignee)}` : r.who,
+      };
+    });
+    const hidden = pieces.length - piecesVisible.length;
+    const empty = !e.isPublic
+      ? "Nothing yet. Private events usually don't need marketing, but you can ask for a sign or an announcement."
+      : isLive
+        ? "No marketing pieces yet."
+        : "Nothing yet. Once the event is approved, marketing gets a flyer and announcement. Add pieces that take longer now: a video, a banner, social media posts.";
+    return (
+      <Panel title="Marketing" right={pieces.length ? `${pieces.length}` : undefined} flush id="marketing">
+        {pieces.length === 0 ? (
+          <EmptyState>{empty}</EmptyState>
+        ) : (
+          <Rows label="Marketing pieces">
+            {rows.map((r) => (
+              <CardRow key={r.id} row={r} />
+            ))}
+            {hidden > 0 && <ItemRow state="plain" title={`${hidden} more you can't open`} sub="Restricted" />}
+          </Rows>
+        )}
+        {addPiece && (
+          <PanelFoot>
+            <Button href={`/marketing/new?event=${ec.id}`} icon="plus" size="small">
+              Add a marketing piece
+            </Button>
+          </PanelFoot>
+        )}
+      </Panel>
+    );
+  }
+
   function SeriesPanel() {
     const r = e.recur!;
     return (
@@ -451,18 +465,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   function CloseOutPanel() {
     const c = e.closeOut;
-    const checks = e.roomChecks ?? [];
-    const checkSummary = checks.length ? (
-      <Rows>
-        {checks.map((r) => (
-          <li key={`${r.date}-${r.when}`}>
-            {dayText(r.date)}, {r.when}: <CheckResult check={r} />
-          </li>
-        ))}
-      </Rows>
-    ) : (
-      <span className="hint">No room checks recorded.</span>
-    );
     if (ec.status === "closed" && c) {
       return (
         <Panel title="Close-out" id="closeout">
@@ -473,7 +475,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="hint">{fmtDateTime(c.at)}</div></> },
               { label: "Deposit", value: c.depositRefund ? "Refund needed (finance was told)" : null },
               { label: "How it went", value: c.notes && <span className="pre">{c.notes}</span> },
-              { label: "Room checks", value: checkSummary },
             ]}
           />
         </Panel>
@@ -497,10 +498,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <strong>{spendText(spent, e.budget)}</strong>
                 <div className="hint">{linked.length} payment request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
-            </div>
-            <div>
-              <div className="hint">Room condition (from security)</div>
-              {checkSummary}
             </div>
             <Field label="How did it go? What would you change next time?">
               <textarea name="notes" rows={3} maxLength={2000} placeholder="e.g. Good turnout. Order less pizza next time." />

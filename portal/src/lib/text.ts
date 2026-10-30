@@ -17,3 +17,6 @@ export const initials = (name: string) =>
     .slice(0, 2)
     .map((w) => w[0]!.toUpperCase())
     .join("") || "?";
+
+/** "A, B and C" ("A, B or C" with `word` "or"). */
+export const andList = (xs: string[], word = "and") => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} ${word} ${xs.at(-1)}`);

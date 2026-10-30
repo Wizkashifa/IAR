@@ -69,10 +69,11 @@ export function slotAsksFor(asks: SlotRequest[], actor: SlotActor): SlotRequest[
 }
 
 /**
- * Open event tasks for the teams this person is on (marketing, A/V, security),
- * soonest due first. Team tasks stay in Team Queues; this is for a count or a
- * short list that links there. The office sees every queue in Team Queues, but
- * those tasks aren't "waiting on you".
+ * Open event tasks for the teams this person is on (marketing, A/V),
+ * soonest due first. Team tasks stay on each team's page (IT & Maintenance for
+ * A/V, Marketing Requests for marketing); this is for a count or a short list
+ * that links there. The office can work every task, but those tasks aren't
+ * "waiting on you".
  */
 export function teamTasksFor(cards: EventCard[], roles: Role[], today: string): QueueItem[] {
   return TASK_TEAMS.filter((t) => roles.includes(t))
