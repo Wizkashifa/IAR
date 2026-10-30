@@ -9,7 +9,7 @@ import styles from "./tickets.module.css";
 export { fmtDate, fmtDateTime, fmtDay } from "@/lib/format";
 
 export const FLASH: Record<string, string> = {
-  reported: "Thank you. The team has been told, and you'll hear from the portal as it moves.",
+  reported: "Thank you. The team has been notified, and so will you be as it moves.",
   assign: "Assigned.",
   start: "Marked as being worked on. The reporter has been told.",
   wait: "Marked as waiting on parts. The reporter has been told.",
@@ -19,7 +19,7 @@ export const FLASH: Record<string, string> = {
   reopen: "Reopened. It's back with the team.",
   cancel: "Cancelled.",
   photos: "Photos added.",
-  watch: "You're following this ticket. You'll hear when it moves.",
+  watch: "You're following this ticket. You'll be notified when it moves.",
   unwatch: "You've stopped following this ticket.",
   linked: "Linked. Both tickets show the link.",
   unlinked: "Link removed from both tickets.",

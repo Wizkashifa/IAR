@@ -30,7 +30,7 @@ export default async function HelpPage() {
     <div className="stack loose">
       <ModuleHead
         title="Help"
-        lead="Step-by-step guides for each part of the portal, in plain words."
+        lead="Step-by-step guides for each part of the portal."
         actions={
           <Button href="/feedback?from=%2Fhelp" icon="message">
             Send feedback

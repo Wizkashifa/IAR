@@ -107,7 +107,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
                 <p className="hint">Only the leaders so far.</p>
               )
             ) : (
-              <p className="hint">The full list is shown to the team itself and the IAR office. To ask the team for something, contact its chair or send a request.</p>
+              <p className="hint">Only the team and the IAR office see the full list.</p>
             )}
           </Panel>
         </div>
@@ -125,7 +125,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
           {editing &&
             (edit || !team.description ? (
-              <Panel title="What the team handles" right="You can change this">
+              <Panel title="What the team handles">
                 <form action={saveTeamInfo} className="stack">
                   <input type="hidden" name="slug" value={team.slug} />
                   <Field label="In a sentence or two" hint="Shown in Who's Who and searched when someone asks “who handles…?”. Up to 300 characters." htmlFor="team-desc">
@@ -148,8 +148,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               </Panel>
             ) : (
               <Panel title="What the team handles">
-                <p className="hint">You can change what the team handles and its Chat link.</p>
-                <Button href={`/teams/${team.slug}?edit=1`} size="small">
+                                <Button href={`/teams/${team.slug}?edit=1`} size="small">
                   Change
                 </Button>
               </Panel>

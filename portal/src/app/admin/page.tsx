@@ -372,7 +372,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 label="Who"
                 people={signInChoices}
                 required
-                hint="Everyone who can use the portal."
               />
               <div>
                 <Button type="submit">Sign in as them</Button>

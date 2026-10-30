@@ -80,7 +80,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
       </div>
       {t.note && <Note>{t.note}</Note>}
       {committees.length === 0 && (
-        <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
+        <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee's chair to add you.</Note>
       )}
       {copy && source && <Note>{copiedNote(source.id)}</Note>}
       <MarketingForm action={createMarketing} kind={type} committees={committees} initial={copy} today={today} cancelHref="/marketing" submitLabel="Send request" uploads={Boolean(await marketingFolder())} />

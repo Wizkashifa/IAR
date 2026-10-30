@@ -1,3 +1,4 @@
+import { VERB } from "@/lib/glossary";
 import { notFound, redirect } from "next/navigation";
 import { cardStore } from "@/lib/cards";
 import { requireViewer } from "@/lib/viewer";
@@ -34,7 +35,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
       {p.returnNote && (
         <div className={styles.body}>
           <Note tone="warn">
-            <strong>What was asked:</strong> {p.returnNote}
+            <strong>What to change:</strong> {p.returnNote}
           </Note>
         </div>
       )}
@@ -49,7 +50,7 @@ export default async function EditPurchase({ params }: { params: Promise<{ id: s
         existingFiles={p.attachments.filter((a) => !a.refs?.length).map((a) => a.name)}
         existingReceipts={p.attachments.flatMap((a) => (a.refs?.length ? [{ name: a.name, refs: a.refs }] : []))}
         existingW9={p.w9Uploaded?.name}
-        submitLabel="Send it again"
+        submitLabel={VERB.sendAgain}
         cancelHref={`/purchases/${id}`}
         initial={{
           kind: p.kind,

@@ -22,7 +22,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { STATUS_LABEL } from "@/lib/glossary";
+import { VERB, STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
@@ -157,7 +157,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {own && can("resubmit") && (
             <>
               {" "}
-              <Link href={`/events/${card.id}/edit`}>{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Link>
+              <Link href={`/events/${card.id}/edit`}>{e.releasedFor ? "Pick a new time" : VERB.makeChanges}</Link>
             </>
           )}
         </Note>
@@ -172,7 +172,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <strong>Declined:</strong> {e.returnNote}
         </Note>
       )}
-      {e.stage === "slot" && card.status === "submitted" && <Note>This request is waiting for an answer to an ask for a booked time (below). It goes to mission review once the time is given up.</Note>}
+      {e.stage === "slot" && card.status === "submitted" && <Note>This request is waiting for an answer to an ask for a booked time (below). Director review starts once it's given up.</Note>}
       {reviewing && reasons.length > 0 && <Note>Look closely at this one: {reasons.join(", ")}.</Note>}
     </>
   );
@@ -271,7 +271,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
             <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is it for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (
@@ -371,7 +371,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const main = reviewing ? (
       <Button variant="primary" icon="check" form="act-event" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
     ) : resubmit ? (
-      <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>
+      <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : VERB.makeChanges}</Button>
     ) : undefined;
     const others = reviewing || addPurchase || renew || again || cancel;
     if (!others) return { panel: null, main };

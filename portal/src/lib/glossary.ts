@@ -8,7 +8,9 @@ import type { CardStatus } from "./cards";
 /** Buttons and the history: what people do to a request. */
 export const VERB = {
   send: "Send",
-  sendAgain: "Send again",
+  sendAgain: "Send it again",
+  /** The link or button to a request's edit page after it was sent back. */
+  makeChanges: "Make the changes and send it again",
   approve: "Approve",
   sendBack: "Send back",
   decline: "Decline",

@@ -284,7 +284,7 @@ export default function EventForm(p: EventFormProps) {
             </div>
             <RoomPicker
               label="Room or rooms"
-              hint={p.rooms.length ? "Leave empty for an off-site event. Pick more than one if you need them together." : "No rooms are set up for booking yet. An admin turns rooms on in Portal Settings."}
+              hint={p.rooms.length ? "Leave empty for an off-site event. Pick more than one if you need them together." : "No rooms can be booked yet. Ask the IAR office."}
               rooms={roomOptions}
               usedMost={p.usedMost}
               value={d.rooms}
@@ -360,7 +360,6 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="avSect">
             <legend><span className={styles.sn}>{num("avSect")}</span>A/V</legend>
             <div className={styles.sectionBody}>
-              <p className="hint">The A/V team will contact you about what they can support.</p>
               <Choices legend="What A/V support do you need? Check all that apply." required>
                 {Object.entries(AV_KINDS).map(([k, l]) => (
                   <Choice key={k} type="checkbox" checked={d.avNeeds.kinds.includes(k)} onChange={() => update((x) => ({ ...x, avNeeds: { ...x.avNeeds, kinds: toggle(x.avNeeds.kinds, k) } }))} label={l} />
@@ -432,7 +431,7 @@ export default function EventForm(p: EventFormProps) {
                 </div>
                 {c.askable ? (
                   ask?.key === c.key ? (
-                    <Field label="Why you need this time" hint="They can give it up or keep it. Your request waits for the answer before mission review.">
+                    <Field label="Why you need this time" hint="They can give it up or keep it. Director review waits for their answer.">
                       <textarea rows={3} value={ask.reason} onChange={(e) => setAsk({ key: c.key, reason: e.target.value })} placeholder="e.g. It's the only evening the speaker can come" maxLength={1000} />
                     </Field>
                   ) : (

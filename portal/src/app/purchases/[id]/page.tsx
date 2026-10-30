@@ -1,3 +1,4 @@
+import { VERB } from "@/lib/glossary";
 import Link from "next/link";
 import { mayDeleteRequests } from "@/lib/card-delete";
 import { DeleteRequest } from "@/app/requests/DeleteRequest";
@@ -135,7 +136,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           {own && can("resubmit") && (
             <>
               {" "}
-              <Link href={`/purchases/${card.id}/edit`}>Make the changes and send it again</Link>
+              <Link href={`/purchases/${card.id}/edit`}>{VERB.makeChanges}</Link>
             </>
           )}
         </Note>
@@ -422,7 +423,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       </form>
     ) : resubmit ? (
       <Button href={`/purchases/${pc.id}/edit`} variant="primary">
-        Make the changes and send it again
+        {VERB.makeChanges}
       </Button>
     ) : undefined;
     const approveForm = approve && (

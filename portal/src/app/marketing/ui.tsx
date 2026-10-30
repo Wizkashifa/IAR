@@ -24,7 +24,7 @@ export const OK_MESSAGES: Record<string, string> = {
   decline: "Declined. The requester is told why.",
   start: "Started. It shows as in progress, with you working on it.",
   reschedule: "Done-by date changed. The requester is told.",
-  assign: "Handed over. They get an alert, and their name shows on the request.",
+  assign: "Handed over. They're notified, and their name shows on the request.",
   finish: "Marked done. The requester is told, with where it went out.",
   sendProof: "Draft sent. The requester is asked to approve it by the same time on the next business day.",
   approve: "Approved. Marketing sends it out next.",

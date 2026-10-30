@@ -68,10 +68,6 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         <AwayForm current={mine} today={today} people={choices} />
       </Panel>
 
-      <p className="hint">
-        This hands off approvals that wait on you by name, such as a committee&apos;s chair approval. Finance and executive steps already go to everyone in that group, so they don&apos;t need covering.
-      </p>
-
       {covering.length > 0 && (
         <Panel title="You're covering for" right={<span>{covering.length}</span>} flush>
           <Rows>

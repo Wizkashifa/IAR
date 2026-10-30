@@ -29,7 +29,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const admin = viewer.actingRoles.includes("admins");
   const listed = await policiesLibrary();
 
-  const head = <ModuleHead title="Library" lead="IAR's approved policies, straight from the Policies Shared Drive. Files open in Google Drive." />;
+  const head = <ModuleHead title="Library" lead="IAR's approved policies. Files open in Google Drive." />;
 
   if (listed.state === "unset")
     return (
@@ -37,7 +37,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         {head}
         <Panel>
           <EmptyState action={admin ? <Button href="/admin?open=library#library">Connect the Policies drive</Button> : undefined}>
-            The Policies drive isn&apos;t connected yet. {admin ? "Add it in Portal Settings." : "A portal admin connects it in Portal Settings."}
+            The Policies drive isn&apos;t connected yet. {admin ? "Add it in Portal Settings." : "Ask the IAR office."}
           </EmptyState>
         </Panel>
       </div>

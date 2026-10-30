@@ -252,7 +252,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               <Field
                 label="Fund or committee"
                 required
-                hint={fundChoices.length === 0 ? "You can charge your own committees' and teams' funds. Ask a portal admin to add you to your committee in Google Groups." : undefined}
+                hint={fundChoices.length === 0 ? "You can charge only your own committees' funds. Ask your committee's chair to add you." : undefined}
               >
                 <select value={fund} onChange={(e) => setFund(e.target.value)} required>
                   <option value="">{fundChoices.length ? "Choose…" : "You're not on a committee yet"}</option>
@@ -318,7 +318,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                   </datalist>
                 </Field>
               ) : (
-                <Field label="Pay to" hint="Reimbursement · no W-9 needed">
+                <Field label="Pay to">
                   <span className={styles.static}>{requesterName} (you)</span>
                 </Field>
               )}
@@ -358,7 +358,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                 multiple={false}
                 maxFiles={1}
                 accept={W9_TYPES}
-                hint="Labor needs a W-9 on file before IAR can pay. It goes only to the finance office's restricted W-9 drive; you won't be able to open it after you send the request."
+                hint="Labor needs a W-9 on file before IAR can pay. Only the finance office can open it, and you can't once it's sent."
               />
             )}
           </div>
@@ -374,11 +374,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         }
       >
         <div className="stack">
-          <p className="hint">
-            {card
-              ? "These are the charges on the statement. For each one, choose its sub-account, say why it was bought and add its receipt (each one uploads as soon as you pick it). Charges from the same store can be lumped together, so one receipt covers them."
-              : "Split the total across as many sub-accounts as it really covers."}
-          </p>
+          {card && <p className="hint">Choose a sub-account, a reason and a receipt for each charge. Each receipt uploads as soon as you pick it.</p>}
           {card && existingFiles.length > 0 && <Note>Already on the request for all its charges: {existingFiles.join(", ")}</Note>}
           {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
           {card ? (

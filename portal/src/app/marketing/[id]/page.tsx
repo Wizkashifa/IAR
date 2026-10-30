@@ -215,7 +215,7 @@ export default async function MarketingDetail({
         : can("sendProof")
           ? { title: "Send for approval", button: "Send for approval" }
           : !can("start") && can("finish")
-            ? { title: "Mark it done", button: "Mark it done" }
+            ? { title: "Mark done", button: "Mark done" }
             : null;
   const barMain = ownPanel ? (
     jump(ownPanel.button)
@@ -442,10 +442,10 @@ export default async function MarketingDetail({
             </Field>
           </div>
           <div className="row">
-            {/* Start is the bar's one-tap button; Mark it done is this panel's main button when there's nothing to start. */}
+            {/* Start is the bar's one-tap button; Mark done is this panel's main button when there's nothing to start. */}
             {finishing && (
               <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
-                Mark it done
+                Mark done
               </Button>
             )}
             {can("reschedule") && (

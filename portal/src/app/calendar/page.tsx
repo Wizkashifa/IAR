@@ -52,7 +52,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <div className="stack loose">
       <ModuleHead
         title="Calendar"
-        lead="Everything booked in IAR's rooms, from the IAR calendar and the event requests. Looking for a free room? Find one and request it in one step."
+        lead="Everything booked in IAR's rooms, from the IAR calendar and the event requests."
         actions={
           <Button href="/calendar/find" variant="primary" icon="search">
             Find a room

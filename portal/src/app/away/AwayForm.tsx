@@ -23,7 +23,7 @@ export function AwayForm({ current, today, people }: { current: Away | null; tod
         people={people}
         defaultValue={current?.delegate ?? null}
         required
-        hint="Usually your committee's backup approver. They're told, and can approve, send back or turn down requests waiting on you. Each one is recorded as on your behalf."
+        hint="Usually your vice chair. They're notified, and can approve, send back or decline what's waiting on you, on your behalf."
       />
       <Field label="Note for them (optional)">
         <input name="note" maxLength={300} placeholder="Travelling for Umrah; reachable by text for anything urgent" defaultValue={current?.note ?? ""} />

@@ -23,7 +23,6 @@ import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemLis
 import { CardRow, Rows } from "@/components/ItemRow";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { Tabs } from "@/components/Tabs";
@@ -86,9 +85,6 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
         <HelpBox module="marketing" />
         {flash}
         {tabs}
-        <Note>
-          Marketing an event? Open the event and use <strong>Add a marketing piece</strong> in its Marketing section: a flyer, posts, a video, a banner. Each piece stays linked to the event. <Link href="/events">Your events</Link>
-        </Note>
         <ItemList
           title="Your requests"
           sections={sectionsOf(groupedRows(groupForViewer(mine, actor), actor, o))}
@@ -154,7 +150,6 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   return (
     <div className="stack">
       {head}
-      <HelpBox module="marketing" />
       {flash}
       {tabs}
       <div className={styles.filterBar}>

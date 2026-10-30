@@ -394,7 +394,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <form action={watchTicket} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="on" value={isWatching(card, actor.email) ? "0" : "1"} />
-            <p className="hint">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
+            <p className="hint">{isWatching(card, actor.email) ? "You'll be notified when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
             <div>
               <Button type="submit" icon={isWatching(card, actor.email) ? "x" : "bell"}>
                 {isWatching(card, actor.email) ? "Stop following" : "Follow this ticket"}
@@ -427,7 +427,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       notes={notes}
       actions={actions}
       bar={barMain ? { label: rowStatusText(card, state), main: barMain } : undefined}
-      decide={resolveOwn ? { title: closes ? "Mark it done" : "Mark it fixed", body: forms.resolve } : undefined}
+      decide={resolveOwn ? { title: closes ? "Mark done" : "Mark fixed", body: forms.resolve } : undefined}
       main={main}
       side={side}
     />

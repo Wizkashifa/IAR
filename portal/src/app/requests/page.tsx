@@ -55,7 +55,7 @@ export default async function MyRequests({ searchParams }: { searchParams: Promi
         title="Your requests"
         sections={sections}
         chips={chips.length > 2 ? chips : undefined}
-        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet. Start with the New request button above."}
+        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet."}
       />
     </div>
   );

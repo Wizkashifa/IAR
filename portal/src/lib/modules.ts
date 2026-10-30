@@ -125,7 +125,7 @@ export const MODULES: PortalModule[] = [
     id: "library",
     nav: "Library",
     name: "Library",
-    summary: "IAR's approved policies, from the Policies Shared Drive. Files open in Google Drive.",
+    summary: "IAR's approved policies. Files open in Google Drive.",
     visibleTo: ["member"],
     phase: 2,
     status: "live",
