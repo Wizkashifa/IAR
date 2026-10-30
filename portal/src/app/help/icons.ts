@@ -9,5 +9,5 @@ export const GUIDE_ICON: Record<HelpKey, IconName> = {
   "it-maintenance": "wrench",
   requests: "inbox",
   away: "clock",
-  teams: "tasks",
+  teams: "book",
 };

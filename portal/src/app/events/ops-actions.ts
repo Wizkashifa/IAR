@@ -14,7 +14,7 @@ import * as wf from "@/lib/events/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 
 /**
- * Team tasks and close-out: the server actions behind Team Queues and the
+ * Team tasks and close-out: the server actions behind the teams' task lists and the
  * event page. The rules are in lib/events (tasks.ts, closeout.ts); these
  * load the card, apply one,
  * save it only if nobody else saved it first, and send the notices.
@@ -74,7 +74,8 @@ export async function workOnTask(form: FormData): Promise<void> {
         const next = members ? assignTask(card, taskId, actor, to, (team && members.get(team)) || [], nowIso()) : actOnTask(card, taskId, actor, action, nowIso(), note);
         return { next, notices: taskNotices(next, taskId, actor, action, note) };
       });
-  revalidatePath("/queues");
+  revalidatePath("/it-maintenance");
+  revalidatePath("/it-maintenance/today");
   revalidatePath("/marketing");
   revalidatePath(`/events/${id}`);
   redirect(withResult(back, error ? "error" : "ok", error ?? `task-${OK_TEXT[action]}`));

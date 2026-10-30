@@ -17,9 +17,18 @@ import { Disclosure } from "@/components/Disclosure";
 import { Field } from "@/components/Field";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 
-/** Pieces Team Queues, Marketing Requests and the event page share. */
+/** Pieces IT & Maintenance, Marketing Requests and the event page share. */
 
 const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
+
+/** What a team member sees after working on a task from a team's page (`?ok=task-…` from workOnTask). */
+export const TASK_FLASH: Record<string, string> = {
+  "task-taken": "It's yours. It shows your name on the event.",
+  "task-started": "Marked in progress.",
+  "task-done": "Marked done. The requester can see it on the event.",
+  "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
+  "task-assigned": "Handed over. They get an alert, and their name shows on the event.",
+};
 
 export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean }) {
   return (

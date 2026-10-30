@@ -18,6 +18,9 @@ import styles from "./tickets.module.css";
 import { Chips } from "@/components/Chips";
 import { Pill } from "@/components/Pill";
 import { Tabs } from "@/components/Tabs";
+import { worksTeam } from "@/lib/events/tasks";
+import { TASK_FLASH } from "../events/ops-ui";
+import { AvTasks } from "./AvTasks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "IT & Maintenance" };
@@ -33,7 +36,10 @@ const FILTERS: Filter[] = [
   { id: "late", label: "Late", test: (c, _me, now, today) => isOverdue(c, now, today) },
 ];
 
-type Search = { view?: string; layout?: string; team?: string; f?: string; ok?: string; error?: string };
+type Search = { view?: string; layout?: string; team?: string; f?: string; av?: string; ok?: string; error?: string };
+
+/** Ticket messages, and the ones for A/V's event tasks worked from Team tickets. */
+const MESSAGES = { ...FLASH, ...TASK_FLASH };
 
 export default async function TicketsPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
@@ -60,6 +66,9 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const shown = queue.filter((c) => filter.test(c, actor.email, now, today));
   const teamNew = queue.filter((c) => c.ticket.status === "new" || c.ticket.status === "reopened").length;
   const qs = (over: Record<string, string>) => `/it-maintenance?${new URLSearchParams({ view: "team", layout, team, f: filter.id, ...over })}`;
+  // A/V's event tasks, for the people who work them (and the office), unless only Facility Maintenance is picked.
+  const showAv = onTeamTab && worksTeam("av", actor.roles) && team !== "facilities";
+  const avAll = sp.av === "all";
 
   const assignees = openTickets.map((c) => c.ticket.assigneeEmail).filter((e): e is string => Boolean(e));
   const names = await nameResolver([...emailsIn([...myTickets, ...following, ...queue]), ...assignees]);
@@ -80,7 +89,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
         }
       />
       <HelpBox module="it-maintenance" />
-      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
 
       {worker && (
         <Tabs
@@ -98,6 +107,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
       {onTeamTab ? (
         <div className="stack">
+          {showAv && <AvTasks email={actor.email} roles={actor.roles} all={avAll} back={qs(avAll ? { av: "all" } : {})} allHref={qs({ av: "all" })} />}
           <div className={styles.filterBar}>
             {teams.length > 1 && (
               <Chips label="Team" chips={(["all", ...teams] as const).map((t) => ({ label: t === "all" ? "Both teams" : TEAM_LABEL[t], href: qs({ team: t }), on: t === team }))} />

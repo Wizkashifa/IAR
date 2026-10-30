@@ -36,7 +36,6 @@ const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admi
   "purchase-requests": { group: "request", label: "Payments", icon: MODULE_ICON.pay },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: MODULE_ICON.mkt },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: MODULE_ICON.it },
-  "team-queues": { group: "team", label: "Team Queues", icon: "tasks" },
   "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
   calendar: { group: "iar", label: "Calendar", icon: "calendar" },
   "run-sheet": { group: "iar", label: "Daily Run Sheet", icon: "book" },

@@ -13,7 +13,14 @@ import { eventContext } from "@/lib/events/context";
 import { requireViewer } from "@/lib/viewer";
 import { ticketActor } from "@/lib/tickets/context";
 import { scheduleStore } from "@/lib/tickets/schedule-store";
-import { workToday } from "@/lib/tickets/today";
+import { eventTasksToday, workToday } from "@/lib/tickets/today";
+import { emailsIn } from "@/lib/card-row";
+import { queueItems } from "@/lib/events/queues";
+import { worksTeam } from "@/lib/events/tasks";
+import { isEventCard } from "@/lib/events/workflow";
+import { nameResolver } from "@/lib/names";
+import { Rows } from "@/components/ItemRow";
+import { EventTaskRow, TASK_FLASH } from "../../events/ops-ui";
 import { STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
 import { type TicketActor, type TicketCard, lateText, permission, teamsOf } from "@/lib/tickets/workflow";
 import { actFromToday } from "../actions";
@@ -162,14 +169,19 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
     );
   }
 
-  const [open, schedules, ev] = await Promise.all([(await cardStore()).listByType("ticket"), (await scheduleStore()).list(), eventContext()]);
+  const store = await cardStore();
+  const av = worksTeam("av", actor.roles);
+  const [open, schedules, ev, events] = await Promise.all([store.listByType("ticket"), (await scheduleStore()).list(), eventContext(), av ? store.listByType("event", ["approved", "close_out"]) : Promise.resolve([])]);
   const work = workToday(open, actor, now, today, schedules);
+  // A/V's event tasks due today (or late), mine or nobody's: a short list that links to each event.
+  const avToday = eventTasksToday(queueItems(events.filter(isEventCard), "av", today), actor.email, today);
+  const names = await nameResolver([...emailsIn(avToday.map((x) => x.card)), ...avToday.flatMap((x) => (x.task.assignee ? [x.task.assignee] : []))]);
   const roomHref = (room: string) => {
     const r = ev.bookable.find((x) => x.name === room);
     return r ? `/events?room=${encodeURIComponent(r.id)}&date=${today}` : null;
   };
   const ctx: Ctx = { actor, now, today, roomHref, showTeam: teams.length > 1 };
-  const nothing = work.mine.length + work.untaken.length + work.preventive.length === 0;
+  const nothing = work.mine.length + work.untaken.length + work.preventive.length + avToday.length === 0;
 
   return (
     <div className="stack">
@@ -182,9 +194,18 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
           </Button>
         }
       />
-      <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
+      <FlashNote ok={sp.ok} error={sp.error} messages={{ ...FLASH, ...TASK_FLASH }} />
       {nothing && <p className="hint">Nothing waiting. Quiet day, alhamdulillah.</p>}
       <Section title="Assigned to you" cards={work.mine} ctx={ctx} empty="Nothing assigned to you right now." />
+      {avToday.length > 0 && (
+        <Panel title="A/V for events today" right={<Link href="/it-maintenance?view=team">All A/V tasks</Link>} flush>
+          <Rows>
+            {avToday.map((item) => (
+              <EventTaskRow key={`${item.card.id}-${item.task.id}`} item={item} withButtons={false} names={names} rooms={ev.rooms} email={actor.email} roles={actor.roles} back="/it-maintenance/today" people={[]} />
+            ))}
+          </Rows>
+        </Panel>
+      )}
       <Section title="Nobody has taken these yet" cards={work.untaken} ctx={ctx} empty="Every request has someone on it." />
       <Section title="Preventive work this week" cards={work.preventive} ctx={ctx} empty="No preventive work due this week." />
       {work.upcoming.length > 0 && (

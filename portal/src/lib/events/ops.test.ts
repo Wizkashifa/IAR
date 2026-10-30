@@ -1,5 +1,5 @@
 /**
- * Event operations: team tasks, Team Queues, the daily run sheet, close-out,
+ * Event operations: team tasks, each team's queue, the daily run sheet, close-out,
  * and linking a purchase to an event.
  * Run with `npm test`.
  */
@@ -10,7 +10,7 @@ import { parsePurchaseInput, type PurchaseInput } from "../purchases/input";
 import { campusesOf, runSheetRows } from "../runsheet";
 import { closeOutNotices, closeOutPermission, dueForCloseOut, linkedPurchases, markNudged, needsNudge, spendOf, startCloseOut, submitCloseOut } from "./closeout";
 import { linkableEvents } from "./link";
-import { lockedCount, nearTerm, queueItems, queueTeamsFor, recentlyDone } from "./queues";
+import { TEAM_WORK_HREF, lockedCount, nearTerm, queueItems, recentlyDone, retiredQueueHref } from "./queues";
 import { type GoogleRoom, mergeRooms } from "./rooms";
 import type { BusyItem } from "./rules";
 import { TaskError, actOnTask, assignTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
@@ -203,10 +203,18 @@ test("tasks: only the team (or the office) works them; take, start, done, and a 
 
 // ---- Queues -------------------------------------------------------------------
 
-test("queues: each person sees their teams' queues; the office sees all; open tasks soonest first", () => {
-  assert.deepEqual(queueTeamsFor(["member", "it", "av"]), ["av"]);
-  assert.deepEqual(queueTeamsFor(["member", "office"]), ["marketing", "av"]);
-  assert.deepEqual(queueTeamsFor(["member"]), []);
+test("queues: old Team Queues links go to each team's page; open tasks soonest first", () => {
+  assert.equal(retiredQueueHref("marketing", ["member", "av"]), "/marketing?view=team", "the team in the link wins");
+  assert.equal(retiredQueueHref("av", ["member", "marketing"]), "/it-maintenance?view=team");
+  assert.equal(retiredQueueHref(undefined, ["member", "marketing"]), "/marketing?view=team", "marketing-only people go to Team work");
+  assert.equal(retiredQueueHref(undefined, ["member", "marketing", "av"]), "/it-maintenance?view=team");
+  assert.equal(retiredQueueHref(undefined, ["member", "it", "av"]), "/it-maintenance?view=team");
+  assert.equal(retiredQueueHref("security", ["member", "office", "marketing"]), "/it-maintenance?view=team", "the office, and old team names, go to IT & Maintenance");
+  assert.equal(retiredQueueHref(undefined, ["member"]), "/it-maintenance?view=team");
+  assert.equal(TEAM_WORK_HREF.av, "/it-maintenance?view=team");
+  const sub = submitted(full());
+  const avAlert = taskUnlockNotices(sub, wf.approve(sub, exec, [], NOW)).find((x) => "role" in x.to && x.to.role === "av");
+  assert.equal(avAlert?.href, "/it-maintenance?view=team", "A/V alerts open IT & Maintenance");
 
   const later = oldMk(approved(full({ date: "2026-12-05" })));
   const sooner = oldMk(approved(full({ date: "2026-11-07" })));
