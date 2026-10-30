@@ -51,4 +51,23 @@
   .hintOk { color: var(--ok); }
   .hintWarn { color: var(--warn); font-weight: 600; }
   .narrow { max-width: 360px; }
+
+  /* Finance's lists on Payments (PaymentFilters.tsx, DeskBatch.tsx). */
+  .filterRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); }
+  .csv { margin-left: auto; }
+  .filters { display: grid; grid-template-columns: repeat(3, minmax(160px, 240px)); gap: var(--s-3); align-items: end; }
+  .clear { font-size: var(--t-sm); padding-bottom: 10px; }
+  .amount { font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+  .refs li { display: grid; grid-template-columns: minmax(0, 1fr) 140px 200px; gap: var(--s-2); align-items: center; padding-top: var(--s-2); border-top: 1px solid var(--line); }
+  .refName { min-width: 0; font-size: var(--t-md); overflow-wrap: anywhere; }
+  .noteHead { margin: 0 0 var(--s-1); font-weight: 700; }
+  .failed { margin: 0; padding-left: var(--s-4); }
+  /* The row's tick box: a 32px hit area around the 20px box, so it's easy to tap on a phone. */
+  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; margin: -6px; cursor: pointer; }
+  @media (max-width: 640px) {
+    .filters { grid-template-columns: 1fr; width: 100%; }
+    .refs li { grid-template-columns: 1fr 1fr; }
+    .refName { grid-column: 1 / -1; }
+  }
 }

@@ -1,6 +1,6 @@
 /**
  * A made-up card statement in the same layout as IAR's Truist statement,
- * for tests and for trying the import in dev (/purchases/finance/statement
+ * for tests and for trying the import in dev (/purchases/statement
  * offers it as a download there). Names, card numbers, references and
  * amounts are all invented: a real statement never goes in this repo.
  */
