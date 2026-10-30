@@ -44,6 +44,7 @@ import { OK_MESSAGES } from "../ui";
 import styles from "../marketing.module.css";
 import { FileList } from "@/components/FileList";
 import { same } from "@/lib/text";
+import { HINT } from "@/lib/glossary";
 import { queueTeamMembers } from "@/lib/groups";
 import { Disclosure } from "@/components/Disclosure";
 import { PeoplePicker } from "@/components/PeoplePicker";
@@ -291,7 +292,7 @@ export default async function MarketingDetail({
             (uploads ? (
               <form action={addMarketingFiles} className="stack">
                 <input type="hidden" name="id" value={mc.id} />
-                <FileDrop name="files" label="Add files" hint={`Up to ${MAX_PER_UPLOAD} files at a time, ${MAX_FILE_MB} MB each. Marketing and the requester can open them here.`} accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
+                <FileDrop name="files" label="Add files" hint="Marketing and the requester can open them here." accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
                 <div>
                   <Button type="submit">Add files</Button>
                 </div>
@@ -414,7 +415,7 @@ export default async function MarketingDetail({
           </div>
           <div className="grid split">
             <DateField name="doneBy" label="Done by (when scheduling)" defaultValue={suggestedDoneBy(mc, today)} min={today} />
-            <Field label="Note, question or reason" hint="Optional when scheduling. Sent to the requester.">
+            <Field label="Note, question or reason" hint={HINT.reviewNote}>
               <input name="note" maxLength={2000} placeholder="e.g. Which size: banner or poster?" />
             </Field>
           </div>
@@ -429,7 +430,7 @@ export default async function MarketingDetail({
         <form id="act-mk" action={actOnMarketing} className="stack">
           {base}
           {finishing && (
-            <Choices legend="Where did it go out?" hint="Tick every place it was posted. Leave them all empty for something that isn't posted, like a badge or a sign.">
+            <Choices legend="Where did it go out?" hint="Leave empty for a badge or a sign.">
               {CHANNELS.map((c) => (
                 <Choice key={c} type="checkbox" name="channels" value={c} label={CHANNEL_LABEL[c]} />
               ))}
@@ -465,7 +466,7 @@ export default async function MarketingDetail({
             (uploads ? (
               <form action={sendMarketingProof} className="stack">
                 <input type="hidden" name="id" value={mc.id} />
-                <FileDrop name="files" label="The draft" required hint={`What the requester should look at: the design, a photo of the sign, or the wording. Up to ${MAX_PER_UPLOAD} files, ${MAX_FILE_MB} MB each.`} accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} />
+                <FileDrop name="files" label="The draft" required hint="The design, a photo of the sign, or the wording." accept={FILE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} />
                 <div className={styles.answerBox}>
                   <Field label="Note for the requester (optional)">
                     <textarea name="note" rows={2} maxLength={2000} />

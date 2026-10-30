@@ -172,7 +172,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                 ))}
               </select>
             </Field>
-            <PeoplePicker name="assignee" label="Give each ticket to" hint="Leave empty and it goes to the team. Pick someone on the schedule's team." people={people} defaultValue={s?.assigneeEmail ?? null} />
+            <PeoplePicker name="assignee" label="Give each ticket to" hint="Leave empty to give it to the team." people={people} defaultValue={s?.assigneeEmail ?? null} />
           </div>
           <datalist id="ticket-locations">
             {locations.map((l) => (

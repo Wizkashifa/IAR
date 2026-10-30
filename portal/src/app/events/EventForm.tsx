@@ -14,7 +14,7 @@ import { FileDrop } from "@/components/FileDrop";
 import { IMAGE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD } from "@/lib/marketing/files";
 import type { EventPrefill } from "@/lib/calendar-view";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
-import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText, SERIES_MAX_MONTHS } from "@/lib/events/series";
+import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText } from "@/lib/events/series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "@/lib/events/types";
 import { type DraftCheck, checkDraft } from "./actions";
 import { ChecksList, Timeline, checksSummary } from "./ui";
@@ -183,7 +183,6 @@ export default function EventForm(p: EventFormProps) {
   const num = (id: string) => sections.findIndex((s) => s.id === id) + 1;
   const max = d.date ? seriesMaxEnd(d.date) : "";
   const summary = checksSummary(result.checks);
-  const len = d.description.trim().length;
   const roomOptions = p.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity || undefined }));
 
   return (
@@ -239,11 +238,7 @@ export default function EventForm(p: EventFormProps) {
             <Field label="Program title" required>
               <input value={d.title} onChange={(e) => set("title", e.target.value)} maxLength={120} required />
             </Field>
-            <Field
-              label="Tell us about the event"
-              required
-              hint={<span className={len >= 200 ? styles.good : undefined}>{len} characters. {len >= 200 ? "That gives reviewers and the teams what they need." : "A few sentences (200 or more characters) help reviewers approve faster."}</span>}
-            >
+            <Field label="Tell us about the event" required>
               <textarea rows={5} value={d.description} onChange={(e) => set("description", e.target.value)} placeholder="What will happen and who it's for. Include the schedule and any speakers or guests." maxLength={4000} required />
             </Field>
             <div className="grid two">
@@ -262,7 +257,6 @@ export default function EventForm(p: EventFormProps) {
                 <input type="number" min={0} max={240} step={15} value={d.teardown} onChange={(e) => set("teardown", Number(e.target.value))} />
               </Field>
             </div>
-            <p className="hint">You set up and clean up yourselves. That time is held on the calendar for you.</p>
             <div className="grid two">
               <Field label="Repeats">
                 <select value={d.recurFreq} onChange={(e) => update((x) => ({ ...x, recurFreq: e.target.value as Draft["recurFreq"], recurUntil: e.target.value === "none" ? "" : x.recurUntil }))}>
@@ -278,13 +272,12 @@ export default function EventForm(p: EventFormProps) {
                   max={max}
                   onChange={(v) => set("recurUntil", v ?? "")}
                   required
-                  hint={`No later than ${longDate(max)} (${SERIES_MAX_MONTHS} months). Request the next period when it ends.`}
                 />
               )}
             </div>
             <RoomPicker
               label="Room or rooms"
-              hint={p.rooms.length ? "Leave empty for an off-site event. Pick more than one if you need them together." : "No rooms can be booked yet. Ask the IAR office."}
+              hint={p.rooms.length ? "Leave empty if it's off-site." : "No rooms can be booked yet. Ask the IAR office."}
               rooms={roomOptions}
               usedMost={p.usedMost}
               value={d.rooms}
@@ -321,11 +314,11 @@ export default function EventForm(p: EventFormProps) {
           <fieldset className={styles.section} id="briefSect">
             <legend><span className={styles.sn}>{num("briefSect")}</span>Marketing</legend>
             <div className={styles.sectionBody}>
-              <p className="hint">Marketing needs about 3 weeks: at least 2 to advertise, and a week or two before that to make the materials.</p>
-              <Field label="One-line subtitle (5–6 words)" hint="Used on the flyer and in other marketing." required>
+              <p className="hint">Send it at least 3 weeks ahead, so Marketing has time to make it and 2 weeks to advertise.</p>
+              <Field label="One-line subtitle (5–6 words)" required>
                 <input required value={d.brief.subtitle} onChange={(e) => setBrief("subtitle", e.target.value)} maxLength={80} placeholder="A 5-Week Class on Fiqh · Sports Activities for Sisters" />
               </Field>
-              <Field label="Announcement text to publish" hint="Marketing already has the date, time and room, and may edit the text for clarity." required>
+              <Field label="Announcement text to publish" hint="No need to repeat the date, time or room. Marketing may edit it." required>
                 <textarea required rows={4} value={d.brief.text} onChange={(e) => setBrief("text", e.target.value)} maxLength={3000} placeholder={ANNOUNCE_EXAMPLE} />
               </Field>
               <Field label="Anything else the flyer or announcement must say (optional)">
@@ -343,7 +336,7 @@ export default function EventForm(p: EventFormProps) {
                 <FileDrop
                   name="images"
                   label="Images for marketing (optional)"
-                  hint={`Logos, photos of speakers or past events, artwork. Image files only (JPG, PNG, HEIC), no PDFs or Word documents. Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each; you can add more on the request page.`}
+                  hint="Logos, speaker photos, artwork. Images only (JPG, PNG, HEIC). You can add more later."
                   accept={IMAGE_ACCEPT}
                   maxFiles={MAX_PER_UPLOAD}
                   maxSizeMb={MAX_FILE_MB}
@@ -431,7 +424,7 @@ export default function EventForm(p: EventFormProps) {
                 </div>
                 {c.askable ? (
                   ask?.key === c.key ? (
-                    <Field label="Why you need this time" hint="They can give it up or keep it. Director review waits for their answer.">
+                    <Field label="Why you need this time" hint="Your request waits for their answer.">
                       <textarea rows={3} value={ask.reason} onChange={(e) => setAsk({ key: c.key, reason: e.target.value })} placeholder="e.g. It's the only evening the speaker can come" maxLength={1000} />
                     </Field>
                   ) : (

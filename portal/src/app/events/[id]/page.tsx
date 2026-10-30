@@ -22,7 +22,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { VERB, STATUS_LABEL } from "@/lib/glossary";
+import { HINT, VERB, STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
@@ -220,7 +220,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   (uploads ? (
                     <form action={addEventImages} className="stack">
                       <input type="hidden" name="id" value={card.id} />
-                      <FileDrop name="images" label="Add images" hint={`Photos, logos or artwork as image files (JPG, PNG, HEIC). No PDFs or Word documents. Up to ${MAX_PER_UPLOAD} at a time, ${MAX_FILE_MB} MB each.`} accept={IMAGE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
+                      <FileDrop name="images" label="Add images" hint="Images only (JPG, PNG, HEIC)." accept={IMAGE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
                       <div>
                         <Button type="submit">Add images</Button>
                       </div>
@@ -379,7 +379,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       <form id="act-event" action={actOnEvent} className="stack">
         {base}
         {reviewing && (
-          <Field label={`${STAGE_LABEL[e.stage]}: note`} hint="Required to send it back or decline it. The requester sees it.">
+          <Field label={`${STAGE_LABEL[e.stage]}: note`} hint={HINT.reviewNote}>
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
         )}

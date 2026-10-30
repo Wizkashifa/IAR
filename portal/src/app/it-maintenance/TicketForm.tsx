@@ -78,10 +78,10 @@ export default function TicketForm({ action, locations }: { action: (prev: FormS
             )}
           </div>
           {room === "Other" && equipmentField}
-          <Field label="Details" required hint="What happened or what you need, when, and anything you already tried.">
+          <Field label="Details" required hint="What happened, when, and what you tried.">
             <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} maxLength={DESCRIPTION_MAX} required />
           </Field>
-          <FileDrop name="photos" label="Photos (optional)" hint="A photo often saves the team a trip. JPEG, PNG, HEIC or WebP, up to 10 MB each." accept={PHOTO_TYPES} camera />
+          <FileDrop name="photos" label="Photos (optional)" hint="A photo often saves the team a trip." accept={PHOTO_TYPES} camera />
         </div>
       </Panel>
 
@@ -89,7 +89,7 @@ export default function TicketForm({ action, locations }: { action: (prev: FormS
         <div className="stack">
           <Choices legend="How urgent is it?" legendHidden>
             {URGENCIES.map((u) => (
-              <Choice key={u} type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} label={<strong>{URGENCY[u].label}</strong>} hint={`${URGENCY[u].hint} The team aims to pick it up ${URGENCY[u].target}.`} />
+              <Choice key={u} type="radio" name="urgency" value={u} checked={urgency === u} onChange={() => setUrgency(u)} label={<strong>{URGENCY[u].label}</strong>} hint={URGENCY[u].hint} />
             ))}
           </Choices>
           {urgency === "urgent" && <Note tone="warn">If anyone is in danger (fire, gas, flooding near power), call 911 first, then tell the front office.</Note>}

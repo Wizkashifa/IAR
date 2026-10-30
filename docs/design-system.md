@@ -60,6 +60,7 @@ Captions and advice earn their place only when they tell volunteers something th
 - **Page lead** (`ModuleHead lead`): one sentence on what the page is for. A module's landing page uses its `summary` from `lib/modules.ts`.
 - **Help box** (`HelpBox`): only on a module's landing page, in the requester's view (not on team tabs). Nothing else on the screen repeats its steps.
 - **Field hint** (`Field`/`Choices` `hint`, always below): a format, a consequence or who sees it. A consequence goes in the hint, never in brackets in the label.
+- **Say it once:** a field hint only says what the label, the control, the upload box (it already shows the size limit) or the checks panel doesn't. Hint text more than one page uses lives in lib (`lib/glossary.ts` `HINT`, or the module's types or forms), not in the page.
 - **Panel note** (`PanelNote`, above a panel's contents): what the section is or who sees it. **Panel foot** (`PanelFoot`, below): totals, where the data comes from, a link to more. Not a loose `<p className="hint">` next to the panel.
 - **Note** (`Note`): only for this request's or this page's state (sent back, away, a deadline close).
 - **Confirmations** after a save: a toast through `FlashNote`, never a note built from the address bar.

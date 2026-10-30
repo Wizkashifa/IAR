@@ -37,7 +37,7 @@ export default async function NotificationSettingsPage({ searchParams }: { searc
           <p className={styles.p}>
             Approvals, questions for you, and requests sent back to you always reach you by a Google Chat message from IAR Portal, or by email if Chat can&apos;t reach you. You can&apos;t turn these off: someone is waiting.
           </p>
-          <Choice type="checkbox" name="quiet" defaultChecked={prefs.quiet} label={<strong>Quiet overnight</strong>} hint="Messages that would arrive between 9 PM and 7 AM wait until 7 AM. Team spaces aren't affected." />
+          <Choice type="checkbox" name="quiet" defaultChecked={prefs.quiet} label={<strong>Quiet overnight</strong>} hint="Messages between 9 PM and 7 AM wait until 7 AM." />
         </Panel>
 
         <Panel title="Updates on your requests">

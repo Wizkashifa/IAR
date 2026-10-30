@@ -22,7 +22,7 @@ import { nameResolver, peopleOptions } from "@/lib/names";
 import { queueTeamMembers } from "@/lib/groups";
 import { Rows } from "@/components/ItemRow";
 import { EventTaskRow, TASK_FLASH } from "../../events/ops-ui";
-import { STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
+import { RESOLVE_HINT, STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
 import { type TicketActor, type TicketCard, lateText, permission, teamsOf } from "@/lib/tickets/workflow";
 import { actFromToday } from "../actions";
 import { FLASH } from "../ui";
@@ -108,7 +108,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} button="default" full open divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("resolve")}
-              <Field label="What did you do?" required hint={preventive ? undefined : "The person who reported it is asked to check."}>
+              <Field label="What did you do?" required hint={preventive ? undefined : RESOLVE_HINT}>
                 <textarea name="note" rows={2} maxLength={2000} required placeholder={preventive ? "Changed the filters" : "Replaced the cartridge"} />
               </Field>
               <FileDrop name="photos" label="Photo (optional)" accept={PHOTO_TYPES} multiple={false} maxFiles={1} camera />

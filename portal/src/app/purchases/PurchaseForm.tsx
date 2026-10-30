@@ -267,7 +267,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             </Field>
           </div>
           {(eventChoices.length > 0 || eventCardId) && (
-            <Field label="Which event is it for? (optional)" hint="Linking it adds this cost to the event, so its final costs add up when it's closed out.">
+            <Field label="Which event is it for? (optional)" hint="The cost is added to the event's total.">
               <select value={eventCardId} onChange={(e) => setEventCardId(e.target.value)}>
                 <option value="">Not for an event</option>
                 {eventChoices.map((ev) => (
@@ -337,7 +337,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                   ))}
                 </select>
               </Field>
-              <AddressField label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Start typing to pick it from Google Maps. Needed for every check, even one picked up in person." value={mailingAddress} onChange={setMailingAddress} />
+              <AddressField label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person." value={mailingAddress} onChange={setMailingAddress} />
             </div>
             {kind === "pay" && (
               <div className="stack tight">
@@ -356,7 +356,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                 multiple={false}
                 maxFiles={1}
                 accept={W9_TYPES}
-                hint="Labor needs a W-9 on file before IAR can pay. Only the finance office can open it, and you can't once it's sent."
+                hint="Needed to pay for labor."
               />
             )}
           </div>
@@ -372,7 +372,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         }
       >
         <div className="stack">
-          {card && <p className="hint">Choose a sub-account, a reason and a receipt for each charge. Each receipt uploads as soon as you pick it.</p>}
+          {card && <p className="hint">For each charge: a sub-account, a reason and a receipt.</p>}
           {card && existingFiles.length > 0 && <Note>Already on the request for all its charges: {existingFiles.join(", ")}</Note>}
           {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
           {card ? (
@@ -450,7 +450,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             camera
             maxFiles={10}
             accept={RECEIPT_TYPES}
-            hint="Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
+            hint="Photos or PDFs, up to 10. W-9s go in their own upload."
           />
         </div>
       </Panel>

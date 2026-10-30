@@ -1,4 +1,4 @@
-import { VERB } from "@/lib/glossary";
+import { HINT, VERB } from "@/lib/glossary";
 import Link from "next/link";
 import { mayDeleteRequests } from "@/lib/card-delete";
 import { DeleteRequest } from "@/app/requests/DeleteRequest";
@@ -431,7 +431,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
       <form id="act-approve" action={actOnPurchase} className="stack">
         {base}
         <div className="grid">
-          <Field label="Note" hint="Optional with Approve; needed to send it back or decline it. Everyone on the request sees it.">
+          <Field label="Note" hint={HINT.reviewNote}>
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
           {returnTo}

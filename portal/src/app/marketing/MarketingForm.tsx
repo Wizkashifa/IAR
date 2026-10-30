@@ -7,7 +7,7 @@ import type { MarketingKind } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
-import { DRIVE_NOTE, FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
+import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions, RequiredKey } from "@/components/Field";
 import { Panel } from "@/components/Panel";
 import { KeyValue } from "@/components/KeyValue";
@@ -47,9 +47,8 @@ export default function MarketingForm({ action, kind, committees, initial, quest
   // Types that start from the requester's own material get a Files section: uploads, or a Drive link for more.
   const files = asksForFiles(kind);
   const driveHint = [
-    uploads === false && files ? "File uploads aren't set up yet, so share your files with a Drive link." : files && uploads ? "For more files, or bigger ones." : "",
-    "Share it with “Everyone at Islamic Association of Raleigh” so marketing can open it.",
-    DRIVE_NOTE[kind] ?? "",
+    uploads === false && files ? "File uploads aren't set up yet, so share your files with a Drive link." : "",
+    "Share it with everyone at IAR so Marketing can open it.",
   ].filter(Boolean).join(" ");
 
   return (
@@ -65,7 +64,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
         <Panel title="Marketing's question">
           <div className="stack">
             <p className="pre">{question}</p>
-            <Field label="Your answer" required hint="You can also change the request below. It goes back to the marketing team when you send it.">
+            <Field label="Your answer" required hint="You can also change the request below.">
               <textarea name="answer" rows={3} maxLength={2000} required />
             </Field>
           </div>
@@ -117,7 +116,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
                 <FileDrop
                   name="files"
                   label="Files for marketing (optional)"
-                  hint={`${FILE_HINT[kind] ?? ""} Up to ${MAX_PER_UPLOAD} files of ${MAX_FILE_MB} MB each.`}
+                  hint={FILE_HINT[kind] || undefined}
                   accept={FILE_ACCEPT}
                   maxFiles={MAX_PER_UPLOAD}
                   maxSizeMb={MAX_FILE_MB}

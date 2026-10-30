@@ -57,6 +57,12 @@ export const FLAG = {
 } as const;
 
 /** The line under a request that tells the requester they'll hear back. */
+/** Field hints that every module shares. */
+export const HINT = {
+  /** The note box when a reviewer decides (approve, send back, decline). */
+  reviewNote: "Needed to send it back or decline. The requester sees it.",
+} as const;
+
 export const NOTIFIED = "You'll be notified when it's done.";
 
 /** The shared statuses every request has, in words. */

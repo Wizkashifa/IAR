@@ -27,7 +27,7 @@ import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { rowStatusText, statusText } from "@/lib/status-text";
-import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
+import { KIND_LABEL, LINK_LABEL, RESOLVE_HINT, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
 import { type Action, type TicketCard, closesOnDone, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
 import { firstDate, isEventCard, whenText } from "@/lib/events/workflow";
 import { dayText, timeText } from "@/lib/events/series";
@@ -145,7 +145,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     link: (
       <form key="link" action={linkTicket} className={`stack grow`}>
         <input type="hidden" name="id" value={card.id} />
-        <Field label="Link another ticket" hint="Its number, like TK-1003.">
+        <Field label="Link another ticket">
           <input name="other" maxLength={20} required placeholder="TK-1003" />
         </Field>
         <Field label="How are they linked?">
@@ -225,7 +225,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <form key="resolve" id="ticket-resolve" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="resolve" />
-        <Field label={closes ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={closes ? undefined : "The reporter is asked to check and confirm."}>
+        <Field label={closes ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={closes ? undefined : RESOLVE_HINT}>
           <textarea name="note" rows={2} maxLength={2000} required />
         </Field>
         {!inBar("resolve") && (

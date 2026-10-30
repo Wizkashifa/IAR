@@ -128,7 +128,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               <Panel title="What the team handles">
                 <form action={saveTeamInfo} className="stack">
                   <input type="hidden" name="slug" value={team.slug} />
-                  <Field label="In a sentence or two" hint="Shown in Who's Who and searched when someone asks “who handles…?”. Up to 300 characters." htmlFor="team-desc">
+                  <Field label="In a sentence or two" hint="What people come to the team for. Shown in Who's Who and found by search." htmlFor="team-desc">
                     <textarea id="team-desc" name="description" rows={3} maxLength={300} defaultValue={team.description ?? ""} />
                   </Field>
                   <Field label="Google Chat space link (optional)" hint="Open the team's space in Google Chat and copy its link." htmlFor="team-chat">
