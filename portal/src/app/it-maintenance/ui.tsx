@@ -21,7 +21,6 @@ export const FLASH: Record<string, string> = {
   photos: "Photos added.",
   watch: "You're following this ticket. You'll hear when it moves.",
   unwatch: "You've stopped following this ticket.",
-  commented: "Comment added. The people on this ticket can see it.",
   linked: "Linked. Both tickets show the link.",
   unlinked: "Link removed from both tickets.",
   added: "Schedule added.",

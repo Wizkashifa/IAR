@@ -264,7 +264,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     <form action={actOnTicket}>
       {base}
       <input type="hidden" name="action" value="cancel" />
-      <ConfirmButton variant="quiet" danger title="Cancel this request?" message="The team stops working on it. You can send a new request any time." confirmLabel="Yes, cancel it">
+      <ConfirmButton variant="danger" title="Cancel this request?" message="The team stops working on it. You can send a new request any time." confirmLabel="Yes, cancel it">
         {own ? "Withdraw this request" : "Cancel this ticket"}
       </ConfirmButton>
     </form>

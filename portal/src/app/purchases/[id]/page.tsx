@@ -440,7 +440,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           <Button type="submit" name="action" value="return">
             Send back
           </Button>
-          <ConfirmButton variant="danger" danger name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
+          <ConfirmButton variant="danger" name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
             Decline
           </ConfirmButton>
         </div>
@@ -498,7 +498,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         {cancel && (
           <form action={actOnPurchase} className="row">
             {base}
-            <ConfirmButton variant="danger" name="action" value="cancel" danger title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
+            <ConfirmButton variant="danger" name="action" value="cancel" title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
               Cancel this request
             </ConfirmButton>
           </form>

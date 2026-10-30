@@ -59,5 +59,4 @@ export const OK_TEXT: Record<string, string> = {
   resolve: "Recorded.",
   cancel: "Request cancelled.",
   attach: "Receipts added. Add more any time until the request is done.",
-  commented: "Comment added. The people on this request can see it.",
 };

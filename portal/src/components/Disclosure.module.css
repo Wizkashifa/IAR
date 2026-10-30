@@ -9,5 +9,7 @@
   .divided { align-self: stretch; width: 100%; border-top: 1px solid var(--line); padding-top: var(--s-3); }
   /* A summary that looks like a button opens across the whole row. */
   .asButton[open] { flex-basis: 100%; }
-  .asButton .body { min-width: 240px; text-align: left; }
+  .asButton .body { min-width: min(240px, 100%); text-align: left; }
+  .full { width: 100%; }
+  .full > summary { width: 100%; }
 }

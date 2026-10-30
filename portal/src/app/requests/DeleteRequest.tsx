@@ -7,8 +7,7 @@ export function DeleteRequest({ id, what }: { id: string; what?: string }) {
     <form action={deleteRequest} className="row end">
       <input type="hidden" name="id" value={id} />
       <ConfirmButton
-        variant="quiet"
-        danger
+        variant="danger"
         size="small"
         title={`Delete ${id}?`}
         message={<>This removes the request and its notifications for everyone. It can&apos;t be undone.{what ? ` ${what}` : ""} Files already in Google Drive stay there.</>}

@@ -1,10 +1,10 @@
+import { FlashNote } from "@/components/FlashNote";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
 import { KeyValue } from "@/components/KeyValue";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { directory } from "@/lib/groups";
 import { nameResolver } from "@/lib/names";
@@ -74,12 +74,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
           </>
         }
       />
-      {(ok || error) && (
-        <div className={styles.notice}>
-          {ok && <Note tone="ok">Saved. Everyone sees the new description in Who&apos;s who.</Note>}
-          {error && <Note tone="bad">{error}</Note>}
-        </div>
-      )}
+      <FlashNote ok={ok ? "saved" : undefined} error={error} messages={{ saved: "Saved. Everyone sees the new description in Who's Who." }} />
 
       <div className={styles.columns}>
         <div className="stack">

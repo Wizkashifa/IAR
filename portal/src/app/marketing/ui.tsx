@@ -30,6 +30,5 @@ export const OK_MESSAGES: Record<string, string> = {
   approve: "Approved. Marketing sends it out next.",
   changes: "Sent to marketing. They make the changes and send you a new draft.",
   cancel: "Request cancelled.",
-  commented: "Comment added. The people on this request can see it.",
   files: "Files added. Marketing can open them from this page.",
 };

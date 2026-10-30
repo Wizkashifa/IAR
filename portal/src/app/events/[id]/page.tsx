@@ -70,7 +70,6 @@ const MESSAGES: Record<string, string> = {
   cancel: "Request cancelled and taken off the calendar.",
   decided: "Your answer is saved and both requests are updated.",
   withdrawn: "Ask withdrawn. Pick another time or room.",
-  commented: "Comment added. The people on this request can see it.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
   images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
 };
@@ -391,12 +390,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
           {(reviewing || addPurchase || renew || again) && <span className="grow" />}
           {reviewing && (
-            <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
+            <ConfirmButton name="action" value="deny" variant="danger" title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
             </ConfirmButton>
           )}
           {cancel && (
-            <ConfirmButton name="action" value="cancel" variant="danger" danger title="Cancel this request?" message={e.holds.length ? "It comes off the IAR calendar and the room is freed for others." : "It's withdrawn and the teams stop working on it."} confirmLabel="Cancel the request" cancelLabel="Keep it">
+            <ConfirmButton name="action" value="cancel" variant="danger" title="Cancel this request?" message={e.holds.length ? "It comes off the IAR calendar and the room is freed for others." : "It's withdrawn and the teams stop working on it."} confirmLabel="Cancel the request" cancelLabel="Keep it">
               {own ? "Withdraw this request" : "Cancel this request"}
             </ConfirmButton>
           )}

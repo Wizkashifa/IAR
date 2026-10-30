@@ -104,7 +104,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </form>
         )}
         {working && can("resolve") && (
-          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} open divided className={styles.tap}>
+          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} button="default" full open divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("resolve")}
               <Field label="What did you do?" required hint={preventive ? undefined : "The person who reported it is asked to check."}>
@@ -118,7 +118,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </Disclosure>
         )}
         {t.status !== "waiting_parts" && t.assigneeEmail && can("wait") && (
-          <Disclosure summary="Waiting on parts" divided className={styles.tap}>
+          <Disclosure summary="Waiting on parts" button="default" full divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("wait")}
               <Field label="What's on order, and when is it due?">

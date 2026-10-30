@@ -337,7 +337,7 @@ export default async function MarketingDetail({
       </>
     );
     const declineButton = can("decline") && (
-      <ConfirmButton name="action" value="decline" variant="danger" danger title="Decline this request?" message={`${requester === "you" ? "You're" : `${names(mc.ownerEmail)} is`} told it was declined, with the note below as the reason.`} confirmLabel="Decline">
+      <ConfirmButton name="action" value="decline" variant="danger" title="Decline this request?" message={`${requester === "you" ? "You're" : `${names(mc.ownerEmail)} is`} told it was declined, with the note below as the reason.`} confirmLabel="Decline">
         Decline
       </ConfirmButton>
     );
@@ -359,7 +359,7 @@ export default async function MarketingDetail({
             <Button href={`/marketing/${mc.id}/edit`}>Edit the request too</Button>
             {can("cancel") && (
               <span className="push">
-                <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
+                <ConfirmButton name="action" value="cancel" variant="danger" title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                   Cancel request
                 </ConfirmButton>
               </span>
@@ -526,7 +526,7 @@ export default async function MarketingDetail({
           {can("edit") && <Button href={`/marketing/${mc.id}/edit`}>Edit the request</Button>}
           {can("cancel") && (
             <span className="push">
-              <ConfirmButton name="action" value="cancel" variant="quiet" danger title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
+              <ConfirmButton name="action" value="cancel" variant="danger" title="Cancel this request?" message="Marketing won't work on it. You can always send a new request." confirmLabel="Cancel request" cancelLabel="Keep it">
                 Cancel request
               </ConfirmButton>
             </span>

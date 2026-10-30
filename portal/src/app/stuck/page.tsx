@@ -1,3 +1,4 @@
+import { FlashNote } from "@/components/FlashNote";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -5,7 +6,6 @@ import { ConfirmButton } from "@/components/Confirm";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemRow } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { canOpenCard } from "@/lib/access";
@@ -119,8 +119,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
   return (
     <div className="stack">
       <ModuleHead title="What's stuck" lead="Every open request, longest wait first: how long it has waited at its step, and who it's waiting on. A reminder goes to them in Google Chat." />
-      {sp.error && <Note tone="bad">{sp.error}</Note>}
-      {sp.sent && !sp.error && <Note tone="ok">Reminder sent for {sp.sent}. It&apos;s in the request&apos;s history.</Note>}
+      <FlashNote ok={sp.sent ? "sent" : undefined} error={sp.error} messages={{ sent: "Reminder sent. It's in the request's history." }} />
 
       <div className={styles.filters}>
         <Chips label="Kind of request" chips={[{ label: "All", href: href({ committee }), on: !kind, count: all.length }, ...KINDS.map((k) => ({ label: k.many, href: href({ kind: k.type }), on: kind === k.type, count: all.filter((i) => i.card.type === k.type).length }))]} />

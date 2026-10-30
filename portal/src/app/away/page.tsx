@@ -1,3 +1,4 @@
+import { FlashNote } from "@/components/FlashNote";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { HelpBox } from "@/components/HelpBox";
@@ -50,8 +51,7 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         lead={`Going away? Hand your approvals to someone so requests don't wait for you. Up to ${MAX_AWAY_DAYS} days at a time; it switches off by itself after your last day.`}
       />
       <HelpBox module="away" />
-      {ok === "saved" && <Note tone="ok">Saved. The person covering has been told.</Note>}
-      {ok === "cleared" && <Note tone="ok">Welcome back. Your approvals come to you again.</Note>}
+      <FlashNote ok={ok} messages={{ saved: "Saved. The person covering has been told.", cleared: "Welcome back. Your approvals come to you again." }} />
 
       {mine && (
         <Note>

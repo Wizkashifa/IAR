@@ -38,7 +38,7 @@ export function Widgets() {
           <Button type="submit" variant="primary">Try sending</Button>
           <Button onClick={() => toast("Saved.")}>Show a toast</Button>
           <Button onClick={() => toast("Marked as held.", { undo: () => toast("Undone.", { tone: "info" }) })}>Toast with Undo</Button>
-          <ConfirmButton danger title="Withdraw this request?" message="The room hold is released and the teams are told." confirmLabel="Withdraw" name="action" value="withdraw">
+          <ConfirmButton variant="danger" title="Withdraw this request?" message="The room hold is released and the teams are told." confirmLabel="Withdraw" name="action" value="withdraw">
             Withdraw…
           </ConfirmButton>
         </div>
