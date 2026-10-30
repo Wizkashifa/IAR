@@ -200,16 +200,26 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
   if (ask) {
     const hold = await holdFor(ask.clash, ctx);
     const nr = sr.newSlotRequest({ fromCard: card.id, requester: actor, hold, dates: ask.clash.dates, reason: ask.reason }, ctx.dir, await slots.listForHold(sr.holdKeyOf(hold)), now);
-    if (!nr.ok) return { errors: [nr.error] };
+    if (!nr.ok) {
+      await discardNew(card0 ? null : card.id);
+      return { errors: [nr.error] };
+    }
     created = await slots.create(nr.value);
   }
-  const routed = card0 ? wf.resubmit(card0, input, actor, directors, now, r.checks, { waitingOnAsk: created?.id }) : wf.submit(card, actor, directors, now, { waitingOnAsk: created?.id });
-  const synced = await syncHolds(routed, ctx);
-  const trouble = calendarTrouble(synced.card, synced.error);
+  let trouble: ReturnType<typeof calendarTrouble>;
   try {
+    const routed = card0 ? wf.resubmit(card0, input, actor, directors, now, r.checks, { waitingOnAsk: created?.id }) : wf.submit(card, actor, directors, now, { waitingOnAsk: created?.id });
+    const synced = await syncHolds(routed, ctx);
+    trouble = calendarTrouble(synced.card, synced.error);
     await store.save(trouble.card, card.updatedAt);
   } catch (err) {
-    return { errors: [err instanceof ConflictError ? err.message : "Something went wrong saving the request."] };
+    if (!(err instanceof ConflictError)) console.error("saving an event request failed", err);
+    // A new request that didn't go through isn't left behind half-made, and neither is its ask.
+    if (!card0) {
+      if (created) await withdrawOpenAsks(card.id, actor, now).catch((e) => console.error("withdrawing an unsent ask failed", e));
+      await discardNew(card.id);
+    }
+    return { errors: [err instanceof ConflictError ? err.message : "Something went wrong saving the request. Nothing was sent."] };
   }
   if (prior) {
     // Link the series to its next period; a hiccup here doesn't undo the new request.
@@ -327,6 +337,16 @@ export async function actOnEventWith(action: wf.EventAction, form: FormData): Pr
 }
 
 /** A cancelled request doesn't keep asking for someone else's time. */
+/** Removes a just-created request that couldn't be sent, so nobody finds it stuck with no one to act on it. */
+async function discardNew(id: string | null): Promise<void> {
+  if (!id) return;
+  try {
+    await (await cardStore()).remove(id);
+  } catch (err) {
+    console.error(`removing unsent request ${id} failed`, err);
+  }
+}
+
 async function withdrawOpenAsks(cardId: string, actor: wf.EventActor, now: string): Promise<Notice[]> {
   const slots = await slotRequestStore();
   const out: Notice[] = [];

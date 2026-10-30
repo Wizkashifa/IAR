@@ -61,6 +61,9 @@ export type Card = {
  * Request numbers by prefix, and where each starts. Purchases start after the
  * old Requisition Form's numbers.
  */
+/** How many requests of one type a list reads at most. */
+const LIST_LIMIT = 2000;
+
 export const COUNTER_START: Record<string, number> = { PO: 12001, EV: 1101, MK: 1001, TK: 1001 };
 
 /** Statuses where the owner has to do something. */
@@ -208,7 +211,7 @@ const memoryStore: CardStore = {
     await ensureSeeded();
     return [...mem.cards.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit).map(clone);
   },
-  async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+  async listByType(type, statuses = OPEN_STATUSES, limit = LIST_LIMIT) {
     await ensureSeeded();
     return [...mem.cards.values()]
       .filter((c) => c.type === type && statuses.includes(c.status))
@@ -309,8 +312,10 @@ async function getFirestoreStore(): Promise<CardStore> {
       const snap = await cards.orderBy("updatedAt", "desc").limit(limit).get();
       return snap.docs.map(toCard);
     },
-    async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+    async listByType(type, statuses = OPEN_STATUSES, limit = LIST_LIMIT) {
+      // No orderBy (that needs a composite index), so a full page means some were left out: say so in the logs.
       const snap = await cards.where("type", "==", type).where("status", "in", statuses.slice(0, 30)).limit(limit).get();
+      if (snap.size >= limit) console.warn(`listByType(${type}) hit its limit of ${limit}; some requests aren't listed.`);
       return snap.docs.map(toCard).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
     async create(card, prefix) {

@@ -4,6 +4,8 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
+import { FlashNote } from "@/components/FlashNote";
+import { ADMIN_OK } from "./sections";
 import { Panel } from "@/components/Panel";
 import { Section } from "@/components/Section";
 import { directory, portalPeople } from "@/lib/groups";
@@ -73,8 +75,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </>
         }
       />
-      {ok && <Note tone="ok">{ok}</Note>}
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={ADMIN_OK} />
 
       <Section open={open === "teams"} title={<>Committees and teams ({teams.length})</>}>
       <p className="hint">
