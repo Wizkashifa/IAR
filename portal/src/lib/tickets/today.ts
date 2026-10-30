@@ -59,14 +59,12 @@ export function workToday(cards: Card[], actor: Pick<TicketActor, "email" | "rol
 }
 
 /**
- * A/V's event tasks for "My work today": open ones due today or already
- * overdue, mine or nobody's yet, soonest due first. `items` are A/V's open
- * tasks (lib/events/queues.ts queueItems).
+ * A/V's event tasks for "My work today": due today or already overdue, mine
+ * or nobody's yet. `items` are A/V's open tasks, soonest due first
+ * (lib/events/queues.ts queueItems), and keep that order.
  */
 export function eventTasksToday(items: QueueItem[], email: string, today: string): QueueItem[] {
-  return items
-    .filter((x) => (x.task.status === "todo" || x.task.status === "doing") && x.task.dueDate <= today && (!x.task.assignee || same(x.task.assignee, email)))
-    .sort((a, b) => a.task.dueDate.localeCompare(b.task.dueDate) || a.card.id.localeCompare(b.card.id));
+  return items.filter((x) => x.task.dueDate <= today && (!x.task.assignee || same(x.task.assignee, email)));
 }
 
 /** Whether this person works tickets (and so has a "My work today"). */

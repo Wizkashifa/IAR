@@ -5,8 +5,7 @@ import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/dates";
 import { isMarketingCard, permission } from "@/lib/marketing/workflow";
 import { driveLinkOf } from "@/lib/marketing/forms";
-import { isEventCard } from "@/lib/events/workflow";
-import { dayText } from "@/lib/events/series";
+import { isEventCard, whenText } from "@/lib/events/workflow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { committeesFor, editMarketing } from "../../actions";
 import MarketingForm from "../../MarketingForm";
@@ -31,7 +30,7 @@ export default async function EditMarketing({ params }: { params: Promise<{ id: 
   if (!permission(card, actor, answering ? "answer" : "edit").ok) redirect(`/marketing/${id}`);
   // A piece for an event shows its event at the top, and keeps the event's committee.
   const ev = m.eventCardId ? await (await cardStore()).get(m.eventCardId) : null;
-  const event = isEventCard(ev) ? { id: ev.id, title: ev.title, when: dayText(ev.event.dates[0] ?? ev.event.date), committee: card.committee } : undefined;
+  const event = isEventCard(ev) ? { id: ev.id, title: ev.title, when: whenText(ev), committee: card.committee } : undefined;
   return (
     <div className="stack loose">
       <div className="stack tight">

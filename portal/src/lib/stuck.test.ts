@@ -160,7 +160,7 @@ test("who it waits on: events, marketing and tickets", () => {
   const doing = mw.start(mw.schedule(mc, mk, T(1), "2026-11-20"), mk, T(2));
   assert.deepEqual(holderOf(doing), { to: [{ email: mk.email }], step: "In progress" });
   const proof = mw.sendProof(doing, mk, T(3), [{ name: "draft.png", size: 1 }]);
-  assert.deepEqual(holderOf(proof), { to: [{ email: vol.email }], step: "Waiting on the requester's approval" });
+  assert.deepEqual(holderOf(proof), { to: [{ email: vol.email }], step: "Waiting on approval" });
   assert.deepEqual(holderOf(mw.approve(proof, vol, T(4))), { to: [{ email: mk.email }], step: "Approved" });
 
   const t = ticket();

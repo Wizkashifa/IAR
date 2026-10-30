@@ -99,7 +99,7 @@ export function Pieces() {
 
       <Panel title="Tabs" right="components/Tabs.tsx: the requester's and the team's views of a module">
         <Tabs
-          label="Show"
+          label="Example views"
           tabs={[{ label: "Your requests", href: "/dev/styles" }, { label: "Team work", href: "/dev/styles?view=team", on: true, extra: <Pill tone="warn" small>3 new</Pill> }]}
           links={[{ label: "Preventive schedules", href: "/dev/styles?p=1" }]}
         />

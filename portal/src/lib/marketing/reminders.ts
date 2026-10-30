@@ -13,7 +13,7 @@
  */
 import type { Notice } from "../notices";
 import { daysBetween, todayLocal } from "../dates";
-import { type MarketingCard, shortDay } from "./workflow";
+import { type MarketingCard, TEAM_STAGES, shortDay } from "./workflow";
 
 export type DailyPlan = {
   notices: Notice[];
@@ -48,7 +48,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
 
   for (const c of cards) {
     const m = c.marketing;
-    if ((m.stage !== "scheduled" && m.stage !== "doing" && m.stage !== "ready") || !m.doneBy || m.remindedFor === m.doneBy) continue;
+    if (!TEAM_STAGES.includes(m.stage) || !m.doneBy || m.remindedFor === m.doneBy) continue;
     const days = daysBetween(today, m.doneBy);
     if (days > 1) continue;
     const when = days === 1 ? "is due tomorrow" : days === 0 ? "is due today" : `was due ${shortDay(m.doneBy)}`;

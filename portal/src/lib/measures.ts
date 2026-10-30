@@ -108,7 +108,7 @@ export function requestsPerWeek(cards: MeasureCard[], now: Date, weeks = 6): Wee
 type StepRule = { re: RegExp; ends?: string | ((m: RegExpMatchArray) => string); start?: boolean };
 
 const BACK = "Back with the requester";
-const APPROVAL = "Waiting on the requester's approval";
+const APPROVAL = "Waiting on approval";
 
 const RULES: Record<MeasuredType, StepRule[]> = {
   purchase: [
@@ -141,8 +141,8 @@ const RULES: Record<MeasuredType, StepRule[]> = {
     { re: /^Started/, ends: "Scheduled" },
     { re: /^Sent for approval/, ends: "In progress" },
     { re: /^(Approved the draft|Asked for changes|Went ahead without the requester's approval)/, ends: APPROVAL },
-    { re: /^Marked as marketed \(nothing to approve\)/, ends: "In progress" },
-    { re: /^Marked as marketed$/, ends: "Approved" },
+    { re: /^Marked done \(nothing to approve\)/, ends: "In progress" },
+    { re: /^Marked done$/, ends: "Approved" },
     { re: /^Done$/, ends: "In progress" },
   ],
   ticket: [

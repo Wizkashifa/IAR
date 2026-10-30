@@ -49,6 +49,7 @@ The demo first used Source Sans 3, Outfit and Fraunces. The brand guide replaced
 - **Buttons:** 36px tall (48px on phones), a `--ctl` border, white, with a tiny shadow. Only the **primary** button is solid green with white text (gold with green text in dark mode), 44px tall, and each page has exactly one, so there is one obvious next step. A list's empty-state button, a settings form or a per-task action is secondary.
 - **Inputs:** a `--ctl` border; focus shows a `--focus` border and ring. On phones they're 48px with 16px text.
 - **Chips** for filters, and a **toast** with Undo for quick confirmations.
+- **Tabs** for the requester's and the team's views of a module ("Your requests" and "Team work" or "Team tickets"), with the team's other pages as quiet links at the end.
 - **Motion:** Home's sections fade in and rise 10px, 80ms apart (`.enter`); work pages appear at once; link cards lift 3px on hover; row chevrons slide; buttons press in; the drawer slides and the account menu drops in. All of it switches off with the system's reduce-motion setting.
 
 ### 5. Icons
@@ -112,7 +113,7 @@ portal/src/
     Choices.tsx       radio/checkbox cards (Choices, Choice) and a plain tick box (Checkbox)
     DataTable.tsx     tables, with the phone card layout
     Disclosure.tsx    "More…" and other folded-away actions
-    SearchForm.tsx, Chips.tsx, Crumb.tsx, LinkCard.tsx, FileList.tsx
+    SearchForm.tsx, Chips.tsx, Tabs.tsx, Crumb.tsx, LinkCard.tsx, FileList.tsx
     FlashNote.tsx, FormErrors.tsx   ?ok=/?error= messages, a form's errors
     Panel.tsx         also PanelNote and PanelFoot, the lines above and below a list
 ```

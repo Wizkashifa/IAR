@@ -16,9 +16,8 @@ import { FlashNote } from "@/components/FlashNote";
 import { CardRow, ItemRow, Rows } from "@/components/ItemRow";
 import { rowsFor } from "@/components/ItemList";
 import { canViewMarketing } from "@/lib/marketing/access";
-import { pieceLabel } from "@/lib/marketing/forms";
 import { mayAddPiece } from "@/lib/marketing/linked";
-import { OPEN_STAGES, isMarketingCard } from "@/lib/marketing/workflow";
+import { OPEN_STAGES } from "@/lib/marketing/workflow";
 import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
@@ -27,7 +26,8 @@ import { STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
-import { nameResolver } from "@/lib/names";
+import { nameResolver, peopleOptions } from "@/lib/names";
+import { piecesFor } from "@/lib/marketing/pieces";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
@@ -51,9 +51,9 @@ import { purchaseTotal } from "@/lib/purchases/types";
 import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
-import { TaskLine } from "../ops-ui";
+import { TASK_FLASH, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
-import { ChecksList, Timeline, checksSummary } from "../ui";
+import { BriefFields, ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
@@ -69,13 +69,6 @@ const MESSAGES: Record<string, string> = {
   decided: "Your answer is saved and both requests are updated.",
   withdrawn: "Ask withdrawn. Pick another time or room.",
   commented: "Comment added. The people on this request can see it.",
-  "task-taken": "It's yours. It shows your name on the event.",
-  "task-started": "Marked in progress.",
-  "task-done": "Marked done. The requester can see it here.",
-  "task-asked": "Question sent as a comment on the event. The requester gets an alert.",
-  "task-assigned": "Handed over. They get an alert, and their name shows here.",
-  "check-ok": "Room check saved.",
-  "check-problem": "Room check saved. The requester and the IAR office have been told about the problem.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
   images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
 };
@@ -111,11 +104,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
   const tasks = tasksFor(card);
   const isLive = card.status === "approved" || card.status === "close_out" || card.status === "closed";
-  const linked = linkedPurchases(await store.listPurchasesForEvent(card.id), card.id);
+  const [purchases, allPieces] = await Promise.all([store.listPurchasesForEvent(card.id), piecesFor(card.id)]);
+  const linked = linkedPurchases(purchases, card.id);
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
   // Its marketing pieces: one marketing request each, linked to this event.
-  const pieces = (await store.listMarketingForEvent(card.id)).filter(isMarketingCard).sort((a, b) => (a.createdAt ?? a.updatedAt).localeCompare(b.createdAt ?? b.updatedAt));
+  const pieces = allPieces.sort((a, b) => (a.createdAt ?? a.updatedAt).localeCompare(b.createdAt ?? b.updatedAt));
   const viewing = { ...actor, seeAll: viewer.roles.includes("admins") };
   const piecesVisible = pieces.filter((p) => canViewMarketing(p, viewing));
   const addPiece = mayAddPiece(card, actor).ok;
@@ -152,7 +146,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   const notes = (
     <>
-      <FlashNote ok={ok} error={error} messages={MESSAGES} />
+      <FlashNote ok={ok} error={error} messages={{ ...MESSAGES, ...TASK_FLASH }} />
       {card.status === "changes_requested" && (
         <Note tone="warn">
           <strong>{e.releasedFor ? "You gave up this time:" : "Sent back for changes:"}</strong> {e.returnNote}
@@ -210,16 +204,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {e.isPublic && e.brief && (
             <Panel title="Marketing brief">
-              <KeyValue
-                items={[
-                  { label: "Subtitle", value: e.brief.subtitle },
-                  { label: "Announcement", value: <span className="pre">{e.brief.text}</span> },
-                  { label: "On the flyer", value: e.brief.flyer && <span className="pre">{e.brief.flyer}</span> },
-                  { label: "Registration", value: e.brief.regLink },
-                  { label: "Payment", value: e.brief.payment && <span className="pre">{e.brief.payment}</span> },
-                  { label: "Files", value: e.brief.files && <a href={e.brief.files} target="_blank" rel="noreferrer">Drive folder</a> },
-                ]}
-              />
+              <BriefFields brief={e.brief} />
             </Panel>
           )}
 
@@ -243,6 +228,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </Panel>
           )}
 
+          {(pieces.length > 0 || addPiece) && <MarketingPanel />}
+
           {e.av && e.avNeeds && (
             <Panel title="A/V needs">
               <KeyValue
@@ -264,16 +251,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {(card.status === "close_out" || card.status === "closed") && <CloseOutPanel />}
 
-          {(pieces.length > 0 || addPiece) && <MarketingPanel />}
 
           {tasks.length > 0 && (
             <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
               <Rows>
                 {tasks.map((t) => (
-                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={(teamMembers.get(t.team) ?? []).map((m) => ({ email: m, name: m === viewer.email.toLowerCase() ? `Me (${names(m)})` : names(m) }))} />
+                  <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={peopleOptions(teamMembers.get(t.team) ?? [], viewer.email, names)} />
                 ))}
               </Rows>
-              {tasks.every((t) => t.status === "locked") && <PanelFoot>Once the event is approved, A/V gets its task in IT &amp; Maintenance and marketing in Marketing Requests.</PanelFoot>}
+              {tasks.every((t) => t.status === "locked") && <PanelFoot>Once the event is approved, A/V gets its task in IT &amp; Maintenance.</PanelFoot>}
             </Panel>
           )}
 
@@ -421,7 +407,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       const due = p.marketing.answers.due;
       return {
         ...r,
-        sub: [pieceLabel(p.marketing.answers.piece), due && `needed by ${dayText(due)}`].filter(Boolean).join(" · "),
+        sub: due ? `Needed by ${dayText(due)}` : r.sub,
         who: p.marketing.assignee && OPEN_STAGES.includes(p.marketing.stage) ? `With ${names(p.marketing.assignee)}` : r.who,
       };
     });
@@ -440,7 +426,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             {rows.map((r) => (
               <CardRow key={r.id} row={r} />
             ))}
-            {hidden > 0 && <ItemRow state="plain" title={`${hidden} more you can't open`} sub="Marketing pieces for this event" />}
+            {hidden > 0 && <ItemRow state="plain" title={`${hidden} more you can't open`} sub="Restricted" />}
           </Rows>
         )}
         {addPiece && (

@@ -80,14 +80,14 @@ test("step names come from the history actions; other entries don't move the clo
 test("marketing's approval step: sent, answered or gone ahead without, then marketed", () => {
   const ends = (action: string) => stepOf("marketing", action).ends;
   assert.equal(ends("Sent for approval"), "In progress");
-  assert.equal(ends("Approved the draft"), "Waiting on the requester's approval");
-  assert.equal(ends("Asked for changes"), "Waiting on the requester's approval");
-  assert.equal(ends("Went ahead without the requester's approval (no answer by Mon, Nov 2, 3:00 PM)"), "Waiting on the requester's approval");
-  assert.equal(ends("Marked as marketed"), "Approved");
-  assert.equal(ends("Marked as marketed (nothing to approve)"), "In progress");
+  assert.equal(ends("Approved the draft"), "Waiting on approval");
+  assert.equal(ends("Asked for changes"), "Waiting on approval");
+  assert.equal(ends("Went ahead without the requester's approval (no answer by Mon, Nov 2, 3:00 PM)"), "Waiting on approval");
+  assert.equal(ends("Marked done"), "Approved");
+  assert.equal(ends("Marked done (nothing to approve)"), "In progress");
   assert.equal(ends("Done"), "In progress", "requests finished before the approval step");
-  const steps = stepTimes([card("marketing", [[0, "Submitted"], [10, "Scheduled, to finish by Friday, October 30"], [12, "Started"], [20, "Sent for approval"], [26, "Approved the draft"], [28, "Marked as marketed"]])], "marketing");
-  assert.deepEqual(steps.map((s) => s.step), ["New", "Scheduled", "In progress", "Waiting on the requester's approval", "Approved"]);
+  const steps = stepTimes([card("marketing", [[0, "Submitted"], [10, "Scheduled, to finish by Friday, October 30"], [12, "Started"], [20, "Sent for approval"], [26, "Approved the draft"], [28, "Marked done"]])], "marketing");
+  assert.deepEqual(steps.map((s) => s.step), ["New", "Scheduled", "In progress", "Waiting on approval", "Approved"]);
 });
 
 test("time at each step: median and longest, only finished waits", () => {

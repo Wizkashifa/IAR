@@ -13,14 +13,15 @@ import { nameResolver } from "@/lib/names";
 import { ROW_TONE, rowState, whoText } from "@/lib/card-row";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
-import { MARKETING_TYPES, answerText, driveLinkOf, neededBy } from "@/lib/marketing/forms";
+import { MARKETING_TYPES, answerText, driveLinkOf, neededBy, pieceLabel } from "@/lib/marketing/forms";
+import { BriefFields } from "@/app/events/ui";
 import { canViewMarketing } from "@/lib/marketing/access";
 import { OPEN_STAGES, approvalDue, channelText, daysUntilNeeded, isMarketingCard, isTight, latestProof, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
 import { CHANNELS, CHANNEL_LABEL } from "@/lib/marketing/types";
 import { Choice, Choices } from "@/components/Choices";
 import { EVENT_NOT_APPROVED, waitsOnEvent } from "@/lib/marketing/linked";
-import { isEventCard } from "@/lib/events/workflow";
-import { dayText, recurText, timeText } from "@/lib/events/series";
+import { firstDate, isEventCard, whenText } from "@/lib/events/workflow";
+import { dayText, timeText } from "@/lib/events/series";
 import { canOpenCard } from "@/lib/access";
 import { LinkCard, LinkCards } from "@/components/LinkCard";
 import { Button } from "@/components/Button";
@@ -63,31 +64,37 @@ export default async function MarketingDetail({
 }) {
   const [{ id }, { ok, error, sent }] = await Promise.all([params, searchParams]);
   const viewer = await requireViewer();
-  const [card, actor] = await Promise.all([(await cardStore()).get(id), actorFor(viewer)]);
+  const store = await cardStore();
+  const [card, actor] = await Promise.all([store.get(id), actorFor(viewer)]);
   // A request someone can't open looks the same as one that doesn't exist.
   if (!isMarketingCard(card) || !canViewMarketing(card, { ...actor, seeAll: viewer.roles.includes("admins") })) notFound();
 
   const mc: MarketingCard = card;
   const m = mc.marketing;
   // A piece for an event reads the event's title, dates, brief and images from the event itself.
-  const linked = m.eventCardId ? await (await cardStore()).get(m.eventCardId) : null;
+  const [linked, team, uploads, mentionable] = await Promise.all([
+    m.eventCardId ? store.get(m.eventCardId) : Promise.resolve(null),
+    // Who on the marketing team the work can be handed to.
+    permission(mc, actor, "assign").ok ? queueTeamMembers("marketing") : Promise.resolve([] as string[]),
+    marketingFolder().then(Boolean),
+    mentionablePeople(mc),
+  ]);
   const event = isEventCard(linked) && canOpenCard(linked, { ...actor, seeAll: viewer.roles.includes("admins") }) ? linked : null;
   const eventImages = event?.event.isPublic ? event.event.images ?? [] : [];
   const t = MARKETING_TYPES[m.kind];
+  // A piece for an event says which piece it is ("Flyer"), not "Marketing for an event".
+  const typeLabel = m.kind === "event" ? pieceLabel(m.answers.piece) || t.label : t.label;
   const today = todayLocal();
   const can = (a: Action) => permission(mc, actor, a).ok;
   const own = mc.ownerEmail.toLowerCase() === viewer.email.toLowerCase();
   const due = neededBy(m.answers);
   const days = daysUntilNeeded(mc, today);
-  // Who on the marketing team the work can be handed to.
-  const team = permission(mc, actor, "assign").ok ? await queueTeamMembers("marketing") : [];
   const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by), ...eventImages.map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
   const state = rowState(mc, actor, { today });
   const tone = ROW_TONE[state];
   const files = filesOf(m);
   const drive = driveLinkOf(m);
-  const uploads = Boolean(await marketingFolder());
   const channels = channelText(m.channels);
   const proof = latestProof(m);
   const approvalBy = approvalDue(m);
@@ -170,7 +177,7 @@ export default async function MarketingDetail({
         </div>
       </Panel>
       <FilesPanel />
-      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} people={await mentionablePeople(mc)} me={viewer.email} />
+      <CommentsPanel id={mc.id} comments={mc.comments} names={names} action={commentOnMarketing} people={mentionable} me={viewer.email} />
       <HistoryPanel entries={m.history} names={names} />
     </>
   );
@@ -181,12 +188,11 @@ export default async function MarketingDetail({
         items={[
           { label: "Requested by", value: names(mc.ownerEmail) },
           { label: "Committee", value: mc.committee },
-          { label: "Type", value: t.label },
+          { label: "Type", value: typeLabel },
           { label: "Submitted", value: fmtDate(mc.createdAt ?? m.history[0]?.at ?? mc.updatedAt) },
           { label: "Needed by", value: due ? fmtDay(due) : null },
           { label: m.stage === "done" ? "Was due" : "Marketing aims to finish", value: m.doneBy && m.stage !== "declined" ? fmtDay(m.doneBy) : null },
           { label: "Worked on by", value: m.assignee ? names(m.assignee) : null },
-          { label: "Went out on", value: channels || null },
           { label: "Waiting on", value: (own ? mc.waitingOn : whoText(mc, viewer, names)) ?? null },
         ]}
       />
@@ -194,7 +200,7 @@ export default async function MarketingDetail({
   );
 
   // The one main button, in the bottom bar. Starting needs nothing else, so it sends the form (id act-mk) straight away;
-  // answering, approving, scheduling, sending a draft and marking it as marketed need fields, so the bar jumps to their own panel (`decide`).
+  // answering, approving, scheduling, sending a draft and marking it done need fields, so the bar jumps to their own panel (`decide`).
   const jump = (label: string) => (
     <Button href="#request-decide" variant="primary" icon="chevD">
       {label}
@@ -209,7 +215,7 @@ export default async function MarketingDetail({
         : can("sendProof")
           ? { title: "Send for approval", button: "Send for approval" }
           : !can("start") && can("finish")
-            ? { title: "Mark as marketed", button: "Mark as marketed" }
+            ? { title: "Mark it done", button: "Mark it done" }
             : null;
   const barMain = ownPanel ? (
     jump(ownPanel.button)
@@ -232,7 +238,7 @@ export default async function MarketingDetail({
             {statusText(mc)}
           </Pill>
         }
-        lead={[t.label, mc.committee, `from ${requester}`, due && `needed by ${fmtDay(due)}`]}
+        lead={[typeLabel, mc.committee, `from ${requester}`, due && `needed by ${fmtDay(due)}`]}
         steps={stepsFor(mc, { today })}
         next={nextStepText(mc, viewer, names, { today })}
         sent={sent === "1"}
@@ -251,29 +257,18 @@ export default async function MarketingDetail({
     if (!event) return null;
     const e = event.event;
     const b = e.isPublic ? e.brief : undefined;
-    const when = e.recur ? `${recurText(e.date, e.recur)}, from ${dayText(e.dates[0] ?? e.date)}` : dayText(e.dates[0] ?? e.date);
     return (
       <>
         <LinkCards label="The event" compact>
-          <LinkCard href={`/events/${event.id}`} icon="calendar" accent="events" title={`For event: ${event.title} · ${dayText(e.dates[0] ?? e.date)}`}>
-            {[e.committeeName, when, `${timeText(e.start)}–${timeText(e.end)}`].join(" · ")}
+          <LinkCard href={`/events/${event.id}`} icon="calendar" accent="events" title={`For event: ${event.title} · ${dayText(firstDate(event))}`}>
+            {[e.committeeName, whenText(event), `${timeText(e.start)}–${timeText(e.end)}`].join(" · ")}
           </LinkCard>
         </LinkCards>
         {(b || eventImages.length > 0) && (
           <Panel title="From the event">
             <div className="stack">
               {b && (
-                <KeyValue
-                  stacked
-                  items={[
-                    { label: "Subtitle", value: b.subtitle },
-                    { label: "Announcement", value: b.text && <span className="pre">{b.text}</span> },
-                    { label: "On the flyer", value: b.flyer && <span className="pre">{b.flyer}</span> },
-                    { label: "Registration", value: b.regLink },
-                    { label: "Payment", value: b.payment && <span className="pre">{b.payment}</span> },
-                    { label: "Files", value: b.files && <a href={b.files} target="_blank" rel="noreferrer">Drive folder</a> },
-                  ]}
-                />
+                <BriefFields brief={b} stacked />
               )}
               {eventImages.length > 0 && <FileList files={eventImages.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty="No images yet." />}
               <p className="hint">Changes on the event show here too. Images are added on the event&apos;s page.</p>
@@ -316,7 +311,7 @@ export default async function MarketingDetail({
     const lead = own
       ? `Look at the draft, then approve it or ask for changes at the end of this page by ${by}. With no answer by then, marketing can go ahead.`
       : late
-        ? `${names(mc.ownerEmail)} didn't answer by ${by}. You can go ahead and mark it as marketed without their approval.`
+        ? `${names(mc.ownerEmail)} didn't answer by ${by}. You can go ahead and mark it done without their approval.`
         : `Waiting on ${names(mc.ownerEmail)} to approve it or ask for changes, until ${by}. After that, marketing can go ahead without their approval.`;
     return (
       <Panel title={own ? "Marketing's draft for you to approve" : "Draft sent for approval"} right={proof.length ? `${proof.length}` : undefined}>
@@ -377,22 +372,28 @@ export default async function MarketingDetail({
     // The requester approves marketing's draft (shown at the top of the page) or asks for changes.
     if (can("approve")) {
       return (
-        <form id="act-mk" action={actOnMarketing} className="stack">
-          {base}
-          <div className={styles.answerBox}>
-            <Field label="What should change?" hint="Only needed if you ask for changes. Marketing sees it on the request.">
-              <textarea name="note" rows={3} maxLength={2000} />
-            </Field>
-          </div>
-          <div className="row">
+        <div className="stack">
+          <form id="act-mk" action={actOnMarketing} className="row">
+            {base}
             <Button type="submit" name="action" value="approve" variant="primary">
               Approve
             </Button>
-            <Button type="submit" name="action" value="changes">
-              Ask for changes
-            </Button>
-          </div>
-        </form>
+          </form>
+          <Disclosure summary="Ask for changes" button="quiet">
+            <form action={actOnMarketing} className="stack">
+              {base}
+              <input type="hidden" name="action" value="changes" />
+              <div className={styles.answerBox}>
+                <Field label="What should change?" hint="Marketing sees it on the request and sends you a new draft." required>
+                  <textarea name="note" rows={3} maxLength={2000} required />
+                </Field>
+              </div>
+              <div>
+                <Button type="submit">Send to marketing</Button>
+              </div>
+            </form>
+          </Disclosure>
+        </div>
       );
     }
 
@@ -441,10 +442,10 @@ export default async function MarketingDetail({
             </Field>
           </div>
           <div className="row">
-            {/* Start is the bar's one-tap button; Mark as marketed is this panel's main button when there's nothing to start. */}
+            {/* Start is the bar's one-tap button; Mark it done is this panel's main button when there's nothing to start. */}
             {finishing && (
               <Button type="submit" name="action" value="finish" variant={can("start") ? "default" : "primary"}>
-                Mark as marketed
+                Mark it done
               </Button>
             )}
             {can("reschedule") && (

@@ -1,5 +1,5 @@
 /**
- * Events & Rooms rules: series, room checks, review and who hears what.
+ * Events & Rooms rules: series, availability checks, review and who hears what.
  * Run with `npm test`.
  */
 import { test } from "node:test";

@@ -12,7 +12,7 @@
 import { preview } from "../comments";
 import { fmtDayTime } from "../format";
 import { type Notice, type Recipient, commentNotices } from "../notices";
-import { approvalDue, channelText, isWorkStage, longDay, type Actor, type MarketingCard } from "./workflow";
+import { approvalDue, channelText, holderOf, isWorkStage, longDay, teamContact, type Actor, type MarketingCard } from "./workflow";
 import { same } from "../text";
 
 const TEAM: Recipient = { role: "marketing" };
@@ -35,7 +35,7 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
   const m = after.marketing;
   const was = before?.marketing.stage;
   // Whoever has the work, or the whole team if nobody does.
-  const assignee: Recipient = m.assignee ? { email: m.assignee } : TEAM;
+  const assignee = teamContact(after);
 
   if (!before) {
     add(TEAM, `New marketing request: ${what}.`, true);
@@ -86,29 +86,12 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
   return out;
 }
 
-/** Who the request is with right now: the team, the person working on it, or the requester. */
-function nextActor(c: MarketingCard): Recipient | null {
-  switch (c.marketing.stage) {
-    case "review":
-      return TEAM;
-    case "scheduled":
-    case "doing":
-    case "ready":
-      return c.marketing.assignee ? { email: c.marketing.assignee } : TEAM;
-    case "question":
-    case "proof":
-      return { email: c.ownerEmail };
-    default:
-      return null;
-  }
-}
-
 /**
  * A new comment: the requester, whoever the request is with, and earlier
  * commenters hear about it in the portal. No alert: a comment asks nothing
  * of anyone by itself.
  */
 export function marketingCommentNotices(card: MarketingCard, by: Actor, text: string): Notice[] {
-  const next = nextActor(card);
+  const next = holderOf(card);
   return commentNotices(card, by, text, { href: `/marketing/${card.id}`, what: label(card), also: next ? [next] : [] });
 }

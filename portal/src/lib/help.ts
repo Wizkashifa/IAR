@@ -215,10 +215,10 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "For the marketing team",
         steps: [
           "Open Marketing Requests and click Team work. It lists every open request, each event's marketing pieces among them, newest first.",
-          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, Waiting on approval, Waiting on the requester, or By event to see each event's pieces together.",
+          "Filter it: New, Nobody has it, Assigned to me, Scheduled, In progress, Waiting on approval or Waiting on the requester. Pick By event to see each event's pieces together.",
           "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
           "When the draft is ready, click Send for approval and add the files. The requester has until the same time on the next business day to answer.",
-          "Once they approve it (or don't answer in time), click Mark as marketed and tick where it went out.",
+          "Once they approve it (or don't answer in time), click Mark it done and tick where it went out.",
           "Older events may still have a Marketing task: take it, start it and mark it done with a note for the requester.",
         ],
       },

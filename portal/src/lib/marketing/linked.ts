@@ -22,34 +22,23 @@
  * them and save what they return (lib/marketing/pieces.ts).
  */
 import type { CardStatus } from "../cards";
-import type { Notice, Recipient } from "../notices";
-import type { EventCard } from "../events/workflow";
+import type { Notice } from "../notices";
+import { type EventCard, firstDate } from "../events/workflow";
 import { dayText } from "../events/series";
 import { addDays, todayLocal } from "../dates";
 import { andList, same } from "../text";
 import { historyEntry, type Permission } from "../workflow-core";
-import { eventPartOf, pieceTitle, type ParsedMarketing } from "./forms";
-import { OPEN_STAGES, cancelWithEvent, isWorkStage, newMarketing, type Actor, type MarketingCard } from "./workflow";
-
-/** A piece is due this many days before the event's first date, unless the requester picks another day. */
-export const PIECE_LEAD_DAYS = 10;
+import { PIECE_LEAD_DAYS, eventPartOf, piecePartOf, pieceTitle, type ParsedMarketing } from "./forms";
+import { OPEN_STAGES, cancelWithEvent, isWorkStage, newMarketing, teamContact, type Actor, type MarketingCard } from "./workflow";
 
 /** What a piece's page and row say while its event isn't approved yet. */
 export const EVENT_NOT_APPROVED = "Event not approved yet";
 
-const TEAM: Recipient = { role: "marketing" };
-
 /** Event statuses a piece can be added in: submitted, in review (or sent back for changes) and approved. */
 const ADDABLE: CardStatus[] = ["submitted", "in_review", "changes_requested", "approved"];
 
-/** Whether the event is approved (or already over), so its marketing can go out. */
-export const eventApproved = (event: EventCard) => event.status === "approved" || event.status === "close_out" || event.status === "closed";
-
 /** Whether a piece should say "Event not approved yet": its event is still in review or sent back. */
 export const waitsOnEvent = (event: EventCard | null | undefined) => Boolean(event && (event.status === "submitted" || event.status === "in_review" || event.status === "changes_requested"));
-
-/** The event's first date. */
-const firstDate = (event: EventCard) => event.event.dates[0] ?? event.event.date;
 
 /** Whether this card is a piece of marketing linked to the event. */
 export const isPieceOf = (card: MarketingCard, eventId: string) => card.marketing.eventCardId === eventId;
@@ -112,9 +101,6 @@ export function autoPiece(before: EventCard | null, after: EventCard, pieces: Ma
   return buildPiece(after, { answers }, `Flyer and announcement: ${after.title}`, "Portal", `Added when ${after.id} was approved`, now);
 }
 
-/** Who has an open piece now: whoever on the team is working on it, or the whole team. */
-const holderOf = (p: MarketingCard): Recipient => (p.marketing.assignee ? { email: p.marketing.assignee } : TEAM);
-
 /** What changed on the event that marketing cares about, in words ("the date and the time"). */
 export function eventChanges(before: EventCard, after: EventCard): string[] {
   const a = before.event;
@@ -141,7 +127,7 @@ export function piecesAfterEventChange(before: EventCard | null, after: EventCar
   const out: { pieces: MarketingCard[]; notices: Notice[] } = { pieces: [], notices: [] };
   if (!before || open.length === 0) return out;
   const what = `${after.id} “${after.title}”`;
-  const notice = (p: MarketingCard, text: string, alert: boolean): Notice => ({ to: holderOf(p), cardId: p.id, href: `/marketing/${p.id}`, text, alert, delegable: false });
+  const notice = (p: MarketingCard, text: string, alert: boolean): Notice => ({ to: teamContact(p), cardId: p.id, href: `/marketing/${p.id}`, text, alert, delegable: false });
 
   const ended = after.status === "cancelled" || after.status === "denied";
   if (ended && before.status !== after.status) {
@@ -156,8 +142,7 @@ export function piecesAfterEventChange(before: EventCard | null, after: EventCar
   const when = after.event.dates.length ? ` It's now on ${after.event.dates.length > 1 ? `${after.event.dates.length} dates from ` : ""}${dayText(firstDate(after))}.` : "";
   for (const p of open) {
     if (renamed && eventPartOf(p.title) === before.title) {
-      const prefix = p.title.includes(": ") ? p.title.slice(0, p.title.indexOf(": ")) : p.title;
-      out.pieces.push({ ...p, title: `${prefix}: ${after.title}`, updatedAt: now });
+      out.pieces.push({ ...p, title: `${piecePartOf(p.title)}: ${after.title}`, updatedAt: now });
     }
     out.notices.push(notice(p, `${what} changed ${andList(changes)}.${changes.some((c) => c.startsWith("the date")) ? when : ""} Check that ${p.id} “${p.title}” still fits.`, true));
   }
@@ -173,7 +158,7 @@ export function piecesAfterEventChange(before: EventCard | null, after: EventCar
 function cancelPieces(open: MarketingCard[], now: string, why: string, because: string): { pieces: MarketingCard[]; notices: Notice[] } {
   return {
     pieces: open.map((p) => cancelWithEvent(p, now, why)),
-    notices: open.map((p) => ({ to: holderOf(p), cardId: p.id, href: `/marketing/${p.id}`, text: `${p.id} “${p.title}” is cancelled: ${because}. Nothing more to do.`, alert: isWorkStage(p.marketing.stage), delegable: false })),
+    notices: open.map((p) => ({ to: teamContact(p), cardId: p.id, href: `/marketing/${p.id}`, text: `${p.id} “${p.title}” is cancelled: ${because}. Nothing more to do.`, alert: isWorkStage(p.marketing.stage), delegable: false })),
   };
 }
 

@@ -6,14 +6,11 @@
  * be tested.
  */
 import type { Role } from "../org";
-import { planTasks } from "./tasks";
+import { TEAM_WORK_HREF, planTasks } from "./tasks";
 import type { EventTask, TaskTeam } from "./types";
 import type { EventCard } from "./workflow";
 
 export type QueueItem = { card: EventCard; task: EventTask; overdue: boolean };
-
-/** Where each team works its event tasks. */
-export const TEAM_WORK_HREF: Record<TaskTeam, string> = { marketing: "/marketing?view=team", av: "/it-maintenance?view=team" };
 
 /**
  * Where an old Team Queues link goes: to the team it names, or else to the
@@ -36,26 +33,14 @@ export function queueItems(cards: EventCard[], team: TaskTeam, today: string): Q
     .sort((a, b) => a.task.dueDate.localeCompare(b.task.dueDate) || a.card.id.localeCompare(b.card.id) || a.task.id.localeCompare(b.task.id));
 }
 
-/**
- * What the queue shows by default: everything due by `horizon` (two weeks
- * out), plus the next task of every event, so a weekly series shows its next
- * date instead of all of them.
- */
-export function nearTerm(items: QueueItem[], horizon: string): QueueItem[] {
-  const seen = new Set<string>();
-  return items.filter((x) => {
-    const first = !seen.has(x.card.id);
-    seen.add(x.card.id);
-    return first || x.task.dueDate <= horizon;
-  });
-}
+/** When something last happened on the task: its last step, or the event's last change. */
+export const taskAt = (q: Pick<QueueItem, "card" | "task">) => q.task.history.at(-1)?.at ?? q.card.updatedAt;
 
 /** The team's most recently finished tasks. */
 export function recentlyDone(cards: EventCard[], team: TaskTeam, limit = 10): QueueItem[] {
-  const at = (t: EventTask) => t.history[t.history.length - 1]?.at ?? "";
   return cards
     .flatMap((card) => (card.event.tasks ?? []).filter((t) => t.team === team && t.status === "done").map((task) => ({ card, task, overdue: false })))
-    .sort((a, b) => at(b.task).localeCompare(at(a.task)))
+    .sort((a, b) => taskAt(b).localeCompare(taskAt(a)))
     .slice(0, limit);
 }
 

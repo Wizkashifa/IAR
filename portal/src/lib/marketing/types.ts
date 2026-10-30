@@ -28,7 +28,7 @@ export const STAGE_LABEL: Record<MarketingStage, string> = {
   question: "Waiting on the requester",
   scheduled: "Scheduled",
   doing: "In progress",
-  proof: "Waiting on the requester's approval",
+  proof: "Waiting on approval",
   ready: "Approved",
   done: "Done",
   declined: "Declined",
@@ -91,7 +91,7 @@ export type MarketingDetails = {
   proofNote?: string;
   /** What the requester asked to change in the last draft, until a new one is sent. */
   changesAsked?: string;
-  /** Where it went out, when marketing marked it as marketed. */
+  /** Where it went out, when marketing marked it done. */
   channels?: Channel[];
   /** A note or link marketing left when it finished. */
   doneNote?: string;

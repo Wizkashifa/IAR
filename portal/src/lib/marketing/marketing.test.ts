@@ -49,7 +49,7 @@ function approvedDraft(c: wf.MarketingCard, by: wf.Actor = mk, at = T(3)): wf.Ma
   return wf.approve(wf.sendProof(started, by, at, DRAFT), owner, at);
 }
 
-/** Marked as marketed after the requester approved the draft. */
+/** Marked done after the requester approved the draft. */
 const marketed = (c: wf.MarketingCard, by: wf.Actor = mk, at = T(3)) => wf.finish(approvedDraft(c, by, at), by, at);
 
 const SHORT_LINK: Partial<MarketingInput> = { kind: "redirect", answers: { from: "raleighmasjid.org/rooms", to: "https://forms.gle/example" } };
@@ -282,7 +282,7 @@ test("work: start, change the date, finish", () => {
   assert.equal(wf.permission(s, mk, "finish").ok, false, "a graphic needs the requester's approval");
   const link = wf.finish(wf.schedule(submitted(SHORT_LINK), mk, T(1), "2026-11-04"), mk, T(2));
   assert.equal(link.marketing.stage, "done");
-  assert.equal(link.marketing.history.at(-1)?.action, "Marked as marketed (nothing to approve)");
+  assert.equal(link.marketing.history.at(-1)?.action, "Marked done (nothing to approve)");
   assert.equal(wf.permission(submitted(), mk, "finish").ok, false);
 });
 
@@ -586,7 +586,7 @@ test("approval: the team sends a draft with at least one file; it waits on the r
   assert.deepEqual(p.marketing.files, [{ name: "flyer.png", size: 2000, at: T(3), by: mk2.email, proof: true }]);
   assert.deepEqual(wf.latestProof(p.marketing).map((f) => f.name), ["flyer.png"]);
   assert.deepEqual(p.marketing.history.at(-1), { by: mk2.email, at: T(3), action: "Sent for approval", note: "Two colour options.\nflyer.png" });
-  assert.equal(STAGE_LABEL.proof, "Waiting on the requester's approval");
+  assert.equal(STAGE_LABEL.proof, "Waiting on approval");
   assert.ok(wf.OPEN_STAGES.includes("proof") && wf.OPEN_STAGES.includes("ready"));
 });
 
@@ -618,7 +618,7 @@ test("approval: only the requester approves or asks for changes, and changes nee
   assert.equal(filesOf(again.marketing).length, 2, "earlier drafts stay on the request");
 });
 
-test("mark as marketed: after approval, with where it went out", () => {
+test("mark it done: after approval, with where it went out", () => {
   const ok = wf.approve(wf.sendProof(inProgress(), mk2, T(3), DRAFT), volunteer, T(4));
   assert.equal(wf.permission(ok, volunteer, "finish").ok, false, "the marketing team marks it");
   assert.throws(() => wf.finish(ok, mk2, T(4), "", ["newsletter", "billboard"]), /billboard/);
@@ -626,14 +626,14 @@ test("mark as marketed: after approval, with where it went out", () => {
   assert.equal(f.marketing.stage, "done");
   assert.deepEqual(f.marketing.channels, ["newsletter", "screens", "instagram"], "in the list's order");
   assert.equal(f.marketing.doneNote, "https://instagram.com/p/1");
-  assert.deepEqual(f.marketing.history.at(-1), { by: mk2.email, at: T(4), action: "Marked as marketed", note: "Went out on Newsletter, Lobby screens and Instagram.\nhttps://instagram.com/p/1" });
+  assert.deepEqual(f.marketing.history.at(-1), { by: mk2.email, at: T(4), action: "Marked done", note: "Went out on Newsletter, Lobby screens and Instagram.\nhttps://instagram.com/p/1" });
   // Nothing posted (a badge or a sign): no channels needed.
   assert.equal(wf.finish(ok, mk2, T(4)).marketing.channels, undefined);
   assert.equal(wf.channelText(["website"]), "Website");
   assert.equal(wf.channelText([]), "");
 });
 
-test("mark as marketed: without an answer, the same time on the next business day", () => {
+test("mark it done: without an answer, the same time on the next business day", () => {
   // Sent Thursday 10 AM: marketing can go ahead Friday 10 AM.
   const p = wf.sendProof(inProgress(), mk2, T(0), DRAFT);
   assert.equal(wf.approvalDue(p.marketing), T(1));

@@ -6,8 +6,8 @@
  * request linked to the event (lib/marketing/linked.ts). Older events keep
  * their Marketing task until the team finishes it.
  * A series gets one task per team for the whole series. Tasks for teams that
- * no longer get them (Security's, on older events) are left on the card but
- * never shown or counted.
+ * no longer get them (Security's, on older events) are never shown, counted
+ * or worked, and drop off the card the next time its tasks are synced.
  * Before approval the tasks are shown as locked ("Unlocks on approval").
  * Cancelling the event drops them. Plain functions so they can be tested.
  */
@@ -24,6 +24,9 @@ import { historyEntry } from "../workflow-core";
 export const TASK_TEAMS: TaskTeam[] = ["marketing", "av"];
 
 export const TEAM_NAME: Record<TaskTeam, string> = { marketing: "Marketing", av: "A/V" };
+
+/** Where each team works its event tasks. */
+export const TEAM_WORK_HREF: Record<TaskTeam, string> = { marketing: "/marketing?view=team", av: "/it-maintenance?view=team" };
 
 /** A task for a team that still gets tasks (not one left from a team that no longer does). */
 export const isTeamTask = (t: EventTask) => (TASK_TEAMS as string[]).includes(t.team);
@@ -93,8 +96,7 @@ export function taskUnlockNotices(before: EventCard | null, after: EventCard): N
     out.push({
       to: { role: team },
       cardId: after.id,
-      // Marketing works from Marketing Requests; A/V from IT & Maintenance.
-      href: team === "marketing" ? "/marketing?view=team" : "/it-maintenance?view=team",
+      href: TEAM_WORK_HREF[team],
       text: `${after.id} “${after.title}” is approved. New ${TEAM_NAME[team]} task: ${task.title}. Due ${dayText(task.dueDate)}.`,
       alert: true,
       delegable: false,

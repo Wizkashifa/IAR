@@ -7,6 +7,9 @@
 import { MARKETING_KINDS, type MarketingKind } from "./types";
 import { daysBetween, isDate } from "../dates";
 
+/** A piece for an event is due this many days before the event's first date, unless the requester picks another day. */
+export const PIECE_LEAD_DAYS = 10;
+
 export type FieldKind = "textarea" | "date" | "url" | "text" | "radio";
 
 export type MarketingField = {
@@ -134,7 +137,7 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     fields: [
       { key: "piece", label: "What do you need?", kind: "radio", required: true, options: PIECES },
       { key: "desc", label: "What it's for and any special asks", kind: "textarea", hint: "Marketing already sees the event's details, brief and images. Add only what's special about this piece: size, wording, where it goes." },
-      { key: "due", label: "When is it needed by?", kind: "date", required: true, hint: "Marketing takes 1–2 weeks. We suggest 10 days before the event." },
+      { key: "due", label: "When is it needed by?", kind: "date", required: true, hint: `Marketing takes 1–2 weeks. We suggest ${PIECE_LEAD_DAYS} days before the event.` },
     ],
   },
 };
@@ -147,6 +150,9 @@ export const pieceTitle = (piece: string | undefined, eventTitle: string) => `${
 
 /** The event's part of a piece's title. */
 export const eventPartOf = (title: string) => (title.includes(": ") ? title.slice(title.indexOf(": ") + 2) : title);
+
+/** The piece's part of its title ("Flyer"). */
+export const piecePartOf = (title: string) => (title.includes(": ") ? title.slice(0, title.indexOf(": ")) : title);
 
 /** The words for a piece ("Social media posts"). */
 export const pieceLabel = (piece: string | undefined) => PIECES.find((p) => p.value === piece)?.label ?? "Marketing";
@@ -166,6 +172,7 @@ export const isMarketingKind = (k: unknown): k is MarketingKind => typeof k === 
 
 /** Marketing usually takes 1–2 weeks; a request needed sooner than this gets a warning. */
 export const LEAD_DAYS = 14;
+
 
 const MAX: Record<FieldKind, number> = { textarea: 5000, text: 200, url: 500, date: 10, radio: 20 };
 export const NOTES_MAX = 2000;

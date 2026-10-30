@@ -27,7 +27,7 @@ const SCREENS = [
   { name: "Marketing request in progress", path: "/marketing/MK-1002", as: "marketing" },
   { name: "Marketing draft to approve", path: "/marketing/MK-1005", as: "member" },
   { name: "Marketing request marketed", path: "/marketing/MK-1006", as: "chair" },
-  { name: "Marketing team work by event", path: "/marketing?view=team&f=event", as: "marketing" },
+  { name: "Marketing team work by event", path: "/marketing?view=team&layout=event", as: "marketing" },
   { name: "Add a marketing piece", path: "/marketing/new?event=EV-1101", as: "chair" },
   { name: "Marketing piece for an event", path: "/marketing/MK-1053", as: "chair" },
   { name: "IT & Maintenance", path: "/it-maintenance", as: "facilities" },

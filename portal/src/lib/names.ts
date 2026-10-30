@@ -4,6 +4,7 @@ import { delegatedToken } from "./google";
 import { directory } from "./groups";
 import { type NameResolver, NameCache, makeNameResolver, prettifyEmail } from "./name-cache";
 import { isPillarGroup, isTeamGroup } from "./teams";
+import type { PersonOption } from "@/components/PeoplePicker";
 
 /**
  * People's names instead of their addresses, read from IAR's Workspace
@@ -71,3 +72,8 @@ export async function nameResolver(emails: string[]): Promise<NameResolver> {
 }
 
 export { type NameResolver, makeNameResolver, prettifyEmail } from "./name-cache";
+
+/** People a task or request can be handed to, by name, with "Me (…)" for the person looking. */
+export function peopleOptions(emails: string[], me: string, names: (email: string) => string): PersonOption[] {
+  return emails.map((e) => ({ email: e, name: e.toLowerCase() === me.toLowerCase() ? `Me (${names(e)})` : names(e) }));
+}

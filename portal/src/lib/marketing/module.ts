@@ -13,7 +13,7 @@ import { same } from "../text";
 import { fmtDayTime } from "../format";
 import { canViewMarketing } from "./access";
 import { STAGE_LABEL, type MarketingStage } from "./types";
-import { type MarketingCard, approvalDue, isMarketingCard, needsApproval, permission, shortDay } from "./workflow";
+import { type MarketingCard, TEAM_STAGES, approvalDue, holderOf, isMarketingCard, needsApproval, permission, shortDay } from "./workflow";
 
 /** The step each stage is on. */
 const STEP_OF: Record<MarketingStage, string> = {
@@ -72,24 +72,12 @@ function marketingNeeds(card: MarketingCard, v: NeedsViewer): boolean {
   const m = card.marketing;
   if (permission(card, v, "schedule").ok) return true; // a new request, for anyone on the team but the requester
   if (permission(card, v, "approve").ok) return true; // the requester, with a draft to approve
-  return (m.stage === "scheduled" || m.stage === "doing" || m.stage === "ready") && same(m.assignee, v.email);
+  return TEAM_STAGES.includes(m.stage) && same(m.assignee, v.email);
 }
 
 function holder(card: MarketingCard): Holder | null {
-  const m = card.marketing;
-  switch (m.stage) {
-    case "review":
-    case "scheduled":
-      return { to: [{ role: "marketing" }], step: STAGE_LABEL[m.stage] };
-    case "doing":
-    case "ready":
-      return { to: [m.assignee ? { email: m.assignee } : { role: "marketing" }], step: STAGE_LABEL[m.stage] };
-    case "question":
-    case "proof":
-      return { to: [{ email: card.ownerEmail }], step: STAGE_LABEL[m.stage] };
-    default:
-      return null;
-  }
+  const to = holderOf(card);
+  return to ? { to: [to], step: STAGE_LABEL[card.marketing.stage] } : null;
 }
 
 /** The list pill: what's needed from you, or who has it (see ModuleDef.rowStatus). */

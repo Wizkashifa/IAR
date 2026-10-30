@@ -1,4 +1,5 @@
-import type { Check } from "@/lib/events/types";
+import type { Check, MarketingBrief } from "@/lib/events/types";
+import { KeyValue } from "@/components/KeyValue";
 import { timeText } from "@/lib/events/series";
 import { Icon, type IconName } from "@/components/Icon";
 import styles from "./events.module.css";
@@ -94,5 +95,22 @@ export function Timeline({ items, request, caption, legend = true }: { items: Ti
         </ul>
       )}
     </div>
+  );
+}
+
+/** An event's marketing brief, on the event's page and on each of its marketing pieces. */
+export function BriefFields({ brief, stacked }: { brief: MarketingBrief; stacked?: boolean }) {
+  return (
+    <KeyValue
+      stacked={stacked}
+      items={[
+        { label: "Subtitle", value: brief.subtitle },
+        { label: "Announcement", value: brief.text && <span className="pre">{brief.text}</span> },
+        { label: "On the flyer", value: brief.flyer && <span className="pre">{brief.flyer}</span> },
+        { label: "Registration", value: brief.regLink },
+        { label: "Payment", value: brief.payment && <span className="pre">{brief.payment}</span> },
+        { label: "Files", value: brief.files && <a href={brief.files} target="_blank" rel="noreferrer">Drive folder</a> },
+      ]}
+    />
   );
 }

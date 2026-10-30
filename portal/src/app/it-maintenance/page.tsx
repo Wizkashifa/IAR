@@ -36,7 +36,7 @@ const FILTERS: Filter[] = [
   { id: "late", label: "Late", test: (c, _me, now, today) => isOverdue(c, now, today) },
 ];
 
-type Search = { view?: string; layout?: string; team?: string; f?: string; av?: string; ok?: string; error?: string };
+type Search = { view?: string; layout?: string; team?: string; f?: string; ok?: string; error?: string };
 
 /** Ticket messages, and the ones for A/V's event tasks worked from Team tickets. */
 const MESSAGES = { ...FLASH, ...TASK_FLASH };
@@ -68,7 +68,6 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const qs = (over: Record<string, string>) => `/it-maintenance?${new URLSearchParams({ view: "team", layout, team, f: filter.id, ...over })}`;
   // A/V's event tasks, for the people who work them (and the office), unless only Facility Maintenance is picked.
   const showAv = onTeamTab && worksTeam("av", actor.roles) && team !== "facilities";
-  const avAll = sp.av === "all";
 
   const assignees = openTickets.map((c) => c.ticket.assigneeEmail).filter((e): e is string => Boolean(e));
   const names = await nameResolver([...emailsIn([...myTickets, ...following, ...queue]), ...assignees]);
@@ -93,7 +92,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
       {worker && (
         <Tabs
-          label="Show"
+          label="IT & Maintenance views"
           tabs={[
             { label: "Your requests", href: "/it-maintenance", on: !onTeamTab },
             { label: team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`, href: "/it-maintenance?view=team", on: onTeamTab, extra: teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill> },
@@ -107,7 +106,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
 
       {onTeamTab ? (
         <div className="stack">
-          {showAv && <AvTasks email={actor.email} roles={actor.roles} all={avAll} back={qs(avAll ? { av: "all" } : {})} allHref={qs({ av: "all" })} />}
+          {showAv && <AvTasks email={actor.email} roles={actor.roles} back={qs({})} />}
           <div className={styles.filterBar}>
             {teams.length > 1 && (
               <Chips label="Team" chips={(["all", ...teams] as const).map((t) => ({ label: t === "all" ? "Both teams" : TEAM_LABEL[t], href: qs({ team: t }), on: t === team }))} />

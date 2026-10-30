@@ -6,9 +6,8 @@ import { canRequestAgain, copiedNote, marketingAgain } from "@/lib/again";
 import { cardStore } from "@/lib/cards";
 import { isMarketingCard } from "@/lib/marketing/workflow";
 import { MARKETING_TYPES, PICKER_KINDS, isMarketingKind } from "@/lib/marketing/forms";
-import { isEventCard } from "@/lib/events/workflow";
-import { dayText, recurText } from "@/lib/events/series";
-import { mayAddPiece, suggestedDue } from "@/lib/marketing/linked";
+import { isEventCard, whenText } from "@/lib/events/workflow";
+import { EVENT_NOT_APPROVED, mayAddPiece, suggestedDue, waitsOnEvent } from "@/lib/marketing/linked";
 import { actorFor } from "@/lib/people";
 import { notFound } from "next/navigation";
 import { canOpenCard } from "@/lib/access";
@@ -49,7 +48,7 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
       <div className="stack loose">
         <div className="stack tight">
           {crumb}
-          <ModuleHead accent="mkt" title="What do you need from marketing?" lead="Requests are reviewed and prioritized each week by the team that oversees IAR Marketing." />
+          <ModuleHead accent="mkt" title="What do you need from marketing?" lead="Someone on the marketing team picks up new requests as they come in." />
         </div>
         <Note>
           Marketing an event? Open it from <Link href="/events">Events &amp; Rooms</Link> and use <strong>Add a marketing piece</strong> in its Marketing section. Each piece (a flyer, posts, a video, a banner) stays linked to the event.
@@ -123,14 +122,14 @@ async function NewPiece({ eventId }: { eventId: string }) {
       </div>
     );
   }
-  const when = e.recur ? `${recurText(e.date, e.recur)}, from ${dayText(e.dates[0] ?? e.date)}` : dayText(e.dates[0] ?? e.date);
+  const when = whenText(card);
   return (
     <div className="stack loose">
       <div className="stack tight">
         {crumb}
         {head}
       </div>
-      {card.status !== "approved" && <Note>The event isn&apos;t approved yet. Marketing can start on this piece now, and it says “Event not approved yet” until it is.</Note>}
+      {waitsOnEvent(card) && <Note>The event isn&apos;t approved yet. Marketing can start on this piece now, and it says “{EVENT_NOT_APPROVED}” until it is.</Note>}
       <MarketingForm
         action={createMarketing}
         kind="event"

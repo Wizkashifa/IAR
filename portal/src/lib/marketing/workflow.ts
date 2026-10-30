@@ -6,11 +6,10 @@
  * The flow (docs/plan.md, Marketing requests): a new request waits for
  * someone on the marketing team to pick it up, as it comes in. They schedule
  * it with a done-by date, ask the requester a question (it comes back as new
- * when they answer),
- * or declines it with a reason. Scheduled work is started. Then marketing
- * sends the requester a draft to approve (everything but short links and
- * small website updates): the requester approves it or asks for changes,
- * and once it's approved marketing marks it as marketed, with where it went
+ * when they answer), or decline it with a reason. Scheduled work is started.
+ * Then marketing sends the requester a draft to approve (everything but short
+ * links and small website updates): the requester approves it or asks for
+ * changes, and once it's approved marketing marks it done, with where it went
  * out. If the requester doesn't answer by the same time on the next business
  * day, marketing can go ahead without their approval.
  *
@@ -26,6 +25,7 @@
  * - Every step is written to the card's history.
  */
 import type { Card, CardStatus } from "../cards";
+import type { Recipient } from "../notices";
 import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, eventPartOf, neededBy, pieceTitle, titleFor, type ParsedMarketing } from "./forms";
@@ -81,6 +81,24 @@ export const OPEN_STAGES: MarketingStage[] = ["review", "question", "scheduled",
 /** Stages where the marketing team has the work: someone may be on it, with a done-by date. */
 export const WORK_STAGES: MarketingStage[] = ["scheduled", "doing", "proof", "ready"];
 export const isWorkStage = (stage: MarketingStage) => WORK_STAGES.includes(stage);
+/** Stages where it's the team's turn on scheduled work: scheduled, in progress, approved and ready to go out. */
+export const TEAM_STAGES: MarketingStage[] = ["scheduled", "doing", "ready"];
+/** Stages where it's the requester's turn: a question to answer or a draft to approve. */
+export const REQUESTER_STAGES: MarketingStage[] = ["question", "proof"];
+
+const TEAM: Recipient = { role: "marketing" };
+
+/** Whoever on the team has the request, or the whole team if nobody does. */
+export const teamContact = (card: MarketingCard): Recipient => (card.marketing.assignee ? { email: card.marketing.assignee } : TEAM);
+
+/** Who the request is with now: the team while it's new, whoever on the team has it, or the requester. Null once it's closed. */
+export function holderOf(card: MarketingCard): Recipient | null {
+  const stage = card.marketing.stage;
+  if (stage === "review") return TEAM;
+  if (TEAM_STAGES.includes(stage)) return teamContact(card);
+  if (REQUESTER_STAGES.includes(stage)) return { email: card.ownerEmail };
+  return null;
+}
 
 // ---- Approval ----------------------------------------------------------------
 
@@ -211,7 +229,7 @@ export function permission(card: MarketingCard, actor: Actor, action: Action, no
 }
 
 /**
- * Marking it as marketed: once the requester approved the draft; straight
+ * Marking it done: once the requester approved the draft; straight
  * from scheduled or in progress for kinds with nothing to approve; or, while
  * the requester has the draft, once they haven't answered by the same time
  * on the next business day.
@@ -451,7 +469,7 @@ export function askChanges(card: MarketingCard, actor: Actor, now: string, note:
 }
 
 /**
- * Marketing marks it as marketed: where it went out (none for a badge or a
+ * Marketing marks it done: where it went out (none for a badge or a
  * sign) and an optional note or link. Going ahead while the requester still
  * has the draft says so in the history.
  */
@@ -467,8 +485,8 @@ export function finish(card: MarketingCard, actor: Actor, now: string, note?: st
     was.stage === "proof" && due
       ? `Went ahead without the requester's approval (no answer by ${fmtDayTime(due)})`
       : was.stage === "ready"
-        ? "Marked as marketed"
-        : "Marked as marketed (nothing to approve)";
+        ? "Marked done"
+        : "Marked done (nothing to approve)";
   const said = [picked.length ? `Went out on ${channelText(picked)}.` : undefined, n].filter(Boolean).join("\n") || undefined;
   const m: MarketingDetails = {
     ...moved(was, "done", now),

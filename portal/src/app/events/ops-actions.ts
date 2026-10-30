@@ -29,7 +29,7 @@ function withResult(back: string, key: "ok" | "error", value: string): string {
 }
 
 /**
- * Load the card, change it and save it. A task or a room check doesn't depend
+ * Load the card, change it and save it. A task doesn't depend
  * on the rest of the card, so if someone else saved it at the same moment it
  * tries once more on the fresh card.
  */

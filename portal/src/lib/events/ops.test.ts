@@ -10,10 +10,10 @@ import { parsePurchaseInput, type PurchaseInput } from "../purchases/input";
 import { campusesOf, runSheetRows } from "../runsheet";
 import { closeOutNotices, closeOutPermission, dueForCloseOut, linkedPurchases, markNudged, needsNudge, spendOf, startCloseOut, submitCloseOut } from "./closeout";
 import { linkableEvents } from "./link";
-import { TEAM_WORK_HREF, lockedCount, nearTerm, queueItems, recentlyDone, retiredQueueHref } from "./queues";
+import { lockedCount, queueItems, recentlyDone, retiredQueueHref } from "./queues";
 import { type GoogleRoom, mergeRooms } from "./rooms";
 import type { BusyItem } from "./rules";
-import { TaskError, actOnTask, assignTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
+import { TEAM_WORK_HREF, TaskError, actOnTask, assignTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
 import { addImages, imagesPermission } from "./images";
 import type { EventInput, EventTask } from "./types";
 import * as wf from "./workflow";
@@ -96,7 +96,6 @@ test("tasks: a Security task left on an older event isn't shown or worked", () =
   const withOld = { ...ok, event: { ...ok.event, tasks: [...ok.event.tasks!, old] } };
   assert.deepEqual(tasksFor(withOld).map((t) => t.team), ["av"]);
   assert.equal(taskPermission(withOld, old.id, office, "done").ok, false);
-  assert.deepEqual(queueItems([withOld], "av", "2026-10-23").length, 1);
 });
 
 test("tasks: locked until approval, added as to-do on approval, dropped on cancel", () => {
@@ -228,11 +227,6 @@ test("queues: old Team Queues links go to each team's page; open tasks soonest f
   assert.equal(mk[0].overdue, false, "marketing is due by the event, Nov 7");
   assert.equal(lockedCount(cards, "av"), 1);
   assert.deepEqual(recentlyDone(cards, "av").map((x) => x.card.id), [finished.id]);
-
-  const farther = approved(full({ date: "2026-12-19" }));
-  const all = queueItems([later, sooner, farther], "av", "2026-10-23");
-  const near = nearTerm(all, "2026-11-06");
-  assert.deepEqual(near.map((x) => x.task.dueDate), ["2026-11-07", "2026-12-05", "2026-12-19"], "each event's next task shows, even past two weeks");
 });
 
 // ---- Run sheet -----------------------------------------------------------------

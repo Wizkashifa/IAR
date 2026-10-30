@@ -35,6 +35,12 @@ export function isEventCard(c: Card | null | undefined): c is EventCard {
   return Boolean(c && c.type === "event" && c.event);
 }
 
+/** The event's first date (a series' first date it still has). */
+export const firstDate = (card: EventCard) => card.event.dates[0] ?? card.event.date;
+
+/** "Sat, Nov 28", or for a series "Every Saturday, from Sat, Nov 28". */
+export const whenText = (card: EventCard) => (card.event.recur ? `${recurText(card.event.date, card.event.recur)}, from ${dayText(firstDate(card))}` : dayText(firstDate(card)));
+
 export const STAGE_LABEL: Record<EventStage, string> = {
   slot: "Waiting on a room answer",
   director: "Director review",
@@ -166,7 +172,7 @@ export function withStage(card: EventCard, e0: EventDetails, now: string, direct
   next.waitingOn = waitingOnFor(next, directors);
   next.title = e.title;
   next.committee = e.committeeName;
-  next.eventDate = e.dates[0] ?? e.date;
+  next.eventDate = firstDate(next);
   next.searchText = [e.description.slice(0, 300), e.setupNotes].join(" ");
   return next;
 }

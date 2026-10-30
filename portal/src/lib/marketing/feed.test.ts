@@ -39,7 +39,7 @@ test("feed: requests in every open stage and event tasks, newest activity first"
 });
 
 test("feed: each filter", () => {
-  assert.deepEqual(FEED_FILTERS.map((f) => f.id), ["all", "new", "unassigned", "mine", "scheduled", "doing", "approval", "waiting", "event"]);
+  assert.deepEqual(FEED_FILTERS.map((f) => f.id), ["all", "new", "unassigned", "mine", "scheduled", "doing", "approval", "waiting"]);
   assert.deepEqual(only("all"), ids(items));
   assert.deepEqual(only("new"), ["EV-1", "MK-1"], "new requests, and event tasks nobody has taken");
   assert.deepEqual(only("unassigned"), ["EV-1", "MK-1"], "waiting on the requester (a question or a draft) isn't the team's to pick up");
@@ -48,7 +48,7 @@ test("feed: each filter", () => {
   assert.deepEqual(only("doing"), ["MK-2", "EV-2", "MK-6"], "approved work still to send out is in progress");
   assert.deepEqual(only("approval"), ["MK-5", "MK-7"]);
   assert.deepEqual(only("waiting"), ["MK-3"]);
-  assert.deepEqual(only("event"), ["EV-1", "EV-2"], "an older event's Marketing task is for its event");
+  assert.deepEqual(items.filter((x) => eventOf(x)).map((x) => (x.kind === "task" ? x.item.card.id : x.card.id)), ["EV-1", "EV-2"], "an older event's Marketing task is for its event");
   assert.equal(feedFilter("nonsense").id, "all");
 });
 

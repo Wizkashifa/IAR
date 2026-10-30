@@ -225,7 +225,7 @@ export async function editMarketing(id: string, expected: string, prev: Marketin
 
 const marketing = { path: "/marketing", is: wf.isMarketingCard };
 
-/** Schedule, ask, decline, start, hand to someone, change the date, approve or ask for changes, mark as marketed, answer or cancel. */
+/** Schedule, ask, decline, start, hand to someone, change the date, approve or ask for changes, mark it done, answer or cancel. */
 export async function actOnMarketing(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
