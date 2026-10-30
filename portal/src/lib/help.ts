@@ -226,12 +226,12 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
   {
     key: "it-maintenance",
-    title: "AV/IT/Maintenance",
+    title: "Report a problem",
     summary: "Report anything broken or needed in the building, IT or A/V, and follow it until it's fixed.",
     href: "/it-maintenance",
     module: "it-maintenance",
     short: [
-      "Click AV/IT/Maintenance and choose the team: building and maintenance, or IT, A/V and tech.",
+      "Click Report a problem and choose the team: building and maintenance, or IT, A/V and tech.",
       "Say where it is, what's wrong and how urgent it is. A photo often saves the team a trip.",
       "The team picks it up and you can follow it here. When they mark it fixed, check it and confirm, or say it's not fixed.",
     ],
@@ -239,7 +239,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Report something",
         steps: [
-          "Open IT & Maintenance and click AV/IT/Maintenance.",
+          "Open IT & Maintenance and click Report a problem.",
           "Choose the team: building and maintenance, or IT, A/V and tech.",
           "Say what you need in a few words, then where it is and the details: what happened, when, and anything you already tried.",
           "Add a photo if you can. On a phone you can take one straight from the form.",
@@ -290,7 +290,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     href: "/requests",
     module: "my-requests",
     short: [
-      "Everything you've asked for is here: events, payments, marketing and AV/IT/Maintenance.",
+      "Everything you've asked for is here: events, payments, marketing and IT & Maintenance.",
       "Needs you is at the top: something sent back, a question, or an event to close out.",
       "Waiting on others shows who has it now. Done is folded away at the bottom.",
     ],

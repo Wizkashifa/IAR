@@ -33,15 +33,15 @@ const SCREENS = [
   { name: "IT & Maintenance", path: "/it-maintenance", as: "facilities" },
   { name: "IT & Maintenance team tickets", path: "/it-maintenance?view=team", as: "facilities" },
   { name: "Event A/V ticket", path: "/it-maintenance/TK-1055", as: "it" },
-  { name: "New AV/IT/Maintenance", path: "/it-maintenance/new", as: "member" },
+  { name: "Report a problem", path: "/it-maintenance/new", as: "member" },
   { name: "Ticket", path: "/it-maintenance/TK-1003", as: "facilities" },
   { name: "My work today", path: "/it-maintenance/today", as: "facilities" },
   { name: "Preventive schedules", path: "/it-maintenance/schedules", as: "facilities" },
   { name: "IT & Maintenance A/V", path: "/it-maintenance?view=team", as: "it" },
   { name: "My work today A/V", path: "/it-maintenance/today", as: "it" },
-  { name: "Run sheet", path: "/run-sheet", as: "office" },
-  { name: "What's stuck", path: "/stuck", as: "office" },
-  { name: "Who's who", path: "/teams", as: "chair" },
+  { name: "Run Sheet", path: "/run-sheet", as: "office" },
+  { name: "What's Stuck", path: "/stuck", as: "office" },
+  { name: "Who's Who", path: "/teams", as: "chair" },
   { name: "Library", path: "/library", as: "chair" },
   { name: "Help", path: "/help", as: "member" },
   { name: "Search", path: "/search?q=youth", as: "chair" },
@@ -50,7 +50,7 @@ const SCREENS = [
   { name: "Out of office", path: "/away", as: "chair" },
   { name: "Feedback", path: "/feedback", as: "member" },
   { name: "Portal Settings", path: "/admin", as: "admin" },
-  { name: "Portal measures", path: "/measures", as: "executive" },
+  { name: "Portal Measures", path: "/measures", as: "executive" },
 ];
 
 const BASE = `http://localhost:${process.env.PORT || 3000}`;

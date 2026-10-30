@@ -1,3 +1,4 @@
+import { slotAsksFor } from "@/lib/needs-you";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
@@ -37,7 +38,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     actorFor(viewer),
     store.listByOwner(viewer.email),
     store.listByType("event", ["submitted", "in_review", "approved"]),
-    (await slotRequestStore()).listWaitingOn(addressesOf(viewer)),
+    // Only the asks this person can decide, as on Home, so the two counts agree.
+    (await slotRequestStore()).listWaitingOn(addressesOf(viewer)).then((a) => slotAsksFor(a, ev)),
     agendaBetween(date, date),
   ]);
   const events = open.filter(isEventCard);

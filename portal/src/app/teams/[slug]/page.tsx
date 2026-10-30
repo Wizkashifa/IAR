@@ -24,7 +24,7 @@ async function findTeam(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { team } = await findTeam((await params).slug);
-  return { title: team ? `${team.name} · Who's who` : "Who's who" };
+  return { title: team ? `${team.name} · Who's Who` : "Who's Who" };
 }
 
 export default async function TeamPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string }> }) {
@@ -57,7 +57,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
   return (
     <>
-      <Crumb trail={[{ href: "/teams", label: "Who's who" }]} here={team.pillar} />
+      <Crumb trail={[{ href: "/teams", label: "Who's Who" }]} here={team.pillar} />
       <ModuleHead
         title={team.name}
         lead={team.description ?? "What this team handles hasn't been written yet."}
@@ -118,7 +118,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               {team.slug === "marketing"
                 ? "Send a marketing request: graphics, signs, announcements, webpages and more. Someone on the team picks up new requests as they come in."
                 : team.slug === "maintenance" || team.slug === "tech"
-                  ? "Send an AV/IT/Maintenance request. It goes to the right team, and you can follow it until it's done."
+                  ? "Use Report a problem on IT & Maintenance. It goes to the right team, and you can follow it until it's done."
                   : "Most things go through an event request (a program or a room) or a payment request (paying for something). For anything else, contact the chair."}
             </p>
           </Panel>
@@ -128,7 +128,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               <Panel title="What the team handles" right="You can change this">
                 <form action={saveTeamInfo} className="stack">
                   <input type="hidden" name="slug" value={team.slug} />
-                  <Field label="In a sentence or two" hint="Shown in Who's who and searched when someone asks “who handles…?”. Up to 300 characters." htmlFor="team-desc">
+                  <Field label="In a sentence or two" hint="Shown in Who's Who and searched when someone asks “who handles…?”. Up to 300 characters." htmlFor="team-desc">
                     <textarea id="team-desc" name="description" rows={3} maxLength={300} defaultValue={team.description ?? ""} />
                   </Field>
                   <Field label="Google Chat space link (optional)" hint="Open the team's space in Google Chat and copy its link." htmlFor="team-chat">

@@ -24,7 +24,7 @@ import styles from "./stuck.module.css";
 import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "What's stuck" };
+export const metadata: Metadata = { title: "What's Stuck" };
 
 /** The edge and the days pill: red over a week, gold 3–7 days, blue under 3. */
 const AGE_STATE: Record<AgeGroup, RowState> = { week: "bad", days: "act", recent: "wait" };
@@ -119,7 +119,7 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="stack">
-      <ModuleHead title="What's stuck" lead="Every open request, longest wait first: how long it has waited at its step, and who it's waiting on. A reminder goes to them in Google Chat." />
+      <ModuleHead title="What's Stuck" lead="Every open request, longest wait first: how long it has waited at its step, and who it's waiting on. A reminder goes to them in Google Chat." />
       <FlashNote ok={sp.sent ? "sent" : undefined} error={sp.error} messages={{ sent: "Reminder sent. It's in the request's history." }} />
 
       <div className={styles.filters}>

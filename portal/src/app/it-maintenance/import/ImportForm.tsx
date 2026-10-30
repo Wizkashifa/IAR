@@ -97,7 +97,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
         {p.problems.length > 0 && (
           <>
             <h2>Rows that can&apos;t come over ({p.problems.length})</h2>
-            <p className="hint">Fix these in Jira and export again, or add them by hand with “AV/IT/Maintenance request”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
+            <p className="hint">Fix these in Jira and export again, or add them by hand with “Report a problem”. Row numbers are as a spreadsheet shows them (row 1 is the header).</p>
             <DataTable framed>
                 <thead>
                   <tr>

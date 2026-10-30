@@ -99,7 +99,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "run-sheet",
-    nav: "Run sheet",
+    nav: "Run Sheet",
     name: "Daily Run Sheet",
     summary: "One printable page of what's happening where, per day and campus.",
     visibleTo: ["member"],
@@ -112,7 +112,7 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "whats-stuck",
-    nav: "What's stuck",
+    nav: "What's Stuck",
     name: "What's Stuck",
     summary: "Every open request by how long it has waited, who it's waiting on, and a reminder button.",
     visibleTo: ["office", "executive", "admins"],
@@ -180,8 +180,8 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "whos-who",
-    nav: "Who's who",
-    name: "Who's who",
+    nav: "Who's Who",
+    name: "Who's Who",
     summary: "Every committee and team, who leads it, and how to ask it for something.",
     visibleTo: ["member"],
     phase: 2,
@@ -191,8 +191,8 @@ export const MODULES: PortalModule[] = [
   },
   {
     id: "measures",
-    nav: "Portal measures",
-    name: "Portal measures",
+    nav: "Portal Measures",
+    name: "Portal Measures",
     summary: "How the portal is being used: requests sent, how long each step takes, what's sent back, and feedback.",
     visibleTo: ["executive", "admins"],
     phase: 2,
