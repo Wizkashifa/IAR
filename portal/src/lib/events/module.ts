@@ -15,6 +15,8 @@ import { andList, same } from "../text";
 import { canViewEvent } from "./access";
 import { lastDate } from "./closeout";
 import { TEAM_NAME as TASK_TEAM_NAME, isTeamTask } from "./tasks";
+import { changeApprovers, changePermission } from "./reschedule";
+import { dayText, timeText } from "./series";
 import { type EventCard, STAGE_LABEL, isEventCard, permission, reviewersFor } from "./workflow";
 
 function eventSteps(card: EventCard, o: StepOptions): Steps {
@@ -74,6 +76,12 @@ function eventNext(card: EventCard, viewer: Viewer, names: NameOf, o: StepOption
         ? "You give final approval as an executive. Then the room is confirmed on the IAR calendar and the teams get their tasks."
         : `An executive gives final approval. Then the room is confirmed on the IAR calendar and the teams get their tasks.${notified}`;
     case "approved": {
+      if (e.change) {
+        const who = changeApprovers(card, o.directors ?? []);
+        const one = who.some((d) => same(d, viewer.email)) || (!who.length && !mine && (viewer.actingRoles ?? []).includes("executive"));
+        const approver = who.length ? `${s.anyOf(who)} (director)` : one ? "You" : "An executive";
+        return `${approver} ${one ? "approve" : "approves"} the new time, ${dayText(e.change.date)}, ${timeText(e.change.start)}–${timeText(e.change.end)}. Until then the approved time stays booked.${notified}`;
+      }
       // Only teams that still get tasks: an older event's Security task isn't anyone's to do.
       const open = (e.tasks ?? []).filter((t) => isTeamTask(t) && t.status !== "done").map((t) => TASK_TEAM_NAME[t.team]);
       const teams = open.length ? `${andList(open)} ${open.length > 1 ? "get" : "gets"} it ready. ` : "";
@@ -86,7 +94,7 @@ function eventNext(card: EventCard, viewer: Viewer, names: NameOf, o: StepOption
 
 function eventNeeds(card: EventCard, v: NeedsViewer, ctx: NeedsContext): boolean {
   const directors = ctx.directorsOf?.(card.event.committeeGroup) ?? [];
-  return permission(card, v, "approve", directors).ok;
+  return permission(card, v, "approve", directors).ok || changePermission(card, v, directors).ok;
 }
 
 function holder(card: EventCard, ctx: StuckContext): Holder | null {
@@ -104,6 +112,11 @@ function holder(card: EventCard, ctx: StuckContext): Holder | null {
     }
     case "mission":
       return { to: [{ role: "executive" }], step: "Executive review" };
+    case "approved": {
+      if (!e.change) return null;
+      const who = changeApprovers(card, ctx.directorsOf?.(e.committeeGroup) ?? []);
+      return { to: who.length ? who.map((email) => ({ email })) : [{ role: "executive" }], step: "New time" };
+    }
     default:
       return null;
   }
@@ -119,6 +132,7 @@ function rowStatus(card: EventCard, state: RowState): string | undefined {
   if (reviewing && card.event.stage === "slot") return state === "act" ? "Needs your answer on the room" : "Waiting on a room answer";
   if (reviewing && card.event.stage === "director") return state === "act" ? "Needs your approval" : "With the director";
   if (reviewing && card.event.stage === "mission") return state === "act" ? "Needs your approval" : "With the executives";
+  if (card.status === "approved" && card.event.change) return state === "act" ? "Needs your approval of a new time" : "New time waiting for approval";
   if (card.status === "approved") return state === "act" ? "Needs you" : "Approved";
   return undefined;
 }

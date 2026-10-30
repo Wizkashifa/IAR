@@ -51,9 +51,43 @@ test("asks go to the owner and their committee's chair and vice chair", () => {
   assert.equal(r.holdKey, "card:EV-1031");
 });
 
-test("a calendar entry made outside the portal: its maker if they're at IAR, else the office", () => {
+test("a calendar entry made outside the portal has no owner here: the office answers for it, with its maker if they're at IAR", () => {
   assert.deepEqual(ask(calendarOnly, ["2026-11-05"]).askedOf, ["role:office"]);
-  assert.deepEqual(ask({ ...calendarOnly, organizerEmail: `secretary@${d}` }, ["2026-11-05"]).askedOf, [`secretary@${d}`]);
+  assert.deepEqual(ask({ ...calendarOnly, organizerEmail: `secretary@${d}` }, ["2026-11-05"]).askedOf, ["role:office", `secretary@${d}`]);
+  assert.equal(sr.offPortal(calendarOnly), true);
+  assert.equal(sr.offPortal(oneTime), false);
+});
+
+test("the office can answer any ask about a booking made off the portal, even one asked before the office answered for them", () => {
+  const old: sr.SlotRequest = { ...ask({ ...calendarOnly, organizerEmail: `secretary@${d}` }, ["2026-11-05"]), askedOf: [`secretary@${d}`], deciders: [`secretary@${d}`] };
+  assert.equal(sr.canDecide(old, office), true);
+  assert.equal(sr.canDecide(old, stranger), false);
+  // A portal booking still waits on its holder, not the office.
+  assert.equal(sr.canDecide(ask(oneTime, ["2026-11-07"]), office), false);
+  // The daily job sends it to the office, once.
+  assert.equal(sr.followUp(old, T(0)), "office");
+  const routed = sr.routeToOffice(old, T(0));
+  assert.deepEqual(routed.deciders.sort(), ["role:office", `secretary@${d}`].sort());
+  assert.equal(sr.followUp(routed, T(0)), null);
+  const n = sr.slotNotices(old, routed, "portal");
+  assert.deepEqual(n.map((x) => [x.to, x.alert]), [[{ role: "office" }, true]]);
+  assert.match(n[0].text, /booked on the IAR calendar/);
+});
+
+test("an ask nobody answers closes after 10 days, or a week before the event, and gives nothing up", () => {
+  const r = ask(oneTime, ["2026-11-07"]);
+  assert.equal(sr.closesOn(r), "2026-11-11");
+  assert.equal(sr.closesOn(r, "2026-11-14"), "2026-11-07");
+  assert.equal(sr.followUp(r, T(2), sr.SLOT_TIMING, { eventDate: "2026-11-30", today: "2026-11-03" }), null);
+  assert.equal(sr.followUp(r, T(2), sr.SLOT_TIMING, { eventDate: "2026-11-09", today: "2026-11-03" }), "expire");
+  assert.equal(sr.followUp(sr.escalate(r, dir, T(6)), T(10)), "expire");
+  const closed = sr.expire(r, T(10));
+  assert.equal(closed.status, "expired");
+  assert.equal(sr.isOpenAsk(closed), false);
+  assert.equal(sr.canDecide(closed, owner), false);
+  const n = sr.slotNotices(r, closed, "portal");
+  assert.ok(n.some((x) => "email" in x.to && x.to.email === requester.email && x.alert));
+  assert.ok(n.filter((x) => !("email" in x.to && x.to.email === requester.email)).every((x) => !x.alert));
 });
 
 test("your own booking, and dates it isn't booked, can't be asked for", () => {

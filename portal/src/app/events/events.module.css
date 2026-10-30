@@ -58,6 +58,8 @@
   .done { background: var(--accent); }
   .ask { border: 1px solid var(--gold); border-radius: var(--r-sm); padding: var(--s-3); background: var(--warn-soft); color: var(--ink); font-size: var(--t-md); display: grid; gap: var(--s-2); }
   .draft { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+  /* A suggested fix for a short overlap (QuickFixes in ui.tsx). */
+  .fixes { border: 1px solid var(--accent); border-radius: var(--r-sm); padding: var(--s-3); background: var(--accent-soft); color: var(--ink); font-size: var(--t-md); display: grid; gap: var(--s-2); }
 
   /* The request page */
   .about { white-space: pre-wrap; margin: 0; max-width: 60ch; }

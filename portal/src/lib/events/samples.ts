@@ -1,5 +1,8 @@
 import "server-only";
-import { roomCalendar } from "../calendar";
+import { roomCalendar, seedDevCalendar } from "../calendar";
+import { directory } from "../groups";
+import * as sr from "./slot-requests";
+import { slotRequestStore } from "./slot-requests-store";
 import type { Card } from "../cards";
 import { ORG } from "../org";
 import { DEV_ROOMS, DEV_ROOM_SETTINGS } from "../rooms-google";
@@ -162,12 +165,46 @@ export async function sampleEvents(): Promise<Card[]> {
   );
 
   const ctx = { rooms: mergeRooms(DEV_ROOMS, DEV_ROOM_SETTINGS), calendar: roomCalendar() } as EventContext;
+  const waiting = await waitingOnCalendarBooking(make, input, ctx, next(2, 15), at);
   const out: Card[] = [];
-  for (const c of [gameNight, halaqa, arabic, family, movie, parents, dinner, tonight]) out.push((await syncHolds(c, ctx)).card);
+  for (const c of [gameNight, halaqa, arabic, family, movie, parents, dinner, tonight, ...(waiting ? [waiting] : [])]) out.push((await syncHolds(c, ctx)).card);
   out.push(await linkedPurchase("EV-1105", at));
   out.push(...samplePieces(dinner, gameNight, at));
   out.push(...sampleAvTickets({ movie, halaqa, dinner }, ctx, at));
   return out;
+}
+
+/**
+ * A request whose setup runs 15 minutes into a meeting booked straight on
+ * the calendar, waiting on its ask for the time: the office answers for that
+ * booking, the ask closes if nobody does, and the requester is offered a
+ * one-click fix (start later, or a shorter setup).
+ */
+async function waitingOnCalendarBooking(
+  make: (id: string, i: EventInput, owner: wf.EventActor, daysAgo: number) => wf.EventCard,
+  input: (over: Partial<EventInput>) => EventInput,
+  ctx: EventContext,
+  date: string,
+  at: (daysAgo: number) => string,
+): Promise<wf.EventCard | null> {
+  seedDevCalendar(ctx.rooms, todayLocal());
+  const room = roomById(ctx.rooms, "dev-flex");
+  if (!room) return null;
+  const busy = (await ctx.calendar.listBusy([{ roomId: room.id, calendarId: room.calendarId }], date, date)).find((b) => b.label === "Staff meeting");
+  if (!busy?.eventId) return null;
+  const card = make("EV-1109", input({
+    ...{ committeeGroup: teamGroupEmail("Education", ORG.domain), committeeName: "Education" },
+    title: "Tutoring afternoon",
+    description: "Homework help for middle-school students with volunteer tutors: math, science and reading, in small groups. Parents can drop in to meet the tutors.",
+    date, start: "13:30", end: "16:00", setup: 30, teardown: 15, rooms: [room.id], attendance: 25,
+  }), volunteer, 2);
+  const hold: sr.Hold = { kind: "booking", label: busy.label, room: room.name, start: busy.start, end: busy.end, calendarEventId: busy.eventId, calendarId: room.calendarId, organizerEmail: busy.organizerEmail, seriesDates: [date] };
+  const slots = await slotRequestStore();
+  const r = sr.newSlotRequest({ fromCard: card.id, requester: volunteer, hold, dates: [date], reason: "It's the only afternoon our tutors are all free." }, await directory(), await slots.listForHold(sr.holdKeyOf(hold)), at(2));
+  if (!r.ok) return null;
+  const ask = await slots.create(r.value);
+  // Education has no director in the samples, so it goes to executive review once it has the time.
+  return wf.submit(card, volunteer, [], at(2), { waitingOnAsk: ask.id });
 }
 
 /**

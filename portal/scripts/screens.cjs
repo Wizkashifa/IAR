@@ -11,6 +11,8 @@ const SCREENS = [
   { name: "New event", path: "/events/new", as: "chair" },
   { name: "Event request", path: "/events/EV-1101", as: "chair" },
   { name: "Event with marketing pieces", path: "/events/EV-1107", as: "chair" },
+  { name: "Event waiting on a room answer", path: "/events/EV-1109", as: "member" },
+  { name: "Change date or time", path: "/events/EV-1102/reschedule", as: "member" },
   { name: "Calendar", path: "/calendar", as: "chair" },
   { name: "Find a room", path: "/calendar/find?date=2026-11-07&start=18:00&end=20:00&people=60&food=1", as: "chair" },
   { name: "Purchases", path: "/purchases", as: "chair" },

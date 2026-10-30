@@ -235,6 +235,8 @@ export function seedDevCalendar(rooms: { id: string; calendarId: string; name: s
   add(cal(/A&B/), "Youth Basketball League", [next(6, 8)], "10:00", "13:00", "sports@dev.local");
   add(cal(/MPH B/), "Sisters' fitness", eventDates(next(0, 3), { freq: "weekly", until: addDays(next(0, 3), 56) }), "16:00", "18:00", "women@dev.local");
   add(cal(/Room 280/), "Shura meeting", [next(4, 11)], "19:00", "21:00", "shura@dev.local");
+  // Booked straight on the calendar by someone not on the portal: the office answers asks about it.
+  add(cal(/Community Flex Room/), "Staff meeting", [next(2, 15)], "11:30", "13:15", "staff@example.org");
   add(cal(/Room 250/), "Adult Quran class", eventDates(next(2, 1), { freq: "weekly", until: addDays(next(2, 1), 70) }), "19:30", "21:00", "education@dev.local");
 }
 

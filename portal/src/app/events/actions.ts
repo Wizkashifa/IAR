@@ -9,18 +9,20 @@ import { requireViewer, type Viewer } from "@/lib/viewer";
 import { type EventContext, busyFor, committeesFor, eventAccess, eventActor, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
-import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
+import { eventCommentNotices, eventNotices, rescheduleNotices } from "@/lib/events/notices";
+import * as rs from "@/lib/events/reschedule";
+import { timeText } from "@/lib/events/series";
 import { roomById } from "@/lib/events/rooms";
-import { type Clash, eventChecks } from "@/lib/events/rules";
-import { addDays } from "@/lib/dates";
+import { type Clash, type QuickFix, eventChecks, fixesText, quickFixes, ruleOn } from "@/lib/events/rules";
+import { addDays, daysBetween, isDate } from "@/lib/dates";
 import * as sr from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
-import type { Check, EventInput } from "@/lib/events/types";
+import type { Check, EventInput, TimeEdit } from "@/lib/events/types";
 import * as wf from "@/lib/events/workflow";
 import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 import { lc } from "@/lib/text";
 import { WorkflowError } from "@/lib/workflow-core";
-import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import { type ActionResult, actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
 import { filesFrom } from "@/lib/drive";
 import { checkFiles } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveEventImages } from "@/lib/marketing/drive";
@@ -33,7 +35,8 @@ import type { FormState } from "@/components/FormErrors";
 export type ClashView = { key: string; label: string; roomName: string; start: string; end: string; dates: string[]; kind: Clash["kind"]; askable: boolean; why?: string };
 export type TimelineView = { roomName: string; date: string; items: { start: string; end: string; label: string; kind: string }[]; request?: { start: string; end: string } };
 /** `timelines`: the day on each room asked for, in the order picked. */
-export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timelines: TimelineView[] };
+/** `fixes`: small changes that clear a short overlap ("Start at 1:45 PM"), with the sentence that offers them. */
+export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timelines: TimelineView[]; fixes?: QuickFix[]; fixText?: string };
 
 const nowIso = () => new Date().toISOString();
 
@@ -73,7 +76,23 @@ export async function checkDraft(raw: EventFormInput & { editing?: string }): Pr
   const input = draftInput(raw, { committees: committeesFor(viewer, ctx.dir), roomIds: ctx.bookable.map((r) => r.id) });
   if (!input) return { checks: [], clashes: [], timelines: [] };
   const editing = raw.editing ? await (await cardStore()).get(String(raw.editing)) : null;
-  const r = await checksFor(ctx, viewer, input, wf.isEventCard(editing) ? editing : undefined);
+  return draftResult(ctx, viewer, input, wf.isEventCard(editing) ? editing : null);
+}
+
+/** The live checks for the time form: the request as it is, with the new date and time. */
+export async function checkTime(id: string, edit: TimeEdit): Promise<DraftCheck> {
+  const viewer = await requireViewer();
+  const card = await (await cardStore()).get(id);
+  if (!wf.isEventCard(card) || !(await eventAccess(card, viewer)).open) return { checks: [], clashes: [], timelines: [] };
+  const form = new FormData();
+  for (const [k, v] of Object.entries(edit)) form.set(k, String(v));
+  const e = readEdit(form);
+  if (!e) return { checks: [], clashes: [], timelines: [] };
+  return draftResult(await eventContext(), viewer, { ...card.event, ...e }, card);
+}
+
+async function draftResult(ctx: EventContext, viewer: Viewer, input: EventInput, editing: wf.EventCard | null): Promise<DraftCheck> {
+  const r = await checksFor(ctx, viewer, input, editing ?? undefined);
   const clashes: ClashView[] = await Promise.all(
     r.clashes.map(async (c) => ({ key: c.key, label: c.label, roomName: roomById(ctx.rooms, c.roomId)?.name ?? "", start: c.start, end: c.end, dates: c.dates, kind: c.kind, ...(await askability(c, viewer)) })),
   );
@@ -95,7 +114,94 @@ export async function checkDraft(raw: EventFormInput & { editing?: string }): Pr
       .map((b) => ({ start: b.start, end: b.end, label: b.label, kind: b.kind }));
     return [{ roomName: room.name, date: day, items, request }];
   });
-  return { checks: r.checks, clashes, timelines };
+  const fixes = quickFixes(input, r.clashes, { rooms: ctx.rooms, busy: r.busy, excludeCard: wf.isEventCard(editing) ? editing.id : undefined });
+  return { checks: r.checks, clashes, timelines, fixes, fixText: fixesText(fixes, r.clashes.length) };
+}
+
+/** The new date and time from a form, checked for shape (the rules check the rest). */
+function readEdit(form: FormData): TimeEdit | null {
+  const date = String(form.get("date") ?? "");
+  const start = String(form.get("start") ?? "");
+  const end = String(form.get("end") ?? "");
+  const setup = Number(form.get("setup"));
+  const teardown = Number(form.get("teardown"));
+  const time = (t: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+  const mins = (n: number) => Number.isInteger(n) && n >= 0 && n <= 240;
+  if (!isDate(date) || !time(start) || !time(end) || !mins(setup) || !mins(teardown)) return null;
+  return { date, start, end, setup, teardown };
+}
+
+/**
+ * A new date or time from the requester. Before approval it takes effect
+ * once the checks pass: an ask whose clash is gone is withdrawn, and a
+ * request waiting on one goes on to review. After approval it waits for the
+ * director, and the approved time stays booked. A new clash stops it.
+ */
+async function rescheduled(card: wf.EventCard, edit: TimeEdit, viewer: Viewer, ctx: EventContext, now: string): Promise<ActionResult<wf.EventCard>> {
+  const actor = eventActor(viewer);
+  const leadRule = ruleOn(ctx.rules, "lead");
+  const p = rs.editPermission(card, actor, ctx.today, leadRule);
+  rs.checkEdit(card, edit, p);
+  if (leadRule && edit.date !== card.event.date && daysBetween(ctx.today, edit.date) < rs.DATE_LOCK_DAYS) throw new WorkflowError("Pick a date at least a week away, or contact the IAR office to move it sooner.");
+  const input: EventInput = { ...card.event, ...edit };
+  const r = await checksFor(ctx, viewer, input, card);
+  const others = r.checks.filter((c) => c.block && c.rule !== "IAR Google Calendar");
+  if (others.length) throw new WorkflowError(others.map((c) => c.text).join(" "));
+  const slots = await slotRequestStore();
+  const open = (await slots.listFromCard(card.id)).filter(sr.isOpenAsk);
+  const waiting = open.find((a) => a.id === card.event.waitingOnAsk);
+  // Still in the way of the same booking, on the same dates: it keeps waiting on that ask.
+  const keep = card.status !== "approved" && waiting && r.clashes.length === 1 && r.clashes[0].key === waiting.holdKey && r.clashes[0].dates.join() === waiting.dates.join() ? waiting : undefined;
+  if (r.clashes.length && !keep) {
+    const fixes = fixesText(quickFixes(input, r.clashes, { rooms: ctx.rooms, busy: r.busy, excludeCard: card.id }), r.clashes.length);
+    throw new WorkflowError(`That time is taken: ${r.clashes.map((c) => `${c.label}, ${timeText(c.start)}–${timeText(c.end)}`).join("; ")}. ${fixes || "Pick another time."}`);
+  }
+  const directors = ctx.directorsOf(card.event.committeeGroup);
+  if (card.status === "approved") {
+    const next = rs.requestChange(card, edit, actor, directors, now, r.checks);
+    return { next, notices: rescheduleNotices(card, next, actor, directors) };
+  }
+  const moved = rs.reschedule(card, edit, actor, directors, now, r.checks, { waitingOnAsk: keep?.id });
+  const synced = await syncHolds(moved, ctx);
+  const trouble = calendarTrouble(synced.card, synced.error);
+  return {
+    next: trouble.card,
+    notices: [...eventNotices(card, trouble.card, actor, directors), ...rescheduleNotices(card, trouble.card, actor, directors), ...trouble.notices],
+    // Once saved: asks the new time no longer needs are withdrawn, and marketing and A/V follow the new time.
+    after: async () => [...(await withdrawOpenAsks(card.id, actor, now, keep?.id, "Withdrawn: the new time no longer overlaps this booking")), ...(await syncLinked(card, trouble.card, actor))],
+  };
+}
+
+/** The time form: change the date, time, setup or cleanup. Problems stay on the form. */
+export async function rescheduleEvent(id: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const viewer = await requireViewer();
+  const edit = readEdit(form);
+  if (!edit) return { errors: ["Check the date and times."] };
+  const store = await cardStore();
+  const card = await store.get(id);
+  if (!wf.isEventCard(card)) return { errors: ["That request no longer exists."] };
+  if (String(form.get("expected") ?? "") !== card.updatedAt) return { errors: ["This request changed while you were looking at it. Reload the page and check it again."] };
+  const ctx = await eventContext();
+  let r: ActionResult<wf.EventCard>;
+  try {
+    r = await rescheduled(card, edit, viewer, ctx, nowIso());
+    await store.save(r.next, card.updatedAt);
+  } catch (err) {
+    if (err instanceof WorkflowError || err instanceof ConflictError) return { errors: [err.message] };
+    console.error("changing an event's time failed", err);
+    return { errors: ["Something went wrong. Nothing was changed."] };
+  }
+  const actor = eventActor(viewer);
+  let more: Notice[] = [];
+  try {
+    more = (r.after ? await r.after() : undefined) ?? [];
+  } catch (err) {
+    console.error("after changing an event's time", err);
+  }
+  await deliver([...r.notices, ...more], actor.email);
+  revalidatePath("/events");
+  revalidatePath(`/events/${id}`);
+  redirect(`/events/${id}?ok=${card.status === "approved" ? "change-asked" : "rescheduled"}`);
 }
 
 /** The Hold an ask is about, from the clash and its holder. */
@@ -299,7 +405,7 @@ export async function addEventImages(form: FormData): Promise<void> {
 
 const events = { path: "/events", is: wf.isEventCard, canOpen: async (card: wf.EventCard, viewer: Viewer) => (await eventAccess(card, viewer)).open };
 
-/** Approve, send back, deny or cancel. */
+/** Approve, send back, deny or cancel; change the time (a one-click fix), and approve, decline or withdraw a new time. */
 export async function actOnEvent(form: FormData): Promise<void> {
   const viewer = await requireViewer();
   const actor = eventActor(viewer);
@@ -318,7 +424,26 @@ export async function actOnEvent(form: FormData): Promise<void> {
       } else if (action === "return") next = wf.returnForChanges(card, actor, directors, now, note);
       else if (action === "deny") next = wf.deny(card, actor, directors, now, note);
       else if (action === "cancel") next = wf.cancel(card, actor, directors, now);
-      else return unknownAction();
+      else if (action === "reschedule") {
+        // A suggested fix, applied with one click from the request page.
+        const edit = readEdit(form);
+        if (!edit) throw new WorkflowError("Check the date and times.");
+        return rescheduled(card, edit, viewer, ctx, now);
+      } else if (action === "approve_change" || action === "decline_change" || action === "withdraw_change") {
+        if (action === "approve_change") {
+          const c = card.event.change;
+          const live = c ? (await checksFor(ctx, viewer, { ...card.event, ...rs.timeOf(c) }, card)).clashes : [];
+          if (live.length) throw new WorkflowError(`The new time now clashes with ${live.map((x) => x.label).join(", ")} on the room calendar. Decline it so the requester can pick another.`);
+        }
+        const changed = action === "approve_change" ? rs.approveChange(card, actor, directors, now, note || undefined) : action === "decline_change" ? rs.declineChange(card, actor, directors, now, note) : rs.withdrawChange(card, actor, directors, now);
+        const synced = action === "approve_change" ? await syncHolds(changed, ctx) : { card: changed };
+        const trouble = calendarTrouble(synced.card, synced.error);
+        return {
+          next: trouble.card,
+          notices: [...rescheduleNotices(card, trouble.card, actor, directors), ...trouble.notices],
+          after: async () => (action === "approve_change" ? await syncLinked(card, trouble.card, actor) : []),
+        };
+      } else return unknownAction();
       const synced = await syncHolds(next, ctx);
       const trouble = calendarTrouble(synced.card, synced.error);
       return {
@@ -331,7 +456,10 @@ export async function actOnEvent(form: FormData): Promise<void> {
   });
 }
 
-export async function actOnEventWith(action: wf.EventAction, form: FormData): Promise<void> {
+/** Everything the request page's buttons can ask actOnEvent to do. */
+export type EventPageAction = wf.EventAction | "reschedule" | "approve_change" | "decline_change" | "withdraw_change";
+
+export async function actOnEventWith(action: EventPageAction, form: FormData): Promise<void> {
   form.set("action", action);
   return actOnEvent(form);
 }
@@ -347,12 +475,14 @@ async function discardNew(id: string | null): Promise<void> {
   }
 }
 
-async function withdrawOpenAsks(cardId: string, actor: wf.EventActor, now: string): Promise<Notice[]> {
+/** Withdraws the card's open asks (but `keep`), with `why` in each ask's history. */
+async function withdrawOpenAsks(cardId: string, actor: wf.EventActor, now: string, keep?: string, why?: string): Promise<Notice[]> {
   const slots = await slotRequestStore();
   const out: Notice[] = [];
-  for (const a of (await slots.listFromCard(cardId)).filter(sr.isOpenAsk)) {
+  for (const a of (await slots.listFromCard(cardId)).filter((x) => sr.isOpenAsk(x) && x.id !== keep)) {
     const w = sr.withdraw(a, actor, now);
     if (!w.ok) continue;
+    if (why) w.value.history = [...w.value.history.slice(0, -1), { ...w.value.history[w.value.history.length - 1], text: why }];
     await slots.save(w.value, a.updatedAt);
     out.push(...sr.slotNotices(a, w.value, actor.email));
   }
@@ -403,7 +533,7 @@ export async function decideAsk(form: FormData): Promise<void> {
         notices.push({ to: { role: "office" }, href: `/events/${req.fromCard}`, cardId: req.fromCard, text: `${req.hold.label} gave up ${sr.datesText(req.dates)} for ${req.fromCard}, but the portal couldn't change the calendar entry. Please free those dates on the room calendar.`, alert: true, delegable: false });
       }
     }
-    // The requester's side: into mission review, or back to pick another time.
+    // The requester's side: on to review, or back to pick another time.
     const from = await store.get(req.fromCard);
     if (wf.isEventCard(from)) {
       const fd = ctx.directorsOf(from.event.committeeGroup);

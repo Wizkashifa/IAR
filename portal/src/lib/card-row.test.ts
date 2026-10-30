@@ -60,7 +60,7 @@ test("a finished request shows no one holding it", () => {
 });
 
 test("asks for a booked time go to whoever can answer them, oldest first", () => {
-  const base = { fromCard: "EV-1061", requesterEmail: "w@x.org", requesterName: "W", hold: {} as never, holdKey: "card:EV-1031", dates: ["2026-11-07"], reason: "", deciders: [], updatedAt: "", history: [] };
+  const base = { fromCard: "EV-1061", requesterEmail: "w@x.org", requesterName: "W", hold: { cardId: "EV-1031" } as never, holdKey: "card:EV-1031", dates: ["2026-11-07"], reason: "", deciders: [], updatedAt: "", history: [] };
   const asks: SlotRequest[] = [
     { ...base, id: "SR-2", askedOf: [chair.email], status: "open", askedAt: "2026-10-22T10:00:00Z" },
     { ...base, id: "SR-1", askedOf: [chair.email], status: "escalated", askedAt: "2026-10-20T10:00:00Z" },

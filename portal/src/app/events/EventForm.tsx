@@ -17,7 +17,7 @@ import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText } from "@/lib/events/series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "@/lib/events/types";
 import { type DraftCheck, checkDraft } from "./actions";
-import { ChecksList, Timeline, checksSummary } from "./ui";
+import { ChecksList, QuickFixes, Timeline, checksSummary } from "./ui";
 import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Checkbox, Choice, Choices } from "@/components/Choices";
@@ -443,7 +443,8 @@ export default function EventForm(p: EventFormProps) {
                 )}
               </div>
             ))}
-            {askable.length === 0 && result.clashes.length > 0 && <p className="hint">Pick another time or room.</p>}
+            <QuickFixes fixes={result.fixes} text={result.fixText} button={(f, label) => <Button size="small" onClick={() => update((x) => ({ ...x, ...f.edit }))}>{label}</Button>} />
+            {askable.length === 0 && result.clashes.length > 0 && !result.fixes?.length && <p className="hint">Pick another time or room.</p>}
           </div>
         </Panel>
         <Panel title="IAR calendar that day" className={styles.calendarPanel}>

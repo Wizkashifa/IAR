@@ -22,6 +22,7 @@ import { ORG, type Role } from "../org";
 import { eventDates, recurText, longDate, dayText } from "./series";
 import { keptTasks } from "./tasks";
 import type { Check, EventApproval, EventDetails, EventInput, EventStage } from "./types";
+import { STEP } from "../glossary";
 import { lc, same } from "../text";
 import { historyEntry, must, WorkflowError } from "../workflow-core";
 
@@ -54,19 +55,20 @@ export function eventChanges(before: EventCard, after: EventCard): string[] {
 /** "Sat, Nov 28", or for a series "Every Saturday, from Sat, Nov 28". */
 export const whenText = (card: EventCard) => (card.event.recur ? `${recurText(card.event.date, card.event.recur)}, from ${dayText(firstDate(card))}` : dayText(firstDate(card)));
 
+/** One name per stage, the same as the step bar's (STEP in lib/glossary.ts), on pills, notes and history alike. */
 export const STAGE_LABEL: Record<EventStage, string> = {
-  slot: "Waiting on a room answer",
-  director: "Director review",
-  mission: "Executive review",
-  approved: "Approved",
-  done: "Closed",
+  slot: STEP.roomAnswer,
+  director: STEP.director,
+  mission: STEP.executiveReview,
+  approved: STEP.approved,
+  done: STEP.closed,
 };
 
 /** The committee's directors who can review it: never the requester. */
 export const reviewersFor = (ownerEmail: string, directors: string[]) => directors.filter((d) => !same(d, ownerEmail));
 
-/** Where a submitted (or resubmitted) request goes first. */
-function firstStage(ownerEmail: string, directors: string[], o: { waitingOnAsk?: string; releasedFor?: string } = {}): EventStage {
+/** Where a submitted (or resubmitted) request goes first, and where one waiting on a room answer goes once it has the time. */
+export function firstStage(ownerEmail: string, directors: string[], o: { waitingOnAsk?: string; releasedFor?: string } = {}): EventStage {
   if (o.waitingOnAsk) return "slot";
   const reviewers = reviewersFor(ownerEmail, directors);
   if (o.releasedFor) return reviewers.length ? "director" : "approved";
@@ -95,15 +97,18 @@ export function waitingOnFor(card: EventCard, directors: string[] = []): string 
   if (card.status === "close_out") return "You: attendance and final costs";
   switch (e.stage) {
     case "slot":
-      return "An answer to your ask for a booked time";
+      return `${STEP.roomAnswer}: whoever holds the booked time`;
     case "director": {
       const who = reviewersFor(card.ownerEmail, directors);
       return `Director review${who.length ? `: ${who.join(", ")}` : ""}`;
     }
     case "mission":
       return "Executive review";
-    case "approved":
-      return undefined;
+    case "approved": {
+      if (!e.change) return undefined;
+      const who = reviewersFor(card.ownerEmail, directors);
+      return who.length ? `${STEP.director} of a new time: ${who.join(", ")}` : `${STEP.executiveReview} of a new time`;
+    }
     case "done":
       return undefined;
   }
@@ -189,7 +194,7 @@ export function withStage(card: EventCard, e0: EventDetails, now: string, direct
 }
 
 /** Dates of the event, without any it gave up. */
-const liveDates = (input: EventInput, released: string[] = []) => eventDates(input.date, input.recur).filter((d) => !released.includes(d));
+export const liveDates = (input: Pick<EventInput, "date" | "recur">, released: string[] = []) => eventDates(input.date, input.recur).filter((d) => !released.includes(d));
 
 /** "Submitted as a series: Every Tuesday, Nov 3 to Jan 26". */
 const submittedText = (input: EventInput) =>
@@ -222,7 +227,7 @@ export function submit(card: EventCard, actor: EventActor, directors: string[], 
     waitingOnAsk: o.waitingOnAsk,
     history: [...card.event.history, historyEntry(actor.email, now, submittedText(card.event), notes)],
   };
-  if (o.waitingOnAsk) e.history.push(historyEntry(actor.email, now, `Waiting for an answer to ${o.waitingOnAsk} before mission review`));
+  if (o.waitingOnAsk) e.history.push(historyEntry(actor.email, now, `Waiting for a room answer (${o.waitingOnAsk}) before ${STAGE_LABEL[firstStage(card.ownerEmail, directors)].toLowerCase()}`));
   return withStage(card, e, now, directors);
 }
 
@@ -300,10 +305,10 @@ export function resubmit(card: EventCard, edited: EventInput, actor: EventActor,
 
 // ---- After an ask for a booked time (slot-requests.ts) --------------------
 
-/** The holder gave the time up: the requester's card goes into mission review. */
+/** The holder gave the time up: the requester's card goes on to review (director, or executive when there's none). */
 export function slotGranted(card: EventCard, directors: string[], now: string, askId: string): EventCard {
   const stage = firstStage(card.ownerEmail, directors);
-  const e: EventDetails = { ...card.event, stage, stageSince: now, waitingOnAsk: undefined, history: [...card.event.history, historyEntry("portal", now, `The time was given up (${askId}). Sent to mission review`)] };
+  const e: EventDetails = { ...card.event, stage, stageSince: now, waitingOnAsk: undefined, history: [...card.event.history, historyEntry("portal", now, `The time was given up (${askId}). Sent to ${STAGE_LABEL[stage].toLowerCase()}`)] };
   return withStage(card, e, now, directors);
 }
 
