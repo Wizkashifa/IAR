@@ -12,12 +12,16 @@ import { type NameOf, type Steps, type Viewer, speaker, stopAt, track } from "..
 import { same } from "../text";
 import { canViewTicket } from "./access";
 import { STATUS_LABEL, TEAM_NAME as TICKET_TEAM_NAME } from "./types";
-import { AUTO_CLOSE_DAYS, type TicketCard, TEAM_ROLE, isTicketCard, onTeam } from "./workflow";
+import { AUTO_CLOSE_DAYS, type TicketCard, TEAM_ROLE, closesOnDone, isTicketCard, onTeam } from "./workflow";
+import { addDays, todayLocal } from "../dates";
+import { WEEK_DAYS } from "./today";
 
 function ticketSteps(card: TicketCard): Steps {
   const t = card.ticket;
-  const labels = [STEP.reported, STEP.pickedUp, STEP.beingWorkedOn, STEP.fixed, STEP.closed];
-  const at = { new: 1, assigned: 2, in_progress: 2, waiting_parts: 2, reopened: 2, resolved: 4, closed: 5, cancelled: 1 }[t.status];
+  // Preventive and event A/V tickets close when they're done: nobody confirms.
+  const closes = closesOnDone(t.kind);
+  const labels = closes ? [STEP.reported, STEP.pickedUp, STEP.beingWorkedOn, STEP.done] : [STEP.reported, STEP.pickedUp, STEP.beingWorkedOn, STEP.fixed, STEP.closed];
+  const at = { new: 1, assigned: 2, in_progress: 2, waiting_parts: 2, reopened: 2, resolved: 4, closed: closes ? 4 : 5, cancelled: 1 }[t.status];
   const steps = track(labels, at);
   if (t.status === "waiting_parts") return { steps, flag: { label: FLAG.waitingParts, tone: "warn" } };
   if (t.status === "reopened") return { steps, flag: { label: FLAG.reopened, tone: "warn" } };
@@ -33,7 +37,7 @@ function ticketNext(card: TicketCard, viewer: Viewer, names: NameOf): string {
   const who = (you: string, they: string) => (t.assigneeEmail ? s.does(t.assigneeEmail, you, they) : `${team} ${they}`);
   switch (t.status) {
     case "new":
-      return `${team} picks it up.${mine ? " You'll get a notification when it's fixed." : ""}`;
+      return `${team} picks it up.${mine ? ` You'll get a notification when it's ${closesOnDone(t.kind) ? "done" : "fixed"}.` : ""}`;
     case "assigned":
       return `${who("start", "starts")} the work.`;
     case "in_progress":
@@ -54,6 +58,8 @@ function ticketNext(card: TicketCard, viewer: Viewer, names: NameOf): string {
 function ticketNeeds(card: TicketCard, v: NeedsViewer): boolean {
   const t = card.ticket;
   if (!onTeam(v, t.team)) return false;
+  // An event's A/V waits on the team once its date is this week, as on My work today.
+  if (t.kind === "event" && (t.dueDate ?? "") > addDays(todayLocal(), WEEK_DAYS - 1)) return false;
   if (t.status === "new") return true;
   if (t.status === "assigned" || t.status === "in_progress" || t.status === "waiting_parts" || t.status === "reopened") return t.assigneeEmail ? same(t.assigneeEmail, v.email) : true;
   return false;

@@ -12,9 +12,12 @@ import type { HistoryEntry } from "../workflow-core";
 /** Which team works it. IT Services covers IT and A/V. */
 export type TicketTeam = "it" | "facilities";
 
-/** A problem (something broke), a request (something new), or preventive maintenance from a schedule. */
-/** Someone asked for it (broken or new, it goes to the same team), or a preventive schedule opened it. */
-export type TicketKind = "request" | "preventive";
+/**
+ * Someone asked for it (broken or new, it goes to the same team), a
+ * preventive schedule opened it, or an approved event that asked for A/V
+ * opened it (one per date, lib/tickets/event-av.ts).
+ */
+export type TicketKind = "request" | "preventive" | "event";
 
 export type Urgency = "low" | "normal" | "high" | "urgent";
 
@@ -80,6 +83,9 @@ export type TicketDetails = {
   labels?: string[];
   /** The preventive schedule that opened it. */
   scheduleId?: string;
+  /** Event A/V: the event it's for, and the date (YYYY-MM-DD) of that event this ticket covers. */
+  eventCardId?: string;
+  eventDate?: string;
   /** The first time someone on the team picked it up, started it or answered. */
   firstResponseAt?: string;
   resolvedAt?: string;
@@ -104,6 +110,7 @@ export const TEAM_CHOICE: Record<TicketTeam, { label: string; hint: string }> = 
 export const KIND_LABEL: Record<TicketKind, string> = {
   request: "Request",
   preventive: "Preventive maintenance",
+  event: "Event A/V",
 };
 
 export const STATUS_LABEL: Record<TicketStatus, string> = {

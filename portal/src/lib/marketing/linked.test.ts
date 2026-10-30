@@ -9,7 +9,7 @@ import type { CardStatus } from "../cards";
 import type { EventInput } from "../events/types";
 import * as ew from "../events/workflow";
 import { parseMarketingInput } from "./forms";
-import { EVENT_NOT_APPROVED, autoPiece, eventChanges, mayAddPiece, newPiece, pieceAddedNotices, piecesAfterEventChange, piecesOnEventDeleted, suggestedDue, waitsOnEvent } from "./linked";
+import { EVENT_NOT_APPROVED, autoPiece, mayAddPiece, newPiece, pieceAddedNotices, piecesAfterEventChange, piecesOnEventDeleted, suggestedDue, waitsOnEvent } from "./linked";
 import * as wf from "./workflow";
 
 const D = "x.org";
@@ -203,7 +203,7 @@ test("date, time or details changed: whoever has each open piece gets an alert; 
   const moved = ew.releaseToMove(ok, [], LATER, "SR-1001", ok.event.dates);
   const back = ew.resubmit(moved, { ...moved.event, date: "2026-11-28", start: "17:00" }, owner, [], LATER, []);
   assert.equal(back.status, "approved");
-  assert.deepEqual(eventChanges(ok, back), ["the date", "the time"]);
+  assert.deepEqual(ew.eventChanges(ok, back), ["the date", "the time"]);
   const r = piecesAfterEventChange(ok, back, [fresh, mine], LATER);
   assert.deepEqual(r.pieces, [], "nothing to save: same stage, same title");
   assert.deepEqual(r.notices.map((n) => ["email" in n.to ? n.to.email : n.to.role, n.alert, n.href]), [["marketing", true, `/marketing/${fresh.id}`], [mk.email, true, `/marketing/${mine.id}`]]);
@@ -218,7 +218,7 @@ test("a new event name goes into each open piece's title", () => {
   const renamed = ew.resubmit(sentBack, { ...sentBack.event, title: "Family Game Night" }, owner, [], LATER, []);
   const r = piecesAfterEventChange(sentBack, renamed, [auto], LATER);
   assert.deepEqual(r.pieces.map((p) => [p.title, p.marketing.stage]), [["Flyer and announcement: Family Game Night", "review"]]);
-  assert.deepEqual(eventChanges(sentBack, renamed), ["the name"]);
+  assert.deepEqual(ew.eventChanges(sentBack, renamed), ["the name"]);
   assert.equal(r.notices.length, 1);
 });
 

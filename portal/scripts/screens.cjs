@@ -32,6 +32,7 @@ const SCREENS = [
   { name: "Marketing piece for an event", path: "/marketing/MK-1053", as: "chair" },
   { name: "IT & Maintenance", path: "/it-maintenance", as: "facilities" },
   { name: "IT & Maintenance team tickets", path: "/it-maintenance?view=team", as: "facilities" },
+  { name: "Event A/V ticket", path: "/it-maintenance/TK-1055", as: "it" },
   { name: "New AV/IT/Maintenance", path: "/it-maintenance/new", as: "member" },
   { name: "Ticket", path: "/it-maintenance/TK-1003", as: "facilities" },
   { name: "My work today", path: "/it-maintenance/today", as: "facilities" },

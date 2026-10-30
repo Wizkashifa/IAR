@@ -78,7 +78,10 @@ export function ticketNotices(before: TicketCard | null, after: TicketCard, acto
       add(holder(after), `${what} was reopened: the reporter says it isn't fixed${said(t.reopenNote)}`, true);
       break;
     case "closed":
-      if (b.status === "resolved" && same(actor.email, after.ownerEmail)) {
+      if (t.kind === "event" && b.status !== "resolved") {
+        // An event's A/V, done: its requester hears what the team did.
+        add({ email: after.ownerEmail }, `${what}: the A/V team marked it done${said(t.resolutionNote)}`, false);
+      } else if (b.status === "resolved" && same(actor.email, after.ownerEmail)) {
         if (t.assigneeEmail) add({ email: t.assigneeEmail }, `${what}: ${t.reporterName} confirmed it's fixed. Thank you!`, false);
       } else if (b.status === "resolved") {
         add({ email: after.ownerEmail }, `${what} was closed: it was marked fixed a week ago and nobody reopened it.`, false);

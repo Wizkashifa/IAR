@@ -1,12 +1,13 @@
 /**
- * Each team's event tasks across every event card, soonest due first. A/V
- * works them from IT & Maintenance → Team tickets; Marketing from Marketing
+ * The Marketing and A/V tasks older events still have (new events get
+ * marketing requests and A/V tickets instead), soonest due first. A/V works
+ * them from IT & Maintenance → Team tickets; Marketing from Marketing
  * Requests → Team work (lib/marketing/feed.ts). Team Queues (/queues) is
  * retired, and its old links go to those pages. Plain functions so they can
  * be tested.
  */
 import type { Role } from "../org";
-import { TEAM_WORK_HREF, planTasks } from "./tasks";
+import { TEAM_WORK_HREF } from "./tasks";
 import type { EventTask, TaskTeam } from "./types";
 import type { EventCard } from "./workflow";
 
@@ -42,9 +43,4 @@ export function recentlyDone(cards: EventCard[], team: TaskTeam, limit = 10): Qu
     .flatMap((card) => (card.event.tasks ?? []).filter((t) => t.team === team && t.status === "done").map((task) => ({ card, task, overdue: false })))
     .sort((a, b) => taskAt(b).localeCompare(taskAt(a)))
     .slice(0, limit);
-}
-
-/** Tasks the team will get once events now in review are approved. */
-export function lockedCount(cards: EventCard[], team: TaskTeam): number {
-  return cards.filter((c) => c.status === "submitted" || c.status === "in_review").reduce((n, c) => n + planTasks(c.event, "locked").filter((t) => t.team === team).length, 0);
 }

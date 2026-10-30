@@ -20,7 +20,7 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG, type Role } from "../org";
 import { eventDates, recurText, longDate, dayText } from "./series";
-import { newlyUnlockedTeams, planTasks, syncTasks, teamList } from "./tasks";
+import { keptTasks } from "./tasks";
 import type { Check, EventApproval, EventDetails, EventInput, EventStage } from "./types";
 import { lc, same } from "../text";
 import { historyEntry, must, WorkflowError } from "../workflow-core";
@@ -37,6 +37,19 @@ export function isEventCard(c: Card | null | undefined): c is EventCard {
 
 /** The event's first date (a series' first date it still has). */
 export const firstDate = (card: EventCard) => card.event.dates[0] ?? card.event.date;
+
+/** What changed on the event that its marketing and A/V care about, in words ("the date and the time"). */
+export function eventChanges(before: EventCard, after: EventCard): string[] {
+  const a = before.event;
+  const b = after.event;
+  const out: string[] = [];
+  if (a.dates.join() !== b.dates.join()) out.push(b.dates.length > 1 ? "the dates" : "the date");
+  if (a.start !== b.start || a.end !== b.end) out.push("the time");
+  if (a.rooms.join() !== b.rooms.join()) out.push(b.rooms.length > 1 ? "the rooms" : "the room");
+  if (before.title !== after.title) out.push("the name");
+  if (a.description !== b.description || JSON.stringify(a.brief ?? null) !== JSON.stringify(b.brief ?? null) || a.isPublic !== b.isPublic) out.push("the details");
+  return out;
+}
 
 /** "Sat, Nov 28", or for a series "Every Saturday, from Sat, Nov 28". */
 export const whenText = (card: EventCard) => (card.event.recur ? `${recurText(card.event.date, card.event.recur)}, from ${dayText(firstDate(card))}` : dayText(firstDate(card)));
@@ -149,8 +162,8 @@ function mustDo(card: EventCard, actor: EventActor, action: EventAction, directo
 
 
 /**
- * Team tasks follow the card: an approved event gets the tasks it needs
- * (keeping any already worked on), and a cancelled or denied one has none.
+ * An older event's team tasks follow the card: approved, it keeps the ones
+ * it still needs; cancelled or denied, it has none.
  */
 function withTasks(e: EventDetails, status: CardStatus, now: string): EventDetails {
   if (status === "cancelled" || status === "denied") {
@@ -158,10 +171,8 @@ function withTasks(e: EventDetails, status: CardStatus, now: string): EventDetai
     const { tasks: _dropped, ...rest } = e;
     return { ...rest, history: _dropped.length ? [...e.history, historyEntry("portal", now, "Team tasks dropped")] : e.history };
   }
-  if (status !== "approved" || e.stage !== "approved") return e;
-  const tasks = syncTasks(e.tasks, planTasks(e), now);
-  const added = newlyUnlockedTeams(e.tasks, tasks);
-  return { ...e, tasks, history: added.length ? [...e.history, historyEntry("portal", now, `Team tasks unlocked: ${teamList(added)}`)] : e.history };
+  if (status !== "approved" || e.stage !== "approved" || !e.tasks) return e;
+  return { ...e, tasks: keptTasks(e) };
 }
 
 /** The card with new event details and status; also sets the fields lists and search read. Used by every transition. */

@@ -17,6 +17,12 @@ export type WhatsNew = {
 export const WHATS_NEW: WhatsNew[] = [
   {
     date: "2026-10-30",
+    title: "A/V for your event is a ticket",
+    text: "When an event that asked for A/V is approved, IT Services gets an A/V ticket for each date. Follow them from the event's A/V section: you hear when each one is done.",
+    href: "/events",
+  },
+  {
+    date: "2026-10-30",
     title: "Marketing pieces for your event",
     text: "Open your event and click Add a marketing piece for each thing you need: a flyer, social media posts, a video, a banner. Each piece has its own due date and page, and marketing sees the event's details and images. You can add them before the event is approved.",
     href: "/events",

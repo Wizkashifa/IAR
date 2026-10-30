@@ -16,7 +16,9 @@
  *   but doesn't do the work.
  * - Portal admins get no team powers for being admins: pass the person's own
  *   group roles (Viewer.actingRoles), as purchases do.
- * - Preventive tickets have no reporter to confirm, so resolving closes them.
+ * - Preventive and event A/V tickets have no reporter to confirm, so marking
+ *   them done closes them. An event A/V ticket follows its event: the event
+ *   being cancelled or moved cancels it, never its requester.
  * - Resolved tickets the reporter never confirms close themselves after
  *   7 days (the daily job).
  * - Every step is written to the ticket's history.
@@ -114,6 +116,8 @@ export function statusFor(s: TicketStatus): CardStatus {
 }
 
 export const isOpen = (t: TicketDetails) => t.status !== "closed" && t.status !== "cancelled";
+/** Preventive and event A/V tickets close when the team marks them done: nobody needs to confirm. */
+export const closesOnDone = (kind: TicketKind) => kind !== "request";
 /** With the team: not yet resolved, closed or cancelled. */
 export const withTeam = (t: TicketDetails) => isOpen(t) && t.status !== "resolved";
 
@@ -217,10 +221,12 @@ export function permission(card: TicketCard, actor: TicketActor, action: Action)
   switch (action) {
     case "confirm":
     case "reopen":
+      if (t.kind === "event") return no("This ticket closes when the A/V team marks it done.");
       if (!own) return no("Only the person who reported it can confirm the fix or reopen it.");
       if (t.status !== "resolved") return no("The team hasn't marked this fixed yet.");
       return { ok: true };
     case "cancel":
+      if (t.kind === "event") return no("This ticket follows its event: cancel the event, or give up the date, and it's cancelled too.");
       if (!own) return no("Only the person who reported it can cancel it.");
       if (t.status !== "new") return no(`${teamName[0].toUpperCase()}${teamName.slice(1)} has already picked this up. Add a comment if it's no longer needed.`);
       return { ok: true };
@@ -343,23 +349,23 @@ export function waitForParts(card: TicketCard, actor: TicketActor, now: string, 
   return withStatus(card, next, now);
 }
 
-/** Mark it fixed with a note saying what was done. Preventive tickets close; others wait for the reporter. */
+/** Mark it fixed with a note saying what was done. Preventive and event A/V tickets close; others wait for the reporter. */
 export function resolve(card: TicketCard, actor: TicketActor, now: string, note: string): TicketCard {
   mustDo(card, actor, "resolve");
   if (!note.trim()) throw new WorkflowError("Say what was done, so the reporter knows what to check.");
   const t = card.ticket;
-  const preventive = t.kind === "preventive";
+  const closes = closesOnDone(t.kind);
   const next: TicketDetails = {
     ...t,
     ...responded(t, card, actor, now),
-    status: preventive ? "closed" : "resolved",
+    status: closes ? "closed" : "resolved",
     statusSince: now,
     assigneeEmail: t.assigneeEmail ?? actor.email.toLowerCase(),
     watchers: addWatcher(t.watchers, t.assigneeEmail ?? actor.email),
     resolutionNote: note.trim(),
     resolvedAt: now,
-    closedAt: preventive ? now : undefined,
-    history: [...t.history, historyEntry(actor.email, now, preventive ? "Done" : "Marked fixed", note.trim())],
+    closedAt: closes ? now : undefined,
+    history: [...t.history, historyEntry(actor.email, now, closes ? "Done" : "Marked fixed", note.trim())],
   };
   return withStatus(card, next, now);
 }
@@ -395,6 +401,21 @@ export function cancel(card: TicketCard, actor: TicketActor, now: string): Ticke
   const t = card.ticket;
   const next: TicketDetails = { ...t, status: "cancelled", statusSince: now, history: [...t.history, historyEntry(actor.email, now, "Cancelled by the reporter")] };
   return withStatus(card, next, now);
+}
+
+/** An event's A/V ticket, cancelled because its event (or that date of it, or its A/V) is gone. `why` goes in its history. */
+export function cancelWithEvent(card: TicketCard, now: string, why: string): TicketCard {
+  const t = card.ticket;
+  if (!isOpen(t)) return card;
+  const next: TicketDetails = { ...t, status: "cancelled", statusSince: now, history: [...t.history, historyEntry(SYSTEM, now, "Cancelled", why)] };
+  return withStatus(card, next, now);
+}
+
+/** An event's A/V ticket, brought up to date with its event: the title, room and what's asked for. Its status doesn't change. */
+export function followEvent(card: TicketCard, fields: { title: string; room: string; equipment?: string; description: string }, now: string, note: string): TicketCard {
+  const t = card.ticket;
+  const next: TicketDetails = { ...t, room: fields.room, equipment: fields.equipment, description: fields.description, history: [...t.history, historyEntry(SYSTEM, now, `Updated from ${t.eventCardId}`, note)] };
+  return withStatus({ ...card, title: fields.title }, next, now);
 }
 
 /** Set or clear the team's target date (YYYY-MM-DD). */
@@ -515,8 +536,9 @@ function hoursUntouched(t: TicketDetails, now: Date): number | null {
   return (now.getTime() - Date.parse(t.statusSince)) / 36e5;
 }
 
-/** Past its target response time and nobody has started it. */
+/** Past its target response time and nobody has started it. An event's A/V has its date instead: it's late only once that's passed. */
 export function pastResponseTarget(t: TicketDetails, now: Date): boolean {
+  if (t.kind === "event") return false;
   const h = hoursUntouched(t, now);
   return h !== null && h >= URGENCY[t.urgency].responseHours;
 }

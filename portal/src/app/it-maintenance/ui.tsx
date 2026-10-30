@@ -33,7 +33,7 @@ export const FLASH: Record<string, string> = {
 /** Ready-made replies for the team, as in the demo. Tapping one fills the comment box; it can be edited before sending. */
 export const REPLIES = ["Need more info: can you add a photo or the exact room?", "On it. I'll update you by end of day.", "Fixed. Please confirm it works for you."];
 
-/** Urgency (unless normal), late, reopened and preventive, as small pills. */
+/** Urgency (unless normal), late, reopened, preventive and event A/V, as small pills. */
 export function TicketTags({ card, reopened }: { card: TicketCard; reopened?: boolean }) {
   const t = card.ticket;
   const u: Urgency = t.urgency;
@@ -57,6 +57,11 @@ export function TicketTags({ card, reopened }: { card: TicketCard; reopened?: bo
     t.kind === "preventive" && (
       <Pill key="p" tone="info">
         Preventive
+      </Pill>
+    ),
+    t.kind === "event" && (
+      <Pill key="e" tone="info">
+        Event A/V
       </Pill>
     ),
   ].filter(Boolean);

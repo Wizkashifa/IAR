@@ -28,7 +28,10 @@ import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { rowStatusText, statusText } from "@/lib/status-text";
 import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
-import { type Action, type TicketCard, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
+import { type Action, type TicketCard, closesOnDone, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
+import { firstDate, isEventCard, whenText } from "@/lib/events/workflow";
+import { dayText, timeText } from "@/lib/events/series";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
 import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
 import styles from "../tickets.module.css";
@@ -87,10 +90,17 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const t = card.ticket;
   const can = (a: Action) => permission(card, actor, a).ok;
   const own = card.ownerEmail.toLowerCase() === actor.email;
-  const preventive = t.kind === "preventive";
+  // Preventive and event A/V tickets close when they're done; requests wait for the reporter to confirm the fix.
+  const closes = closesOnDone(t.kind);
   const team = onTeam(actor, t.team);
   // Who it can be handed to: its own team first, then the other team (IT Services and Facility Maintenance hand tickets to each other).
-  const [byTeam, needsActor] = await Promise.all([can("assign") ? teamMembers() : Promise.resolve({ it: [], facilities: [] } as Record<TicketTeam, string[]>), actorFor(viewer)]);
+  const [byTeam, needsActor, linked] = await Promise.all([
+    can("assign") ? teamMembers() : Promise.resolve({ it: [], facilities: [] } as Record<TicketTeam, string[]>),
+    actorFor(viewer),
+    // An event's A/V ticket links back to its event (approved, so anyone signed in can open it).
+    t.eventCardId ? (await cardStore()).get(t.eventCardId) : Promise.resolve(null),
+  ]);
+  const event = isEventCard(linked) ? linked : null;
   const members = [...new Set([...byTeam[t.team], ...TICKET_TEAMS.filter((x) => x !== t.team).flatMap((x) => byTeam[x])])];
   const otherTeam = (m: string) => (byTeam[t.team].includes(m) ? undefined : TEAM_NAME[TICKET_TEAMS.find((x) => byTeam[x].includes(m)) ?? t.team]);
   const names = await nameResolver([card.ownerEmail, ...(t.assigneeEmail ? [t.assigneeEmail] : []), ...members, ...t.history.map((h) => h.by).filter((b) => b.includes("@"))]);
@@ -113,7 +123,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const inBar = (a: string) => a === barAction && !resolveOwn;
   const variantFor = (a: Action): "primary" | "default" => (primary.includes(a) && !barAction ? "primary" : "default");
   const startLabel = t.status === "waiting_parts" ? "Parts are in: back to work" : "Start work";
-  const resolveLabel = preventive ? "Mark done" : "Mark fixed";
+  const resolveLabel = closes ? "Mark done" : "Mark fixed";
   const barMain =
     barAction === "confirm" ? (
       <Button variant="primary" type="submit" form="ticket-confirm" formAction={actOnTicketWith.bind(null, "confirm")}>
@@ -214,7 +224,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <form key="resolve" id="ticket-resolve" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="resolve" />
-        <Field label={preventive ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={preventive ? undefined : "The reporter is asked to check and confirm."}>
+        <Field label={closes ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={closes ? undefined : "The reporter is asked to check and confirm."}>
           <textarea name="note" rows={2} maxLength={2000} required />
         </Field>
         {!inBar("resolve") && (
@@ -242,7 +252,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <form key="due" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="due" />
-        <DateField name="due" label={preventive ? "Due date" : "Target date"} defaultValue={t.dueDate ?? null} clearable />
+        <DateField name="due" label={closes ? "Due date" : "Target date"} defaultValue={t.dueDate ?? null} clearable />
         <div>
           <Button type="submit">{t.dueDate ? "Change date" : "Set date"}</Button>
         </div>
@@ -293,7 +303,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       )}
       {t.status === "closed" && t.resolutionNote && (
         <Note tone="ok">
-          <strong>{preventive ? "Done" : "Fixed"}:</strong> {t.resolutionNote}
+          <strong>{closes ? "Done" : "Fixed"}:</strong> {t.resolutionNote}
         </Note>
       )}
     </>
@@ -301,6 +311,13 @@ export default async function TicketDetail({ params, searchParams }: { params: P
 
   const main = (
     <>
+      {event && (
+        <LinkCards label="The event" compact>
+          <LinkCard href={`/events/${event.id}`} icon="calendar" accent="events" title={`For event: ${event.title} · ${dayText(t.eventDate ?? firstDate(event))}`}>
+            {[event.event.committeeName, whenText(event), `${timeText(event.event.start)}–${timeText(event.event.end)}`].join(" · ")}
+          </LinkCard>
+        </LinkCards>
+      )}
       <Panel title="Details">
         <p className={styles.description}>{t.description}</p>
         {t.labels && t.labels.length > 0 && (
@@ -339,14 +356,14 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <Panel title="About this ticket">
         <KeyValue
           items={[
-            { label: "Reported by", value: preventive ? "Preventive schedule" : t.reporterName },
+            { label: t.kind === "event" ? "Event requested by" : "Reported by", value: t.kind === "preventive" ? "Preventive schedule" : t.reporterName },
             { label: "Where", value: t.room },
             { label: "Equipment", value: t.equipment },
             { label: "Urgency", value: `${URGENCY[t.urgency].label}: picked up ${URGENCY[t.urgency].target}` },
             { label: "Who has it", value: t.assigneeEmail ? names(t.assigneeEmail) : isOpen(t) ? `The ${TEAM_NAME[t.team]} team` : undefined },
-            { label: preventive ? "Due" : "Target date", value: t.dueDate ? fmtDay(t.dueDate) : undefined },
+            { label: closes ? "Due" : "Target date", value: t.dueDate ? fmtDay(t.dueDate) : undefined },
             { label: "Reported", value: fmtDateTime(card.createdAt ?? t.history[0].at) },
-            { label: preventive ? "Done" : "Fixed", value: t.resolvedAt ? fmtDate(t.resolvedAt) : undefined },
+            { label: closes ? "Done" : "Fixed", value: t.resolvedAt ? fmtDate(t.resolvedAt) : undefined },
             { label: "From Jira", value: t.jiraKey },
           ]}
         />
@@ -403,14 +420,14 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <TicketTags card={card} />
         </>
       }
-      lead={[KIND_LABEL[t.kind], TEAM_NAME[t.team], !preventive && `from ${t.reporterName}`, t.room]}
+      lead={[KIND_LABEL[t.kind], TEAM_NAME[t.team], t.kind === "request" && `from ${t.reporterName}`, t.room]}
       steps={stepsFor(card)}
       next={nextStepText(card, viewer, names)}
       sent={sp.sent === "1"}
       notes={notes}
       actions={actions}
       bar={barMain ? { label: rowStatusText(card, state), main: barMain } : undefined}
-      decide={resolveOwn ? { title: preventive ? "Mark it done" : "Mark it fixed", body: forms.resolve } : undefined}
+      decide={resolveOwn ? { title: closes ? "Mark it done" : "Mark it fixed", body: forms.resolve } : undefined}
       main={main}
       side={side}
     />

@@ -1,7 +1,8 @@
 /**
  * "My work today" for the IT Services and Facility Maintenance teams: what's
  * assigned to me, what nobody on my team has taken, and preventive work due
- * this week. Plain functions so the order can be tested; the page only shows
+ * this week. An event's A/V ticket counts as mine or untaken once its date is
+ * within the week. Plain functions so the order can be tested; the page only shows
  * what these return.
  */
 import type { Card } from "../cards";
@@ -15,7 +16,7 @@ import { addDays } from "../dates";
 export type WorkToday = {
   /** Assigned to me: urgent and late first, then due today, then the rest. */
   mine: TicketCard[];
-  /** My teams' requests nobody has taken yet, most urgent and oldest first. */
+  /** My teams' requests nobody has taken yet: urgent, late and due today first, then most urgent and oldest. */
   untaken: TicketCard[];
   /** Preventive tickets due within the week, mine or nobody's yet. */
   preventive: TicketCard[];
@@ -44,11 +45,13 @@ export function workToday(cards: Card[], actor: Pick<TicketActor, "email" | "rol
   const weekEnd = addDays(today, WEEK_DAYS - 1);
   const open = cards.filter(isTicketCard).filter((c) => withTeam(c.ticket) && teams.includes(c.ticket.team));
   const mineOrNobody = (c: TicketCard) => !c.ticket.assigneeEmail || same(c.ticket.assigneeEmail, actor.email);
+  // Requests always; an event's A/V once its date is this week.
+  const asked = (c: TicketCard) => c.ticket.kind === "request" || (c.ticket.kind === "event" && (c.ticket.dueDate ?? "") <= weekEnd);
 
   const mine = open
-    .filter((c) => c.ticket.kind !== "preventive" && same(c.ticket.assigneeEmail, actor.email))
+    .filter((c) => asked(c) && same(c.ticket.assigneeEmail, actor.email))
     .sort((a, b) => band(a, now, today) - band(b, now, today) || (a.ticket.dueDate ?? "9999").localeCompare(b.ticket.dueDate ?? "9999") || byUrgencyThenAge(a, b));
-  const untaken = open.filter((c) => c.ticket.kind !== "preventive" && !c.ticket.assigneeEmail).sort(byUrgencyThenAge);
+  const untaken = open.filter((c) => asked(c) && !c.ticket.assigneeEmail).sort((a, b) => band(a, now, today) - band(b, now, today) || byUrgencyThenAge(a, b));
   const preventive = open
     .filter((c) => c.ticket.kind === "preventive" && mineOrNobody(c) && (!c.ticket.dueDate || c.ticket.dueDate <= weekEnd))
     .sort((a, b) => (a.ticket.dueDate ?? "").localeCompare(b.ticket.dueDate ?? "") || byUrgencyThenAge(a, b));

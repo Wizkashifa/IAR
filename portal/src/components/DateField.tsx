@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
 import { Field, errorId } from "./Field";
+import styles from "./DateField.module.css";
 
 type Base = { name?: string; label: string; hint?: string; error?: string; required?: boolean; disabled?: boolean };
 
@@ -24,6 +25,7 @@ export function DateField({ value, defaultValue, onChange, min, max, clearable, 
         minDate={min}
         maxDate={max}
         clearable={clearable}
+        clearButtonProps={{ "aria-label": `Clear ${f.label.toLowerCase()}`, className: styles.clear }}
         required={f.required}
         disabled={f.disabled}
         placeholder={placeholder}

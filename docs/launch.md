@@ -20,7 +20,7 @@ This is how the portal was put on IAR's Google Cloud, and how to set it up again
 | Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest, and finance paying several at once | Library beyond policies (Shura documents, each committee's drive) |
 | Events & Rooms on IAR's room calendars, with asks for a booked time; the Calendar and Find a room | Asset tracker |
 | Marketing Requests with file uploads and Team work, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
-| IT & Maintenance, with the open Jira issues imported, A/V tasks for events, and My work today for the facilities and IT teams | |
+| IT & Maintenance, with the open Jira issues imported, A/V tickets for events, and My work today for the facilities and IT teams | |
 | Who's who, the Library (IAR's policies), What's stuck (office and executives), "Request this again" | |
 | Portal measures for the portal admins (counts only) | |
 
@@ -95,7 +95,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] 30 days before a series ends, its requester gets a Chat message; "Request the next period" opens the form with the next dates filled in.
 - [ ] A asks for a time someone else booked. They give it up; the dates leave the calendar at once and A's request moves on.
 - [ ] Food in a room that doesn't allow it, or attendance over capacity, is flagged to the reviewers.
-- [ ] Once approved, the event's A/V task appears in IT & Maintenance → Team tickets (and in My work today on the day). A public event gets one marketing piece, "Flyer and announcement", in Marketing Requests → Team work, and the Marketing space gets a post. There is no Security task and no Marketing task.
+- [ ] Once approved, the event gets one A/V ticket per date on IT & Maintenance → Team tickets, due that day, and the A/V space gets one post. Give up a date: only its ticket is cancelled. Mark one done: it closes and the requester hears. A public event gets one marketing piece, "Flyer and announcement", in Marketing Requests → Team work, and the Marketing space gets a post. There is no Security task and no Marketing task.
 - [ ] The run sheet for that day lists it, with the calendar's other bookings.
 - [ ] After the event, the daily job moves it to close-out; A records attendance; the linked purchase shows as actual spend.
 - [ ] The approved event shows on the Calendar's week view for its room and committee.

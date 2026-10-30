@@ -23,7 +23,7 @@
  */
 import type { CardStatus } from "../cards";
 import type { Notice } from "../notices";
-import { type EventCard, firstDate } from "../events/workflow";
+import { type EventCard, eventChanges, firstDate } from "../events/workflow";
 import { dayText } from "../events/series";
 import { addDays, todayLocal } from "../dates";
 import { andList, same } from "../text";
@@ -99,19 +99,6 @@ export function autoPiece(before: EventCard | null, after: EventCard, pieces: Ma
     due: suggestedDue(after, todayLocal(new Date(now))),
   };
   return buildPiece(after, { answers }, `Flyer and announcement: ${after.title}`, "Portal", `Added when ${after.id} was approved`, now);
-}
-
-/** What changed on the event that marketing cares about, in words ("the date and the time"). */
-export function eventChanges(before: EventCard, after: EventCard): string[] {
-  const a = before.event;
-  const b = after.event;
-  const out: string[] = [];
-  if (a.dates.join() !== b.dates.join()) out.push(b.dates.length > 1 ? "the dates" : "the date");
-  if (a.start !== b.start || a.end !== b.end) out.push("the time");
-  if (a.rooms.join() !== b.rooms.join()) out.push(b.rooms.length > 1 ? "the rooms" : "the room");
-  if (before.title !== after.title) out.push("the name");
-  if (a.description !== b.description || JSON.stringify(a.brief ?? null) !== JSON.stringify(b.brief ?? null) || a.isPublic !== b.isPublic) out.push("the details");
-  return out;
 }
 
 /**

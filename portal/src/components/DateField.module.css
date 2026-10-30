@@ -1,0 +1,5 @@
+/* The date field's own pieces. Values from tokens.css. */
+@layer components {
+  /* "Clear the date": a full tap target on phones. */
+  .clear { min-width: max(24px, var(--tap)); min-height: max(24px, var(--tap)); }
+}
