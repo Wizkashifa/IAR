@@ -1,10 +1,10 @@
 "use client";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { MARKETING_TYPES, NOTES_MAX, asksForNotes, type MarketingField, type MarketingInput } from "@/lib/marketing/forms";
 import type { MarketingKind } from "@/lib/marketing/types";
 import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { DateField } from "@/components/DateField";
 import { FileDrop } from "@/components/FileDrop";
 import { FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
@@ -135,7 +135,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
         <Button href={cancelHref} variant="quiet">
           Cancel
         </Button>
-        <Submit label={submitLabel} />
+        <SubmitButton>{submitLabel}</SubmitButton>
       </FormActions>
     </form>
   );
@@ -174,14 +174,5 @@ function Question({ f, value, today }: { f: MarketingField; value?: string; toda
         />
       )}
     </Field>
-  );
-}
-
-function Submit({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="primary" disabled={pending}>
-      {pending ? "Sending…" : label}
-    </Button>
   );
 }

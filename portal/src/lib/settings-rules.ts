@@ -5,6 +5,7 @@
 import type { RoomSetting } from "./events/rooms";
 import type { Role } from "./org";
 import type { TeamInfo } from "./whos-who";
+import { lc } from "./text";
 
 /**
  * An IAR card and who holds it. A card isn't tied to a fund: one cardholder
@@ -43,7 +44,7 @@ export function checkCard(
   ctx: { domain: string; existing: CreditCard[] },
 ): { ok: true; card: CreditCard } | { ok: false; error: string } {
   const last4 = String(raw.last4 ?? "").trim();
-  const holderEmail = String(raw.holderEmail ?? "").trim().toLowerCase();
+  const holderEmail = lc(String(raw.holderEmail ?? ""));
   const holderName = String(raw.holderName ?? "").trim().slice(0, 120);
   if (!/^\d{4}$/.test(last4)) return { ok: false, error: "Enter only the card's last four digits, never the full number." };
   if (ctx.existing.some((c) => c.last4 === last4)) return { ok: false, error: `A card ending ${last4} is already listed.` };

@@ -13,7 +13,8 @@
  */
 import type { Notice } from "../notices";
 import { daysBetween, todayLocal } from "../dates";
-import { type MarketingCard, TEAM_STAGES, shortDay } from "./workflow";
+import { type MarketingCard, TEAM_STAGES } from "./workflow";
+import { fmtShortDay } from "../format";
 
 export type DailyPlan = {
   notices: Notice[];
@@ -51,7 +52,7 @@ export function planDaily(cards: MarketingCard[], today: string): DailyPlan {
     if (!TEAM_STAGES.includes(m.stage) || !m.doneBy || m.remindedFor === m.doneBy) continue;
     const days = daysBetween(today, m.doneBy);
     if (days > 1) continue;
-    const when = days === 1 ? "is due tomorrow" : days === 0 ? "is due today" : `was due ${shortDay(m.doneBy)}`;
+    const when = days === 1 ? "is due tomorrow" : days === 0 ? "is due today" : `was due ${fmtShortDay(m.doneBy)}`;
     notices.push({
       to: { role: "marketing" },
       cardId: c.id,

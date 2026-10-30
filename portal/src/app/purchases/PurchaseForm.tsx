@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
-import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountsForFund, findAccount, isLaborAccount, shortFund } from "@/lib/purchases/accounts";
 import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, type DeliveryMethod, type PurchaseKind } from "@/lib/purchases/types";
@@ -9,6 +8,7 @@ import { findVendor, type VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { EventChoice } from "@/lib/events/link";
 import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Field, FormActions } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
 import { Note } from "@/components/Note";
@@ -469,18 +469,8 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         <Button href={cancelHref} variant="quiet">
           Cancel
         </Button>
-        <Submit label={submitLabel} waiting={uploading > 0} />
+        <SubmitButton disabled={uploading > 0}>{uploading > 0 ? "Waiting for receipts to upload…" : submitLabel}</SubmitButton>
       </FormActions>
     </form>
-  );
-}
-
-/** `waiting`: receipts are still uploading, so it can't be sent yet. */
-function Submit({ label, waiting }: { label: string; waiting?: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="primary" disabled={pending || waiting}>
-      {pending ? "Sending…" : waiting ? "Waiting for receipts to upload…" : label}
-    </Button>
   );
 }

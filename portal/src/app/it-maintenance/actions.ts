@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { todayLocal } from "@/lib/dates";
+import { todayLocal, nowIso } from "@/lib/dates";
 import { cardStore, ConflictError, type CardStatus } from "@/lib/cards";
 import { filesFrom } from "@/lib/drive";
 import { deliver } from "@/lib/notifications";
@@ -22,8 +22,6 @@ import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
 import type { FormState } from "@/components/FormErrors";
 
-
-const nowIso = () => new Date().toISOString();
 const back = (id: string, q: string) => `/it-maintenance/${id}?${q}`;
 const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");

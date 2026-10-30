@@ -22,15 +22,15 @@ export type Notice = {
   delegable: boolean;
 };
 
-/** Collects notices for one card: each recipient once, and never the person who acted. */
+/** Collects notices for one card: each recipient once, and never the person who acted. `delegable`: see Notice. */
 export function collector(cardId: string, actorEmail: string, href: string) {
   const out: Notice[] = [];
   const seen = new Set<string>();
-  const add = (to: Recipient, text: string, alert: boolean) => {
+  const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
     const key = "email" in to ? to.email.toLowerCase() : `role:${to.role}`;
     if (("email" in to && same(to.email, actorEmail)) || seen.has(key)) return;
     seen.add(key);
-    out.push({ to, cardId, href, text, alert, delegable: false });
+    out.push({ to, cardId, href, text, alert, delegable });
   };
   return { out, add };
 }

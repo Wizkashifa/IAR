@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { Select } from "@mantine/core";
 import { Field, errorId } from "./Field";
+import { lc } from "@/lib/text";
 
 export type PersonOption = { email: string; name: string; note?: string };
 
@@ -22,7 +23,7 @@ export function PeoplePicker({ people, value, defaultValue, onChange, name, labe
         searchable
         clearable={!required}
         filter={({ options, search }) => {
-          const q = search.trim().toLowerCase();
+          const q = lc(search);
           return options.filter((o) => "value" in o && (o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)));
         }}
         nothingFoundMessage="Nobody by that name"

@@ -10,10 +10,10 @@ import type { ModuleDef } from "../registry";
 import type { Holder } from "../stuck";
 import { type NameOf, type Steps, type Viewer, quoted, speaker, stopAt, track } from "../steps";
 import { same } from "../text";
-import { fmtDayTime } from "../format";
+import { fmtDayTime, fmtShortDay } from "../format";
 import { canViewMarketing } from "./access";
 import { STAGE_LABEL, type MarketingStage } from "./types";
-import { type MarketingCard, TEAM_STAGES, approvalDue, holderOf, isMarketingCard, needsApproval, permission, shortDay } from "./workflow";
+import { type MarketingCard, TEAM_STAGES, approvalDue, holderOf, isMarketingCard, needsApproval, permission } from "./workflow";
 
 /** The step each stage is on. */
 const STEP_OF: Record<MarketingStage, string> = {
@@ -44,7 +44,7 @@ function marketingNext(card: MarketingCard, viewer: Viewer, names: NameOf): stri
   const m = card.marketing;
   const s = speaker(viewer, names);
   const mine = same(card.ownerEmail, viewer.email);
-  const by = m.doneBy ? `, to be done by ${shortDay(m.doneBy)}` : "";
+  const by = m.doneBy ? `, to be done by ${fmtShortDay(m.doneBy)}` : "";
   switch (m.stage) {
     case "review":
       return `The marketing team picks up new requests as they come in.${mine ? ` ${NOTIFIED}` : ""}`;

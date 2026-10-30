@@ -8,6 +8,8 @@
 import { ORG } from "../org";
 import { type TicketDetails, type TicketTeam, type Urgency, TEAM_NAME, URGENCIES } from "./types";
 import { type TicketActor, type TicketCard, onTeam, searchTextFor, statusFor, teamGroup, waitingOnFor } from "./workflow";
+import { addDays, isDate } from "../dates";
+import { addMonths, longDate } from "../events/series";
 
 export type Frequency = "weekly" | "monthly" | "quarterly" | "semiannual" | "yearly";
 
@@ -44,16 +46,9 @@ export type TicketSchedule = {
   lastCreatedOn?: string;
 };
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const isDate = (s: string) => DATE.test(s) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
-
 /** The date one period after `ymd`. Months keep the day, or the month's last day when it's shorter (Jan 31 → Feb 28). */
 export function addFrequency(ymd: string, f: Frequency): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  if (f === "weekly") return new Date(Date.UTC(y, m - 1, d + 7)).toISOString().slice(0, 10);
-  const months = { monthly: 1, quarterly: 3, semiannual: 6, yearly: 12 }[f];
-  const last = new Date(Date.UTC(y, m - 1 + months + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(y, m - 1 + months, Math.min(d, last))).toISOString().slice(0, 10);
+  return f === "weekly" ? addDays(ymd, 7) : addMonths(ymd, { monthly: 1, quarterly: 3, semiannual: 6, yearly: 12 }[f]);
 }
 
 /** The first date after `today` on the schedule from `from`: missed dates are skipped, not piled up. */
@@ -76,8 +71,6 @@ export function dueSchedules(list: TicketSchedule[], today: string): TicketSched
 export function canManageSchedules(actor: Pick<TicketActor, "roles">, team: TicketTeam): boolean {
   return onTeam(actor, team);
 }
-
-const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 /**
  * The preventive ticket a schedule opens, due on its scheduled day. It belongs
@@ -108,7 +101,7 @@ export function ticketFromSchedule(s: TicketSchedule, now: string): TicketCard {
     id: "",
     orgId: ORG.id,
     type: "ticket",
-    title: `${s.name} – ${fmtDay(s.next)}`,
+    title: `${s.name} – ${longDate(s.next)}`,
     status: statusFor(t.status),
     ownerEmail: teamGroup(s.team),
     committee: TEAM_NAME[s.team],

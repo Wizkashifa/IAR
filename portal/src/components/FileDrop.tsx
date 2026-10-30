@@ -6,9 +6,9 @@ import styles from "./FileDrop.module.css";
 import { Field } from "./Field";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
+import { fileSize } from "@/lib/format";
 
 const MB = 1024 * 1024;
-const kb = (n: number) => (n >= MB ? `${(n / MB).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
 /**
  * Add files by dragging them in, choosing them, or (with `camera`) taking a
@@ -68,7 +68,7 @@ export function FileDrop({ name, label, hint, error, required, accept, multiple 
           {files.map((f, i) => (
             <li key={`${f.name}-${i}`}>
               <span className={styles.fname}>{f.name}</span>
-              <span className={styles.small}>{kb(f.size)}</span>
+              <span className={styles.small}>{fileSize(f.size)}</span>
               <Button variant="quiet" size="small" onClick={() => setFiles((now) => now.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`}>
                 Remove
               </Button>

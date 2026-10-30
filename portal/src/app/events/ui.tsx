@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
 import type { QuickFix } from "@/lib/events/rules";
 import type { Check, MarketingBrief } from "@/lib/events/types";
+import { Button } from "@/components/Button";
 import { KeyValue } from "@/components/KeyValue";
-import { timeText } from "@/lib/events/series";
+import { Panel } from "@/components/Panel";
+import { Pill } from "@/components/Pill";
+import { dayText, timeText, toMinutes } from "@/lib/events/series";
 import { Icon, type IconName } from "@/components/Icon";
+import type { ClashView, DraftCheck } from "./actions";
 import styles from "./events.module.css";
 
 /** Pieces the event pages share. Plain components that work on the server and in the form. */
@@ -59,12 +63,58 @@ export function checksSummary(checks: Check[]): { tone: "ok" | "warn" | "bad"; l
   return checks.length ? { tone: "ok", label: "All clear" } : null;
 }
 
+/**
+ * The live checks beside a form: the room and policy checks, what's in the
+ * way (`children`, each form's own clash rows), and the quick fixes. `fix`
+ * fills a fix into the form; `after` goes below the fixes.
+ */
+export function ChecksPanel({ result, checking, empty, fix, children, after }: { result: DraftCheck; checking: boolean; empty?: string; fix: (f: QuickFix) => void; children?: ReactNode; after?: ReactNode }) {
+  const summary = checksSummary(result.checks);
+  return (
+    <Panel title="Checks" right={summary ? <Pill tone={summary.tone} status>{checking ? "Checking…" : summary.label}</Pill> : undefined}>
+      <div className="stack">
+        <ChecksList checks={result.checks} empty={empty} />
+        {children}
+        <QuickFixes fixes={result.fixes} text={result.fixText} button={(f, label) => <Button size="small" onClick={() => fix(f)}>{label}</Button>} />
+        {after}
+      </div>
+    </Panel>
+  );
+}
+
+/** Who has the time, the room and when: "Youth Halaqa has the Main Hall, 6:00 PM–8:00 PM on Tue, Nov 17". `few`: list up to three of a series' dates. */
+export function ClashText({ c, few }: { c: ClashView; few?: boolean }) {
+  const dates = c.dates.length > 1 ? ` on ${c.dates.length} dates${few ? ` (${c.dates.slice(0, 3).map(dayText).join(", ")}${c.dates.length > 3 ? "…" : ""})` : ""}` : ` on ${dayText(c.dates[0])}`;
+  return (
+    <>
+      <strong>{c.label}</strong> has {c.roomName}, {timeText(c.start)}–{timeText(c.end)}
+      {dates}.
+    </>
+  );
+}
+
+/** The day on each room asked for, beside a form. `empty`: what to say when there's none to show. */
+export function DayPanel({ timelines, empty }: { timelines: DraftCheck["timelines"]; empty: string }) {
+  return (
+    <Panel title="IAR calendar that day" className={styles.calendarPanel}>
+      {timelines.length > 0 ? (
+        <div className="stack">
+          {timelines.map((t, i) => (
+            <Timeline key={t.roomName} items={t.items} request={t.request} caption={`${t.roomName} · ${dayText(t.date)}`} legend={i === timelines.length - 1} />
+          ))}
+        </div>
+      ) : (
+        <p className="hint">{empty}</p>
+      )}
+    </Panel>
+  );
+}
+
 const DAY_START = 7 * 60;
 const DAY_END = 23 * 60;
 const LANE = 30;
-const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 /** Where a time sits across the day, as a percentage of the width. */
-const pct = (t: string) => ((Math.max(DAY_START, Math.min(DAY_END, toMin(t))) - DAY_START) / (DAY_END - DAY_START)) * 100;
+const pct = (t: string) => ((Math.max(DAY_START, Math.min(DAY_END, toMinutes(t))) - DAY_START) / (DAY_END - DAY_START)) * 100;
 
 export type TimelineItem = { start: string; end: string; label: string; kind: string };
 
@@ -75,13 +125,13 @@ export type TimelineItem = { start: string; end: string; label: string; kind: st
  */
 /** `legend: false` leaves out the key, for all but the last of several timelines in a row. */
 export function Timeline({ items, request, caption, legend = true }: { items: TimelineItem[]; request?: { start: string; end: string }; caption?: string; legend?: boolean }) {
-  const all = [...items, ...(request ? [{ ...request, label: "Your request", kind: "req" }] : [])].sort((a, b) => toMin(a.start) - toMin(b.start));
+  const all = [...items, ...(request ? [{ ...request, label: "Your request", kind: "req" }] : [])].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   // Overlapping entries go on separate rows so each label stays readable.
   const ends: number[] = [];
   const placed = all.map((x) => {
-    let lane = ends.findIndex((e) => e <= toMin(x.start));
+    let lane = ends.findIndex((e) => e <= toMinutes(x.start));
     if (lane < 0) lane = ends.length;
-    ends[lane] = toMin(x.end);
+    ends[lane] = toMinutes(x.end);
     return { ...x, lane };
   });
   const rows = Math.max(1, ...placed.map((x) => x.lane + 1));

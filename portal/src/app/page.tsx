@@ -25,12 +25,11 @@ import { ItemRow, Rows } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { NewRequestTiles } from "@/components/LinkCard";
 import { KINDS } from "@/lib/kinds";
+import { dayText } from "@/lib/events/series";
+import { fmtShortDay } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Home" };
-
-const fmtDay = (d: string, weekday = false) =>
-  new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { ...(weekday ? { weekday: "short" as const } : {}), month: "short", day: "numeric", timeZone: "UTC" });
 
 /** "MPH A&B – full gym", or the first two rooms and how many more. */
 const roomsText = (rooms: string[]) => (rooms.length === 0 ? "Off-site" : rooms.length <= 2 ? rooms.join(", ") : `${rooms.slice(0, 2).join(", ")} and ${rooms.length - 2} more`);
@@ -81,16 +80,16 @@ export default async function Home() {
 
   return (
     <div className="stack enter">
-      <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${fmtDay(today, true)}.`} />
+      <ModuleHead greet title={`Assalamu alaikum, ${firstName}`} lead={`Here's what needs you today, ${dayText(today)}.`} />
 
       {myAway &&isCurrentOrUpcoming(myAway, today) && (
         <Note>
-          {isActive(myAway, today) ? "You're marked away" : `You'll be away from ${fmtDay(myAway.from)}`} until {fmtDay(myAway.until)}. {names(myAway.delegate)} is covering your approvals. <Link href="/away">Change</Link>
+          {isActive(myAway, today) ? "You're marked away" : `You'll be away from ${fmtShortDay(myAway.from)}`} until {fmtShortDay(myAway.until)}. {names(myAway.delegate)} is covering your approvals. <Link href="/away">Change</Link>
         </Note>
       )}
       {covering.map((a) => (
         <Note key={a.email}>
-          {isActive(a, today) ? "You're covering" : `From ${fmtDay(a.from)} you'll cover`} approvals for {a.name} until {fmtDay(a.until)}
+          {isActive(a, today) ? "You're covering" : `From ${fmtShortDay(a.from)} you'll cover`} approvals for {a.name} until {fmtShortDay(a.until)}
           {a.note ? `: “${a.note}”` : "."}
         </Note>
       ))}
@@ -110,7 +109,7 @@ export default async function Home() {
       <Panel
         title={
           <>
-            Today at IAR <span className={styles.date}>· {fmtDay(today, true)}</span>
+            Today at IAR <span className={styles.date}>· {dayText(today)}</span>
           </>
         }
         right={runSheet ? <Button href="/run-sheet" size="small">Printable version</Button> : undefined}

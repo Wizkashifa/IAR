@@ -1,8 +1,8 @@
 "use client";
 import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Field, FormActions } from "@/components/Field";
 import { FileDrop } from "@/components/FileDrop";
 import { Note } from "@/components/Note";
@@ -13,15 +13,6 @@ import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Choice, Choices } from "@/components/Choices";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"];
-
-function Submit() {
-  const { pending } = useFormStatus();
-  return (
-    <Button variant="primary" type="submit" disabled={pending}>
-      {pending ? "Sending…" : "Send to the team"}
-    </Button>
-  );
-}
 
 export default function TicketForm({ action, locations }: { action: (prev: FormState, form: FormData) => Promise<FormState>; locations: string[] }) {
   const [state, formAction] = useActionState(action, { errors: [] });
@@ -100,7 +91,7 @@ export default function TicketForm({ action, locations }: { action: (prev: FormS
         <Button href="/it-maintenance" variant="quiet">
           Cancel
         </Button>
-        <Submit />
+        <SubmitButton>Send to the team</SubmitButton>
       </FormActions>
     </form>
   );

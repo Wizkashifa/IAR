@@ -5,6 +5,7 @@ import Link from "next/link";
 import { latestWhatsNew, whatsNewSince, type WhatsNew } from "@/lib/whats-new";
 import { Button } from "./Button";
 import styles from "./WhatsNewNote.module.css";
+import { plural } from "@/lib/text";
 
 const KEY = "iar.whatsNew.seen";
 
@@ -46,7 +47,7 @@ export function WhatsNewNote() {
     <section className={styles.note} aria-labelledby="whats-new">
       <div className={styles.line}>
         <Link href="/help/whats-new" className={styles.lineLink}>
-          {items.length} new {items.length === 1 ? "thing" : "things"} in the portal
+          {plural(items.length, "new thing")} in the portal
         </Link>
         {close}
       </div>

@@ -16,6 +16,7 @@ import { RULES } from "@/lib/events/rules";
 import { parseDriveId } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
 import type { AdminOk, AdminSection } from "./sections";
+import { lc } from "@/lib/text";
 
 async function requireAdmin() {
   const viewer = await requireViewer();
@@ -121,7 +122,7 @@ export async function savePoliciesDrive(form: FormData): Promise<void> {
 export async function startActingAs(form: FormData): Promise<void> {
   const viewer = await requireAdmin();
   if (viewer.dev || isDevAuth()) return back({ error: "In dev mode, switch sample users at /dev instead." }, "support");
-  const target = String(form.get("email") ?? "").trim().toLowerCase();
+  const target = lc(String(form.get("email") ?? ""));
   if (!target.endsWith(`@${ORG.domain}`)) return back({ error: `Enter an @${ORG.domain} address.` }, "support");
   if (target === viewer.email.toLowerCase()) return back({ error: "That's you." }, "support");
   let groups: string[];

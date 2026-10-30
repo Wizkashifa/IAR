@@ -6,6 +6,9 @@ export const TIME_ZONE = "America/New_York";
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const noon = (ymd: string) => Date.parse(`${ymd}T12:00:00Z`);
 
+/** Now, as an ISO time: when something happened. */
+export const nowIso = () => new Date().toISOString();
+
 /** Today's date in Raleigh. */
 export function todayLocal(now: Date = new Date()): string {
   return now.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });

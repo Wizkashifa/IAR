@@ -2,6 +2,7 @@ import "server-only";
 import { isDevAuth } from "./dev";
 import { delegatedToken } from "./google";
 import { failed } from "./health";
+import { lc } from "./text";
 
 /**
  * Plain-text email through the Gmail API, sent as the portal's own mailbox
@@ -33,7 +34,7 @@ export function mailEnabled(): boolean {
 }
 
 export async function sendMail(to: string[], subject: string, text: string): Promise<void> {
-  const rcpt = [...new Set(to.map((t) => t.trim().toLowerCase()))].filter((t) => ADDRESS.test(t));
+  const rcpt = [...new Set(to.map(lc))].filter((t) => ADDRESS.test(t));
   if (rcpt.length === 0) return;
   const subj = oneLine(subject).slice(0, 200);
 

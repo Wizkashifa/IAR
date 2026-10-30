@@ -203,6 +203,16 @@ test("event next step: the director is named, or told it's theirs; close-out fal
   assert.equal(nextStepText(closing, exec, names), "Vol Unteer adds the attendance and final costs to close it out.");
 });
 
+test("event next step: waiting on an ask the IAR office answers says so, and names the review that follows", () => {
+  const c = ew.newEvent(eventInput(), vol, T(0), []);
+  c.id = "EV-2";
+  const waiting = ew.submit(c, vol, DIRS, T(0), { waitingOnAsk: "SR-1" });
+  assert.equal(waiting.event.stage, "slot");
+  assert.equal(nextStepText(waiting, vol, names, { directors: DIRS }), "Whoever holds the booked time answers your ask for it. If they give it up, the request goes on to review. You'll be notified when it's done.");
+  assert.equal(nextStepText(waiting, vol, names, { directors: DIRS, officeAnswers: true }), "The IAR office answers your ask for the booked time, since it was booked on the IAR calendar, not in the portal. If they give it up, the request goes on to director review. You'll be notified when it's done.");
+  assert.equal(nextStepText(waiting, exec, names, { directors: [], officeAnswers: true }), "The IAR office answers the ask for the booked time, since it was booked on the IAR calendar, not in the portal. If they give it up, the request goes on to executive review.");
+});
+
 test("event needs: the director, then any executive; close-out for the requester", () => {
   const ctx = { directorsOf: () => DIRS };
   const c = event();

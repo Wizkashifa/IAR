@@ -1,17 +1,16 @@
 "use client";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { useFormStatus } from "react-dom";
 import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { DateField, TimeField } from "@/components/DateField";
 import { Field, FormActions } from "@/components/Field";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import { Pill } from "@/components/Pill";
-import { dayText, timeText } from "@/lib/events/series";
+import { dayText } from "@/lib/events/series";
 import type { TimeEdit } from "@/lib/events/types";
 import { type DraftCheck, checkTime } from "./actions";
-import { ChecksList, QuickFixes, Timeline, checksSummary } from "./ui";
+import { ChecksPanel, ClashText, DayPanel } from "./ui";
 import styles from "./events.module.css";
 
 export type TimeFormProps = {
@@ -55,7 +54,6 @@ export default function TimeForm(p: TimeFormProps) {
 
   const unchanged = JSON.stringify(t) === JSON.stringify(p.initial);
   const blockers = result.checks.filter((c) => c.block);
-  const summary = checksSummary(result.checks);
 
   return (
     <div className={styles.formGrid}>
@@ -92,44 +90,22 @@ export default function TimeForm(p: TimeFormProps) {
         <FormActions>
           {blockers.length > 0 && <span className="hint">{result.fixes?.length ? "Use a suggested fix, or pick another time." : "Fix the conflicts in the checks first."}</span>}
           <Button href={`/events/${p.id}`} variant="quiet">Cancel</Button>
-          <Submit label={p.approved ? "Ask for this change" : "Save the new time"} disabled={unchanged || blockers.length > 0} />
+          <SubmitButton busy="Saving…" disabled={unchanged || blockers.length > 0}>{p.approved ? "Ask for this change" : "Save the new time"}</SubmitButton>
         </FormActions>
       </form>
 
       <div className={styles.aside}>
-        <Panel title="Checks" right={summary ? <Pill tone={summary.tone} status>{checking ? "Checking…" : summary.label}</Pill> : undefined}>
-          <div className="stack">
-            <ChecksList checks={result.checks} empty="Checking…" />
-            {result.clashes.map((c) => (
-              <div key={c.key} className={styles.ask}>
-                <strong>{c.label}</strong> has {c.roomName}, {timeText(c.start)}–{timeText(c.end)}
-                {c.dates.length > 1 ? ` on ${c.dates.length} dates` : ` on ${dayText(c.dates[0])}`}.
+        <ChecksPanel result={result} checking={checking} empty="Checking…" fix={(f) => setT(f.edit)}>
+          {result.clashes.map((c) => (
+            <div key={c.key} className={styles.ask}>
+              <div>
+                <ClashText c={c} />
               </div>
-            ))}
-            <QuickFixes fixes={result.fixes} text={result.fixText} button={(f, label) => <Button size="small" onClick={() => setT(f.edit)}>{label}</Button>} />
-          </div>
-        </Panel>
-        <Panel title="IAR calendar that day" className={styles.calendarPanel}>
-          {result.timelines.length > 0 ? (
-            <div className="stack">
-              {result.timelines.map((tl, i) => (
-                <Timeline key={tl.roomName} items={tl.items} request={tl.request} caption={`${tl.roomName} · ${dayText(tl.date)}`} legend={i === result.timelines.length - 1} />
-              ))}
             </div>
-          ) : (
-            <p className="hint">Off-site: nothing to check on the calendar.</p>
-          )}
-        </Panel>
+          ))}
+        </ChecksPanel>
+        <DayPanel timelines={result.timelines} empty="Off-site: nothing to check on the calendar." />
       </div>
     </div>
-  );
-}
-
-function Submit({ label, disabled }: { label: string; disabled: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button variant="primary" type="submit" disabled={pending || disabled}>
-      {pending ? "Saving…" : label}
-    </Button>
   );
 }

@@ -9,6 +9,7 @@ import { type Room, roomById, roomsOverlap } from "./rooms";
 import { SERIES_MAX_MONTHS, dayText, eventDates, fromMinutes, longDate, seriesMaxEnd, timeText, toMinutes } from "./series";
 import type { Check, EventInput, TimeEdit } from "./types";
 import { daysBetween } from "../dates";
+import { andList } from "../text";
 
 /** Policy rules an admin can turn off. The calendar check can't be turned off. */
 export const RULES = [
@@ -279,6 +280,6 @@ export function quickFixes(e: EventInput, clashes: Pick<Clash, "start" | "end">[
 export function fixesText(fixes: QuickFix[], clashCount = 1): string {
   if (!fixes.length) return "";
   const list = fixes.map((f) => f.text);
-  const joined = list.length > 1 ? `${list.slice(0, -1).join(", ")} or ${list[list.length - 1]}` : list[0];
+  const joined = andList(list, "or");
   return `${joined[0].toUpperCase()}${joined.slice(1)} to remove the conflict${clashCount > 1 ? "s" : ""}.`;
 }

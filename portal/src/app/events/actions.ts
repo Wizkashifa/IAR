@@ -11,10 +11,11 @@ import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
 import { eventCommentNotices, eventNotices, rescheduleNotices } from "@/lib/events/notices";
 import * as rs from "@/lib/events/reschedule";
-import { timeText } from "@/lib/events/series";
+import { isTime, timeText } from "@/lib/events/series";
+import { holdWindow } from "@/lib/calendar";
 import { roomById } from "@/lib/events/rooms";
 import { type Clash, type QuickFix, eventChecks, fixesText, quickFixes, ruleOn } from "@/lib/events/rules";
-import { addDays, daysBetween, isDate } from "@/lib/dates";
+import { addDays, daysBetween, isDate, nowIso } from "@/lib/dates";
 import * as sr from "@/lib/events/slot-requests";
 import { slotRequestStore } from "@/lib/events/slot-requests-store";
 import type { Check, EventInput, TimeEdit } from "@/lib/events/types";
@@ -22,7 +23,7 @@ import * as wf from "@/lib/events/workflow";
 import { checkRenewalDates, renewalState } from "@/lib/events/renewal";
 import { lc } from "@/lib/text";
 import { WorkflowError } from "@/lib/workflow-core";
-import { type ActionResult, actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
+import { type ActionResult, actOnCard, actOnCardForm, commentOnCard, unknownAction } from "@/lib/card-actions";
 import { filesFrom } from "@/lib/drive";
 import { checkFiles } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveEventImages } from "@/lib/marketing/drive";
@@ -30,15 +31,12 @@ import { addImages, imagesOf, imagesPermission } from "@/lib/events/images";
 import { syncLinked } from "@/lib/events/linked-sync";
 import type { FormState } from "@/components/FormErrors";
 
-
 /** A clash, as the form shows it: whether its holder can be asked, and if not, why. */
 export type ClashView = { key: string; label: string; roomName: string; start: string; end: string; dates: string[]; kind: Clash["kind"]; askable: boolean; why?: string };
 export type TimelineView = { roomName: string; date: string; items: { start: string; end: string; label: string; kind: string }[]; request?: { start: string; end: string } };
 /** `timelines`: the day on each room asked for, in the order picked. */
 /** `fixes`: small changes that clear a short overlap ("Start at 1:45 PM"), with the sentence that offers them. */
 export type DraftCheck = { checks: Check[]; clashes: ClashView[]; timelines: TimelineView[]; fixes?: QuickFix[]; fixText?: string };
-
-const nowIso = () => new Date().toISOString();
 
 async function checksFor(ctx: EventContext, viewer: Viewer, input: EventInput, editing?: wf.EventCard) {
   const busy = await busyFor(ctx, input);
@@ -84,9 +82,7 @@ export async function checkTime(id: string, edit: TimeEdit): Promise<DraftCheck>
   const viewer = await requireViewer();
   const card = await (await cardStore()).get(id);
   if (!wf.isEventCard(card) || !(await eventAccess(card, viewer)).open) return { checks: [], clashes: [], timelines: [] };
-  const form = new FormData();
-  for (const [k, v] of Object.entries(edit)) form.set(k, String(v));
-  const e = readEdit(form);
+  const e = readEdit(edit);
   if (!e) return { checks: [], clashes: [], timelines: [] };
   return draftResult(await eventContext(), viewer, { ...card.event, ...e }, card);
 }
@@ -97,9 +93,7 @@ async function draftResult(ctx: EventContext, viewer: Viewer, input: EventInput,
     r.clashes.map(async (c) => ({ key: c.key, label: c.label, roomName: roomById(ctx.rooms, c.roomId)?.name ?? "", start: c.start, end: c.end, dates: c.dates, kind: c.kind, ...(await askability(c, viewer)) })),
   );
   const day = input.date;
-  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
-  const fm = (m: number) => `${String(Math.floor(Math.max(0, m) / 60)).padStart(2, "0")}:${String(Math.max(0, m) % 60).padStart(2, "0")}`;
-  const request = { start: fm(toMin(input.start) - input.setup), end: fm(toMin(input.end) + input.teardown) };
+  const request = holdWindow(input);
   const timelines: TimelineView[] = input.rooms.flatMap((id) => {
     const room = roomById(ctx.rooms, id);
     if (!room) return [];
@@ -118,17 +112,23 @@ async function draftResult(ctx: EventContext, viewer: Viewer, input: EventInput,
   return { checks: r.checks, clashes, timelines, fixes, fixText: fixesText(fixes, r.clashes.length) };
 }
 
-/** The new date and time from a form, checked for shape (the rules check the rest). */
-function readEdit(form: FormData): TimeEdit | null {
-  const date = String(form.get("date") ?? "");
-  const start = String(form.get("start") ?? "");
-  const end = String(form.get("end") ?? "");
-  const setup = Number(form.get("setup"));
-  const teardown = Number(form.get("teardown"));
-  const time = (t: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+/** The new date and time, checked for shape (the rules check the rest). From a form, pass `formEdit(form)`. */
+function readEdit(v: Partial<Record<keyof TimeEdit, unknown>>): TimeEdit | null {
+  const date = String(v.date ?? "");
+  const start = String(v.start ?? "");
+  const end = String(v.end ?? "");
+  const setup = Number(v.setup ?? 0);
+  const teardown = Number(v.teardown ?? 0);
   const mins = (n: number) => Number.isInteger(n) && n >= 0 && n <= 240;
-  if (!isDate(date) || !time(start) || !time(end) || !mins(setup) || !mins(teardown)) return null;
+  if (!isDate(date) || !isTime(start) || !isTime(end) || !mins(setup) || !mins(teardown)) return null;
   return { date, start, end, setup, teardown };
+}
+
+const formEdit = (form: FormData) => readEdit({ date: form.get("date"), start: form.get("start"), end: form.get("end"), setup: form.get("setup"), teardown: form.get("teardown") });
+
+/** What's in the way on the room calendar now, for the request as it is or at a new time. */
+async function clashesNow(ctx: EventContext, viewer: Viewer, card: wf.EventCard, time?: TimeEdit): Promise<Clash[]> {
+  return (await checksFor(ctx, viewer, { ...card.event, ...time }, card)).clashes;
 }
 
 /**
@@ -175,33 +175,15 @@ async function rescheduled(card: wf.EventCard, edit: TimeEdit, viewer: Viewer, c
 /** The time form: change the date, time, setup or cleanup. Problems stay on the form. */
 export async function rescheduleEvent(id: string, _prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
-  const edit = readEdit(form);
+  const edit = formEdit(form);
   if (!edit) return { errors: ["Check the date and times."] };
-  const store = await cardStore();
-  const card = await store.get(id);
-  if (!wf.isEventCard(card)) return { errors: ["That request no longer exists."] };
-  if (String(form.get("expected") ?? "") !== card.updatedAt) return { errors: ["This request changed while you were looking at it. Reload the page and check it again."] };
+  form.set("id", id);
   const ctx = await eventContext();
-  let r: ActionResult<wf.EventCard>;
-  try {
-    r = await rescheduled(card, edit, viewer, ctx, nowIso());
-    await store.save(r.next, card.updatedAt);
-  } catch (err) {
-    if (err instanceof WorkflowError || err instanceof ConflictError) return { errors: [err.message] };
-    console.error("changing an event's time failed", err);
-    return { errors: ["Something went wrong. Nothing was changed."] };
-  }
-  const actor = eventActor(viewer);
-  let more: Notice[] = [];
-  try {
-    more = (r.after ? await r.after() : undefined) ?? [];
-  } catch (err) {
-    console.error("after changing an event's time", err);
-  }
-  await deliver([...r.notices, ...more], actor.email);
-  revalidatePath("/events");
-  revalidatePath(`/events/${id}`);
-  redirect(`/events/${id}?ok=${card.status === "approved" ? "change-asked" : "rescheduled"}`);
+  return actOnCardForm(form, viewer, {
+    ...events,
+    act: (card, _action, now) => rescheduled(card, edit, viewer, ctx, now),
+    ok: (card) => (card.status === "approved" ? "change-asked" : "rescheduled"),
+  });
 }
 
 /** The Hold an ask is about, from the clash and its holder. */
@@ -418,7 +400,7 @@ export async function actOnEvent(form: FormData): Promise<void> {
       let next: wf.EventCard;
       if (action === "approve") {
         // Check the calendar again: something may have been booked since it was submitted.
-        const live = (await checksFor(ctx, viewer, card.event, card)).clashes.filter((c) => c.kind !== "pending");
+        const live = (await clashesNow(ctx, viewer, card)).filter((c) => c.kind !== "pending");
         if (live.length) throw new WorkflowError(`It now clashes with ${live.map((c) => c.label).join(", ")} on the room calendar. Send it back so the requester can pick another time.`);
         next = wf.approve(card, actor, directors, now, note || undefined);
       } else if (action === "return") next = wf.returnForChanges(card, actor, directors, now, note);
@@ -426,13 +408,13 @@ export async function actOnEvent(form: FormData): Promise<void> {
       else if (action === "cancel") next = wf.cancel(card, actor, directors, now);
       else if (action === "reschedule") {
         // A suggested fix, applied with one click from the request page.
-        const edit = readEdit(form);
+        const edit = formEdit(form);
         if (!edit) throw new WorkflowError("Check the date and times.");
         return rescheduled(card, edit, viewer, ctx, now);
       } else if (action === "approve_change" || action === "decline_change" || action === "withdraw_change") {
         if (action === "approve_change") {
           const c = card.event.change;
-          const live = c ? (await checksFor(ctx, viewer, { ...card.event, ...rs.timeOf(c) }, card)).clashes : [];
+          const live = c ? await clashesNow(ctx, viewer, card, rs.timeOf(c)) : [];
           if (live.length) throw new WorkflowError(`The new time now clashes with ${live.map((x) => x.label).join(", ")} on the room calendar. Decline it so the requester can pick another.`);
         }
         const changed = action === "approve_change" ? rs.approveChange(card, actor, directors, now, note || undefined) : action === "decline_change" ? rs.declineChange(card, actor, directors, now, note) : rs.withdrawChange(card, actor, directors, now);

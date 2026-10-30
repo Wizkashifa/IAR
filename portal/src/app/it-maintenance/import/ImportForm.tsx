@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 import { Button, buttonClass } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { FileDrop } from "@/components/FileDrop";
 import { FormActions } from "@/components/Field";
 import { Note } from "@/components/Note";
@@ -12,15 +12,6 @@ import { STATUS_LABEL, TEAM_LABEL, URGENCY, type TicketStatus, type TicketTeam }
 import type { ImportState } from "../actions";
 import { Checkbox } from "@/components/Choices";
 import { DataTable } from "@/components/DataTable";
-
-function Submit({ label, busy }: { label: string; busy: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button variant="primary" type="submit" disabled={pending}>
-      {pending ? busy : label}
-    </Button>
-  );
-}
 
 export default function ImportForm({ action }: { action: (prev: ImportState, form: FormData) => Promise<ImportState> }) {
   const [state, formAction] = useActionState(action, { stage: "start" });
@@ -161,7 +152,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           <input type="hidden" name="includeDone" value={state.includeDone ? "1" : ""} />
           <textarea name="csv" defaultValue={state.csv} hidden readOnly />
           <FormActions sticky={false}>
-            {p.ready.length > 0 && <Submit label={`Import ${p.ready.length} ticket${p.ready.length === 1 ? "" : "s"}`} busy="Importing…" />}
+            {p.ready.length > 0 && <SubmitButton busy="Importing…">{`Import ${p.ready.length} ticket${p.ready.length === 1 ? "" : "s"}`}</SubmitButton>}
             <a href="/it-maintenance/import" className={buttonClass({ variant: "quiet" })}>
               Start over
             </a>
@@ -191,7 +182,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
       </Panel>
       <input type="hidden" name="step" value="preview" />
       <FormActions sticky={false}>
-        <Submit label="Preview" busy="Reading the file…" />
+        <SubmitButton busy="Reading the file…">Preview</SubmitButton>
       </FormActions>
     </form>
   );

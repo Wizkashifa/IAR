@@ -22,7 +22,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { HINT, NOTIFIED, VERB, STATUS_LABEL } from "@/lib/glossary";
+import { HINT, VERB, STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
@@ -56,6 +56,7 @@ import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, 
 import { closeOutEvent } from "../ops-actions";
 import { TASK_FLASH, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
+import { holdWindow } from "@/lib/calendar";
 import { BriefFields, ChecksList, QuickFixes, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
@@ -143,15 +144,13 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   // Everyone this page shows, by name.
   const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...emailsIn(piecesVisible), ...piecesVisible.map((p) => p.marketing.assignee ?? ""), ...avVisible.map((t) => t.ticket.assigneeEmail ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
   const names = await nameResolver(emails);
-  const opts = { today: ctx.today, directors };
-  const steps = stepsFor(card, opts);
   // Waiting on an ask about a booking made off the portal: the IAR office answers it, so say so.
   const waitingAsk = e.stage === "slot" && card.status === "submitted" ? asks.find((a) => a.id === e.waitingOnAsk && isOpenAsk(a)) : undefined;
   const officeAnswers = Boolean(waitingAsk && offPortal(waitingAsk.hold));
-  const nextReview0 = STAGE_LABEL[firstStage(card.ownerEmail, directors)];
-  const next = officeAnswers
-    ? `The IAR office answers ${own ? "your" : "the"} ask for the booked time, since it was booked on the IAR calendar, not in the portal. If they give it up, the request goes on to ${nextReview0.toLowerCase()}.${own ? ` ${NOTIFIED}` : ""}`
-    : nextStepText(card, viewer, names, opts);
+  const opts = { today: ctx.today, directors, officeAnswers };
+  const steps = stepsFor(card, opts);
+  const next = nextStepText(card, viewer, names, opts);
+  const firstReview = STAGE_LABEL[firstStage(card.ownerEmail, directors)];
   const state = rowState(card, actor, { today: ctx.today, ctx: { directorsOf: ctx.directorsOf } });
   const tone = ROW_TONE[state];
 
@@ -159,7 +158,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const calDate = e.dates.find((d) => d >= ctx.today) ?? e.dates[0] ?? e.date;
   const calRoom = e.rooms.map((r) => roomById(ctx.rooms, r)).find(Boolean);
   const calItems = calRoom ? roomDay(await agendaBetween(calDate, calDate), ctx.rooms, calRoom, calDate, card.id) : [];
-  const holdWindow = holdTimes(e.start, e.end, e.setup, e.teardown);
+  const hold = holdWindow(e);
 
   const base = (
     <>
@@ -194,7 +193,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       )}
       {e.stage === "slot" && card.status === "submitted" && (
         <Note>
-          This request is waiting for an answer to an ask for a booked time (below). {nextReview0} starts once it&apos;s given up{own && editing.ok ? ", or once you change to a time that's free" : ""}.
+          This request is waiting for an answer to an ask for a booked time (below). {firstReview} starts once it&apos;s given up{own && editing.ok ? ", or once you change to a time that's free" : ""}.
         </Note>
       )}
       {own && fixes.length > 0 && (
@@ -388,7 +387,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {calRoom && (
             <Panel title="Calendar">
-              <Timeline items={calItems} request={holdWindow} caption={`${calRoom.name} · ${dayText(calDate)}`} />
+              <Timeline items={calItems} request={hold} caption={`${calRoom.name} · ${dayText(calDate)}`} />
             </Panel>
           )}
         </>
@@ -697,11 +696,4 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       </Panel>
     );
   }
-}
-
-/** The room hold around the event: setup before, cleanup after. */
-function holdTimes(start: string, end: string, setup: number, teardown: number) {
-  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
-  const fm = (m: number) => `${String(Math.floor(Math.max(0, m) / 60)).padStart(2, "0")}:${String(Math.max(0, m) % 60).padStart(2, "0")}`;
-  return { start: fm(toMin(start) - setup), end: fm(Math.min(24 * 60 - 1, toMin(end) + teardown)) };
 }

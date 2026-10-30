@@ -21,6 +21,7 @@ import { LOCATIONS, UNKNOWN_LOCATION } from "./locations";
 import { type TicketDetails, type TicketKind, type TicketStatus, type TicketTeam, type Urgency, TEAM_NAME } from "./types";
 import { type TicketCard, searchTextFor, statusFor, waitingOnFor } from "./workflow";
 import type { HistoryEntry } from "../workflow-core";
+import { lc } from "../text";
 
 // ---- CSV ---------------------------------------------------------------------
 
@@ -81,7 +82,7 @@ export function parseCsv(text: string): string[][] {
 /** One issue: every value under each column name (lowercased), in column order. */
 export type JiraRow = { row: number; values: Map<string, string[]> };
 
-const norm = (h: string) => h.trim().toLowerCase().replace(/\s+/g, " ");
+const norm = (h: string) => lc(h).replace(/\s+/g, " ");
 
 /** The CSV as Jira rows. Needs at least "Issue key" and "Summary" columns. */
 export function readJiraCsv(text: string): { ok: true; rows: JiraRow[]; columns: string[] } | { ok: false; error: string } {

@@ -21,6 +21,8 @@ export type StepOptions = {
   executiveThreshold?: number | null;
   /** The committee's directors, for an event. With none to review it, the director step shows as skipped. */
   directors?: string[];
+  /** An event waiting on an ask about a booking made off the portal, which the IAR office answers. */
+  officeAnswers?: boolean;
 };
 
 /** The person looking. `actingRoles` (their own groups, as in lib/viewer.ts) lets the text say "You" to the finance office or an executive at their step. */

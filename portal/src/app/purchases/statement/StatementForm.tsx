@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 import { Button, buttonClass } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { DataTable, cell } from "@/components/DataTable";
 import { FileDrop } from "@/components/FileDrop";
 import { FormActions } from "@/components/Field";
@@ -12,15 +12,6 @@ import { Pill } from "@/components/Pill";
 import { fmtMoney, fmtMonth } from "@/lib/format";
 import type { StatementState } from "./actions";
 import styles from "./statement.module.css";
-
-function Submit({ label, busy }: { label: string; busy: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button variant="primary" type="submit" disabled={pending}>
-      {pending ? busy : label}
-    </Button>
-  );
-}
 
 /** Upload, check what was read, then confirm: only then do cardholders hear. */
 export default function StatementForm({ action, sampleHref }: { action: (prev: StatementState, form: FormData) => Promise<StatementState>; sampleHref?: string }) {
@@ -97,7 +88,7 @@ export default function StatementForm({ action, sampleHref }: { action: (prev: S
           <input type="hidden" name="step" value="confirm" />
           <input type="hidden" name="month" value={p.month} />
           <FormActions sticky={false}>
-            <Submit label="Import and tell cardholders" busy="Importing…" />
+            <SubmitButton busy="Importing…">Import and tell cardholders</SubmitButton>
             <a href="/purchases/statement" className={buttonClass({ variant: "quiet" })}>
               Start over
             </a>
@@ -144,7 +135,7 @@ export default function StatementForm({ action, sampleHref }: { action: (prev: S
       </Panel>
       <input type="hidden" name="step" value="preview" />
       <FormActions sticky={false}>
-        <Submit label="Read the statement" busy="Reading the statement…" />
+        <SubmitButton busy="Reading the statement…">Read the statement</SubmitButton>
       </FormActions>
     </form>
   );

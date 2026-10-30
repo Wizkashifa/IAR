@@ -28,7 +28,8 @@ import { ORG, type Role } from "../org";
 import type { Notice, Recipient } from "../notices";
 import { type Directory, teamPeople } from "../teams";
 import { addDays } from "../dates";
-import { lc, same } from "../text";
+import { dayText, timeText } from "./series";
+import { lc, plural, same } from "../text";
 
 /** What the requester's room check clashed with. */
 export type Hold = {
@@ -123,22 +124,11 @@ export function holdKeyOf(h: Pick<Hold, "cardId" | "calendarEventId">): string {
   return "";
 }
 
-const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-function fmtDate(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return `${DOW[dt.getUTCDay()]} ${MON[m - 1]} ${d}`;
-}
-function fmtTime(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-}
-/** "Tue Nov 4" or "Tue Nov 4 and 2 more dates". */
+/** "Tue, Nov 4" or "Tue, Nov 4 and 2 more dates". */
 export function datesText(dates: string[]): string {
   if (!dates.length) return "";
   const more = dates.length - 1;
-  return more ? `${fmtDate(dates[0])} and ${more} more date${more > 1 ? "s" : ""}` : fmtDate(dates[0]);
+  return more ? `${dayText(dates[0])} and ${plural(more, "more date")}` : dayText(dates[0]);
 }
 
 const OFFICE = "role:office";
@@ -224,7 +214,7 @@ export function newSlotRequest(
       status: "open",
       askedAt: now,
       updatedAt: now,
-      history: [{ at: now, by: lc(requester.email), text: `Asked for ${hold.room}, ${datesText(dates)}, ${fmtTime(hold.start)}–${fmtTime(hold.end)}, held by ${hold.label}. Reason: ${reason}` }],
+      history: [{ at: now, by: lc(requester.email), text: `Asked for ${hold.room}, ${datesText(dates)}, ${timeText(hold.start)}–${timeText(hold.end)}, held by ${hold.label}. Reason: ${reason}` }],
     },
   };
 }
@@ -415,7 +405,7 @@ export function slotNotices(before: SlotRequest | null, after: SlotRequest, acto
     if (same(to, actorEmail)) return;
     out.push({ to: recipient(to), cardId, href: `/events/${cardId}`, text, alert, delegable: alert });
   };
-  const slot = `${after.hold.room}, ${datesText(after.dates)}, ${fmtTime(after.hold.start)}–${fmtTime(after.hold.end)}`;
+  const slot = `${after.hold.room}, ${datesText(after.dates)}, ${timeText(after.hold.start)}–${timeText(after.hold.end)}`;
   const holder = after.hold.cardId ?? after.fromCard;
 
   if (!before) {

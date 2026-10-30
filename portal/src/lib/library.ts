@@ -1,6 +1,6 @@
 import "server-only";
 import { GoogleAuth } from "google-auth-library";
-import { todayLocal } from "./dates";
+import { todayLocal, addDays } from "./dates";
 import { isDevAuth } from "./dev";
 import { reportFailure, reportOk } from "./health";
 import { buildLibrary, driveSearchQuery, matchFiles, type DriveItem, type Library, type LibraryFile } from "./library-core";
@@ -124,7 +124,7 @@ const DEV_DRIVE = "dev-policies-drive";
 
 function devItems(): DriveItem[] {
   const today = todayLocal();
-  const day = (offset: number) => new Date(Date.parse(`${today}T12:00:00Z`) + offset * 86_400_000).toISOString().slice(0, 10);
+  const day = (offset: number) => addDays(today, offset);
   const at = (offset: number) => `${day(offset)}T15:00:00.000Z`;
   const folder = (id: string, name: string): DriveItem => ({ id, name, mimeType: "application/vnd.google-apps.folder", parents: [DEV_DRIVE] });
   const file = (id: string, name: string, mimeType: string, parent: string, updated: number, by: string, review?: number): DriveItem => ({

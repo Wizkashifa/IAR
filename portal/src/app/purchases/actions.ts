@@ -20,9 +20,8 @@ import * as wf from "@/lib/purchases/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 import { actOnCard, commentOnCard, unknownAction } from "@/lib/card-actions";
 import type { FormState } from "@/components/FormErrors";
+import { nowIso } from "@/lib/dates";
 
-
-const nowIso = () => new Date().toISOString();
 const directorsFor = (ctx: PurchaseContext, c: wf.PurchaseCard) => {
   const a = ctx.routing.approversFor(c.purchase.fund);
   return { directors: a.directors, chairs: a.chairs };

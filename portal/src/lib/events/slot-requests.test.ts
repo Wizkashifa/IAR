@@ -224,3 +224,10 @@ test("notices: the people asked get an alert; the requester hears the answer", (
   const upN = sr.slotNotices(r, up, "portal");
   assert.deepEqual(upN.filter((n) => n.alert).map((n) => n.to), [{ email: director.email }]);
 });
+
+test("datesText: the first date the way the rest of the request page writes it, and how many more", () => {
+  assert.equal(sr.datesText([]), "");
+  assert.equal(sr.datesText(["2026-11-17"]), "Tue, Nov 17");
+  assert.equal(sr.datesText(["2026-11-17", "2026-11-24"]), "Tue, Nov 17 and 1 more date");
+  assert.equal(sr.datesText(["2026-11-17", "2026-11-24", "2026-12-01"]), "Tue, Nov 17 and 2 more dates");
+});

@@ -9,14 +9,15 @@ import { peopleStore } from "@/lib/people";
 import { requireViewer } from "@/lib/viewer";
 import { todayLocal } from "@/lib/dates";
 import type { FormState } from "@/components/FormErrors";
+import { fmtShortDay } from "@/lib/format";
+import { lc } from "@/lib/text";
 
 
-const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 export async function saveAway(_prev: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireViewer();
   const people = await peopleStore();
-  const delegate = String(form.get("delegate") ?? "").trim().toLowerCase();
+  const delegate = lc(String(form.get("delegate") ?? ""));
   const r = checkAway(
     { from: String(form.get("from") ?? ""), until: String(form.get("until") ?? ""), delegate, note: String(form.get("note") ?? "") },
     { email: viewer.email, name: viewer.name },
@@ -32,7 +33,7 @@ export async function saveAway(_prev: FormState, form: FormData): Promise<FormSt
       [{
         to: { email: r.away.delegate },
         href: "/",
-        text: `${viewer.name} asked you to cover their approvals from ${fmtDay(r.away.from)} to ${fmtDay(r.away.until)}${r.away.note ? `: “${r.away.note}”` : "."}`,
+        text: `${viewer.name} asked you to cover their approvals from ${fmtShortDay(r.away.from)} to ${fmtShortDay(r.away.until)}${r.away.note ? `: “${r.away.note}”` : "."}`,
         alert: true,
         delegable: false,
       }],

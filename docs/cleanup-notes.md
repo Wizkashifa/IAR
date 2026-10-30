@@ -1,29 +1,90 @@
 # Clean-up notes: repeated code
 
-CLAUDE.md asks for shared helpers ("use them rather than writing another copy"). These are places where code repeats something that already exists, for a later clean-up. Nothing here changes what people see.
+CLAUDE.md asks for shared helpers ("use them rather than writing another copy"). These are places where code still repeats something that exists already, for a later clean-up.
 
-## From the event request changes (change date or time, office answers, quick fixes)
+## Done (Oct 30, 2026)
 
-Most of these came from building each new piece next to the old one, so the existing screens couldn't break, and then never merging them.
+Everything on the first list is done. What people see stayed the same, except for the three small fixes at the end of this section.
 
-| Copy | Why it happened | Fix |
-|---|---|---|
-| The Checks panel, calendar panel and `Submit` button in `portal/src/app/events/TimeForm.tsx` repeat those in `EventForm.tsx`. | The request form has these panels written inline, and I avoided touching the form every new request goes through. | Pull out `ChecksPanel`, `DayPanel` and `Submit` into `app/events/ui.tsx` and use them in both. Check with `npm run shots`. |
-| `rescheduleEvent` in `app/events/actions.ts` repeats `actOnCard`'s steps: stale-page check, save, follow-up, notices, revalidate and redirect. | The time form needs errors to stay on the form (`FormState`), and `actOnCard` always redirects. | Give `actOnCard` an option to return errors instead of redirecting, and use it for both. |
-| `approve_change` re-checks the calendar in its own code, next to `approve`'s re-check (`actions.ts`). | Its input is the new time. | One helper: the clashes a given time would have now. |
-| `approveChange`, `declineChange` and `withdrawChange` in `lib/events/reschedule.ts` each drop `change`, add history and call `withStage`. | Written one at a time. | One private helper. |
-| `rescheduleNotices` in `lib/events/notices.ts` copies `eventNotices`' `add` helper, which skips the actor. | It also skips duplicates. | One shared helper with the duplicate check, used by both. |
-| `checkTime` in `actions.ts` builds a `FormData` only to reuse `readEdit`. | Quickest way to reuse the checks. | `readEdit` should take a plain object; the form version calls it. |
-| `app/events/[id]/page.tsx` writes its own "What happens next" and "Waiting on" text when the IAR office answers an ask. | `eventModule.next` doesn't know about asks. | Pass the waiting ask through `StepOptions` so `lib/events/module.ts` says it, as the registry rule expects. Also rename `nextReview0`. |
+- **Event forms.** `ChecksPanel`, `ClashText` and `DayPanel` in `app/events/ui.tsx` draw the Checks panel and the calendar panel for both `EventForm` and `TimeForm`.
+- **One submit button.** `components/SubmitButton.tsx` replaces the 8 `Submit` copies in the event, purchase, statement, marketing, ticket and import forms.
+- **`actOnCardForm`** (`lib/card-actions.ts`) is `actOnCard` for a form that keeps what was typed. `rescheduleEvent` uses it, so the stale-page check, save, follow-up, notices and revalidate are written once. A failure sending alerts after a time change is now logged instead of showing an error page.
+- **Smaller event helpers:**
+  - `clashesNow` re-checks the calendar for both `approve` and `approve_change`.
+  - `closeChange` in `lib/events/reschedule.ts` does approve, decline and withdraw a change.
+  - `readEdit` takes a plain object, so `checkTime` doesn't build a `FormData`.
+- **Notices.** `collector` in `lib/notices.ts` now takes `delegable`. `eventNotices` and `rescheduleNotices` both use it.
+- **"What happens next" for an ask the IAR office answers** comes from `lib/events/module.ts`, through `StepOptions.officeAnswers`. `nextReview0` is now `firstReview`.
+- **Time helpers.** The time ↔ minutes copies now use `toMinutes` and `holdWindow`.
+- **Date and text helpers:**
+  - `slot-requests.ts` uses `dayText` and `timeText`.
+  - Local date formatters use `dayText`, `longDate` and `fmtShortDay`: card-row, home, away, measures, marketing, ticket schedules and library.
+  - Day maths uses `addDays`, `addMonths` and `daysBetween`: EventForm, RoomDay, library and ticket schedules.
+  - `todayLocal` replaces a copy in RequestExamples.
+  - `fileSize` replaces a copy in FileDrop.
+  - `andList(…, "or")` builds the quick-fix sentence.
+  - `plural` covers 5 counts.
+  - `lc` covers 13 places that trimmed and lower-cased.
+  - One exported `nowIso` (`lib/dates.ts`) replaces 6 copies.
 
-## Already there before
+Changes people might notice:
 
-- The time ↔ minutes helpers are written out again in `app/events/actions.ts` (`toMin`, `fm`), `app/events/[id]/page.tsx` (`holdTimes`) and `app/events/ui.tsx` (`toMin`). Use `toMinutes` and `fromMinutes` in `lib/events/series.ts`, and `holdWindow` in `lib/calendar.ts`.
-- `lib/events/slot-requests.ts` has its own `fmtDate` and `fmtTime` next to `dayText` and `timeText` in `series.ts`. They format dates differently ("Tue Nov 17" vs "Tue, Nov 17"), so the ask panel doesn't match the rest of the request page.
+- An ask's dates read "Tue, Nov 17", like the rest of the request page. Before, they read "Tue Nov 17".
+- On the change-time form, a clash row puts the booking's name and the rest of the sentence on one line, as on the request form.
+- A ticket schedule with an impossible next date ("2026-13-01") shows "Choose the next date." instead of failing.
+
+How it was checked:
+
+- `npm test` (3 new tests), typecheck, build and `npm run a11y` all pass.
+- `npm run shots` was compared pixel by pixel with the screens before the change. The only differences were the date comma above, sub-pixel text rendering, and captures taken while the page was still loading.
+- A Playwright run of the event flows gave the same results on the old and new code:
+  - a clash and asking for the time;
+  - a quick fix;
+  - off-site;
+  - asking to change an approved event's time;
+  - an ask the office answers.
+
+## Still to do
+
+Each of these was left alone on purpose, because the change wouldn't be exactly the same for everyone.
+
+- **Same-address checks.** These places compare `a.toLowerCase() === b.toLowerCase()` where `lib/text.ts` has `same()`:
+  - `lib/access.ts`
+  - `lib/events/access.ts`
+  - `lib/events/renewal.ts`
+  - `lib/again.ts`
+  - `lib/cards.ts`
+  - `lib/act-as.ts`
+  - `lib/teams.ts`
+  - `lib/purchases/input.ts`
+  - `lib/purchases/reminders.ts`
+  - `lib/purchases/settings.ts`
+  - `lib/names.ts`
+  - `lib/feedback-thread.ts`
+  - `lib/comments.ts`
+  - the marketing and purchase request and edit pages
+  - `app/purchases/page.tsx`
+  - `app/events/ops-ui.tsx`
+
+  `same()` also trims spaces, and two empty values never match, so check each place before switching.
+- **Notice builders.** `marketingNotices` and `purchaseNotices` have their own `add`. `collector` would also stop a person getting two notices about one change; decide whether that's wanted first.
+- **Close-out.** `closeOutEvent` (`app/events/ops-actions.ts`) saves the card without `actOnCard`. Moving it changes three things: who may act (the `mayOpen` check), the message when alerts fail, and where the page lands (`#closeout`).
+- **"Waiting on" for an ask the office answers.** This is still set on the request page, because `waitingOn` is stored on the card. Saying it in the workflow would change how the lists read too.
+- **Small repeats with no shared helper yet:**
+  - About 30 inline ``error=${encodeURIComponent(…)}`` redirects in the app's actions.
+  - `pad` in `lib/purchases/statement.ts` and `statement-sample.ts`.
+  - The title-case code in `lib/name-cache.ts` and `fallbackName` in `lib/steps.ts`. They don't do the same job: `prettifyEmail` also drops group prefixes and numbers.
+  - The `PORTAL_ACCESS_GROUP` lower-casing in `lib/org.ts` and `lib/groups.ts`.
 
 ## How to look for more
 
-- Search for small local helpers that redo shared ones: `toMin`, `fm`, `fmtDate`, `fmtTime`, `padStart(2, "0")`, `const add = (to`, `function Submit`. Compare each with `lib/text.ts`, `lib/dates.ts`, `lib/format.ts`, `lib/events/series.ts` and `lib/notices.ts`.
-- Pages that build "What happens next" or "Waiting on" text themselves instead of asking `lib/registry.ts`.
-- Server actions that save a card without going through `lib/card-actions.ts`.
-- Forms that draw the same panels: `EventForm` and `TimeForm`, and the forms under `app/purchases`, `app/marketing` and `app/it-maintenance`.
+- Search for small local helpers that redo shared ones:
+  - `toMin`, `fm`, `fmtDate`, `fmtTime`, `padStart(2, "0")`
+  - `toLocaleDateString(` with `T12:00:00Z`
+  - `.trim().toLowerCase()`
+  - `const add = (to`
+  - `function Submit`
+
+  Compare each with `lib/text.ts`, `lib/dates.ts`, `lib/format.ts`, `lib/events/series.ts` and `lib/notices.ts`.
+- Look for pages that build "What happens next" or "Waiting on" text themselves instead of asking `lib/registry.ts`.
+- Look for server actions that save a card without going through `lib/card-actions.ts`.

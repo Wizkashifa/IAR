@@ -17,7 +17,7 @@ import { lastDate } from "./closeout";
 import { TEAM_NAME as TASK_TEAM_NAME, isTeamTask } from "./tasks";
 import { changeApprovers, changePermission } from "./reschedule";
 import { dayText, timeText } from "./series";
-import { type EventCard, STAGE_LABEL, isEventCard, permission, reviewersFor } from "./workflow";
+import { type EventCard, STAGE_LABEL, firstStage, isEventCard, permission, reviewersFor } from "./workflow";
 
 function eventSteps(card: EventCard, o: StepOptions): Steps {
   const e = card.event;
@@ -62,7 +62,9 @@ function eventNext(card: EventCard, viewer: Viewer, names: NameOf, o: StepOption
   if (card.status === "denied" || card.status === "cancelled" || card.status === "closed") return "";
   switch (e.stage) {
     case "slot":
-      return `Whoever holds the booked time answers ${mine ? "your" : "the"} ask for it. If they give it up, the request goes on to review.${notified}`;
+      return o.officeAnswers
+        ? `The IAR office answers ${mine ? "your" : "the"} ask for the booked time, since it was booked on the IAR calendar, not in the portal. If they give it up, the request goes on to ${STAGE_LABEL[firstStage(card.ownerEmail, o.directors ?? [])].toLowerCase()}.${notified}`
+        : `Whoever holds the booked time answers ${mine ? "your" : "the"} ask for it. If they give it up, the request goes on to review.${notified}`;
     case "director": {
       const who = reviewersFor(card.ownerEmail, o.directors ?? []);
       const reviewer = who.length ? `${s.anyOf(who)} (director)` : "The committee's director";

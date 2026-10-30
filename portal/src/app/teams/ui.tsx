@@ -3,6 +3,7 @@ import { Pill } from "@/components/Pill";
 import type { NameResolver } from "@/lib/names";
 import type { TeamEntry } from "@/lib/whos-who";
 import styles from "./teams.module.css";
+import { plural } from "@/lib/text";
 
 /** "Chair: Ali Hassan · Vice chair: Sara Khan", or who to ask when a team has no chair yet. */
 export function leadersLine(t: TeamEntry, names: NameResolver): string {
@@ -25,7 +26,7 @@ export function TeamRow({ team, names, mine }: { team: TeamEntry; names: NameRes
       }
       sub={leadersLine(team, names)}
       extra={team.description}
-      right={<span className={styles.count}>{team.memberCount} {team.memberCount === 1 ? "person" : "people"}</span>}
+      right={<span className={styles.count}>{plural(team.memberCount, "person", "people")}</span>}
     />
   );
 }

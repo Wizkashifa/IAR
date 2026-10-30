@@ -182,3 +182,26 @@ test("one name per stage: the pill, the step bar and history agree", () => {
   assert.equal(card({}, DIRS, { waitingOnAsk: "SR-1001" }).event.history.at(-1)!.action, "Waiting for a room answer (SR-1001) before director review");
   assert.doesNotMatch(JSON.stringify(wf.slotGranted(noDir, [], T(1), "SR-1001").event.history), /mission review/);
 });
+
+test("closing a change: approve takes the new time and its checks; decline and withdraw keep the approved time, each with its own history", () => {
+  const a = approved();
+  const checks = [{ sev: "ok" as const, text: "Room is free", rule: "IAR Google Calendar" }];
+  const asked = rs.requestChange(a, { ...rs.timeOf(a.event), start: "13:45", end: "20:15" }, owner, DIRS, T(3), checks);
+  const alert = rescheduleNotices(a, asked, owner, DIRS).find((x) => "email" in x.to && x.to.email === director.email);
+  assert.equal(alert?.delegable, true, "the director can hand the approval to whoever covers for them");
+
+  const ok = rs.approveChange(asked, director, DIRS, T(4), "Fine by me");
+  assert.deepEqual(ok.event.checks, checks);
+  assert.deepEqual(ok.event.history.slice(-2).map((h) => h.action), ["Approved the new date or time", "Room hold moved on the IAR calendar"]);
+  assert.match(ok.event.history.at(-2)!.note!, /\nFine by me$/);
+
+  const no = rs.declineChange(asked, director, DIRS, T(4), " Cleaning then ");
+  assert.equal(no.event.history.at(-1)!.action, "Kept the approved time: the new one wasn't approved");
+  assert.equal(no.event.history.at(-1)!.note, "Cleaning then");
+  assert.equal(no.event.history.length, asked.event.history.length + 1);
+
+  const back = rs.withdrawChange(asked, owner, DIRS, T(4));
+  assert.equal(back.event.history.at(-1)!.action, "Withdrew the new date or time. The approved time stays");
+  assert.equal(back.event.start, "13:30");
+  assert.equal(back.status, "approved");
+});

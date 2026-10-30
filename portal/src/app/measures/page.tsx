@@ -29,6 +29,7 @@ import styles from "./measures.module.css";
 import { RightNow } from "./RightNow";
 import { historyOf } from "@/lib/kinds";
 import { DataTable, cell } from "@/components/DataTable";
+import { fmtShortDay } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Portal Measures" };
@@ -37,7 +38,6 @@ export const metadata: Metadata = { title: "Portal Measures" };
 const RECENT = 5000;
 
 const toMeasure = (c: Card): MeasureCard => ({ type: c.type, createdAt: c.createdAt, updatedAt: c.updatedAt, history: historyOf(c) });
-const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const monthName = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
 const pct = (n: number, of: number) => (of ? Math.round((n / of) * 100) : 0);
 
@@ -79,7 +79,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
   const rows = requestsPer(cards, periods);
   const rowTotal = (w: (typeof rows)[number]) => MEASURED.reduce((a, t) => a + w.counts[t], 0);
   const busiest = Math.max(1, ...rows.map(rowTotal));
-  const rowName = (day: string) => (by === "month" ? monthName(day) : shortDay(day));
+  const rowName = (day: string) => (by === "month" ? monthName(day) : fmtShortDay(day));
   const back = sentBack(cards);
   const forms = startedVsSent(started, cards, since);
   const fb = feedbackByKind(feedback.filter((f) => Date.parse(f.at) >= start));
@@ -214,7 +214,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
           <PanelFoot>For changes, or with a question from the marketing team. From the {cards.length} requests sent in the {rangeLabel.toLowerCase()}.</PanelFoot>
         </Panel>
 
-        <Panel title="Forms started but not sent" right={`Since ${shortDay(since)}`} flush>
+        <Panel title="Forms started but not sent" right={`Since ${fmtShortDay(since)}`} flush>
           <DataTable>
             <caption className="sr-only">Request forms someone started typing in, against requests sent</caption>
             <thead>

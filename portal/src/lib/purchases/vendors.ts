@@ -10,6 +10,7 @@ import type { Vendor } from "../cards";
 import type { Role } from "../org";
 import { SOCIAL_WELFARE_FUND } from "./accounts";
 import type { PurchaseDetails } from "./types";
+import { lc } from "../text";
 
 export const vendorSlug = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "unnamed";
@@ -40,7 +41,7 @@ export function vendorsForFund(all: Vendor[], roles: Role[], fund: string): Vend
 
 /** The saved vendor with this name, ignoring case (works on the full record or the form's VendorChoice). */
 export function findVendor<V extends { name: string }>(list: V[], name: string): V | undefined {
-  const n = name.trim().toLowerCase();
+  const n = lc(name);
   return n ? list.find((v) => v.name.toLowerCase() === n) : undefined;
 }
 

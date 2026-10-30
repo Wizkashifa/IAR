@@ -11,6 +11,7 @@
  */
 
 import { daysBetween, isDate } from "./dates";
+import { lc } from "./text";
 
 export type Away = {
   /** Lowercased @domain email of the person who is away. */
@@ -61,7 +62,7 @@ export function checkAway(
   const errors: string[] = [];
   const from = input.from.trim();
   const until = input.until.trim();
-  const delegate = input.delegate.trim().toLowerCase();
+  const delegate = lc(input.delegate);
   const note = input.note?.trim().slice(0, 300) || undefined;
 
   if (!isDate(from)) errors.push("Pick the first day you're away.");

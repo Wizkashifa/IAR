@@ -14,6 +14,7 @@ import { isFinished, needsViewer, type NeedsContext, type NeedsViewer } from "./
 import { TEAM_NAME as TICKET_TEAM } from "./tickets/types";
 import { lc, same } from "./text";
 import { todayLocal } from "./dates";
+import { dayText } from "./events/series";
 
 /**
  * The edge colour: gold when it needs the person looking, blue while it waits
@@ -45,7 +46,6 @@ export type RowOptions = {
   ctx?: NeedsContext;
 };
 
-const day = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 
 const ticketOpen = (c: Card) => c.ticket && !["resolved", "closed", "cancelled"].includes(c.ticket.status);
@@ -90,9 +90,9 @@ export function subText(card: Card): string {
   if (card.ticket) parts.push(TICKET_TEAM[card.ticket.team], card.ticket.room);
   else if (card.marketing) parts.push(MARKETING_TYPES[card.marketing.kind]?.label ?? "Marketing", card.committee);
   else parts.push(card.committee);
-  if (card.event && card.eventDate) parts.push(day(card.eventDate));
+  if (card.event && card.eventDate) parts.push(dayText(card.eventDate));
   if (card.purchase && typeof card.amount === "number") parts.push(fmtMoney(card.amount));
-  if (card.marketing?.doneBy) parts.push(`done by ${day(card.marketing.doneBy)}`);
+  if (card.marketing?.doneBy) parts.push(`done by ${dayText(card.marketing.doneBy)}`);
   return parts.filter(Boolean).join(" · ");
 }
 

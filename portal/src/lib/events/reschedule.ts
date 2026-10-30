@@ -21,7 +21,7 @@
 import { daysBetween } from "../dates";
 import { STEP } from "../glossary";
 import { same } from "../text";
-import { historyEntry, WorkflowError } from "../workflow-core";
+import { type HistoryEntry, historyEntry, WorkflowError } from "../workflow-core";
 import { lastDate } from "./closeout";
 import { dayText, timeText } from "./series";
 import type { Check, EventDetails, TimeEdit } from "./types";
@@ -122,34 +122,36 @@ export function requestChange(card: EventCard, edit: TimeEdit, actor: EventActor
   return withStage(card, e, now, directors, card.status);
 }
 
+/** The event without its waiting change, with `entries` added to its history. `apply` changes what's left (the new time, once approved). */
+function closeChange(card: EventCard, directors: string[], now: string, entries: HistoryEntry[], apply: (e: EventDetails) => EventDetails = (e) => e): EventCard {
+  const { change: _closed, ...rest } = card.event;
+  const e: EventDetails = { ...apply(rest), history: [...card.event.history, ...entries] };
+  return withStage(card, e, now, directors, card.status);
+}
+
 export function approveChange(card: EventCard, actor: EventActor, directors: string[], now: string, note?: string): EventCard {
   const p = changePermission(card, actor, directors);
   if (!p.ok) throw new WorkflowError(p.reason);
-  const e0 = card.event;
-  const c = e0.change!;
+  const c = card.event.change!;
   const edit = timeOf(c);
-  const { change: _done, ...rest } = e0;
-  const e: EventDetails = {
-    ...applied(rest, edit),
-    checks: c.checks,
-    history: [...e0.history, historyEntry(actor.email, now, "Approved the new date or time", [changesNote(card, edit), note?.trim()].filter(Boolean).join("\n")), ...(e0.rooms.length ? [historyEntry("portal", now, "Room hold moved on the IAR calendar")] : [])],
-  };
-  return withStage(card, e, now, directors, card.status);
+  return closeChange(
+    card,
+    directors,
+    now,
+    [historyEntry(actor.email, now, "Approved the new date or time", [changesNote(card, edit), note?.trim()].filter(Boolean).join("\n")), ...(card.event.rooms.length ? [historyEntry("portal", now, "Room hold moved on the IAR calendar")] : [])],
+    (rest) => ({ ...applied(rest, edit), checks: c.checks }),
+  );
 }
 
 export function declineChange(card: EventCard, actor: EventActor, directors: string[], now: string, note: string): EventCard {
   const p = changePermission(card, actor, directors);
   if (!p.ok) throw new WorkflowError(p.reason);
   if (!note.trim()) throw new WorkflowError("Say why the new time doesn't work.");
-  const { change: _dropped, ...rest } = card.event;
-  const e: EventDetails = { ...rest, history: [...card.event.history, historyEntry(actor.email, now, "Kept the approved time: the new one wasn't approved", note.trim())] };
-  return withStage(card, e, now, directors, card.status);
+  return closeChange(card, directors, now, [historyEntry(actor.email, now, "Kept the approved time: the new one wasn't approved", note.trim())]);
 }
 
 export function withdrawChange(card: EventCard, actor: EventActor, directors: string[], now: string): EventCard {
   if (!same(card.ownerEmail, actor.email)) throw new WorkflowError("Only the requester can withdraw the change.");
   if (!card.event.change) throw new WorkflowError("No new time is waiting for approval.");
-  const { change: _dropped, ...rest } = card.event;
-  const e: EventDetails = { ...rest, history: [...card.event.history, historyEntry(actor.email, now, "Withdrew the new date or time. The approved time stays")] };
-  return withStage(card, e, now, directors, card.status);
+  return closeChange(card, directors, now, [historyEntry(actor.email, now, "Withdrew the new date or time. The approved time stays")]);
 }

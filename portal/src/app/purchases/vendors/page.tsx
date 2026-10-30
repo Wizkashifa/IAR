@@ -19,6 +19,7 @@ import { DataTable, cell } from "@/components/DataTable";
 import { Disclosure } from "@/components/Disclosure";
 import { SearchForm } from "@/components/SearchForm";
 import { Crumb } from "@/components/Crumb";
+import { lc } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Saved vendors" };
@@ -33,7 +34,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
   const viewer = await requireViewer();
   const finance = viewer.actingRoles.includes("finance");
   const { shared, restricted } = visibleVendors(await (await cardStore()).listVendors(), viewer.actingRoles);
-  const needle = q.trim().toLowerCase();
+  const needle = lc(q);
   const match = (v: Vendor) => !needle || v.name.toLowerCase().includes(needle) || (v.address ?? "").toLowerCase().includes(needle);
 
   return (

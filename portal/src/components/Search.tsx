@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Spotlight, createSpotlight } from "@mantine/spotlight";
 import { Icon, type IconName } from "./Icon";
 import styles from "./Search.module.css";
+import { lc } from "@/lib/text";
 
 export type SearchPlace = { label: string; href: string; icon: IconName };
 type Result = { id: string; title: string; sub: string; href: string };
@@ -68,7 +69,7 @@ export function Search({ places, variant = "header" }: { places: SearchPlace[]; 
     window.open(url, "_blank", "noopener,noreferrer");
   };
   const all = () => go(`/search?q=${encodeURIComponent(query.trim())}`);
-  const q = query.trim().toLowerCase();
+  const q = lc(query);
   const pages = places.filter((p) => !q || p.label.toLowerCase().includes(q));
 
   return (

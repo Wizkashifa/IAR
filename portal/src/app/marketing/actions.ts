@@ -6,7 +6,7 @@ import { requireViewer, type Viewer } from "@/lib/viewer";
 import { deliver } from "@/lib/notifications";
 import { actorFor } from "@/lib/people";
 import { directory, queueTeamMembers } from "@/lib/groups";
-import { todayLocal } from "@/lib/dates";
+import { todayLocal, nowIso } from "@/lib/dates";
 import { MARKETING_TYPES, isMarketingKind, parseMarketingInput, type MarketingInput } from "@/lib/marketing/forms";
 import { marketingCommentNotices, marketingNotices } from "@/lib/marketing/notices";
 import type { Notice } from "@/lib/notices";
@@ -22,8 +22,6 @@ import type { FormState } from "@/components/FormErrors";
 
 /** `n` changes on every answer, so the form redraws with what was typed. */
 export type MarketingFormState = FormState & { values?: MarketingInput; n: number };
-
-const nowIso = () => new Date().toISOString();
 
 /**
  * Committees and teams this person may request for: the ones they're on and

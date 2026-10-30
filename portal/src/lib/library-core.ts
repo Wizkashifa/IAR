@@ -6,6 +6,8 @@
  * The files stay in IAR's Policies Shared Drive; the portal only lists them
  * and links to them. Nothing is copied.
  */
+import { daysBetween } from "./dates";
+import { longDate } from "./events/series";
 
 /** One file or folder as Drive lists it (the fields lib/library.ts asks for). */
 export type DriveItem = {
@@ -79,20 +81,12 @@ export function reviewDate(item: Pick<DriveItem, "description" | "properties">):
   return m?.[1];
 }
 
-/** Days from `today` to `day`, both "YYYY-MM-DD". */
-function daysUntil(day: string, today: string): number {
-  return Math.round((Date.parse(`${day}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
-}
-
-const fmt = (ymd: string) =>
-  new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-
 /** The review pill: overdue (red), due within 30 days (warn), or just the date. */
 export function reviewState(reviewBy: string, today: string): { tone: "bad" | "warn" | "neutral"; label: string } {
-  const d = daysUntil(reviewBy, today);
-  if (d < 0) return { tone: "bad", label: `Review overdue since ${fmt(reviewBy)}` };
-  if (d <= 30) return { tone: "warn", label: d === 0 ? "Review due today" : `Review due ${fmt(reviewBy)}` };
-  return { tone: "neutral", label: `Review by ${fmt(reviewBy)}` };
+  const d = daysBetween(today, reviewBy);
+  if (d < 0) return { tone: "bad", label: `Review overdue since ${longDate(reviewBy)}` };
+  if (d <= 30) return { tone: "warn", label: d === 0 ? "Review due today" : `Review due ${longDate(reviewBy)}` };
+  return { tone: "neutral", label: `Review by ${longDate(reviewBy)}` };
 }
 
 /**

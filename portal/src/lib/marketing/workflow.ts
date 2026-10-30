@@ -31,9 +31,9 @@ import type { Actor } from "../purchases/workflow";
 import { LEAD_DAYS, MARKETING_TYPES, eventPartOf, neededBy, pieceTitle, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
 import { CHANNELS, CHANNEL_LABEL, type Channel, type MarketingDetails, type MarketingFile, type MarketingKind, type MarketingStage } from "./types";
-import { andList, same } from "../text";
+import { andList, same, lc } from "../text";
 import { addDays, daysBetween, isDate, nextBusinessDay, todayLocal } from "../dates";
-import { fmtDayTime } from "../format";
+import { fmtDayTime, fmtShortDay } from "../format";
 import { historyEntry, must, WorkflowError } from "../workflow-core";
 
 export type { Actor };
@@ -47,8 +47,6 @@ export function isMarketingCard(c: Card | null | undefined): c is MarketingCard 
 
 /** Today in Raleigh (YYYY-MM-DD) for an ISO time. */
 
-/** "Nov 4" for a YYYY-MM-DD day. */
-export const shortDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 /** "Wednesday, November 4" for a YYYY-MM-DD day. */
 export const longDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
 
@@ -131,9 +129,9 @@ export function waitingOnFor(card: MarketingCard): string | undefined {
     case "question":
       return "You: answer marketing's question";
     case "scheduled":
-      return m.doneBy ? `Marketing: due ${shortDay(m.doneBy)}` : "Marketing: scheduled";
+      return m.doneBy ? `Marketing: due ${fmtShortDay(m.doneBy)}` : "Marketing: scheduled";
     case "doing":
-      return m.doneBy ? `Marketing: in progress, due ${shortDay(m.doneBy)}` : "Marketing: in progress";
+      return m.doneBy ? `Marketing: in progress, due ${fmtShortDay(m.doneBy)}` : "Marketing: in progress";
     case "proof":
       return "You: approve marketing's draft";
     case "ready":
@@ -404,7 +402,7 @@ export function start(card: MarketingCard, actor: Actor, now: string, note?: str
  */
 export function assign(card: MarketingCard, actor: Actor, now: string, to: string, members: string[]): MarketingCard {
   mustDo(card, actor, "assign");
-  const email = to.trim().toLowerCase();
+  const email = lc(to);
   const m = card.marketing;
   if (!email) throw new WorkflowError("Choose who should work on it.");
   if (!members.some((x) => same(x, email))) throw new WorkflowError(`${email} isn't on the marketing team's Google Group.`);

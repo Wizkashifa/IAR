@@ -13,6 +13,7 @@ import { reviewState, type LibraryFile } from "@/lib/library-core";
 import { requireViewer } from "@/lib/viewer";
 import { fmtDate } from "@/lib/format";
 import { SearchForm } from "@/components/SearchForm";
+import { plural } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Library" };
@@ -67,10 +68,10 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       )}
       {admin && due > 0 && !q && !folder && (
         <Note tone="warn">
-          {due} {due === 1 ? "policy is" : "policies are"} due for review in the next 30 days or overdue. Set a file&apos;s review date in Google Drive by writing &ldquo;Review by 2027-01-31&rdquo; in its description.
+          {plural(due, "policy is", "policies are")} due for review in the next 30 days or overdue. Set a file&apos;s review date in Google Drive by writing &ldquo;Review by 2027-01-31&rdquo; in its description.
         </Note>
       )}
-      <Panel title={title} right={<span>{shown.length} {shown.length === 1 ? "file" : "files"}</span>} flush>
+      <Panel title={title} right={<span>{plural(shown.length, "file")}</span>} flush>
         {shown.length === 0 ? (
           <EmptyState action={q ? <Button href="/library">Show all policies</Button> : undefined}>
             {q ? `No policy matches “${q}”.` : "This folder is empty."}

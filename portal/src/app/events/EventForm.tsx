@@ -1,26 +1,26 @@
 "use client";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { DateField, TimeField } from "@/components/DateField";
 import { Field, FormActions, RequiredKey, RequiredTag } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
-import { Pill } from "@/components/Pill";
 import { RoomPicker } from "@/components/RoomPicker";
 import { FileDrop } from "@/components/FileDrop";
 import { IMAGE_ACCEPT, MAX_FILE_MB, MAX_PER_UPLOAD } from "@/lib/marketing/files";
 import type { EventPrefill } from "@/lib/calendar-view";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
-import { RECUR_LABEL, dayText, longDate, seriesMaxEnd, timeText } from "@/lib/events/series";
+import { RECUR_LABEL, longDate, seriesMaxEnd } from "@/lib/events/series";
 import type { AvNeeds, EventInput, MarketingBrief, RecurFreq } from "@/lib/events/types";
 import { type DraftCheck, checkDraft } from "./actions";
-import { ChecksList, QuickFixes, Timeline, checksSummary } from "./ui";
+import { ChecksPanel, ClashText, DayPanel } from "./ui";
 import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Checkbox, Choice, Choices } from "@/components/Choices";
+import { addDays } from "@/lib/dates";
 
 export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
@@ -58,18 +58,13 @@ const ANNOUNCE_EXAMPLE = "Join us for a family game night with dinner, board gam
 function initialDraft(p: EventFormProps): Draft {
   const i = p.initial;
   const f = p.prefill;
-  const plus = (n: number) => {
-    const d = new Date(`${p.today}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + n);
-    return d.toISOString().slice(0, 10);
-  };
   const committee = p.committees.find((c) => c.group === (i?.committeeGroup ?? p.defaultCommittee)) ?? p.committees[0];
   return {
     title: i?.title ?? "",
     description: i?.description ?? "",
     committeeGroup: i?.committeeGroup ?? committee?.group ?? "",
     committeeName: i?.committeeName ?? committee?.name ?? "",
-    date: i?.date ?? f?.date ?? plus(21),
+    date: i?.date ?? f?.date ?? addDays(p.today, 21),
     start: i?.start ?? f?.start ?? "18:30",
     end: i?.end ?? f?.end ?? "20:00",
     setup: i?.setup ?? 30,
@@ -182,7 +177,6 @@ export default function EventForm(p: EventFormProps) {
   ];
   const num = (id: string) => sections.findIndex((s) => s.id === id) + 1;
   const max = d.date ? seriesMaxEnd(d.date) : "";
-  const summary = checksSummary(result.checks);
   const roomOptions = p.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity || undefined }));
 
   return (
@@ -396,7 +390,7 @@ export default function EventForm(p: EventFormProps) {
         <FormActions>
           {blockers.length > 0 && !asking && <span className="hint">{clashOnly ? "The room is taken. Change the time or room, or ask for it." : "Fix the conflicts in the checks first."}</span>}
           <Button href={p.editing ? `/events/${p.editing}` : "/events"} variant="quiet">Cancel</Button>
-          <Submit label={asking ? "Send and ask for the time" : p.submitLabel} disabled={blockers.length > 0 && !asking} />
+          <SubmitButton disabled={blockers.length > 0 && !asking}>{asking ? "Send and ask for the time" : p.submitLabel}</SubmitButton>
         </FormActions>
       </form>
 
@@ -413,61 +407,41 @@ export default function EventForm(p: EventFormProps) {
             ))}
           </ol>
         </Panel>
-        <Panel title="Checks" right={summary ? <Pill tone={summary.tone} status>{checking ? "Checking…" : summary.label}</Pill> : undefined}>
-          <div className="stack">
-            <ChecksList checks={result.checks} />
-            {result.clashes.map((c) => (
-              <div key={c.key} className={styles.ask}>
-                <div>
-                  <strong>{c.label}</strong> has {c.roomName}, {timeText(c.start)}–{timeText(c.end)}
-                  {c.dates.length > 1 ? ` on ${c.dates.length} dates (${c.dates.slice(0, 3).map(dayText).join(", ")}${c.dates.length > 3 ? "…" : ""})` : ` on ${dayText(c.dates[0])}`}.
-                </div>
-                {c.askable ? (
-                  ask?.key === c.key ? (
-                    <Field label="Why you need this time" hint="Your request waits for their answer.">
-                      <textarea rows={3} value={ask.reason} onChange={(e) => setAsk({ key: c.key, reason: e.target.value })} placeholder="e.g. It's the only evening the speaker can come" maxLength={1000} />
-                    </Field>
-                  ) : (
-                    <div>
-                      <Button size="small" onClick={() => setAsk({ key: c.key, reason: "" })} disabled={result.clashes.length > 1 || !clashOnly}>Ask to use this time</Button>
-                      {result.clashes.length > 1 && <div className="hint">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
-                    </div>
-                  )
-                ) : (
-                  <div className="hint">{c.why}</div>
-                )}
-                {ask?.key === c.key && (
-                  <div>
-                    <Button size="small" variant="quiet" onClick={() => setAsk(null)}>Don&apos;t ask</Button>
-                  </div>
-                )}
+        <ChecksPanel
+          result={result}
+          checking={checking}
+          fix={(f) => update((x) => ({ ...x, ...f.edit }))}
+          after={askable.length === 0 && result.clashes.length > 0 && !result.fixes?.length && <p className="hint">Pick another time or room.</p>}
+        >
+          {result.clashes.map((c) => (
+            <div key={c.key} className={styles.ask}>
+              <div>
+                <ClashText c={c} few />
               </div>
-            ))}
-            <QuickFixes fixes={result.fixes} text={result.fixText} button={(f, label) => <Button size="small" onClick={() => update((x) => ({ ...x, ...f.edit }))}>{label}</Button>} />
-            {askable.length === 0 && result.clashes.length > 0 && !result.fixes?.length && <p className="hint">Pick another time or room.</p>}
-          </div>
-        </Panel>
-        <Panel title="IAR calendar that day" className={styles.calendarPanel}>
-          {result.timelines.length > 0 ? (
-            <div className="stack">
-              {result.timelines.map((t, i) => (
-                <Timeline key={t.roomName} items={t.items} request={t.request} caption={`${t.roomName} · ${dayText(t.date)}`} legend={i === result.timelines.length - 1} />
-              ))}
+              {c.askable ? (
+                ask?.key === c.key ? (
+                  <Field label="Why you need this time" hint="Your request waits for their answer.">
+                    <textarea rows={3} value={ask.reason} onChange={(e) => setAsk({ key: c.key, reason: e.target.value })} placeholder="e.g. It's the only evening the speaker can come" maxLength={1000} />
+                  </Field>
+                ) : (
+                  <div>
+                    <Button size="small" onClick={() => setAsk({ key: c.key, reason: "" })} disabled={result.clashes.length > 1 || !clashOnly}>Ask to use this time</Button>
+                    {result.clashes.length > 1 && <div className="hint">Change the time or room so only one booking is in the way, then you can ask for it.</div>}
+                  </div>
+                )
+              ) : (
+                <div className="hint">{c.why}</div>
+              )}
+              {ask?.key === c.key && (
+                <div>
+                  <Button size="small" variant="quiet" onClick={() => setAsk(null)}>Don&apos;t ask</Button>
+                </div>
+              )}
             </div>
-          ) : (
-            <p className="hint">{d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."}</p>
-          )}
-        </Panel>
+          ))}
+        </ChecksPanel>
+        <DayPanel timelines={result.timelines} empty={d.rooms.length ? "Checking…" : "Off-site: nothing to check on the calendar."} />
       </div>
     </div>
-  );
-}
-
-function Submit({ label, disabled }: { label: string; disabled: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button variant="primary" type="submit" disabled={pending || disabled}>
-      {pending ? "Sending…" : label}
-    </Button>
   );
 }

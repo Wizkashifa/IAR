@@ -1,6 +1,5 @@
 "use client";
-import { useFormStatus } from "react-dom";
-import { Button } from "@/components/Button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { FileDrop } from "@/components/FileDrop";
 
 /** File types a receipt or invoice can be. */
@@ -19,15 +18,6 @@ export const RECEIPT_TYPES = [
   "text/csv",
   "text/plain",
 ];
-
-function Send() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="primary" disabled={pending}>
-      {pending ? "Uploading…" : "Add these receipts"}
-    </Button>
-  );
-}
 
 /**
  * More receipts for a request already sent, in as many small sends as
@@ -49,7 +39,7 @@ export function AddReceipts({ action, fields }: { action: (form: FormData) => Pr
         hint="Up to 10 at a time. You can add more later."
       />
       <div>
-        <Send />
+        <SubmitButton busy="Uploading…">Add these receipts</SubmitButton>
       </div>
     </form>
   );

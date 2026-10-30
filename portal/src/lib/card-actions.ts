@@ -10,6 +10,7 @@ import { deliver } from "./notifications";
 import { actorFor } from "./people";
 import type { Viewer } from "./viewer";
 import { WorkflowError } from "./workflow-core";
+import { nowIso } from "./dates";
 
 /**
  * The parts every module's server actions share: load the request, check
@@ -19,7 +20,6 @@ import { WorkflowError } from "./workflow-core";
  * does (its workflow.ts).
  */
 
-const nowIso = () => new Date().toISOString();
 const page = (path: string, id: string, q: string) => `${path}/${id}?${q}`;
 const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 
@@ -104,23 +104,22 @@ export type ActionResult<C extends Card> = {
   after?: () => Promise<Notice[] | void>;
 };
 
+type ActModule<C extends Card> = Module<C> & { noun?: string; act(card: C, action: string, now: string): Promise<ActionResult<C>> };
+
 /**
- * One action on a request (approve, schedule, resolve…). Refuses if the
- * request changed since the person opened it. A refused step (WorkflowError)
- * or someone saving first (ConflictError) comes back as the message; any
- * other failure is logged and nothing is changed.
+ * Does one action and what follows it. Refuses if the request changed since
+ * the person opened it. A refused step (WorkflowError) or someone saving
+ * first (ConflictError) comes back as the message; any other failure is
+ * logged and nothing is changed. `missing`: the request is gone, or this
+ * person can't open it.
  */
-export async function actOnCard<C extends Card>(
-  form: FormData,
-  viewer: Viewer,
-  m: Module<C> & { noun?: string; act(card: C, action: string, now: string): Promise<ActionResult<C>> },
-): Promise<never> {
+async function act<C extends Card>(form: FormData, viewer: Viewer, m: ActModule<C>, stale: string): Promise<{ id: string; action: string; card: C; error: string | null } | { id: string; missing: true }> {
   const id = String(form.get("id") ?? "");
   const action = String(form.get("action") ?? "");
   const store = await cardStore();
   const card = await store.get(id);
-  if (!m.is(card) || !(await (m.canOpen ?? mayOpen)(card, viewer))) redirect(m.path);
-  if (String(form.get("expected") ?? "") !== card.updatedAt) redirect(page(m.path, id, err(`This ${m.noun ?? "request"} changed while you were looking at it. Check it again before acting.`)));
+  if (!m.is(card) || !(await (m.canOpen ?? mayOpen)(card, viewer))) return { id, missing: true };
+  if (String(form.get("expected") ?? "") !== card.updatedAt) return { id, action, card, error: stale };
   let error: string | null = null;
   let done: ActionResult<C> | null = null;
   try {
@@ -143,9 +142,30 @@ export async function actOnCard<C extends Card>(
     }, `${m.path} follow-up failed`);
     await tell(() => deliver([...r.notices, ...more], viewer.email.toLowerCase()), `${m.path} alerts failed`);
   }
+  return { id, action, card, error };
+}
+
+/** One action on a request (approve, schedule, resolve…), from a button on its page: back to the page with what happened. */
+export async function actOnCard<C extends Card>(form: FormData, viewer: Viewer, m: ActModule<C>): Promise<never> {
+  const r = await act(form, viewer, m, `This ${m.noun ?? "request"} changed while you were looking at it. Check it again before acting.`);
+  if ("missing" in r) redirect(m.path);
   revalidatePath(m.path);
-  revalidatePath(`${m.path}/${id}`);
-  redirect(page(m.path, id, error ? err(error) : `ok=${action}`));
+  revalidatePath(`${m.path}/${r.id}`);
+  redirect(page(m.path, r.id, r.error ? err(r.error) : `ok=${r.action}`));
+}
+
+/**
+ * The same, from a form that keeps what was typed: a problem comes back for
+ * the form to show (its FormState), and once done it goes to the request
+ * page with `ok(card)`, the card as it was before.
+ */
+export async function actOnCardForm<C extends Card>(form: FormData, viewer: Viewer, m: ActModule<C> & { ok(card: C): string }): Promise<{ errors: string[] }> {
+  const r = await act(form, viewer, m, `This ${m.noun ?? "request"} changed while you were looking at it. Reload the page and check it again.`);
+  if ("missing" in r) return { errors: [`That ${m.noun ?? "request"} no longer exists.`] };
+  if (r.error) return { errors: [r.error] };
+  revalidatePath(m.path);
+  revalidatePath(`${m.path}/${r.id}`);
+  redirect(page(m.path, r.id, `ok=${m.ok(r.card)}`));
 }
 
 /** The unknown-action refusal every module's switch ends with. */

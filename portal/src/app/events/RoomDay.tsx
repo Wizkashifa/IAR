@@ -5,12 +5,7 @@ import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { Field } from "@/components/Field";
 import styles from "./events.module.css";
-
-const shift = (ymd: string, n: number) => {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-};
+import { addDays } from "@/lib/dates";
 
 /**
  * A place (a room, or a campus on the run sheet) and a day. Changing either
@@ -41,9 +36,9 @@ export function RoomDay({ options, value, param = "room", label = "Room", date, 
       )}
       <DateField label="Day" value={date} onChange={(v) => v && go({ date: v })} />
       <div className={styles.days}>
-        <Button icon="chevL" onClick={() => go({ date: shift(date, -1) })}><span className="sr-only">Day before</span></Button>
+        <Button icon="chevL" onClick={() => go({ date: addDays(date, -1) })}><span className="sr-only">Day before</span></Button>
         <Button onClick={() => go({ date: today })} disabled={date === today}>Today</Button>
-        <Button icon="chevR" onClick={() => go({ date: shift(date, 1) })}><span className="sr-only">Next day</span></Button>
+        <Button icon="chevR" onClick={() => go({ date: addDays(date, 1) })}><span className="sr-only">Next day</span></Button>
       </div>
     </div>
   );

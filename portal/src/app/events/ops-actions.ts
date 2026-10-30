@@ -12,6 +12,7 @@ import { TASK_TEAMS, TaskError, type TaskAction, actOnTask, assignTask, taskNoti
 import { queueTeamMembers } from "@/lib/groups";
 import * as wf from "@/lib/events/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
+import { nowIso } from "@/lib/dates";
 
 /**
  * Team tasks and close-out: the server actions behind the teams' task lists and the
@@ -19,8 +20,6 @@ import { WorkflowError } from "@/lib/workflow-core";
  * load the card, apply one,
  * save it only if nobody else saved it first, and send the notices.
  */
-
-const nowIso = () => new Date().toISOString();
 
 /** `back` with ?ok= or ?error= added, keeping any #anchor. */
 function withResult(back: string, key: "ok" | "error", value: string): string {

@@ -5,6 +5,7 @@ import { directory } from "./groups";
 import { type NameResolver, NameCache, makeNameResolver, prettifyEmail } from "./name-cache";
 import { isPillarGroup, isTeamGroup } from "./teams";
 import type { PersonOption } from "@/components/PeoplePicker";
+import { lc } from "./text";
 
 /**
  * People's names instead of their addresses, read from IAR's Workspace
@@ -57,13 +58,13 @@ const cache = (g.__iarNames ??= new NameCache(fetchFromWorkspace));
 export async function namesFor(emails: string[]): Promise<Map<string, string>> {
   if (isDevAuth()) {
     const dev = devNames();
-    return new Map([...new Set(emails.map((e) => e.trim().toLowerCase()))].map((e) => [e, dev.get(e) ?? prettifyEmail(e)]));
+    return new Map([...new Set(emails.map(lc))].map((e) => [e, dev.get(e) ?? prettifyEmail(e)]));
   }
   return cache.namesFor(emails);
 }
 
 export async function nameOf(email: string): Promise<string> {
-  return (await namesFor([email])).get(email.trim().toLowerCase()) ?? prettifyEmail(email);
+  return (await namesFor([email])).get(lc(email)) ?? prettifyEmail(email);
 }
 
 /** Look up every address a page shows in one go, then pass the result to sentence builders such as nextStepText. */

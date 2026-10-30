@@ -17,11 +17,10 @@ import { clearAway } from "./actions";
 import styles from "./away.module.css";
 import { todayLocal } from "@/lib/dates";
 import { ItemRow, Rows } from "@/components/ItemRow";
+import { dayText } from "@/lib/events/series";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Out of office" };
-
-const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
 export default async function AwayPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
   const { ok } = await searchParams;
@@ -55,7 +54,7 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
 
       {mine && (
         <Note>
-          {isActive(mine, today) ? "You're away now" : `You'll be away from ${fmtDay(mine.from)}`} until {fmtDay(mine.until)}. {nameOf(mine.delegate)} is covering.{" "}
+          {isActive(mine, today) ? "You're away now" : `You'll be away from ${dayText(mine.from)}`} until {dayText(mine.until)}. {nameOf(mine.delegate)} is covering.{" "}
           <form action={clearAway} className={styles.back}>
             <Button type="submit" variant="quiet" size="small">
               {isActive(mine, today) ? "I'm back" : "Cancel it"}
@@ -72,7 +71,7 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         <Panel title="You're covering for" right={<span>{covering.length}</span>} flush>
           <Rows>
             {covering.map((a) => (
-              <ItemRow key={a.email} state="plain" title={a.name} sub={`${fmtDay(a.from)} to ${fmtDay(a.until)}${isActive(a, today) ? " · now" : ""}${a.note ? ` · “${a.note}”` : ""}`} />
+              <ItemRow key={a.email} state="plain" title={a.name} sub={`${dayText(a.from)} to ${dayText(a.until)}${isActive(a, today) ? " · now" : ""}${a.note ? ` · “${a.note}”` : ""}`} />
             ))}
           </Rows>
         </Panel>

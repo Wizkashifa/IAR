@@ -3,7 +3,7 @@
  * Same rule as purchases: an alert only for whoever has to act next (the
  * director, the executive, the requester on a send-back). Plain functions.
  */
-import { type Notice, type Recipient, commentNotices } from "../notices";
+import { type Notice, type Recipient, collector, commentNotices } from "../notices";
 import { dayText, timeText } from "./series";
 import { type EventActor, type EventCard, reviewersFor } from "./workflow";
 import { same } from "../text";
@@ -12,13 +12,8 @@ const label = (c: EventCard) => `${c.id} “${c.title}” (${c.event.dates[0] ? 
 
 /** Notices for one change, from the card before (null for a new request) to after. The actor never notifies themselves. */
 export function eventNotices(before: EventCard | null, after: EventCard, actor: EventActor, directors: string[]): Notice[] {
-  const out: Notice[] = [];
-  const href = `/events/${after.id}`;
+  const { out, add } = collector(after.id, actor.email, `/events/${after.id}`);
   const what = label(after);
-  const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
-    if ("email" in to && same(to.email, actor.email)) return;
-    out.push({ to, cardId: after.id, href, text, alert, delegable });
-  };
   const owner = { email: after.ownerEmail };
   const reviewers = reviewersFor(after.ownerEmail, directors);
 
@@ -65,16 +60,8 @@ export function eventCommentNotices(card: EventCard, by: EventActor, text: strin
  * an alert, and the requester hears the answer.
  */
 export function rescheduleNotices(before: EventCard, after: EventCard, actor: EventActor, directors: string[]): Notice[] {
-  const out: Notice[] = [];
-  const href = `/events/${after.id}`;
+  const { out, add } = collector(after.id, actor.email, `/events/${after.id}`);
   const what = label(after);
-  const told = new Set<string>();
-  const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
-    const key = "email" in to ? to.email.toLowerCase() : `role:${to.role}`;
-    if (("email" in to && same(to.email, actor.email)) || told.has(key)) return;
-    told.add(key);
-    out.push({ to, cardId: after.id, href, text, alert, delegable });
-  };
   const b = before.event, a = after.event;
   const owner = { email: after.ownerEmail };
   const approvers = reviewersFor(after.ownerEmail, directors);

@@ -15,6 +15,7 @@ import styles from "../calendar.module.css";
 import { Checkbox } from "@/components/Choices";
 import { ItemRow, Rows } from "@/components/ItemRow";
 import { Crumb } from "@/components/Crumb";
+import { plural } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Find a room" };
@@ -66,7 +67,7 @@ export default async function FindRoom({ searchParams }: { searchParams: Promise
 
       {need && (
         <>
-          <Panel title={`Free on ${dayText(need.date)}, ${timeText(need.start)}–${timeText(need.end)}`} right={<span>{free.length} {free.length === 1 ? "room" : "rooms"}</span>} flush>
+          <Panel title={`Free on ${dayText(need.date)}, ${timeText(need.start)}–${timeText(need.end)}`} right={<span>{plural(free.length, "room")}</span>} flush>
             {free.length === 0 ? (
               <EmptyState action={<Button href="/calendar">See the calendar</Button>}>
                 No room fits that time and size. Try another time, or fewer people.

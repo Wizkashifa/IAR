@@ -19,6 +19,7 @@ import { statusText } from "@/lib/status-text";
 import { teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
 import styles from "./styles.module.css";
+import { todayLocal } from "@/lib/dates";
 
 /**
  * The list and request-page pieces, with the current sample user's real
@@ -30,7 +31,7 @@ export async function RequestExamples() {
   const cards = await store.listByOwner(viewer.email);
   const directorsOf = (g: string) => teamPeople(dir, g).directors;
   const names = await nameResolver(emailsIn(cards));
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const today = todayLocal();
   const grouped = groupedRows(groupForViewer(cards, actor, { directorsOf }), actor, { names, today, ctx: { directorsOf } });
   const sample = cards.find((c) => c.event && c.status === "in_review") ?? cards[0];
   const directors = sample?.event ? directorsOf(sample.event.committeeGroup) : [];
