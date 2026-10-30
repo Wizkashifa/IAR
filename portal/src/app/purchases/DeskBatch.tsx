@@ -7,7 +7,7 @@ import { Field } from "@/components/Field";
 import { ItemRow } from "@/components/ItemRow";
 import { Panel } from "@/components/Panel";
 import type { DeskTab } from "@/lib/purchases/finance-desk";
-import styles from "./finance.module.css";
+import styles from "./purchases.module.css";
 import { Checkbox } from "@/components/Choices";
 
 /** One row on the desk, prepared on the server (names, amounts and dates already in words). */
@@ -36,10 +36,10 @@ const ACTION: Record<DeskTab, { value: string; label: string; title: (n: number)
 
 /**
  * The list with a tick box on each row, "Select all", and what to do with the
- * ticked ones. The form posts to the finance desk action, which runs each
+ * ticked ones. The form posts to desk-actions.ts, which runs each
  * request through the workflow on its own.
  */
-/** `readOnly`: the list alone, without tick boxes or actions, for executives (and admins) who can see the desk but not work it. */
+/** `readOnly`: the list alone, without tick boxes or actions, for executives (and admins) who can see these lists but not work them. */
 export function DeskBatch({ tab, rows, back, action, title, readOnly }: { tab: DeskTab; rows: DeskRow[]; back: string; action: (form: FormData) => Promise<void>; title: string; readOnly?: boolean }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const on = rows.filter((r) => picked.has(r.key));

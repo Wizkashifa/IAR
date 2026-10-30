@@ -1,12 +1,16 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { Button } from "@/components/Button";
+import { Button, buttonClass } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
+import { Icon } from "@/components/Icon";
+import { Note } from "@/components/Note";
 import { Pill } from "@/components/Pill";
+import { ToastOnLoad } from "@/components/toast";
 import { cardStore } from "@/lib/cards";
 import { emailsIn, type RowData } from "@/lib/card-row";
 import { nameResolver, type NameResolver } from "@/lib/names";
@@ -14,14 +18,17 @@ import { groupForViewer, type NeedsViewer } from "@/lib/needs-you";
 import { requireViewer } from "@/lib/viewer";
 import { actorFor } from "@/lib/people";
 import { shortFund } from "@/lib/purchases/accounts";
-import { cardChecklist, mayViewDesk } from "@/lib/purchases/finance-desk";
+import { PAY_TYPE_LABEL, cardChecklist, deskCards, deskDate, deskOptions, filterDesk, lineKey, mayViewDesk, mayWorkDesk, openReturns, payTypeOf, type DeskTab } from "@/lib/purchases/finance-desk";
 import { statementStore, type ImportedStatement } from "@/lib/purchases/statements";
-import { STAGE_LABEL, openExpectedReturns, type PurchaseStage } from "@/lib/purchases/types";
+import { KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { FlashNote } from "@/components/FlashNote";
 import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth } from "./ui";
+import { deskAction } from "./desk-actions";
+import { DeskBatch, type DeskRow } from "./DeskBatch";
+import { RESULT_COOKIE, readResult } from "./desk-result";
+import { PaymentFilters } from "./PaymentFilters";
 import styles from "./purchases.module.css";
-import { Chips } from "@/components/Chips";
 import { DataTable } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
@@ -39,18 +46,24 @@ const FILTERS: { id: string; label: string; test: (c: PurchaseCard) => boolean }
   { id: "returns", label: "Refunds & repayments due", test: (c) => openExpectedReturns(c.purchase).length > 0 },
 ];
 
+/** Finance's lists: the views finance works several at a time, and which desk list each one is. */
+const DESK_VIEW: Record<string, DeskTab> = { payment: "pay", books: "books", returns: "returns" };
+
 /** List rows for purchases; each pill says who has it, as in every other list (lib/status-text.ts rowStatusText). */
 function rows(cards: PurchaseCard[], viewer: NeedsViewer, names: NameResolver): RowData[] {
   return rowsFor(cards, viewer, { names });
 }
 
-export default async function PurchasesPage({ searchParams }: { searchParams: Promise<{ view?: string; ok?: string; error?: string }> }) {
-  const { view = "all", ok, error } = await searchParams;
+type Search = { view?: string; ok?: string; error?: string; fund?: string; month?: string; r?: string };
+
+export default async function PurchasesPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const { view = "all", ok, error, r } = await searchParams;
   const viewer = await requireViewer();
   const actor = await actorFor(viewer);
   const store = await cardStore();
-  // Finance works the desk and card receipts; executives see them too.
+  // Finance pays, books and records several at a time, and checks card receipts; executives see these too.
   const desk = mayViewDesk(viewer.roles);
+  const works = mayWorkDesk(viewer.actingRoles);
   const [mine, open, latest, cardReceipts] = await Promise.all([
     store.listByOwner(viewer.email),
     store.listOpenPurchases(),
@@ -75,7 +88,16 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
   const names = await nameResolver(emailsIn([...myPurchases, ...queue, ...committeeOpen, ...(overseer ? filtered : [])]));
   const mineGrouped = groupForViewer(myPurchases, actor);
   const mineRows = { needsYou: rows(mineGrouped.needsYou, actor, names), waiting: rows(mineGrouped.waiting, actor, names), done: rows(mineGrouped.done, actor, names) };
-  const chips = FILTERS.map((f) => ({ label: f.label, href: `/purchases?view=${f.id}`, on: f.id === filter.id, count: openPurchases.filter(f.test).length }));
+  // Finance's lists (To pay, Enter in QuickBooks, Refunds) count what they show.
+  const count = (id: string, test: (c: PurchaseCard) => boolean) => {
+    const t = desk ? DESK_VIEW[id] : undefined;
+    if (!t) return openPurchases.filter(test).length;
+    return t === "returns" ? openReturns(deskCards(openPurchases, t)).length : deskCards(openPurchases, t).length;
+  };
+  const views = FILTERS.map((f) => ({ value: f.id, label: `${f.label} (${count(f.id, f.test)})` }));
+  const deskTab = desk ? DESK_VIEW[filter.id] : undefined;
+  const deskList = deskTab ? await financeList(openPurchases, deskTab, filter.id, await searchParams) : null;
+  const result = deskTab ? readResult((await cookies()).get(RESULT_COOKIE)?.value, r) : null;
 
   return (
     <>
@@ -84,7 +106,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={
           <>
-            {desk && <Button href="/purchases/finance">Finance desk</Button>}
+            {desk && <Button href="/purchases/statement">{works ? "Upload card statement" : "Card statements"}</Button>}
             <Button href="/purchases/vendors">Saved vendors</Button>
             <Button href="/purchases/new" variant="primary" icon="plus">
               New payment request
@@ -95,6 +117,19 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
       <HelpBox module="purchases" />
       <div className={`stack ${styles.body}`}>
         <FlashNote ok={ok} error={error} messages={OK_TEXT} />
+        <ToastOnLoad message={result?.summary} tone={result?.tone} />
+        {result && result.failed.length > 0 && (
+          <Note tone="warn">
+            <p className={styles.noteHead}>{result.summary}</p>
+            <ul className={styles.failed}>
+              {result.failed.map((f) => (
+                <li key={f.id}>
+                  <Link href={`/purchases/${f.id}`}>{f.id}</Link>: {f.message}
+                </li>
+              ))}
+            </ul>
+          </Note>
+        )}
 
         {queue.length > 0 && (
           <PurchaseList
@@ -131,19 +166,40 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
 
         {overseer && (
           <section className="stack" aria-label="All requests">
-            <Chips label="Show" chips={chips} />
-            <PurchaseList
-              title={filter.id === "all" ? "All open requests" : filter.label}
-              right={
-                filter.id === "returns" && filtered.length
-                  ? `Outstanding ${fmtMoney(filtered.flatMap((c) => openExpectedReturns(c.purchase)).reduce((s, l) => s + l.amount, 0))}`
-                  : `${filtered.length}`
-              }
-              cards={filtered}
-              rows={rows(filtered, actor, names)}
-              redact={redact}
-              empty="Nothing here."
-            />
+            <div className={styles.filterRow}>
+              <PaymentFilters view={filter.id} views={views} fund={deskList?.fund ?? ""} month={deskList?.month ?? ""} funds={deskList?.funds} months={deskList?.months} />
+              {deskList?.filtered && (
+                <Link href={`/purchases?view=${filter.id}`} className={styles.clear}>
+                  Clear filters
+                </Link>
+              )}
+              {deskList && (
+                // A plain link: the CSV is a download, not a page.
+                <a href={deskList.csvHref} download className={buttonClass({ variant: "quiet", className: styles.csv })}>
+                  <Icon name="down" />
+                  Download CSV for QuickBooks
+                </a>
+              )}
+            </div>
+            {deskTab && deskList ? (
+              <>
+                <DeskBatch key={deskList.back} tab={deskTab} rows={deskList.rows} back={deskList.back} action={deskAction} title={deskList.filtered ? `${filter.label} · filtered` : filter.label} readOnly={!works} />
+                <p className="hint">The CSV has one row per line item for what&apos;s shown here: date, request, payee, fund, sub-account, memo and amount.</p>
+              </>
+            ) : (
+              <PurchaseList
+                title={filter.id === "all" ? "All open requests" : filter.label}
+                right={
+                  filter.id === "returns" && filtered.length
+                    ? `Outstanding ${fmtMoney(filtered.flatMap((c) => openExpectedReturns(c.purchase)).reduce((s, l) => s + l.amount, 0))}`
+                    : `${filtered.length}`
+                }
+                cards={filtered}
+                rows={rows(filtered, actor, names)}
+                redact={redact}
+                empty="Nothing here."
+              />
+            )}
           </section>
         )}
 
@@ -151,6 +207,66 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
       </div>
     </>
   );
+}
+
+const waited = (c: PurchaseCard) => {
+  const d = daysWaiting(c);
+  return d === 0 ? "since today" : `${d} day${d === 1 ? "" : "s"}`;
+};
+
+/**
+ * One of finance's lists (To pay, Enter in QuickBooks, Refunds owed), filtered
+ * by fund and month, as rows finance can tick and work several at a time.
+ */
+async function financeList(open: PurchaseCard[], tab: DeskTab, view: string, q: Search) {
+  const fund = q.fund || undefined;
+  const month = /^\d{4}-\d{2}$/.test(q.month ?? "") ? q.month : undefined;
+  const onTab = deskCards(open, tab);
+  const shown = filterDesk(onTab, { fund, month });
+  const options = deskOptions(onTab);
+  const names = await nameResolver(shown.map((c) => c.ownerEmail));
+  const query = (extra: Record<string, string | undefined>) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(extra)) if (v) p.set(k, v);
+    return `?${p}`;
+  };
+  const from = (c: PurchaseCard) => (c.purchase.restricted ? "Social & Welfare" : names(c.ownerEmail));
+  const payee = (c: PurchaseCard) => (c.purchase.kind === "card" ? `Card ···${c.purchase.card?.last4 ?? ""}` : c.purchase.payee ?? "");
+  const rows: DeskRow[] =
+    tab === "returns"
+      ? openReturns(shown).map(({ card, line }) => ({
+          key: lineKey(card.id, line.id),
+          id: card.id,
+          title: card.title,
+          href: `/purchases/${card.id}`,
+          sub: [shortFund(card.purchase.fund), line.flag === "refund" ? `Refund from ${line.merchant ?? "the merchant"}` : `Repayment${line.repayBy ? ` from ${line.repayBy}` : ""}`, line.date ?? ""].filter(Boolean).join(" · "),
+          status: line.flag === "refund" ? "Refund owed" : "Repayment owed",
+          amount: line.amount,
+          amountText: fmtMoney(line.amount),
+          version: card.updatedAt,
+        }))
+      : shown.map((c) => ({
+          key: c.id,
+          id: c.id,
+          title: c.title,
+          href: `/purchases/${c.id}`,
+          sub: [shortFund(c.purchase.fund), KIND_LABEL[c.purchase.kind], payee(c), `from ${from(c)}`].filter(Boolean).join(" · "),
+          status: tab === "pay" ? `${PAY_TYPE_LABEL[payTypeOf(c)]} · waiting ${waited(c)}` : `Paid ${deskDate(c)}${c.purchase.payment ? ` · ${c.purchase.payment.method} ${c.purchase.payment.reference}` : ""}`,
+          amount: purchaseTotal(c.purchase),
+          amountText: fmtMoney(purchaseTotal(c.purchase)),
+          version: c.updatedAt,
+          method: payTypeOf(c) === "ach" ? "ACH" : "Check",
+        }));
+  return {
+    rows,
+    fund,
+    month,
+    filtered: Boolean(fund || month),
+    funds: options.funds.map((f) => ({ value: f, label: shortFund(f) })),
+    months: options.months.map((m) => ({ value: m, label: fmtMonth(m) })),
+    back: `/purchases${query({ view, fund, month })}`,
+    csvHref: `/purchases/csv${query({ tab, fund, month })}`,
+  };
 }
 
 /** Requests with how long each has waited at its step, most overdue first. */
@@ -175,7 +291,7 @@ function PurchaseList({ title, right, cards, rows, redact, empty, note }: { titl
 function CardChecklist({ statement, receipts }: { statement?: ImportedStatement; receipts: PurchaseCard[] }) {
   const foot = (
     <PanelFoot>
-      <Link href="/purchases/finance/statement">See the card statements</Link>
+      <Link href="/purchases/statement">See the card statements</Link>
     </PanelFoot>
   );
   if (!statement) {

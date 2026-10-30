@@ -34,11 +34,11 @@ export default function StatementForm({ action, sampleHref }: { action: (prev: S
           {state.unknown > 0 && ` ${state.unknown} card${state.unknown === 1 ? " isn't" : "s aren't"} in Portal Settings, so nobody was told about ${state.unknown === 1 ? "it" : "them"}.`}
         </Note>
         <FormActions sticky={false}>
-          <Button variant="primary" href="/purchases/finance">
-            Back to the finance desk
+          <Button variant="primary" href="/purchases">
+            Back to payments
           </Button>
           {/* A full reload starts the form over. */}
-          <a href="/purchases/finance/statement" className={buttonClass({ variant: "quiet" })}>
+          <a href="/purchases/statement" className={buttonClass({ variant: "quiet" })}>
             Upload another statement
           </a>
         </FormActions>
@@ -98,7 +98,7 @@ export default function StatementForm({ action, sampleHref }: { action: (prev: S
           <input type="hidden" name="month" value={p.month} />
           <FormActions sticky={false}>
             <Submit label="Import and tell cardholders" busy="Importing…" />
-            <a href="/purchases/finance/statement" className={buttonClass({ variant: "quiet" })}>
+            <a href="/purchases/statement" className={buttonClass({ variant: "quiet" })}>
               Start over
             </a>
           </FormActions>

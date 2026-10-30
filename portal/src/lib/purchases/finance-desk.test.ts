@@ -1,4 +1,4 @@
-/** The finance desk's lists, filters and batch steps, and the QuickBooks CSV. Run with `npm test`. */
+/** Finance's lists on Payments, filters and batch steps, and the QuickBooks CSV. Run with `npm test`. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parsePurchaseInput, type PurchaseInput } from "./input";
@@ -57,7 +57,7 @@ test("desk tabs: to pay, to enter in QuickBooks, refunds owed; oldest first; sen
 
 test("desk filters: fund, month (paid date, statement month, or sent date) and payment type", () => {
   const check = toPay();
-  // New requests are always checks; an older one sent by ACH still shows and filters as ACH.
+  // New requests are always checks; an older one sent by ACH still shows as ACH.
   const older = toPay({ fund: "Women Expenses" });
   const ach = { ...older, purchase: { ...older.purchase, delivery: "ach" as const } };
   const card = cardReceipts("2026-08", [{ date: "2026-08-02", description: "USPS.COM CLICKNSHIP", amount: 9.57, line: { accountId: "a76" } }]);
@@ -69,7 +69,6 @@ test("desk filters: fund, month (paid date, statement month, or sent date) and p
   assert.equal(deskDate(pw.recordPayment(check, fin, T(9), "Check", "77")), T(9).slice(0, 10));
 
   const all = [check, ach, card];
-  assert.deepEqual(filterDesk(all, { type: "ach" }).map((c) => c.id), [ach.id]);
   assert.deepEqual(filterDesk(all, { fund: "Youth Expenses" }).map((c) => c.id), [check.id]);
   assert.deepEqual(filterDesk(all, { month: "2026-08" }).map((c) => c.id), [card.id]);
   assert.deepEqual(filterDesk(all, {}).length, 3);

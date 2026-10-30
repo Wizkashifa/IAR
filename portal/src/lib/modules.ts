@@ -137,17 +137,6 @@ export const MODULES: PortalModule[] = [
     ],
   },
   {
-    id: "finance-desk",
-    nav: "Finance desk",
-    name: "Finance desk",
-    summary: "Pay approved requests, enter them in QuickBooks and record refunds, several at a time.",
-    visibleTo: ["finance", "executive"],
-    phase: 1,
-    status: "live",
-    href: "/purchases/finance",
-    plannedFeatures: [],
-  },
-  {
     id: "rentals",
     name: "Facility Rentals",
     summary: "Review gym and hall rental requests from outside renters.",
