@@ -6,7 +6,7 @@ import type { BusyItem } from "./events/rules";
 import { dayOfWeek, eventDates, fromMinutes, rrule, toMinutes, weekOfMonth } from "./events/series";
 import type { CalendarOp } from "./events/slot-requests";
 import type { HoldStatus, Recurrence } from "./events/types";
-import { addDays } from "./dates";
+import { addDays, TIME_ZONE } from "./dates";
 
 /**
  * IAR's room calendars in Google Calendar, the source of truth for bookings.
@@ -19,7 +19,6 @@ import { addDays } from "./dates";
 
 const SCOPE = "https://www.googleapis.com/auth/calendar.events";
 const API = "https://www.googleapis.com/calendar/v3";
-export const TIME_ZONE = "America/New_York";
 
 /** A room's calendar to read. */
 export type RoomCal = { roomId: string; calendarId: string };

@@ -6,7 +6,7 @@
  */
 import type { Card, CardStatus } from "./cards";
 import type { EventCard } from "./events/workflow";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import { moduleFor } from "./registry";
 import type { Role } from "./org";
 import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";

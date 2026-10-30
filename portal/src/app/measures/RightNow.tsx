@@ -1,3 +1,4 @@
+import { plural } from "@/lib/text";
 import Link from "next/link";
 import { DataTable, cell } from "@/components/DataTable";
 import { EmptyState } from "@/components/EmptyState";
@@ -26,7 +27,6 @@ import styles from "./measures.module.css";
 
 /** Whole dollars for the headline tiles; the panels below keep the cents. */
 const dollars = (n: number) => fmtMoney(Math.round(n)).replace(/\.00$/, "");
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 /** Events that are still with someone (as on What's stuck): approved ones wait on nobody until close-out. */
 const WAITING_EVENT = new Set(["submitted", "in_review", "changes_requested", "close_out"]);
 

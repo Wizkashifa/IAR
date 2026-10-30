@@ -5,7 +5,7 @@ import { isDevAuth } from "./dev";
 import type { Alert } from "./alerts";
 import { cleanPrefs, type NotifyPrefs } from "./notify-prefs";
 import { type PurchaseContext, personFunds, purchaseContext } from "./purchases/settings";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import type { Viewer } from "./viewer";
 import { todayLocal } from "./dates";
 

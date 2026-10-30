@@ -16,7 +16,7 @@ import { portalSettings } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDateTime } from "../purchases/ui";
+import { fmtDateTime } from "@/lib/format";
 import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
 import { auditStore } from "@/lib/audit";
 import { isDevAuth } from "@/lib/dev";

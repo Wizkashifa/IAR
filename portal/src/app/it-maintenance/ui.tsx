@@ -6,7 +6,6 @@ import { TEAM_LABEL, URGENCY, type TicketStatus, type Urgency } from "@/lib/tick
 import { type TicketCard, lateText } from "@/lib/tickets/workflow";
 import styles from "./tickets.module.css";
 
-export { fmtDate, fmtDateTime, fmtDay } from "@/lib/format";
 
 export const FLASH: Record<string, string> = {
   reported: "Thank you. The team has been notified, and so will you be as it moves.",

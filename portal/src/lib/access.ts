@@ -4,7 +4,7 @@
  * module keeps its own rule (lib/registry.ts); this picks the right one.
  */
 import type { Card } from "./cards";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import { moduleFor } from "./registry";
 
 /** The person looking, with their own group roles; `seeAll` for portal admins doing support. */

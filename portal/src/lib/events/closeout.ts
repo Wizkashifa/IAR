@@ -6,6 +6,7 @@
  * later they get a reminder. Submitting closes the card; the IAR office can
  * close it for them. Plain functions so they can be tested.
  */
+import { fmtMoney } from "../format";
 import type { Card } from "../cards";
 import type { Notice } from "../notices";
 import { purchaseTotal } from "../purchases/types";
@@ -19,7 +20,6 @@ import { historyEntry, WorkflowError } from "../workflow-core";
 /** Days in close-out before the requester is reminded. */
 export const NUDGE_DAYS = 7;
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 export const lastDate = (card: EventCard) => card.event.dates[card.event.dates.length - 1] ?? card.event.date;
 
@@ -56,7 +56,7 @@ export function spendOf(purchases: Card[]): number {
 
 /** "$310.00 of the $400.00 budget (78%)". */
 export function spendText(spent: number, budget: number): string {
-  return budget > 0 ? `${money(spent)} of the ${money(budget)} budget (${Math.round((spent / budget) * 100)}%)` : `${money(spent)} (no budget given)`;
+  return budget > 0 ? `${fmtMoney(spent)} of the ${fmtMoney(budget)} budget (${Math.round((spent / budget) * 100)}%)` : `${fmtMoney(spent)} (no budget given)`;
 }
 
 // ---- Closing ---------------------------------------------------------------------
@@ -99,7 +99,7 @@ export function submitCloseOut(card: EventCard, actor: EventActor, now: string, 
     at: now,
     ...(byOffice ? { byOffice: true } : {}),
   };
-  const summary = [n !== undefined ? `${n} came` : "", `spent ${money(spent)}`, closeOut.depositRefund ? "deposit refund needed" : ""].filter(Boolean).join(", ");
+  const summary = [n !== undefined ? `${n} came` : "", `spent ${fmtMoney(spent)}`, closeOut.depositRefund ? "deposit refund needed" : ""].filter(Boolean).join(", ");
   const e = {
     ...card.event,
     stage: "done" as const,

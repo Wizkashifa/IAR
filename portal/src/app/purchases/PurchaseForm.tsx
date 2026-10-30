@@ -18,7 +18,7 @@ import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { groupCharges, type StatementChoice } from "@/lib/purchases/statement";
-import { fmtMonth } from "@/lib/format";
+import { fmtMoney, fmtMonth } from "@/lib/format";
 import { AccountOptions, CardCharges, type ChargeInput } from "./CardCharges";
 import { filesOn, type ChargeFile } from "./ChargeReceipt";
 import { RECEIPT_TYPES } from "./AddReceipts";
@@ -55,7 +55,6 @@ export type FormProps = {
   cancelHref: string;
 };
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const toNum = (v: string | number) => {
   const n = Number(String(v).replace(/[$,\s]/g, ""));
   return Number.isFinite(n) ? n : 0;
@@ -369,7 +368,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         title={card ? "Charges" : "Line items"}
         right={
           <span className={styles.total}>
-            Total <strong>{money(total)}</strong>
+            Total <strong>{fmtMoney(total)}</strong>
           </span>
         }
       >
@@ -435,7 +434,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               </Button>
             )}
             <span className={styles.total}>
-              Total <strong>{money(total)}</strong>
+              Total <strong>{fmtMoney(total)}</strong>
             </span>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { rolesFromGroups } from "@/lib/org";
 import { directedTeamGroups, membershipsOf, teamRoles } from "@/lib/teams";
 import { devChatOutbox } from "@/lib/chat";
 import { devOutbox } from "@/lib/mail";
-import { fmtDateTime } from "../purchases/ui";
+import { fmtDateTime } from "@/lib/format";
 import { choosePersona, runDailyNow } from "./actions";
 import { Button } from "@/components/Button";
 import { Panel } from "@/components/Panel";

@@ -11,14 +11,13 @@ import { STAGE_LABEL, purchaseTotal } from "./types";
 import type { Actor, PurchaseCard } from "./workflow";
 import { same } from "../text";
 import { type Notice, type Recipient, commentNotices } from "../notices";
-import { fmtMonth } from "../format";
+import { fmtMoney, fmtMonth } from "../format";
 import type { Statement } from "./statement";
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 /** Social & Welfare details stay out of notices, which outlive the request's own access checks. */
 export function purchaseLabel(c: PurchaseCard): string {
-  return c.purchase.restricted ? `${c.id} (Social & Welfare request)` : `${c.id} “${c.title}” (${money(purchaseTotal(c.purchase))})`;
+  return c.purchase.restricted ? `${c.id} (Social & Welfare request)` : `${c.id} “${c.title}” (${fmtMoney(purchaseTotal(c.purchase))})`;
 }
 
 /** Who acts at the card's current stage. */
@@ -142,7 +141,7 @@ export function statementNotices(s: Pick<Statement, "month" | "cards">, holders:
     out.push({
       to: { email: h.holderEmail },
       href: `/purchases/new?card=${c.last4}&month=${s.month}`,
-      text: `Your ${fmtMonth(s.month)} card statement is in: ${n} charge${n === 1 ? "" : "s"} on card ···${c.last4}, ${money(c.total)}. Add the receipts and say why each was bought.`,
+      text: `Your ${fmtMonth(s.month)} card statement is in: ${n} charge${n === 1 ? "" : "s"} on card ···${c.last4}, ${fmtMoney(c.total)}. Add the receipts and say why each was bought.`,
       alert: true,
       delegable: false,
     });

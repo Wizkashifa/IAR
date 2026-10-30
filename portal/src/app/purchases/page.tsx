@@ -24,7 +24,8 @@ import { statementStore, type ImportedStatement } from "@/lib/purchases/statemen
 import { KIND_LABEL, STAGE_LABEL, openExpectedReturns, purchaseTotal, type PurchaseStage } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, actionableBy, canViewDetail, daysWaiting, isPurchaseCard, type PurchaseCard } from "@/lib/purchases/workflow";
 import { FlashNote } from "@/components/FlashNote";
-import { OK_TEXT, PurchaseRow, fmtMoney, fmtMonth } from "./ui";
+import { OK_TEXT, PurchaseRow } from "./ui";
+import { fmtMoney, fmtMonth } from "@/lib/format";
 import { deskAction } from "./desk-actions";
 import { DeskBatch, type DeskRow } from "./DeskBatch";
 import { RESULT_COOKIE, readResult } from "./desk-result";

@@ -19,7 +19,8 @@ import { FREQUENCIES, FREQUENCY_LABEL, type TicketSchedule } from "@/lib/tickets
 import { TEAM_LABEL, TEAM_NAME, URGENCIES, URGENCY } from "@/lib/tickets/types";
 import { teamsOf } from "@/lib/tickets/workflow";
 import { pauseSchedule, saveSchedule } from "../actions";
-import { FLASH, fmtDay } from "../ui";
+import { FLASH } from "../ui";
+import { fmtDay } from "@/lib/format";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "../tickets.module.css";
 import { Crumb } from "@/components/Crumb";
