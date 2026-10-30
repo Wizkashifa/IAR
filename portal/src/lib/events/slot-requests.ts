@@ -11,18 +11,23 @@
  * - A recurring series is asked for date by date: only the clashing dates.
  * - The holder (the booking's owner, with their committee's chair and vice
  *   chair) can give the dates up and move their event, give them up and
- *   cancel, or keep them. A calendar entry with no portal card can only be
- *   given up or kept.
+ *   cancel, or keep them. A calendar entry with no portal card has no owner
+ *   on the portal, so the IAR office answers for it (with whoever made it, if
+ *   they're at IAR); it can only be given up or kept.
  * - Giving dates up frees them on the calendar at once. A moved event goes
  *   to the pillar director only, then straight to approved.
  * - No answer: a reminder after 3 days, and after 6 the ask goes to the
  *   pillar director over the holder's committee (the executive when there is
- *   none), who can decide for them. Nothing is ever given up automatically.
+ *   none), who can decide for them. After 10 days, or once the requester's
+ *   event is less than a week away, the ask closes ("expired") and the
+ *   request goes back to the requester to pick another time, so it never
+ *   waits forever. Nothing is ever given up automatically.
  * - Every step is written to the request's history.
  */
 import { ORG, type Role } from "../org";
 import type { Notice, Recipient } from "../notices";
 import { type Directory, teamPeople } from "../teams";
+import { addDays } from "../dates";
 import { lc, same } from "../text";
 
 /** What the requester's room check clashed with. */
@@ -49,7 +54,7 @@ export type Hold = {
 };
 
 export type SlotChoice = "release_move" | "release_cancel" | "keep";
-export type SlotStatus = "open" | "escalated" | "released" | "kept" | "withdrawn";
+export type SlotStatus = "open" | "escalated" | "released" | "kept" | "withdrawn" | "expired";
 
 export type SlotHistoryEntry = { at: string; by: string; text: string };
 
@@ -84,9 +89,13 @@ export type SlotRequest = {
 
 export type SlotActor = { email: string; name: string; roles: Role[] };
 
-/** Days before a reminder, and before the ask goes up to the director. */
-export type SlotTiming = { remindDays: number; escalateDays: number };
-export const SLOT_TIMING: SlotTiming = { remindDays: 3, escalateDays: 6 };
+/**
+ * Days before a reminder, before the ask goes up to the director, and before
+ * it closes with no answer. `closeBeforeEvent`: it also closes once the
+ * requester's event is this many days away, leaving time to pick another.
+ */
+export type SlotTiming = { remindDays: number; escalateDays: number; expireDays: number; closeBeforeEvent: number };
+export const SLOT_TIMING: SlotTiming = { remindDays: 3, escalateDays: 6, expireDays: 10, closeBeforeEvent: 7 };
 
 export const SLOT_STATUS_LABEL: Record<SlotStatus, string> = {
   open: "Waiting for an answer",
@@ -94,6 +103,7 @@ export const SLOT_STATUS_LABEL: Record<SlotStatus, string> = {
   released: "Given up",
   kept: "Kept",
   withdrawn: "Withdrawn",
+  expired: "No answer in time",
 };
 
 export const CHOICE_LABEL: Record<SlotChoice, string> = {
@@ -131,7 +141,16 @@ export function datesText(dates: string[]): string {
   return more ? `${fmtDate(dates[0])} and ${more} more date${more > 1 ? "s" : ""}` : fmtDate(dates[0]);
 }
 
-/** Who the ask goes to: the card's owner and their committee's chairs, the calendar entry's maker, or the office. */
+const OFFICE = "role:office";
+
+/** A booking made straight on the calendar: nobody owns it on the portal. */
+export const offPortal = (hold: Pick<Hold, "cardId">) => !hold.cardId;
+
+/**
+ * Who the ask goes to: the card's owner and their committee's chairs. A
+ * calendar entry made outside the portal has no owner here, so the IAR
+ * office answers for it, along with whoever made it if they're at IAR.
+ */
 function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[] {
   const out = new Set<string>();
   if (hold.cardId && hold.ownerEmail) {
@@ -140,11 +159,12 @@ function askTargets(hold: Hold, dir: Directory, requesterEmail: string): string[
       const p = teamPeople(dir, hold.committeeGroup);
       for (const e of [...p.chairs, ...p.vices]) out.add(e);
     }
-  } else if (hold.organizerEmail && lc(hold.organizerEmail).endsWith(`@${ORG.domain}`)) {
-    out.add(lc(hold.organizerEmail));
+  } else {
+    out.add(OFFICE);
+    if (hold.organizerEmail && lc(hold.organizerEmail).endsWith(`@${ORG.domain}`)) out.add(lc(hold.organizerEmail));
   }
   out.delete(lc(requesterEmail));
-  return out.size ? [...out] : ["role:office"];
+  return out.size ? [...out] : [OFFICE];
 }
 
 /** Who decides when nobody answers: the pillar director over the holder's committee, else the executive. */
@@ -211,10 +231,11 @@ export function newSlotRequest(
 
 const addressed = (list: string[], actor: SlotActor) => list.some((a) => (a.startsWith("role:") ? actor.roles.includes(a.slice(5) as Role) : same(a, actor.email)));
 
-/** Can this person answer the ask? The requester never can. */
+/** Can this person answer the ask? The requester never can. The office can always answer for a booking made off the portal. */
 export function canDecide(req: SlotRequest, actor: SlotActor): boolean {
   if (!isOpenAsk(req) || same(actor.email, req.requesterEmail)) return false;
   if (addressed(req.askedOf, actor)) return true;
+  if (offPortal(req.hold) && actor.roles.includes("office")) return true;
   return req.status === "escalated" && addressed(req.escalatedTo ?? [], actor);
 }
 
@@ -234,7 +255,7 @@ export type OwnerChange =
 
 /** What happens to the requester's card. */
 export type RequesterChange =
-  /** Into mission review as normal: director, then executive. */
+  /** On to review as normal: director, then executive. */
   | { action: "to_review" }
   /** Back to the requester to pick another time. */
   | { action: "changes"; note: string };
@@ -304,14 +325,50 @@ export function withdraw(req: SlotRequest, actor: SlotActor, now: string): Resul
 
 const daysSince = (iso: string, now: string) => (Date.parse(now) - Date.parse(iso)) / 864e5;
 
-/** What a daily job should do with an unanswered ask. */
-export function followUp(req: SlotRequest, now: string, timing: SlotTiming = SLOT_TIMING): "remind" | "escalate" | null {
-  if (req.status !== "open") return null;
+/** An ask about a booking made off the portal that the office wasn't asked about (asks made before the office answered for them). */
+export const needsOffice = (req: SlotRequest) => isOpenAsk(req) && offPortal(req.hold) && !req.askedOf.includes(OFFICE);
+
+/**
+ * The day an unanswered ask closes: `expireDays` after it was asked, or
+ * `closeBeforeEvent` days before the requester's event, whichever is first.
+ * `eventDate`: the requester's event's first date ("YYYY-MM-DD").
+ */
+export function closesOn(req: Pick<SlotRequest, "askedAt">, eventDate?: string, timing: SlotTiming = SLOT_TIMING): string {
+  const byAge = addDays(req.askedAt.slice(0, 10), timing.expireDays);
+  const byEvent = eventDate ? addDays(eventDate, -timing.closeBeforeEvent) : byAge;
+  return byEvent < byAge ? byEvent : byAge;
+}
+
+/** What a daily job should do with an unanswered ask. `today`: "YYYY-MM-DD" in Raleigh. */
+export function followUp(req: SlotRequest, now: string, timing: SlotTiming = SLOT_TIMING, o: { eventDate?: string; today?: string } = {}): "office" | "expire" | "remind" | "escalate" | null {
+  if (!isOpenAsk(req)) return null;
+  if (needsOffice(req)) return "office";
   const age = daysSince(req.askedAt, now);
+  if (age >= timing.expireDays || (o.today && o.today >= closesOn(req, o.eventDate, timing))) return "expire";
+  if (req.status !== "open") return null;
   if (age >= timing.escalateDays) return "escalate";
   if (age >= timing.remindDays && !req.remindedAt) return "remind";
   return null;
 }
+
+/** An ask about a booking made off the portal goes to the office, who answer for it. */
+export function routeToOffice(req: SlotRequest, now: string): SlotRequest {
+  return {
+    ...req,
+    askedOf: [...req.askedOf, OFFICE],
+    deciders: [...new Set([...req.deciders, OFFICE])],
+    updatedAt: now,
+    history: [...req.history, { at: now, by: "portal", text: `${req.hold.label} was booked on the IAR calendar, not in the portal, so the IAR office answers for it` }],
+  };
+}
+
+/** Nobody answered in time: the ask closes, and the requester picks another time. Nothing is given up. */
+export function expire(req: SlotRequest, now: string): SlotRequest {
+  return { ...req, status: "expired", updatedAt: now, history: [...req.history, { at: now, by: "portal", text: "Closed: nobody answered in time. Nothing was given up" }] };
+}
+
+/** The note the requester's request goes back with when its ask closes unanswered. */
+export const EXPIRED_NOTE = "Nobody answered your ask for the booked time in time. Pick another time or room.";
 
 export function markReminded(req: SlotRequest, now: string): SlotRequest {
   return { ...req, remindedAt: now, updatedAt: now, history: [...req.history, { at: now, by: "portal", text: "Reminder sent: no answer yet" }] };
@@ -369,13 +426,22 @@ export function slotNotices(before: SlotRequest | null, after: SlotRequest, acto
     for (const a of after.askedOf) add(a, holder, `Reminder: ${after.requesterName} is waiting for your answer about ${slot}`, true);
     return out;
   }
+  if (!before.askedOf.includes(OFFICE) && after.askedOf.includes(OFFICE) && before.status === after.status) {
+    add(OFFICE, holder, `${after.requesterName} asks for ${slot}, held by ${after.hold.label}. It was booked on the IAR calendar, not in the portal, so the office answers for it. Reason: ${after.reason}`, true);
+    return out;
+  }
+  if (after.status === "expired" && before.status !== "expired") {
+    add(after.requesterEmail, after.fromCard, `Nobody answered your ask for ${slot} in time, so it closed. Pick another time or room.`, true);
+    for (const a of after.deciders) add(a, holder, `${after.requesterName}'s ask for ${slot} closed with no answer. Nothing was given up.`, false);
+    return out;
+  }
   if (before.status === "open" && after.status === "escalated") {
     for (const a of after.escalatedTo ?? []) add(a, holder, `Nobody answered ${after.requesterName}'s ask for ${slot}, held by ${after.hold.label}. Please decide.`, true);
     for (const a of after.askedOf) add(a, holder, `${after.requesterName}'s ask for ${slot} went to the director, since nobody answered`, false);
     return out;
   }
   if (after.status === "released" && before.status !== "released") {
-    add(after.requesterEmail, after.fromCard, `${after.hold.label} gave up ${slot}. Your request goes to mission review.`, false);
+    add(after.requesterEmail, after.fromCard, `${after.hold.label} gave up ${slot}. Your request goes on to review.`, false);
     if (after.choice === "release_move" && after.hold.ownerEmail) add(after.hold.ownerEmail, holder, `Pick a new time for ${after.hold.label}. It needs only the director's approval.`, true);
     return out;
   }

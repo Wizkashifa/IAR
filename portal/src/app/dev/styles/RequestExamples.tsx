@@ -44,7 +44,7 @@ export async function RequestExamples() {
       <Panel title="Steps" right="components/Stages.tsx">
         <div className="stack">
           <Stages steps={[{ label: "Submitted", state: "done" }, { label: "Chair approval", state: "now" }, { label: "Finance review", state: "todo" }, { label: "To pay", state: "todo" }, { label: "Paid", state: "todo" }]} />
-          <Stages steps={[{ label: "Submitted", state: "done" }, { label: "Director review", state: "skip" }, { label: "Executive review", state: "done" }, { label: "Approved", state: "done" }, { label: "Event day", state: "skip" }]} flag={{ label: "Withdrawn", tone: "bad" }} />
+          <Stages steps={[{ label: "Submitted", state: "done" }, { label: "Director review", state: "skip" }, { label: "Executive review", state: "done" }, { label: "Approved", state: "done" }, { label: "Event day", state: "stopped" }]} flag={{ label: "Withdrawn", tone: "bad" }} />
         </div>
       </Panel>
 

@@ -10,6 +10,8 @@
   .now { color: var(--ink); font-weight: 600; }
   .now .bar { background: var(--gold); }
   .skip { opacity: 0.45; }
+  .skip .label { text-decoration: line-through; }
+  .stopped { opacity: 0.45; }
   .flag { margin-top: var(--s-2); }
   .summary { display: none; margin: var(--s-2) 0 0; font-size: var(--t-sm); color: var(--ink-2); }
   .summary strong { color: var(--ink); }

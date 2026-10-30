@@ -22,7 +22,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { HINT, VERB, STATUS_LABEL } from "@/lib/glossary";
+import { HINT, NOTIFIED, VERB, STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
@@ -36,10 +36,11 @@ import { requireViewer } from "@/lib/viewer";
 import { busyFor, eventAccess, eventContext, mayBookRestricted } from "@/lib/events/context";
 import { AV_INCLUDES, AV_KINDS } from "@/lib/events/input";
 import { roomById } from "@/lib/events/rooms";
-import { eventChecks, eventFlags, missionReasons, windowText } from "@/lib/events/rules";
+import { eventChecks, eventFlags, findClashes, fixesText, missionReasons, quickFixes, ruleOn, windowText } from "@/lib/events/rules";
 import { dayText, longDate, recurText, timeText } from "@/lib/events/series";
-import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText, isOpenAsk } from "@/lib/events/slot-requests";
-import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
+import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, closesOn, datesText, isOpenAsk, offPortal } from "@/lib/events/slot-requests";
+import { STAGE_LABEL, firstStage, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
+import { changeApprovers, changePermission, changeStep, changeWho, editPermission, timeChanges, timeOf } from "@/lib/events/reschedule";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
 import { TASK_TEAMS, tasksFor, worksTeam } from "@/lib/events/tasks";
@@ -55,7 +56,7 @@ import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, 
 import { closeOutEvent } from "../ops-actions";
 import { TASK_FLASH, TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
-import { BriefFields, ChecksList, Timeline, checksSummary } from "../ui";
+import { BriefFields, ChecksList, QuickFixes, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
 import { daysBetween } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
@@ -72,6 +73,12 @@ const MESSAGES: Record<string, string> = {
   withdrawn: "Ask withdrawn. Pick another time or room.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
   images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
+  rescheduled: "New time saved. The checks were run again, and anyone who already approved it has been told.",
+  reschedule: "New time saved. The checks were run again, and anyone who already approved it has been told.",
+  "change-asked": "New time sent for approval. The approved time stays booked until then.",
+  approve_change: "New time approved. The room is moved on the calendar and the requester is told.",
+  decline_change: "New time declined. The approved time stays, and the requester sees your note.",
+  withdraw_change: "New time withdrawn. The approved time stays.",
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -99,7 +106,15 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const own = card.ownerEmail === viewer.email.toLowerCase();
   const reviewing = can("approve");
   const live = reviewing ? eventChecks(e, { rooms: ctx.rooms, busy: await busyFor(ctx, e), today: ctx.today, rules: ctx.rules, mayBookRestricted: mayBookRestricted(viewer), excludeCard: card.id }) : null;
+  // Changing the date or time: who may, and for the requester, small fixes that clear an overlap with one click.
+  const editing = editPermission(card, ev, ctx.today, ruleOn(ctx.rules, "lead"));
+  const changeOk = changePermission(card, ev, directors).ok;
+  const busyNow = editing.ok && e.rooms.length ? await busyFor(ctx, e) : [];
+  const clashesNow = editing.ok ? findClashes(e, ctx.rooms, busyNow, { excludeCard: card.id }) : [];
+  const fixes = (editing.ok ? quickFixes(e, clashesNow, { rooms: ctx.rooms, busy: busyNow, excludeCard: card.id }) : []).filter((f) => !(editing.ok && editing.dateLocked && f.edit.date !== e.date));
+
   const roomNames = e.rooms.map((r) => roomById(ctx.rooms, r)?.name ?? r);
+  const formerNames = e.rooms.map((r) => roomById(ctx.rooms, r)?.formerly).filter((x): x is string => Boolean(x));
   const reasons = missionReasons(e);
   const renewal = e.renewedBy ? await store.get(e.renewedBy) : null;
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
@@ -131,7 +146,13 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const names = await nameResolver(emails);
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
-  const next = nextStepText(card, viewer, names, opts);
+  // Waiting on an ask about a booking made off the portal: the IAR office answers it, so say so.
+  const waitingAsk = e.stage === "slot" && card.status === "submitted" ? asks.find((a) => a.id === e.waitingOnAsk && isOpenAsk(a)) : undefined;
+  const officeAnswers = Boolean(waitingAsk && offPortal(waitingAsk.hold));
+  const nextReview0 = STAGE_LABEL[firstStage(card.ownerEmail, directors)];
+  const next = officeAnswers
+    ? `The IAR office answers ${own ? "your" : "the"} ask for the booked time, since it was booked on the IAR calendar, not in the portal. If they give it up, the request goes on to ${nextReview0.toLowerCase()}.${own ? ` ${NOTIFIED}` : ""}`
+    : nextStepText(card, viewer, names, opts);
   const state = rowState(card, actor, { today: ctx.today, ctx: { directorsOf: ctx.directorsOf } });
   const tone = ROW_TONE[state];
 
@@ -172,7 +193,31 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <strong>Declined:</strong> {e.returnNote}
         </Note>
       )}
-      {e.stage === "slot" && card.status === "submitted" && <Note>This request is waiting for an answer to an ask for a booked time (below). Director review starts once it's given up.</Note>}
+      {e.stage === "slot" && card.status === "submitted" && (
+        <Note>
+          This request is waiting for an answer to an ask for a booked time (below). {nextReview0} starts once it&apos;s given up{own && editing.ok ? ", or once you change to a time that's free" : ""}.
+        </Note>
+      )}
+      {own && fixes.length > 0 && (
+        <QuickFixes
+          fixes={fixes}
+          text={fixesText(fixes, clashesNow.length)}
+          button={(f, label) => (
+            <form action={actOnEventWith.bind(null, "reschedule")}>
+              {base}
+              {Object.entries(f.edit).map(([k, v]) => (
+                <input key={k} type="hidden" name={k} value={String(v)} />
+              ))}
+              <Button size="small" type="submit">{label}</Button>
+            </form>
+          )}
+        />
+      )}
+      {e.change && card.status === "approved" && (
+        <Note tone="warn">
+          <strong>New time asked for:</strong> {dayText(e.change.date)}, {timeText(e.change.start)}–{timeText(e.change.end)} (setup {e.change.setup} min, cleanup {e.change.teardown} min). The approved time stays booked until {changeWho(card, directors)} approves it. <a href="#change">See the change</a>
+        </Note>
+      )}
       {reviewing && reasons.length > 0 && <Note>Look closely at this one: {reasons.join(", ")}.</Note>}
     </>
   );
@@ -287,6 +332,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
             </Panel>
           )}
 
+          {e.change && ec.status === "approved" && <ChangePanel />}
+
           {asks.length > 0 && (
             <section className="stack" id="asks" aria-label="Asks for a booked time">
               {asks.map((a) => (
@@ -306,7 +353,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               items={[
                 { label: "Requested by", value: own ? `You (${e.agreed.name})` : names(card.ownerEmail) },
                 { label: "Committee", value: e.committeeName },
-                { label: "Waiting on", value: card.status === "closed" || card.status === "cancelled" || card.status === "denied" ? null : whoText(card, viewer, names) },
+                { label: "Waiting on", value: card.status === "closed" || card.status === "cancelled" || card.status === "denied" ? null : officeAnswers ? `${STAGE_LABEL.slot}: the IAR office` : whoText(card, viewer, names) },
                 {
                   label: "When",
                   value: e.recur ? (
@@ -320,7 +367,17 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 },
                 { label: "Time", value: `${timeText(e.start)}–${timeText(e.end)}` },
                 { label: "Room hold", value: e.rooms.length ? `${windowText(e)} (setup ${e.setup} min, cleanup ${e.teardown} min)` : null },
-                { label: "Room", value: roomNames.join(", ") || "Off-site" },
+                {
+                  label: "Room",
+                  value: e.rooms.length ? (
+                    <>
+                      {roomNames.join(", ")}
+                      {formerNames.length > 0 && <div className="hint">{formerNames.join(", ")}</div>}
+                    </>
+                  ) : (
+                    "Off-site"
+                  ),
+                },
                 { label: "Calendar", value: e.holds.length ? (e.holds.some((h) => h.status === "tentative") ? "Held (pending approval)" : "Confirmed") : null },
                 { label: "Given up", value: (e.released ?? []).length ? (e.released ?? []).map(dayText).join(", ") : null },
                 { label: "Expected", value: `${e.attendance} people` },
@@ -361,7 +418,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const addPurchase = own && (ec.status === "approved" || ec.status === "close_out");
     const renew = renewing?.can && ec.status === "approved";
     const again = canRequestAgain(ec, viewer, ctx.today);
-    if (!reviewing && !cancel && !resubmit && !addPurchase && !renew && !again) {
+    const reschedule = editing.ok;
+    if (!reviewing && !cancel && !resubmit && !addPurchase && !renew && !again && !reschedule && !changeOk) {
       if (ec.status !== "in_review" || own) return { panel: null };
       const why = permission(ec, ev, "approve", directors);
       if (why.ok) return { panel: null };
@@ -370,10 +428,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     }
     const main = reviewing ? (
       <Button variant="primary" icon="check" form="act-event" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
+    ) : changeOk ? (
+      <Button href="#change" variant="primary">Review the new time</Button>
     ) : resubmit ? (
       <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : VERB.makeChanges}</Button>
     ) : undefined;
-    const others = reviewing || addPurchase || renew || again || cancel;
+    const others = reviewing || addPurchase || renew || again || cancel || reschedule;
     if (!others) return { panel: null, main };
     const panel = (
       <form id="act-event" action={actOnEvent} className="stack">
@@ -385,10 +445,11 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         )}
         <div className="row">
           {reviewing && <Button formAction={actOnEventWith.bind(null, "return")} type="submit">Send back</Button>}
+          {reschedule && <Button href={`/events/${ec.id}/reschedule`} icon="calendar">Change date or time</Button>}
           {addPurchase && <Button href="/purchases/new" icon="receipt">Add a payment request</Button>}
           {renew && <Button href={`/events/${ec.id}/renew`} icon="repeat">Request the next period</Button>}
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
-          {(reviewing || addPurchase || renew || again) && <span className="grow" />}
+          {(reviewing || addPurchase || renew || again || reschedule) && <span className="grow" />}
           {reviewing && (
             <ConfirmButton name="action" value="deny" variant="danger" title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
@@ -403,6 +464,48 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       </form>
     );
     return { panel, main };
+  }
+
+  /** A new date or time waiting for approval: the old and new values, and the director's answer (or the requester's withdraw). */
+  function ChangePanel() {
+    const c = e.change!;
+    const changes = timeChanges(timeOf(e), timeOf(c), Boolean(e.recur));
+    return (
+      <Panel title="New time waiting for approval" right={<Pill tone="warn" status>{changeStep(ec, directors)}</Pill>} id="change">
+        <form id="act-change" action={actOnEvent} className="stack">
+          {base}
+          <ul className="stack tight">
+            {changes.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <p className="hint">Asked by {c.by === viewer.email.toLowerCase() ? "you" : names(c.by)} on {fmtDateTime(c.at)}. The approved time stays booked until it&apos;s approved.</p>
+          {c.checks.length > 0 && (
+            <Disclosure summary="Checks on the new time">
+              <ChecksList checks={c.checks} />
+            </Disclosure>
+          )}
+          {changeOk && (
+            <>
+              <Field label="Note for the requester" hint="Needed if you decline, so they know why.">
+                <textarea name="note" rows={2} maxLength={1000} />
+              </Field>
+              <div className="row">
+                <Button variant="primary" icon="check" type="submit" formAction={actOnEventWith.bind(null, "approve_change")}>Approve the new time</Button>
+                <span className="grow" />
+                <Button variant="danger" type="submit" formAction={actOnEventWith.bind(null, "decline_change")}>Decline</Button>
+              </div>
+            </>
+          )}
+          {own && (
+            <div>
+              <Button variant="quiet" size="small" type="submit" formAction={actOnEventWith.bind(null, "withdraw_change")}>Withdraw the new time</Button>
+            </div>
+          )}
+          {!changeOk && !own && <p className="hint">Waiting on {changeApprovers(ec, directors).map(names).join(", ") || "an executive"}.</p>}
+        </form>
+      </Panel>
+    );
   }
 
   /** The event's marketing pieces, each with its status and who has it, and a way to add one. */
@@ -558,7 +661,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <KeyValue
             items={[
               { label: "Time", value: slot },
-              { label: "Held by", value: a.hold.label },
+              { label: "Held by", value: offPortal(a.hold) ? `${a.hold.label} (booked on the IAR calendar)` : a.hold.label },
               { label: "For", value: <Link href={`/events/${a.fromCard}`}>{a.fromCard}</Link> },
               { label: "Why", value: `“${a.reason}”` },
               { label: "Answer", value: a.choice ? `${CHOICE_LABEL[a.choice]}${a.note ? ` (“${a.note}”)` : ""}` : null },
@@ -579,6 +682,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               {a.status === "escalated" && <Note>Nobody answered for 6 days, so it&apos;s yours to decide. The history records that you decided for them.</Note>}
             </form>
           )}
+          {offPortal(a.hold) && isOpenAsk(a) && (
+            <Note>
+              {holderIsThis ? "" : "This booking came from the IAR calendar, not the portal, so the IAR office answers for it."} If nobody answers by {dayText(closesOn(a, e.dates[0]))}, the ask closes and {mine ? "you can" : "the requester can"} pick another time. Nothing is given up without an answer.
+            </Note>
+          )}
+          {!offPortal(a.hold) && isOpenAsk(a) && mine && <p className="hint">If nobody answers by {dayText(closesOn(a, e.dates[0]))}, the ask closes and you can pick another time.</p>}
           {mine && isOpenAsk(a) && (
             <form action={withdrawAsk}>
               <input type="hidden" name="ask" value={a.id} />

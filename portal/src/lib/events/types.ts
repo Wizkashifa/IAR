@@ -32,8 +32,9 @@ export type AvNeeds = { kinds: string[]; includes: string[]; ack: boolean };
  *
  * slot → director → mission → approved → (close-out, closed)
  * "slot": waiting for an answer to an ask for a booked time; holds nothing yet.
- * "director": mission review by the committee's pillar director.
- * "mission": final mission review by any executive.
+ * "director": Director review, by the committee's pillar director.
+ * "mission": Executive review, the final review by any executive.
+ * Names people see: STAGE_LABEL in workflow.ts (the same as the step bar's).
  */
 export type EventStage = "slot" | "director" | "mission" | "approved" | "done";
 
@@ -47,6 +48,19 @@ export type CheckSeverity = "ok" | "info" | "warn" | "bad";
 /** One result of the automatic checks, shown on the form and kept for the reviewers. */
 export type Check = { sev: CheckSeverity; text: string; rule: string; block?: boolean };
 
+
+/** The parts of an event its requester can change on their own: when, and the setup and cleanup around it. For a series, `date` is its first date. */
+export type TimeEdit = Pick<EventInput, "date" | "start" | "end" | "setup" | "teardown">;
+
+/** A new date or time asked for on an approved event. The approved time stays booked until it's approved. */
+export type TimeChange = TimeEdit & {
+  /** The dates it would have, minus any given up. */
+  dates: string[];
+  by: string;
+  at: string;
+  /** The checks on the new time, for whoever approves it. */
+  checks: Check[];
+};
 
 export type EventApproval = { stage: "director" | "mission"; by: string; at: string };
 
@@ -155,6 +169,8 @@ export type EventDetails = EventInput & {
   closeOutSince?: string;
   closeOutNudged?: string;
   closeOut?: CloseOut;
+  /** A new date or time waiting for approval, on an approved event (lib/events/reschedule.ts). */
+  change?: TimeChange;
   /** Images for marketing (public events), in the marketing Shared Drive's "Event Requests / <date · event name>" folder. */
   images?: MarketingFile[];
 };

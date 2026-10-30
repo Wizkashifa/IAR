@@ -4,7 +4,7 @@
  * director, the executive, the requester on a send-back). Plain functions.
  */
 import { type Notice, type Recipient, commentNotices } from "../notices";
-import { dayText } from "./series";
+import { dayText, timeText } from "./series";
 import { type EventActor, type EventCard, reviewersFor } from "./workflow";
 import { same } from "../text";
 
@@ -42,7 +42,7 @@ export function eventNotices(before: EventCard | null, after: EventCard, actor: 
   const stage = after.event.stage;
   if (stage === "director" && after.status === "in_review") {
     const why = after.event.releasedFor ? "It was moved to give up its time, so only you need to approve it." : "";
-    for (const d of reviewers) add({ email: d }, `${what} needs your mission review as the committee's director.${why ? ` ${why}` : ""}`, true, true);
+    for (const d of reviewers) add({ email: d }, `${what} needs your director review.${why ? ` ${why}` : ""}`, true, true);
   }
   if (stage === "mission" && after.status === "in_review") add({ role: "executive" }, `${what} needs executive review.`, true);
   if (stage === "approved" && after.status === "approved" && before) {
@@ -57,4 +57,51 @@ export function eventCommentNotices(card: EventCard, by: EventActor, text: strin
   if (card.status === "in_review" && card.event.stage === "director") also.push(...reviewersFor(card.ownerEmail, directors).map((email) => ({ email })));
   if (card.status === "in_review" && card.event.stage === "mission") also.push({ role: "executive" });
   return commentNotices(card, by, text, { href: `/events/${card.id}`, what: `${card.id} “${card.title}”`, also });
+}
+
+/**
+ * A date or time change, made by the requester or approved or declined: the
+ * approvers who already acted hear about it, whoever approves a change gets
+ * an alert, and the requester hears the answer.
+ */
+export function rescheduleNotices(before: EventCard, after: EventCard, actor: EventActor, directors: string[]): Notice[] {
+  const out: Notice[] = [];
+  const href = `/events/${after.id}`;
+  const what = label(after);
+  const told = new Set<string>();
+  const add = (to: Recipient, text: string, alert: boolean, delegable = false) => {
+    const key = "email" in to ? to.email.toLowerCase() : `role:${to.role}`;
+    if (("email" in to && same(to.email, actor.email)) || told.has(key)) return;
+    told.add(key);
+    out.push({ to, cardId: after.id, href, text, alert, delegable });
+  };
+  const b = before.event, a = after.event;
+  const owner = { email: after.ownerEmail };
+  const approvers = reviewersFor(after.ownerEmail, directors);
+  const changeTo: Recipient[] = approvers.length ? approvers.map((email) => ({ email })) : [{ role: "executive" }];
+  const acted = [...new Set(b.approvals.map((x) => x.by))];
+  const newTime = (t: { date: string; start: string; end: string }) => `${dayText(t.date)}, ${timeText(t.start)}–${timeText(t.end)}`;
+
+  if (!b.change && a.change) {
+    for (const to of changeTo) add(to, `${what}: the requester asks to move it to ${newTime(a.change)}. Please approve or decline the new time. The approved time stays booked until then.`, true, true);
+    for (const by of acted) add({ email: by }, `${what}, which you approved: the requester asks to move it to ${newTime(a.change)}.`, false);
+    return out;
+  }
+  if (b.change && !a.change) {
+    const moved = b.date !== a.date || b.start !== a.start || b.end !== a.end || b.setup !== a.setup || b.teardown !== a.teardown;
+    if (same(actor.email, after.ownerEmail)) {
+      for (const to of changeTo) add(to, `${what}: the requester withdrew the new time. Nothing to do.`, false);
+    } else {
+      add(owner, moved ? `${what}: the new time is approved, ${newTime(a)}.${a.rooms.length ? " The room is moved on the IAR calendar." : ""}` : `${what}: the new time wasn't approved, so the approved time stays. See the request for why.`, !moved);
+      if (moved) for (const by of acted) add({ email: by }, `${what}, which you approved, moved to ${newTime(a)}.`, false);
+    }
+    return out;
+  }
+  // Before approval: anyone who already approved, and whoever is reviewing it now, hear about the new time.
+  for (const by of acted) add({ email: by }, `${what}, which you approved, was moved by the requester to ${newTime(a)}.`, false);
+  if (after.status === "in_review" && b.stage === a.stage) {
+    if (a.stage === "director") for (const d of approvers) add({ email: d }, `${what}, waiting on your review, was moved by the requester to ${newTime(a)}.`, false);
+    if (a.stage === "mission") add({ role: "executive" }, `${what}, waiting on executive review, was moved by the requester to ${newTime(a)}.`, false);
+  }
+  return out;
 }

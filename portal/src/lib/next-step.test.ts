@@ -99,13 +99,13 @@ test("purchase steps: straight to finance skips the chair; card receipts have th
   assert.deepEqual(labels(stepsFor(card)), ["Submitted", "Finance review", "Entered in QuickBooks"]);
 });
 
-test("purchase steps: sent back is flagged, declined and withdrawn skip what's left", () => {
+test("purchase steps: sent back is flagged; declined and withdrawn mark what's left as not reached, not skipped", () => {
   const back = pw.returnForChanges(purchase(), chair, T(1), "Attach the receipt");
   assert.deepEqual(stepsFor(back).flag, { label: "Sent back for changes", tone: "warn" });
   const denied = pw.reject(purchase(), chair, T(1), "Not in the budget");
   const s = stepsFor(denied);
   assert.deepEqual(s.flag, { label: "Declined", tone: "bad" });
-  assert.equal(states(s)["Chair approval"], "skip");
+  assert.equal(states(s)["Chair approval"], "stopped");
   assert.equal(stepsFor(pw.cancel(purchase(), vol, T(1))).flag?.label, "Withdrawn");
 });
 

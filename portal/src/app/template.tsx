@@ -16,7 +16,7 @@ export default async function Template({ children }: { children: React.ReactNode
       <Note tone="warn">
         <form action={STOP_ACT_AS} method="post" className="row">
           <span>
-            You&apos;re signed in as <strong>{viewer.name}</strong> to troubleshoot. Anything you save is marked as done by you ({viewer.supportAdmin.name}) on their behalf.
+            You&apos;re signed in as <strong>{viewer.name}</strong> to troubleshoot. Anything you save is marked as done by you ({viewer.supportAdmin.name}) on their behalf. You see only what they see: your admin actions come back when you stop.
           </span>
           <Button type="submit" size="small">
             Stop and go back to you

@@ -7,7 +7,8 @@ import type { Card } from "./cards";
 import { FLAG } from "./glossary";
 import { andList, same } from "./text";
 
-export type StepState = "done" | "now" | "todo" | "skip";
+/** "skip": passed over on purpose (no director to ask). "stopped": never reached, because the request was declined or withdrawn. */
+export type StepState = "done" | "now" | "todo" | "skip" | "stopped";
 export type Step = { label: string; state: StepState };
 /** A request off the normal path: sent back or waiting (warn), or stopped (bad). */
 export type StepFlag = { label: string; tone: "warn" | "bad" };
@@ -42,12 +43,12 @@ export function track(labels: string[], at: number, skip: string[] = []): Step[]
   return labels.map((label, i) => ({ label, state: skip.includes(label) ? "skip" : i < at ? "done" : i === at ? "now" : "todo" }));
 }
 
-/** After a request stops, the steps it never reached are skipped. */
+/** After a request stops, the steps it never reached are marked as not reached (not as skipped). */
 export function stopAt(steps: Step[]): Step[] {
-  return steps.map((s) => (s.state === "now" || s.state === "todo" ? { ...s, state: "skip" as const } : s));
+  return steps.map((s) => (s.state === "now" || s.state === "todo" ? { ...s, state: "stopped" as const } : s));
 }
 
-/** The flag for a request sent back, declined or withdrawn, with the steps it never reached skipped. */
+/** The flag for a request sent back, declined or withdrawn, with the steps it never reached marked. */
 export function finish(card: Card, steps: Step[]): Steps {
   if (card.status === "changes_requested") return { steps, flag: { label: FLAG.sentBack, tone: "warn" } };
   const flag = card.status === "denied" ? FLAG.declined : card.status === "cancelled" ? FLAG.withdrawn : null;

@@ -57,7 +57,13 @@ export const HELP_GUIDES: HelpGuide[] = [
           "As you fill in the form, the Checks panel compares your times with the IAR room calendars, school hours, prayers and the room rules.",
           "A red check means the room is taken or a rule is broken. Change the time or the room before you send.",
           "A yellow check is something reviewers will look at, such as a short lead time. You can still send it.",
+          "If only a few minutes overlap, the portal suggests a fix, such as starting a little later or a shorter setup. Click it to use it.",
           "If the time you want is already booked, you can ask whoever holds it to give it up. If nobody answers within a few days, their director decides.",
+          "If it was booked on the IAR calendar rather than in the portal, the IAR office answers your ask.",
+          "If nobody answers after 10 days, or a week before your event, the ask closes and you can pick another time.",
+          "To change the date or time later, open your request and choose Change date or time.",
+          "Once it's approved, the director approves a new time first. The old time stays booked until then.",
+          "Less than a week before the event, contact the IAR office to change the date.",
         ],
       },
       {

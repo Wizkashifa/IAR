@@ -7,7 +7,7 @@
  */
 import { type Room, roomById, roomsOverlap } from "./rooms";
 import { SERIES_MAX_MONTHS, dayText, eventDates, fromMinutes, longDate, seriesMaxEnd, timeText, toMinutes } from "./series";
-import type { Check, EventInput } from "./types";
+import type { Check, EventInput, TimeEdit } from "./types";
 import { daysBetween } from "../dates";
 
 /** Policy rules an admin can turn off. The calendar check can't be turned off. */
@@ -188,13 +188,13 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
   }
 
   if (ruleOn(ctx.rules, "lead") && days >= 0) {
-    if (days < 7) add("warn", `Only ${days} day${days === 1 ? "" : "s"} away. Mission review can take up to a week.`, "Room policy §4");
+    if (days < 7) add("warn", `Only ${days} day${days === 1 ? "" : "s"} away. Review can take up to a week.`, "Room policy §4");
     else if (e.isPublic && days < 21) add("warn", `${days} days away. Marketing asks for 3 weeks to promote public events.`, MF);
     else add("ok", `${days} days of lead time.`, "Room policy §4");
   }
 
   const mr = missionReasons(e);
-  if (mr.length) add("info", `Mission review will look closely at this: ${mr.join(", ")}.`, "Mission review");
+  if (mr.length) add("info", `The reviewers will look closely at this: ${mr.join(", ")}.`, "Review");
   const dn = e.description.trim().length;
   if (dn < DESCRIPTION_GOOD) add("info", dn ? "A longer description helps. Say what happens, who it's for, the schedule and any speakers." : "Add a description. The reviewers, marketing and the teams all read it.", "Program Request Form");
   else add("ok", "The description gives reviewers enough to go on.", "Program Request Form");
@@ -217,3 +217,68 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
 /** Shown next to times in lists: "6:00–9:00 PM" style isn't needed; keep both ends explicit. */
 export const windowText = (e: Pick<EventInput, "start" | "end" | "setup" | "teardown">) =>
   `${timeText(fromMinutes(toMinutes(e.start) - e.setup))}–${timeText(fromMinutes(toMinutes(e.end) + e.teardown))}`;
+
+// ---- Fixing a small overlap yourself -----------------------------------------
+
+/** An overlap this short or shorter gets a suggested fix. */
+export const FIX_MINUTES = 30;
+
+/** A change that clears every clash: "Start at 1:45 PM", applied with one click. */
+export type QuickFix = { text: string; edit: TimeEdit };
+
+const roundUp5 = (n: number) => Math.ceil(n / 5) * 5;
+const roundDown5 = (n: number) => Math.floor(n / 5) * 5;
+
+/**
+ * Small changes that clear a clash of up to FIX_MINUTES: cut the setup (a
+ * booking ending just after setup starts) or the cleanup (one starting just
+ * before cleanup ends), or move the event later or earlier, keeping its
+ * length. Each is checked against the calendar again, so it clears every
+ * clash on every date and adds none; one that would run into after-hours
+ * isn't offered. Empty when nothing small fixes it.
+ */
+export function quickFixes(e: EventInput, clashes: Pick<Clash, "start" | "end">[], ctx: { rooms: Room[]; busy: BusyItem[]; excludeCard?: string; gaveTo?: string }): QuickFix[] {
+  if (!clashes.length) return [];
+  const s = toMinutes(e.start), en = toMinutes(e.end);
+  const ws = s - e.setup, we = en + e.teardown;
+  const overlap = (c: Pick<Clash, "start" | "end">) => Math.min(we, toMinutes(c.end)) - Math.max(ws, toMinutes(c.start));
+  if (clashes.some((c) => overlap(c) > FIX_MINUTES)) return [];
+  const base: TimeEdit = { date: e.date, start: e.start, end: e.end, setup: e.setup, teardown: e.teardown };
+  const tries: QuickFix[] = [];
+  const shift = (by: number): TimeEdit => ({ ...base, start: fromMinutes(s + by), end: fromMinutes(en + by) });
+  // Something ends during the setup (or a little into the event): start later, or set up for less time.
+  const lastEnd = Math.max(...clashes.map((c) => toMinutes(c.end)));
+  const firstStart = Math.min(...clashes.map((c) => toMinutes(c.start)));
+  const late = roundUp5(lastEnd - ws);
+  if (late > 0 && late <= FIX_MINUTES) tries.push({ text: `start at ${timeText(fromMinutes(s + late))}`, edit: shift(late) });
+  if (lastEnd <= s && lastEnd > ws) {
+    const setup = roundDown5(s - lastEnd);
+    tries.push({ text: setup ? `cut setup to ${setup} min` : "skip the setup time", edit: { ...base, setup } });
+  }
+  // Something starts during the cleanup: end earlier, or clean up faster.
+  const early = roundUp5(we - firstStart);
+  if (early > 0 && early <= FIX_MINUTES) tries.push({ text: `start at ${timeText(fromMinutes(s - early))}`, edit: shift(-early) });
+  if (firstStart >= en && firstStart < we) {
+    const teardown = roundDown5(firstStart - en);
+    tries.push({ text: teardown ? `cut cleanup to ${teardown} min` : "skip the cleanup time", edit: { ...base, teardown } });
+  }
+  const seen = new Set<string>();
+  return tries.filter((f) => {
+    const t = f.edit;
+    const key = JSON.stringify(t);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    if (toMinutes(t.start) - t.setup < 0 || toMinutes(t.end) + t.teardown > 24 * 60) return false;
+    if (afterHours(t) && !afterHours(e)) return false;
+    const next = { ...e, ...t };
+    return findClashes(next, ctx.rooms, ctx.busy, { excludeCard: ctx.excludeCard }).length === 0;
+  });
+}
+
+/** "Start at 1:45 PM or cut setup to 15 min to remove the conflict." */
+export function fixesText(fixes: QuickFix[], clashCount = 1): string {
+  if (!fixes.length) return "";
+  const list = fixes.map((f) => f.text);
+  const joined = list.length > 1 ? `${list.slice(0, -1).join(", ")} or ${list[list.length - 1]}` : list[0];
+  return `${joined[0].toUpperCase()}${joined.slice(1)} to remove the conflict${clashCount > 1 ? "s" : ""}.`;
+}

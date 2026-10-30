@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import type { QuickFix } from "@/lib/events/rules";
 import type { Check, MarketingBrief } from "@/lib/events/types";
 import { KeyValue } from "@/components/KeyValue";
 import { timeText } from "@/lib/events/series";
@@ -25,6 +27,28 @@ export function ChecksList({ checks, empty = "Pick a date, times and a room to s
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * Small changes that clear a short overlap, offered with the sentence that
+ * explains them ("Start at 1:45 PM or cut setup to 15 min to remove the
+ * conflict."). `button` draws each one's button: filling in the form, or a
+ * one-click form on the request page.
+ */
+export function QuickFixes({ fixes, text, button }: { fixes?: QuickFix[]; text?: string; button: (fix: QuickFix, label: string) => ReactNode }) {
+  if (!fixes?.length) return null;
+  return (
+    <div className={styles.fixes}>
+      <div>
+        <strong>Fix it yourself:</strong> {text}
+      </div>
+      <div className="row">
+        {fixes.map((f) => (
+          <span key={f.text}>{button(f, f.text[0].toUpperCase() + f.text.slice(1))}</span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -75,7 +99,7 @@ export function Timeline({ items, request, caption, legend = true }: { items: Ti
               <title>{`${x.label} ${timeText(x.start)}–${timeText(x.end)}`}</title>
               <rect x={`${x0}%`} y={4 + x.lane * LANE} width={`${w}%`} height={LANE - 4} rx={6} />
               <foreignObject x={`${x0}%`} y={4 + x.lane * LANE} width={`${w}%`} height={LANE - 4}>
-                <span className={styles.lbl}>{x.label}</span>
+                <span className={styles.lbl} title={`${x.label} ${timeText(x.start)}–${timeText(x.end)}`}>{x.label}</span>
               </foreignObject>
             </g>
           );

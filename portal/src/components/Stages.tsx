@@ -4,7 +4,8 @@ import styles from "./Stages.module.css";
 
 /**
  * The step bar on a request page (lib/next-step.ts `stepsFor`): thin bars,
- * green for steps done, gold for the one it's on, faded for steps skipped.
+ * green for steps done, gold for the one it's on, faded and struck through
+ * for steps skipped, faded for steps a stopped request never reached.
  * On a phone every bar fits on one line and a single line names the current
  * step ("Step 6 of 7: Close-out"); the step labels stay for screen readers.
  */
@@ -20,6 +21,7 @@ export function Stages({ steps, flag }: { steps: Step[]; flag?: StepFlag }) {
               {s.label}
               {s.state === "done" && <span className="sr-only"> (done)</span>}
               {s.state === "skip" && <span className="sr-only"> (skipped)</span>}
+              {s.state === "stopped" && <span className="sr-only"> (not reached)</span>}
             </span>
           </li>
         ))}

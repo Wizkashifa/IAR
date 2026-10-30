@@ -25,14 +25,31 @@ export type RoomSetting = {
   note?: string;
 };
 
-export type Room = GoogleRoom & Required<Pick<RoomSetting, "bookable" | "food" | "restricted" | "mph">> & { overlaps: string[]; note: string };
+/**
+ * `name` is the short name people see everywhere; `fullName` is Google's
+ * name as is, and `formerly` the old name it carried ("Previously Library"),
+ * shown only in the room's details and on hover.
+ */
+export type Room = GoogleRoom & Required<Pick<RoomSetting, "bookable" | "food" | "restricted" | "mph">> & { overlaps: string[]; note: string; fullName: string; formerly?: string };
+
+/**
+ * "Community Room (Previously Library)" → "Community Room", with the old name
+ * kept apart. Only a trailing "(Previously …)", "(Formerly …)" or "(was …)" is
+ * taken off; any other bracket is part of the name.
+ */
+export function shortRoomName(name: string): { name: string; formerly?: string } {
+  const m = name.match(/^(.*\S)\s*\(\s*((?:previously|formerly|was|old name:?)\s+[^)]+?)\s*\)\s*$/i);
+  if (!m) return { name: name.trim() };
+  return { name: m[1], formerly: m[2][0].toUpperCase() + m[2].slice(1) };
+}
 
 /** Google's rooms with their portal settings, sorted by building then name. */
 export function mergeRooms(google: GoogleRoom[], settings: Record<string, RoomSetting>): Room[] {
   return google
     .map((g) => {
       const s = settings[g.id] ?? {};
-      return { ...g, bookable: Boolean(s.bookable), food: Boolean(s.food), restricted: Boolean(s.restricted), mph: Boolean(s.mph), overlaps: (s.overlaps ?? []).filter((x) => x !== g.id), note: s.note ?? "" };
+      const short = shortRoomName(g.name);
+      return { ...g, name: short.name, fullName: g.name, ...(short.formerly ? { formerly: short.formerly } : {}), bookable: Boolean(s.bookable), food: Boolean(s.food), restricted: Boolean(s.restricted), mph: Boolean(s.mph), overlaps: (s.overlaps ?? []).filter((x) => x !== g.id), note: s.note ?? "" };
     })
     .sort((a, b) => a.building.localeCompare(b.building) || a.name.localeCompare(b.name, undefined, { numeric: true }));
 }

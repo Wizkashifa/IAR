@@ -213,7 +213,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               {rooms.map((r) => (
                 <tr key={r.id}>
                   <td data-label="Room">
-                    <strong>{r.name}</strong>
+                    <strong>{r.fullName}</strong>
                     <div className="hint">{[r.building, r.capacity ? `${r.capacity} people` : ""].filter(Boolean).join(" · ")}</div>
                     <div className="hint">{r.calendarId}</div>
                   </td>

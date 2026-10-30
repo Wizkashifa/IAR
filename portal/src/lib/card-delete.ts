@@ -14,8 +14,11 @@ import type { Viewer } from "./viewer";
  * holds off the room calendars and settles any asks for a booked time.
  */
 
-/** Portal admins, and an admin signed in as someone else. */
-export const mayDeleteRequests = (viewer: Viewer) => viewer.actingRoles.includes("admins") || Boolean(viewer.supportAdmin);
+/**
+ * Portal admins. An admin signed in as someone else sees exactly what that
+ * person sees, so not this (unless the person is an admin too).
+ */
+export const mayDeleteRequests = (viewer: Pick<Viewer, "actingRoles">) => viewer.actingRoles.includes("admins");
 
 type Cleanup = (card: Card, by: string) => Promise<{ notices: Notice[]; problems: string[] }>;
 
