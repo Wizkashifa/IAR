@@ -31,7 +31,7 @@ export default async function StatementPage() {
   const works = mayWorkDesk(viewer.actingRoles);
   return (
     <div className="stack">
-      <Crumb trail={[{ href: "/purchases", label: "Payments" }, { href: "/purchases/finance", label: "Finance desk" }]} here="Card statement" />
+      <Crumb trail={[{ href: "/purchases", label: "Payments" }]} here="Card statement" />
       <ModuleHead accent="pay"
         title={works ? "Card statement" : "Card statements"}
         lead={
@@ -41,7 +41,7 @@ export default async function StatementPage() {
         }
       />
       {works ? (
-        <StatementForm action={statementAction} sampleHref={isDevAuth() ? "/purchases/finance/statement/sample" : undefined} />
+        <StatementForm action={statementAction} sampleHref={isDevAuth() ? "/purchases/statement/sample" : undefined} />
       ) : (
         <Note>Only the finance office uploads card statements. You can see the ones already in.</Note>
       )}

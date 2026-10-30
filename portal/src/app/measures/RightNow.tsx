@@ -72,8 +72,8 @@ export async function RightNow({ cards }: { cards: Card[] }) {
       <Stats label="Headline numbers">
         <Stat label="Waiting on someone" value={waiting.length} note={`Across ${plural(kinds.filter((k) => k.open).length, "module")}`} href="/stuck" />
         <Stat label="Waiting over a week" value={overWeek.length} note={oldest ? `Longest: ${plural(oldest, "day")}` : "Nothing waiting"} tone={overWeek.length ? "warn" : "ok"} href="/stuck" />
-        <Stat label={`Paid in ${fmtMonth(month)}`} value={dollars(money.paid)} note={plural(money.paidCount, "payment")} href="/purchases/finance?tab=books" />
-        <Stat label="Approved, to pay" value={dollars(money.toPay)} note={plural(money.toPayCount, "request")} href="/purchases/finance" />
+        <Stat label={`Paid in ${fmtMonth(month)}`} value={dollars(money.paid)} note={plural(money.paidCount, "payment")} href="/purchases?view=books" />
+        <Stat label="Approved, to pay" value={dollars(money.toPay)} note={plural(money.toPayCount, "request")} href="/purchases?view=payment" />
         <Stat label="Events this week" value={week.length} note={`${week.filter((w) => !w.approved).length} still in review`} href="/calendar" />
         <Stat label="Open tickets" value={openTickets} note={lateTickets ? `${lateTickets} late` : "None late"} tone={lateTickets ? "bad" : "plain"} href="/it-maintenance?view=team" />
       </Stats>
@@ -147,7 +147,7 @@ export async function RightNow({ cards }: { cards: Card[] }) {
             <EmptyState>Nothing paid yet this month.</EmptyState>
           )}
           <PanelFoot>
-            <Link href="/purchases/finance">Finance desk</Link> · <Link href="/purchases/finance/statement">Card statements</Link>
+            <Link href="/purchases?view=payment">To pay</Link> · <Link href="/purchases/statement">Card statements</Link>
           </PanelFoot>
         </Panel>
       </div>

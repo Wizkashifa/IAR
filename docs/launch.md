@@ -17,7 +17,7 @@ This is how the portal was put on IAR's Google Cloud, and how to set it up again
 | --- | --- |
 | Sign-in with @islam1.org for everyone; alerts in Google Chat, with each person's notification choices and quiet overnight | Facility rentals and the public rental page |
 | Home ("Waiting on you", Today at IAR, What's new), My Requests, Search, Help, Feedback, Out of office | Budget and Shura dashboard: still being designed |
-| Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest and the Finance desk | Library beyond policies (Shura documents, each committee's drive) |
+| Purchase Requests (pay, reimburse, card receipts), with reminders, a morning digest, and finance paying several at once | Library beyond policies (Shura documents, each committee's drive) |
 | Events & Rooms on IAR's room calendars, with asks for a booked time; the Calendar and Find a room | Asset tracker |
 | Marketing Requests with file uploads and Team work, the daily run sheet, event close-out | Jira-style boards for facilities (sprints, epics, reports), until the facilities lead says they need them |
 | IT & Maintenance, with the open Jira issues imported, A/V tasks for events, and My work today for the facilities and IT teams | |
@@ -83,7 +83,7 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] Searching `12001` from the top bar finds it.
 - [ ] B turns on Out of office with C covering. C gets a Chat message, approves one, and its history says "for B".
 - [ ] On the request page, the step bar and "What happens next" are right for A, for B and for F (each reads "You" only at their own step).
-- [ ] F pays two approved requests at once on the Finance desk, enters them in QuickBooks, and downloads the CSV; the CSV opens in a spreadsheet with one row per line item.
+- [ ] F pays two approved requests at once from Payments (Show: To pay), enters them in QuickBooks, and downloads the CSV; the CSV opens in a spreadsheet with one row per line item.
 - [ ] A uses "Request this again" on a paid request: the form opens filled in, with no receipts.
 
 **Events & Rooms**

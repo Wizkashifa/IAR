@@ -1,7 +1,7 @@
 /**
- * The finance desk (app/purchases/finance): what's waiting on the finance
- * office after approval, filtered by fund, month and payment type, and
- * worked several at a time. Plain functions: the page and its actions call
+ * Finance's lists on Payments (app/purchases/page.tsx): what's waiting on
+ * the finance office after approval, filtered by fund and month, and worked
+ * several at a time. Plain functions: the page and its actions call
  * them, and every change still goes through workflow.ts one request at a time.
  */
 import type { Role } from "../org";
@@ -10,12 +10,12 @@ import type { PurchaseCard } from "./workflow";
 import { WorkflowError } from "../workflow-core";
 
 /**
- * Who can open the desk and the card statements: finance works them, and
+ * Who sees finance's lists and the card statements: finance works them, and
  * executives see them (every request and card receipt there) without acting.
  * `roles` is what someone can see; admins pass too, also without acting.
  */
 export const mayViewDesk = (roles: readonly Role[]) => roles.includes("finance") || roles.includes("executive");
-/** Who can pay, book and record on the desk: finance, from their own groups (`actingRoles`). */
+/** Who can pay, book and record several at a time: finance, from their own groups (`actingRoles`). */
 export const mayWorkDesk = (actingRoles: readonly Role[]) => actingRoles.includes("finance");
 
 export type DeskTab = "pay" | "books" | "returns";
@@ -29,10 +29,9 @@ export const DESK_TABS: { id: DeskTab; label: string }[] = [
 export type DeskPayType = "check" | "ach" | "card";
 export const PAY_TYPE_LABEL: Record<DeskPayType, string> = { check: "Check", ach: "ACH", card: "IAR card" };
 
-export type DeskFilter = { fund?: string; month?: string; type?: DeskPayType };
+export type DeskFilter = { fund?: string; month?: string };
 
 export const isDeskTab = (s: string | undefined): s is DeskTab => s === "pay" || s === "books" || s === "returns";
-export const isPayType = (s: string | undefined): s is DeskPayType => s === "check" || s === "ach" || s === "card";
 
 const live = (c: PurchaseCard) => c.status !== "cancelled" && c.status !== "denied" && c.status !== "changes_requested";
 
@@ -62,7 +61,7 @@ export function deskDate(c: PurchaseCard): string {
 }
 
 export function filterDesk(cards: PurchaseCard[], f: DeskFilter): PurchaseCard[] {
-  return cards.filter((c) => (!f.fund || c.purchase.fund === f.fund) && (!f.month || deskDate(c).startsWith(f.month)) && (!f.type || payTypeOf(c) === f.type));
+  return cards.filter((c) => (!f.fund || c.purchase.fund === f.fund) && (!f.month || deskDate(c).startsWith(f.month)));
 }
 
 /** The funds and months present, for the filter menus (months newest first). */

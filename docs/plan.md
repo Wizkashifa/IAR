@@ -39,7 +39,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Google is the only directory | Sign-in is @islam1.org only, so personal Gmail accounts are out. Google Groups decide who sees which module. No Microsoft Forms |
 | IAR's Google Calendar is the source of truth for bookings | The portal reads and writes the calendar. Nothing gets booked outside it. The raleighmasjid.org reservation page gets retired or fed from the calendar |
 | One card per request, owned by the requester | The sponsoring committee is co-owner, and the chair can reassign the card. A card never ends up with no owner |
-| Teams work their own queues | Marketing (Marketing Requests → Team work), A/V (IT & Maintenance) and finance (the Finance desk) see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
+| Teams work their own queues | Marketing (Marketing Requests → Team work), A/V (IT & Maintenance) and finance (Payments → To pay) see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
 | Notify only when someone needs to act | Action-needed alerts go out right away. Everything else goes into a digest or the portal's activity feed |
 | Rules are automated as flags, not hard blocks | The office can override with a recorded reason |
 | Mission review for every event | The committee's pillar director reviews first, then any one executive gives the final approval. The office doesn't review events. New programs, outside groups or speakers, fundraisers, and large or costly events are flagged for the reviewers. Recurring series are approved once per season |

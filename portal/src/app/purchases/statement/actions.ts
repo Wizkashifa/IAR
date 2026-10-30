@@ -110,7 +110,7 @@ async function confirmStatement(month: string): Promise<StatementState> {
   const ctx = await purchaseContext();
   const notices = statementNotices(imported, ctx.cards, viewer.email);
   await deliver(notices, viewer.email);
-  revalidatePath("/purchases/finance/statement");
+  revalidatePath("/purchases/statement");
   return { stage: "done", month: imported.month, told: notices.length, unknown: matchCards(imported, ctx.cards).unknown.length };
 }
 

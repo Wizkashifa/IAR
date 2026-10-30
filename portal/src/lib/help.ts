@@ -160,7 +160,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Upload the card statement (finance office)",
         steps: [
-          "On the finance desk, click Upload card statement and add the PDF from Truist.",
+          "On Payments, click Upload card statement and add the PDF from Truist.",
           "The portal reads every card's charges and checks they add up to the statement's totals. If anything doesn't add up, nothing is imported.",
           "Check the preview, then click Import and tell cardholders. Each cardholder gets a message to add their receipts.",
           "A card on the statement that isn't in Portal Settings is flagged. Add it there and upload the statement again.",

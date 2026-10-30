@@ -11,24 +11,24 @@ import { purchaseContext } from "@/lib/purchases/settings";
 import { vendorAfterPayment } from "@/lib/purchases/vendors";
 import { batchSummary, mayWorkDesk, runBatch, splitKey } from "@/lib/purchases/finance-desk";
 import * as wf from "@/lib/purchases/workflow";
-import { RESULT_COOKIE, type DeskResult } from "./result";
+import { RESULT_COOKIE, type DeskResult } from "./desk-result";
 import { WorkflowError } from "@/lib/workflow-core";
 
 const VERB = { pay: "marked paid", books: "marked entered in QuickBooks", resolve: "updated with the money received" } as const;
 type DeskAction = keyof typeof VERB;
 
 /**
- * Pay, enter in QuickBooks, or record refunds for the requests ticked on the
- * finance desk. Each request goes through the workflow on its own; the ones
+ * Pay, enter in QuickBooks, or record refunds for the requests ticked on
+ * Payments (To pay, Enter in QuickBooks, Refunds). Each request goes through the workflow on its own; the ones
  * it refuses, or that changed meanwhile, are listed and the rest still go.
  */
 export async function deskAction(form: FormData): Promise<void> {
   const viewer = await requireViewer();
-  if (!mayWorkDesk(viewer.actingRoles)) redirect("/purchases/finance");
+  if (!mayWorkDesk(viewer.actingRoles)) redirect("/purchases");
   const actor = await actorFor(viewer);
   const action = String(form.get("action") ?? "") as DeskAction;
   const backRaw = String(form.get("back") ?? "");
-  const back = backRaw.startsWith("/purchases/finance") ? backRaw : "/purchases/finance";
+  const back = backRaw.startsWith("/purchases?") ? backRaw : "/purchases";
   const keys = [...new Set(form.getAll("pick").map(String))].slice(0, 200);
   if (!(action in VERB) || keys.length === 0) return finish(back, { summary: "Tick at least one request first.", tone: "warn", failed: [] });
 
@@ -69,12 +69,11 @@ export async function deskAction(form: FormData): Promise<void> {
         if (v) await store.saveVendor(v);
       }
     } catch (err) {
-      if (!(err instanceof ConflictError)) console.error("finance desk save failed", err);
+      if (!(err instanceof ConflictError)) console.error("batch save failed", err);
       failed.push({ id: next.id, message: err instanceof ConflictError ? err.message : "Couldn't be saved. Nothing changed on it." });
     }
   }
   revalidatePath("/purchases");
-  revalidatePath("/purchases/finance");
   const word = `${saved === 1 ? "request" : "requests"} ${VERB[action]}`;
   return finish(back, { summary: batchSummary(saved, word, failed.length), tone: failed.length ? "warn" : "ok", failed });
 }
@@ -82,6 +81,6 @@ export async function deskAction(form: FormData): Promise<void> {
 /** The outcome travels in a short-lived cookie matched by a one-time key in the URL, so a link can't fake it. */
 async function finish(back: string, r: Omit<DeskResult, "key">): Promise<never> {
   const key = Math.random().toString(36).slice(2, 10);
-  (await cookies()).set(RESULT_COOKIE, JSON.stringify({ ...r, key }), { path: "/purchases/finance", maxAge: 60, httpOnly: true, sameSite: "lax" });
+  (await cookies()).set(RESULT_COOKIE, JSON.stringify({ ...r, key }), { path: "/purchases", maxAge: 60, httpOnly: true, sameSite: "lax" });
   redirect(`${back}${back.includes("?") ? "&" : "?"}r=${key}`);
 }
