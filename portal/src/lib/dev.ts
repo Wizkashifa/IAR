@@ -42,7 +42,6 @@ export const DEV_PERSONAS: DevPersona[] = [
   { id: "designer", name: "Sample Designer", email: "designer@dev.local", title: "Marketing team (designer)", groups: [], teams: { Marketing: "member" } },
   { id: "it", name: "Sample IT", email: "it@dev.local", title: "IT Services (IT and A/V)", groups: [], teams: { "IT Services": "member" } },
   { id: "facilities", name: "Sample Facilities", email: "facilities@dev.local", title: "Facility Maintenance staff", groups: [], teams: { "Facility Maintenance": "member" } },
-  { id: "security", name: "Sample Security", email: "security@dev.local", title: "Safety & Security", groups: [], teams: { "Safety & Security": "member" } },
   { id: "admin", name: "Sample Admin", email: "admin@dev.local", title: "Portal admin", groups: [g.admins], teams: { Administration: "member" } },
 ];
 

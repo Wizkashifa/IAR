@@ -35,7 +35,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Click New event request and fill in one form: the event, the room, and marketing's and A/V's questions if you need them.",
       "The checks beside the form compare your times with the IAR room calendars as you type, so you see a clash before you send.",
       "Your committee's director reviews it, then an executive gives final approval. The room is held on the calendar while you wait.",
-      "Once it's approved, marketing, A/V and security each get their task. After the event, you add the attendance and final costs.",
+      "Once it's approved, marketing and A/V each get their task. After the event, you add the attendance and final costs.",
     ],
     sections: [
       {
@@ -65,7 +65,8 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
           "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
-          "Once it's approved, the room is confirmed on the IAR calendar, and marketing, A/V and security see their tasks in Team Queues.",
+          "Once it's approved, the room is confirmed on the IAR calendar, and marketing and A/V see their tasks in Team Queues.",
+          "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
         ],
       },
       {
@@ -312,7 +313,7 @@ export const HELP_GUIDES: HelpGuide[] = [
   {
     key: "teams",
     title: "Team Queues and the run sheet",
-    summary: "For the marketing, A/V, security, facilities and office teams.",
+    summary: "For the marketing, A/V and office teams, and the front desk.",
     href: "/queues",
     module: "team-queues",
     short: [
@@ -324,7 +325,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Team Queues",
         steps: [
-          "Each team sees its own tasks across every approved event: the flyer and announcement for marketing, A/V setup for A/V, the room check for security.",
+          "Each team sees its own tasks across every approved event: the flyer and announcement for marketing, and A/V setup for A/V.",
           "Tasks unlock when the event is approved. Locked ones are counted so you can plan ahead.",
           "Open a task to see everything the requester gave: the announcement text, the A/V needs, the room and times.",
           "Click Start when you begin and Done when you finish. The requester can see where each task stands.",
@@ -334,8 +335,8 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "The daily run sheet",
         steps: [
           "Open Daily Run Sheet (under IAR in the menu; everyone can see it) and pick the day and campus.",
-          "It lists each room's bookings in time order, with the contact, the setup plan and security notes.",
-          "Print it for the front desk or the security team.",
+          "It lists each room's bookings in time order, with the contact, the setup plan and notes such as food or a large crowd. Events after hours are marked.",
+          "Print it for the front desk.",
         ],
       },
     ],

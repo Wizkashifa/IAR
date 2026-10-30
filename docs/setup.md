@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. `npm run dev` turns on dev mode: there is no Google sign-in, requests are sample data held in memory, and http://localhost:3000/dev lets you switch between sample users (volunteer, chair, office, finance, security, admin) to see how the home page changes by group. Dev mode switches itself off on Cloud Run.
+Open http://localhost:3000. `npm run dev` turns on dev mode: there is no Google sign-in, requests are sample data held in memory, and http://localhost:3000/dev lets you switch between sample users (volunteer, chair, office, finance, marketing, admin) to see how the home page changes by group. Dev mode switches itself off on Cloud Run.
 
 ## One-time Google setup
 
@@ -141,7 +141,7 @@ The launch list (26; Outreach is part of Da'wah):
 | Marketing | portal-team-marketing@ | Marketing requests and tasks, weekly review |
 | Older Adult Community | portal-team-seniors@ | |
 | Page Road | portal-team-page@ | |
-| Safety & Security | portal-team-security@ | Security tasks and room checks, run sheet |
+| Safety & Security | portal-team-security@ | |
 | Shura | portal-team-shura@ | Shura dashboard (later) |
 | Social & Welfare | portal-team-welfare@ | Restricted S&W purchase requests and payees |
 | Sports & Recreation | portal-team-sports@ | |
@@ -193,7 +193,7 @@ The portal alerts whoever has to act next: an approver when a request reaches th
 
 1. **The Chat app** (Cloud console → Google Chat API → Configuration): app name "IAR Portal", the IAR logo as its avatar, interactive features on, "Receive 1:1 messages" and "Join spaces and group conversations" ticked; connection: **HTTP endpoint URL** `https://<portal address>/api/chat`, authentication audience **HTTP endpoint URL**; visibility: leave "Make this Chat app available to specific people and groups" unticked, so the private Marketplace listing (step 2) makes it available to everyone in islam1.org (tick it and enter `portal-role-beta@` and `portal-role-admin@` only while sign-in is limited to the testers). Don't build it as a Workspace add-on. The app sends as the runtime service account itself (the `chat.bot` scope); there's no key and no delegation for it.
 2. **List it privately** (Google Workspace Marketplace SDK → App configuration: visibility Private, Individual + Admin Install (Chat apps can't be admin-only); App integrations: Chat app; then the store listing and Publish; private listings aren't reviewed by Google), and **install it** for everyone (open the Google Workspace Marketplace at workspace.google.com/marketplace, search "IAR Portal", Admin install; or certain groups while sign-in is limited to the testers). Installing it is what lets the app message people.
-3. **Spaces**: one per role or queue team (Finance, Office, Executive, Admins, Marketing, IT & A/V, Facilities, Security), with that team's Google Group added as a member so the space follows the group, and the app added. Save each space's name (`spaces/AAAA…`) in Portal Settings `chatSpaces`, keyed by role (`finance`, `office`, `executive`, `admins`, `marketing`, `it`, `av`, `facilities`, `security`). A role with no space gets its alerts by email to its group.
+3. **Spaces**: one per role or queue team (Finance, Office, Executive, Admins, Marketing, IT & A/V, Facilities), with that team's Google Group added as a member so the space follows the group, and the app added. Save each space's name (`spaces/AAAA…`) in Portal Settings `chatSpaces`, keyed by role (`finance`, `office`, `executive`, `admins`, `marketing`, `it`, `av`, `facilities`). A role with no space gets its alerts by email to its group.
 4. Set `PORTAL_CHAT=on` when deploying.
 
 **Email is the fallback**, for someone the app can't reach yet (it isn't installed for them):

@@ -1,7 +1,7 @@
 /**
  * The daily run sheet: one printable page of what's happening where on a day,
  * for one campus. Approved events (and ones in close-out) come from the
- * portal with everything the office, facilities and security need; the other
+ * portal with everything the office and facilities need; the other
  * entries on the room calendars (bookings made in Google Calendar, prayers
  * and school hours included) are listed too, marked as calendar entries.
  * Plain functions so they can be tested.
@@ -10,7 +10,6 @@ import { AV_KINDS } from "./events/input";
 import { type Room, roomById } from "./events/rooms";
 import { type BusyItem, isAfterHours } from "./events/rules";
 import { fromMinutes, toMinutes } from "./events/series";
-import type { RoomCheck } from "./events/types";
 import type { EventCard } from "./events/workflow";
 
 export type RunSheetEvent = {
@@ -32,11 +31,11 @@ export type RunSheetEvent = {
   setupNotes: string;
   /** What A/V was asked for, or "". */
   av: string;
-  security: string[];
+  /** For the front desk: open to the public, food, a large crowd. */
+  notes: string[];
   afterHours: boolean;
   series: boolean;
   closeOut: boolean;
-  checks: { before?: RoomCheck; after?: RoomCheck };
 };
 
 export type RunSheetEntry = {
@@ -60,11 +59,10 @@ const inCampus = (rooms: Room[], id: string, campus?: string) => {
   return Boolean(r) && (!campus || (r!.building || "Other rooms") === campus);
 };
 
-/** What security should know about an event. */
-export function securityNotes(card: EventCard): string[] {
+/** What the front desk should know about an event. After hours shows as its own flag. */
+export function eventNotes(card: EventCard): string[] {
   const e = card.event;
-  const out = ["Check the room before and after."];
-  if (isAfterHours(e)) out.push("After hours: security on site until it ends (2-hour minimum).");
+  const out: string[] = [];
   if (e.isPublic) out.push("Open to the public.");
   if (e.outsideSpeaker) out.push("Outside speaker or guest.");
   if (e.food) out.push("Food served.");
@@ -81,7 +79,6 @@ export function runSheetRows(events: EventCard[], busy: BusyItem[], rooms: Room[
     if (!(c.status === "approved" || c.status === "close_out") || !e.dates.includes(date)) continue;
     const here = e.rooms.filter((id) => inCampus(rooms, id, campus));
     if (!here.length) continue;
-    const check = (when: RoomCheck["when"]) => (e.roomChecks ?? []).find((r) => r.date === date && r.when === when);
     out.push({
       kind: "event",
       cardId: c.id,
@@ -98,11 +95,10 @@ export function runSheetRows(events: EventCard[], busy: BusyItem[], rooms: Room[
       attendance: e.attendance,
       setupNotes: e.setupNotes.trim(),
       av: e.av ? (e.avNeeds?.kinds ?? []).map((k) => AV_KINDS[k] ?? k).join(", ") || "A/V support" : "",
-      security: securityNotes(c),
+      notes: eventNotes(c),
       afterHours: isAfterHours(e),
       series: e.dates.length > 1,
       closeOut: c.status === "close_out",
-      checks: { before: check("before"), after: check("after") },
     });
   }
 

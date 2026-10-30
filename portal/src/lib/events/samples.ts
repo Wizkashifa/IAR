@@ -10,7 +10,6 @@ import * as pw from "../purchases/workflow";
 import { startCloseOut } from "./closeout";
 import type { EventContext } from "./context";
 import { syncHolds } from "./holds";
-import { recordRoomCheck } from "./roomchecks";
 import { mergeRooms } from "./rooms";
 import { dayOfWeek } from "./series";
 import { actOnTask } from "./tasks";
@@ -121,10 +120,7 @@ export async function sampleEvents(): Promise<Card[]> {
   );
   let movie = wf.approve(wf.approve(movie0, director, DIRECTORS, at(28)), exec, DIRECTORS, at(27));
   const it: wf.EventActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
-  const security: wf.EventActor = { email: "security@dev.local", name: "Sample Security", roles: ["member", "security"] };
   movie = actOnTask(movie, "av", it, "done", at(6), "Projector and two speakers set up; returned to the A/V closet.");
-  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "before", ok: true });
-  movie = recordRoomCheck(movie, security, at(6), { date: movie.event.dates[0], when: "after", ok: false, note: "Pizza boxes left by the back door and the floor needed sweeping." });
   movie = startCloseOut(movie, at(5));
 
   // Yesterday, still approved: the daily job moves it to close-out.
@@ -138,7 +134,7 @@ export async function sampleEvents(): Promise<Card[]> {
     volunteer, 20,
   );
 
-  // Coming up: public, with A/V, a setup plan and after-hours security, so every team has a task.
+  // Coming up: public, with A/V, a setup plan and running after hours, so every team has a task.
   const dinnerDate = next(6, 29);
   const dinner = approveNoDirector(
     make("EV-1107", input({

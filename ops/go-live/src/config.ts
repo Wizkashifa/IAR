@@ -76,7 +76,6 @@ export const SPACES: SpaceDef[] = [
   { key: "marketing", title: "IAR Portal · Marketing", roles: ["marketing"], group: (d) => teamGroup("Marketing", d) },
   { key: "it", title: "IAR Portal · IT & A/V", roles: ["it", "av"], group: (d) => teamGroup("IT Services", d) },
   { key: "facilities", title: "IAR Portal · Facilities", roles: ["facilities"], group: (d) => teamGroup("Facility Maintenance", d) },
-  { key: "security", title: "IAR Portal · Security", roles: ["security"], group: (d) => teamGroup("Safety & Security", d) },
 ];
 
 /** Drive roles by the names the Drive screen uses. */

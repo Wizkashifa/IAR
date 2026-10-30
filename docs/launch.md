@@ -56,7 +56,7 @@ Only needed to rebuild the portal in a new project. For the live portal, go-live
 4. **Add the DNS record.** go-live shows the record for `portal.islam1.org` (a CNAME `portal` → `ghs.googlehosted.com`). Add it in islam1.org's DNS, or ask IAR's web admin to; on Cloudflare, set it to DNS only (grey cloud). The portal works on its Cloud Run address meanwhile; run go-live again later and it switches over once DNS and the certificate work (then update the Chat app's endpoint, which it reminds you of).
 5. **The Policies drive by hand** (go-live doesn't make it; it makes the receipts, W-9, maintenance photos and marketing drives itself; see [setup.md](setup.md) §7): add the portal's runtime service account as a **Viewer**. Portal Settings shows the account's address.
 6. **Portal Settings** (signed in as a portal admin, at `/admin`):
-   - check every team has a fund, check the cards, turn on the rooms people can book and set food, shared space (the full gym and its halves) and restricted rooms, and check the Chat spaces are listed;
+   - check every team has a fund, check the cards, turn on the rooms people can book and set food, shared space (the full gym and its halves) and restricted rooms, and check the Chat spaces are listed. If an older setup made an "IAR Portal · Security" space, archive it in Google Chat and remove `security` from `chatSpaces`: the portal no longer sends Security anything;
    - **Library:** paste the Policies drive's address under "Library: the Policies drive", and check it says it's connected;
    - **Event rules:** pick the room reservation policy from the Library (or paste its link), so the event form links it next to "I've read the room reservation policy".
 7. **Who's who.** Ask each chair to open their team's page in Who's who and add a line on what the team handles and its Google Chat space link. Until they do, the page shows its chair and vice chair only.
@@ -95,8 +95,8 @@ Use people in these roles: A (a committee member), B (that committee's chair), D
 - [ ] 30 days before a series ends, its requester gets a Chat message; "Request the next period" opens the form with the next dates filled in.
 - [ ] A asks for a time someone else booked. They give it up; the dates leave the calendar at once and A's request moves on.
 - [ ] Food in a room that doesn't allow it, or attendance over capacity, is flagged to the reviewers.
-- [ ] Once approved, the event's tasks appear in Team Queues for marketing, A/V and security.
-- [ ] The run sheet for that day lists it, with the calendar's other bookings; security records the room check before and after.
+- [ ] Once approved, the event's tasks appear in Team Queues for marketing and A/V. There is no Security task.
+- [ ] The run sheet for that day lists it, with the calendar's other bookings.
 - [ ] After the event, the daily job moves it to close-out; A records attendance; the linked purchase shows as actual spend.
 - [ ] The approved event shows on the Calendar's week view for its room and committee.
 

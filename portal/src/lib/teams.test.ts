@@ -143,6 +143,9 @@ test("roles: team queues come from being on the team, at any level; chairs from 
   assert.deepEqual(teamRoles(membershipsOf(dir, "vol@x.org")), []);
   const it = teamRoles([{ name: "IT Services", group: "portal-team-tech@x.org", role: "member" }]);
   assert.deepEqual(it.sort(), ["av", "it"]);
+  assert.deepEqual(teamRoles([{ name: "Safety & Security", group: "portal-team-security@x.org", role: "member" }]), [], "Safety & Security is a committee, not a queue");
+  assert.deepEqual(teamRoles([{ name: "Safety & Security", group: "portal-team-security@x.org", role: "chair" }]), ["chairs"]);
+  assert.equal(teamSlug("Safety & Security"), "security", "its group address stays portal-team-security@");
 });
 
 test("roles: role groups plus team roles, with queue email going to the team's group", () => {

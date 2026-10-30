@@ -17,7 +17,7 @@ export const RULES = [
   { id: "food", name: "Food only in rooms that allow it", policy: "Room policy §8" },
   { id: "restricted", name: "Restricted rooms: leadership, imams and chairs only", policy: "Room policy §10" },
   { id: "lead", name: "Lead time: 1 week for review, 3 weeks for public events", policy: "Room policy §4 · Marketing form" },
-  { id: "afterhours", name: "After-hours security (before 7 AM or after 10 PM)", policy: "Room policy §3" },
+  { id: "afterhours", name: "After-hours events (before 7 AM or after 10 PM)", policy: "Room policy §3" },
   { id: "advert", name: "No advertising until approved", policy: "Room policy §4" },
 ] as const;
 export type RuleId = (typeof RULES)[number]["id"];
@@ -184,7 +184,7 @@ export function eventChecks(e: EventInput, ctx: CheckContext): CheckResult {
       for (const r of picked.filter((x) => x.restricted)) add("warn", `${r.name} can only be booked by leadership, imams or committee chairs.`, "Room policy §10");
     }
     for (const r of picked.filter((x) => x.note)) add("info", `${r.name}: ${r.note}`, "Room note");
-    if (ruleOn(ctx.rules, "afterhours") && afterHours(e)) add("warn", "Starts before 7 AM or runs past 10 PM with setup and cleanup. After-hours security is needed (2-hour minimum, charged to the event).", "Room policy §3");
+    if (ruleOn(ctx.rules, "afterhours") && afterHours(e)) add("warn", "Starts before 7 AM or runs past 10 PM with setup and cleanup. Room policy requires after-hours security (2-hour minimum): arrange it with Safety & Security before the event.", "Room policy §3");
   }
 
   if (ruleOn(ctx.rules, "lead") && days >= 0) {

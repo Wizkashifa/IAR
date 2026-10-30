@@ -14,7 +14,6 @@ export const ROLES = [
   "av",
   "it",
   "facilities",
-  "security",
   "sw",
   "executive",
   "shura",
@@ -53,7 +52,7 @@ export const ORG = {
 export function roleMailbox(role: Role): string | null {
   const g = ORG.roleGroups[role];
   if (g) return g;
-  const team: Partial<Record<Role, string>> = { marketing: "marketing", av: "tech", it: "tech", facilities: "maintenance", security: "security", sw: "welfare", shura: "shura" };
+  const team: Partial<Record<Role, string>> = { marketing: "marketing", av: "tech", it: "tech", facilities: "maintenance", sw: "welfare", shura: "shura" };
   return team[role] ? `portal-team-${team[role]}@${domain}` : null;
 }
 

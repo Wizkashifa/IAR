@@ -69,7 +69,7 @@ export function slotAsksFor(asks: SlotRequest[], actor: SlotActor): SlotRequest[
 }
 
 /**
- * Open event tasks for the teams this person is on (marketing, A/V, security),
+ * Open event tasks for the teams this person is on (marketing, A/V),
  * soonest due first. Team tasks stay in Team Queues; this is for a count or a
  * short list that links there. The office sees every queue in Team Queues, but
  * those tasks aren't "waiting on you".

@@ -197,7 +197,7 @@ test("event next step: the director is named, or told it's theirs; close-out fal
   assert.equal(nextStepText(c, vol, names, { directors: DIRS }), "Dee Rector (director) reviews it against IAR's mission, then an executive gives final approval. You'll get a notification when it's done.");
   assert.equal(nextStepText(c, director, names, { directors: DIRS }), "You (director) review it against IAR's mission, then an executive gives final approval.");
   const ok = ew.approve(ew.approve(c, director, DIRS, T(1)), exec, DIRS, T(2));
-  assert.equal(nextStepText(ok, vol, names), "Security gets it ready. After the event, you add the attendance and close it out.");
+  assert.equal(nextStepText(ok, vol, names), "After the event, you add the attendance and close it out.", "no Security step any more");
   const closing = startCloseOut(ok, T(50), DIRS);
   assert.equal(nextStepText(closing, vol, names), "You add the attendance and final costs to close it out.");
   assert.equal(nextStepText(closing, exec, names), "Vol Unteer adds the attendance and final costs to close it out.");

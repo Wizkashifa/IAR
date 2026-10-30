@@ -106,7 +106,8 @@ test("checks: policy flags go to reviewers without stopping the request", () => 
   assert.equal(r.blocked, false);
   assert.match(warn, /holds 30/);
   assert.match(warn, /leadership, imams or committee chairs/);
-  assert.match(warn, /After-hours security/);
+  assert.match(warn, /Room policy requires after-hours security \(2-hour minimum\): arrange it with Safety & Security before the event\./);
+  assert.doesNotMatch(warn, /charged to the event/);
   assert.match(warn, /Only 4 days away/);
   // Food in Room 250 isn't allowed; the message lists rooms that allow it.
   assert.match(eventChecks(base({ food: true }), ctx()).checks.find((c) => /Food isn't allowed/.test(c.text))!.text, /MPH A/);

@@ -53,7 +53,7 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
         {head}
         <Panel>
           <EmptyState>
-            You&apos;re not on a team that gets event tasks (Marketing, IT Services, Facility Maintenance or Safety &amp; Security). The IAR office sees every queue.
+            You&apos;re not on a team that gets event tasks (Marketing, or IT Services for A/V). The IAR office sees every queue.
           </EmptyState>
         </Panel>
       </div>
@@ -92,8 +92,8 @@ export default async function QueuesPage({ searchParams }: { searchParams: Promi
       id={card.id}
       sub={
         <>
-          {card.title} · {card.event.committeeName} · {roomNames(card.event.rooms)} · {task.date ? dayText(task.date) : dayText(card.event.dates[0] ?? card.event.date)}
-          {card.event.dates.length > 1 && !task.date ? ` (series, ${card.event.dates.length} dates)` : ""}, {timeText(card.event.start)}–{timeText(card.event.end)} · from {names(card.ownerEmail)}
+          {card.title} · {card.event.committeeName} · {roomNames(card.event.rooms)} · {dayText(card.event.dates[0] ?? card.event.date)}
+          {card.event.dates.length > 1 ? ` (series, ${card.event.dates.length} dates)` : ""}, {timeText(card.event.start)}–{timeText(card.event.end)} · from {names(card.ownerEmail)}
         </>
       }
       who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `Due ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}

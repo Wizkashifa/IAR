@@ -44,7 +44,6 @@ const mem: { s: PortalSettings } = {
         it: "spaces/dev-it",
         av: "spaces/dev-it",
         facilities: "spaces/dev-facilities",
-        security: "spaces/dev-security",
       },
       rooms: DEV_ROOM_SETTINGS,
       eventRules: {},

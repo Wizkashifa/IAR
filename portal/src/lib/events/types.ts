@@ -87,12 +87,12 @@ export type EventInput = {
  * a queue role. Committees set up and clean up their own events, so there is
  * no facilities task.
  */
-export type TaskTeam = "marketing" | "av" | "security";
+export type TaskTeam = "marketing" | "av";
 
 /** "locked" until the event is approved; then to do → in progress → done. */
 export type TaskStatus = "locked" | "todo" | "doing" | "done";
 
-/** One team's job for the event (for a series, security has one per date). */
+/** One team's job for the event (one for a whole series). */
 export type EventTask = {
   id: string;
   team: TaskTeam;
@@ -102,15 +102,10 @@ export type EventTask = {
   assignee?: string;
   /** "YYYY-MM-DD". */
   dueDate: string;
-  /** Security: the event date this task is for. */
-  date?: string;
   /** Left by the team when they finished it. */
   note?: string;
   history: HistoryEntry[];
 };
-
-/** Security's room check before or after the event, on one of its dates. */
-export type RoomCheck = { date: string; when: "before" | "after"; ok: boolean; note?: string; by: string; at: string };
 
 /** What the requester (or the office) filled in after the event. */
 export type CloseOut = {
@@ -155,8 +150,6 @@ export type EventDetails = EventInput & {
   renewalNotified?: string;
   /** Team tasks, added when it's approved (lib/events/tasks.ts). */
   tasks?: EventTask[];
-  /** Security's room checks, per date. */
-  roomChecks?: RoomCheck[];
   /** When the event went to close-out, and when the requester was reminded. */
   closeOutSince?: string;
   closeOutNudged?: string;

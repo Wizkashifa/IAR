@@ -4,10 +4,9 @@
  * - Marketing, for a public event: flyer, announcement and website listing,
  *   due by the event's first date. The team sees it as soon as it's approved.
  * - A/V, when A/V support was asked for: the kinds asked for, due on the day.
- * - Facilities, when the requester wrote a setup plan (tables, chairs, stage).
- * - Security, when it has a room: the room check before and after, plus
- *   after-hours coverage when it runs before 7 AM or past 10 PM. A series gets
- *   one security task per date; the other teams get one task for the series.
+ * A series gets one task per team for the whole series. Tasks for teams that
+ * no longer get them (Security's, on older events) are left on the card but
+ * never shown or counted.
  * Before approval the tasks are shown as locked ("Unlocks on approval").
  * Cancelling the event drops them. Plain functions so they can be tested.
  */
@@ -15,16 +14,18 @@ import { withComment } from "../comments";
 import type { Role } from "../org";
 import type { Notice } from "../notices";
 import { AV_KINDS } from "./input";
-import { isAfterHours } from "./rules";
 import { dayText } from "./series";
 import type { EventDetails, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
 import { lc } from "../text";
 import { historyEntry } from "../workflow-core";
 
-export const TASK_TEAMS: TaskTeam[] = ["marketing", "av", "security"];
+export const TASK_TEAMS: TaskTeam[] = ["marketing", "av"];
 
-export const TEAM_NAME: Record<TaskTeam, string> = { marketing: "Marketing", av: "A/V", security: "Security" };
+export const TEAM_NAME: Record<TaskTeam, string> = { marketing: "Marketing", av: "A/V" };
+
+/** A task for a team that still gets tasks (not one left from a team that no longer does). */
+export const isTeamTask = (t: EventTask) => (TASK_TEAMS as string[]).includes(t.team);
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = { locked: "Unlocks on approval", todo: "To do", doing: "In progress", done: "Done" };
 
@@ -52,10 +53,6 @@ export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTa
     const kinds = (e.avNeeds?.kinds ?? []).map((k) => (AV_KINDS[k] ?? k).toLowerCase());
     add({ id: "av", team: "av", title: `A/V: ${kinds.length ? kinds.join(", ") : "support requested"}`, dueDate: first });
   }
-  if (e.rooms.length) {
-    const title = `Room check before and after${isAfterHours(e) ? " + after-hours coverage" : ""}`;
-    for (const d of e.dates) add({ id: `security-${d}`, team: "security", title: e.dates.length > 1 ? `${title} (${dayText(d)})` : title, dueDate: d, date: d });
-  }
   return out;
 }
 
@@ -68,7 +65,7 @@ export function syncTasks(existing: EventTask[] | undefined, planned: EventTask[
   const have = new Map((existing ?? []).map((t) => [t.id, t]));
   return planned.map((p) => {
     const t = have.get(p.id);
-    if (t) return { ...t, title: p.title, dueDate: p.dueDate, ...(p.date ? { date: p.date } : {}), status: t.status === "locked" ? "todo" : t.status };
+    if (t) return { ...t, title: p.title, dueDate: p.dueDate, status: t.status === "locked" ? "todo" : t.status };
     return { ...p, status: "todo", history: [historyEntry("portal", now, "Unlocked when the event was approved")] };
   });
 }
@@ -81,26 +78,24 @@ export function newlyUnlockedTeams(before: EventTask[] | undefined, after: Event
 
 /** What the card shows: its tasks once approved, or the tasks it will get (locked) while in review. */
 export function tasksFor(card: EventCard): EventTask[] {
-  if (card.event.tasks?.length) return card.event.tasks;
+  if (card.event.tasks?.length) return card.event.tasks.filter(isTeamTask);
   if (card.status === "submitted" || card.status === "in_review" || card.status === "changes_requested") return planTasks(card.event, "locked");
   return [];
 }
 
-/** "Marketing, A/V and Security". */
+/** "Marketing and A/V". */
 export const teamList = (teams: TaskTeam[]) => teams.map((t) => TEAM_NAME[t]).join(", ").replace(/, ([^,]*)$/, " and $1");
 
 /** Each team whose tasks just unlocked gets one alert in its Chat space, for the whole event. */
 export function taskUnlockNotices(before: EventCard | null, after: EventCard): Notice[] {
   const out: Notice[] = [];
   for (const team of newlyUnlockedTeams(before?.event.tasks, after.event.tasks)) {
-    const mine = (after.event.tasks ?? []).filter((t) => t.team === team);
-    const first = mine.reduce((a, b) => (b.dueDate < a.dueDate ? b : a));
-    const more = mine.length > 1 ? ` (${mine.length} tasks, one per date)` : "";
+    const task = (after.event.tasks ?? []).find((t) => t.team === team)!;
     out.push({
       to: { role: team },
       cardId: after.id,
       href: `/queues?team=${team}`,
-      text: `${after.id} “${after.title}” is approved. New ${TEAM_NAME[team]} task: ${first.title}${more}. First one due ${dayText(first.dueDate)}.`,
+      text: `${after.id} “${after.title}” is approved. New ${TEAM_NAME[team]} task: ${task.title}. Due ${dayText(task.dueDate)}.`,
       alert: true,
       delegable: false,
     });
@@ -117,7 +112,7 @@ export const worksTeam = (team: TaskTeam, roles: Role[]) => roles.includes(team)
 
 /** Whether the task can be worked on now: the event is approved (or in close-out) and it isn't locked. */
 export function taskPermission(card: EventCard, taskId: string, actor: EventActor, action: TaskAction): { ok: true; task: EventTask } | { ok: false; reason: string } {
-  const task = card.event.tasks?.find((t) => t.id === taskId);
+  const task = card.event.tasks?.find((t) => t.id === taskId && isTeamTask(t));
   if (!task) return { ok: false, reason: card.event.tasks?.length ? "That task isn't on this event any more." : "This event's tasks unlock when it's approved." };
   if (!worksTeam(task.team, actor.roles)) return { ok: false, reason: `Only the ${TEAM_NAME[task.team]} team can work on this task.` };
   if (card.status !== "approved" && card.status !== "close_out") return { ok: false, reason: "This event isn't approved, so its tasks are on hold." };

@@ -35,7 +35,6 @@ import { CHOICE_LABEL, SLOT_STATUS_LABEL, type SlotRequest, canDecide, datesText
 import { STAGE_LABEL, isEventCard, permission, reviewersFor, type EventAction } from "@/lib/events/workflow";
 import { RENEW_DAYS, renewalOpens, renewalState } from "@/lib/events/renewal";
 import { closeOutPermission, linkedPurchases, spendOf, spendText } from "@/lib/events/closeout";
-import { mayCheckRooms, roomCheckFor } from "@/lib/events/roomchecks";
 import { TASK_TEAMS, tasksFor, worksTeam } from "@/lib/events/tasks";
 import { queueTeamMembers } from "@/lib/groups";
 import { imagesOf, imagesPermission } from "@/lib/events/images";
@@ -47,7 +46,7 @@ import { purchaseTotal } from "@/lib/purchases/types";
 import { fmtDateTime, fmtMoney } from "@/lib/format";
 import { actOnEvent, actOnEventWith, addEventImages, commentOnEvent, decideAsk, decideAskWith, withdrawAsk } from "../actions";
 import { closeOutEvent } from "../ops-actions";
-import { CheckResult, RoomCheckCell, TaskLine } from "../ops-ui";
+import { TaskLine } from "../ops-ui";
 import { roomDay } from "../calendar";
 import { ChecksList, Timeline, checksSummary } from "../ui";
 import styles from "../events.module.css";
@@ -107,8 +106,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
   const tasks = tasksFor(card);
   const isLive = card.status === "approved" || card.status === "close_out" || card.status === "closed";
-  // Room checks happen on the day: dates so far (and today).
-  const checkDates = isLive && e.rooms.length ? e.dates.filter((d) => d <= ctx.today || (e.roomChecks ?? []).some((r) => r.date === d)) : [];
   const linked = linkedPurchases(await store.listPurchasesForEvent(card.id), card.id);
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
@@ -265,27 +262,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 ))}
               </Rows>
               {tasks.every((t) => t.status === "locked") && <PanelFoot>Each team gets its task in Team Queues once the event is approved.</PanelFoot>}
-            </Panel>
-          )}
-
-          {checkDates.length > 0 && (
-            <Panel title="Room checks" flush id="roomchecks">
-              <Rows>
-                {checkDates.map((d) => (
-                  <ItemRow
-                    key={d}
-                    state="plain"
-                    title={dayText(d)}
-                    right={
-                      <div className={styles.cells}>
-                        <RoomCheckCell card={ec} date={d} when="before" check={roomCheckFor(ec, d, "before")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                        <RoomCheckCell card={ec} date={d} when="after" check={roomCheckFor(ec, d, "after")} roles={viewer.actingRoles} back={`/events/${card.id}#roomchecks`} />
-                      </div>
-                    }
-                  />
-                ))}
-              </Rows>
-              <PanelFoot>Security checks the room before and after the event.{mayCheckRooms(ev) ? " Record each check here or on the run sheet." : ""}</PanelFoot>
             </Panel>
           )}
 
@@ -451,18 +427,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
   function CloseOutPanel() {
     const c = e.closeOut;
-    const checks = e.roomChecks ?? [];
-    const checkSummary = checks.length ? (
-      <Rows>
-        {checks.map((r) => (
-          <li key={`${r.date}-${r.when}`}>
-            {dayText(r.date)}, {r.when}: <CheckResult check={r} />
-          </li>
-        ))}
-      </Rows>
-    ) : (
-      <span className="hint">No room checks recorded.</span>
-    );
     if (ec.status === "closed" && c) {
       return (
         <Panel title="Close-out" id="closeout">
@@ -473,7 +437,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
               { label: "Closed by", value: <>{c.by.includes("@") ? names(c.by) : c.by}{c.byOffice ? " (IAR office)" : ""}<div className="hint">{fmtDateTime(c.at)}</div></> },
               { label: "Deposit", value: c.depositRefund ? "Refund needed (finance was told)" : null },
               { label: "How it went", value: c.notes && <span className="pre">{c.notes}</span> },
-              { label: "Room checks", value: checkSummary },
             ]}
           />
         </Panel>
@@ -497,10 +460,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 <strong>{spendText(spent, e.budget)}</strong>
                 <div className="hint">{linked.length} payment request{linked.length === 1 ? "" : "s"} linked. Missing one? Edit it, or send it and pick this event.</div>
               </div>
-            </div>
-            <div>
-              <div className="hint">Room condition (from security)</div>
-              {checkSummary}
             </div>
             <Field label="How did it go? What would you change next time?">
               <textarea name="notes" rows={3} maxLength={2000} placeholder="e.g. Good turnout. Order less pizza next time." />

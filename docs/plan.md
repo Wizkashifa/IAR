@@ -23,7 +23,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Purchase requests that get lost | Email clutter, missed approvals, storage limits, forms owned by individuals that break when staff leave, no sub-account splits. 12 requests were waiting 7 to 44 days at last count |
 | Rules in people's heads | The 2021 room policy contradicts the forms (fire pit, cafe minimum), so nobody can check requests consistently |
 | No record after the event | No actual cost per event, no room-condition record tied to the request, no deposit tracking |
-| No shared daily view | Security and facilities have no single list of what is happening where today |
+| No shared daily view | The front desk and facilities have no single list of what is happening where today |
 
 ### The forms being replaced
 
@@ -39,7 +39,7 @@ One event today can take three separate forms on two platforms. Status lives in 
 | Google is the only directory | Sign-in is @islam1.org only, so personal Gmail accounts are out. Google Groups decide who sees which module. No Microsoft Forms |
 | IAR's Google Calendar is the source of truth for bookings | The portal reads and writes the calendar. Nothing gets booked outside it. The raleighmasjid.org reservation page gets retired or fed from the calendar |
 | One card per request, owned by the requester | The sponsoring committee is co-owner, and the chair can reassign the card. A card never ends up with no owner |
-| Teams work their own queues | Marketing, A/V, security and finance see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
+| Teams work their own queues | Marketing, A/V and finance see their tasks across all cards. They never need to open each event. Committees set up and clean up their own events, so facilities has no event tasks |
 | Notify only when someone needs to act | Action-needed alerts go out right away. Everything else goes into a digest or the portal's activity feed |
 | Rules are automated as flags, not hard blocks | The office can override with a recorded reason |
 | Mission review for every event | The committee's pillar director reviews first, then any one executive gives the final approval. The office doesn't review events. New programs, outside groups or speakers, fundraisers, and large or costly events are flagged for the reviewers. Recurring series are approved once per season |
@@ -77,9 +77,8 @@ Every event gets mission review in two steps: the director of the committee's pi
 
 - Marketing: flyer, announcement, webpage, highlight. Locked until approval, per policy
 - AV support (committees do their own setup and cleanup)
-- Security: after-hours coverage and the before/after room check
 - Purchase requests: linked POs, coded to the event
-- Payments: fee and deposit for community MPH use, deposit refund after the room check
+- Payments: fee and deposit for community MPH use, deposit refund at close-out
 
 **Asking for a booked time**
 
@@ -108,10 +107,10 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | My Requests | Everyone signed in | One list of the person's own cards (events, purchase requests, rentals they sponsor), with status and what is waiting on them | 1 |
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card. Card receipts come from the monthly card statement finance uploads (PDF): each cardholder's charges are filled in, they add the sub-account and why it was bought, and charges at one store (Amazon) can be lumped under one receipt | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
-| Team queues | Marketing, AV, security, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
+| Team queues | Marketing, AV, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
 | Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
-| Daily run sheet | Security, facilities, office | One printable page per day and campus: time, room, event, contact, setup, security notes, after-hours flag | 2 |
-| Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, room condition from security, deposit refund | 2 |
+| Daily run sheet | Front desk, facilities, office | One printable page per day and campus: time, room, event, contact, setup, notes (food, large crowd), after-hours flag | 2 |
+| Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
 | Facility rentals (gym) | Public front door; office reviews | Outside renters book without an IAR account (email verified). Fee, deposit, agreement, and an insurance upload if the policy requires it. Same approval engine | 3 |
 | Public calendar feed | Public | Approved public events published to the website and to Salam Y'all | 3 |
@@ -177,11 +176,10 @@ Most of the [2021 Room Reservation Policy](https://raleighmasjid.org/wp-content/
 | Conference room: leadership, imams, chairs only; requester must attend; IAR business only | Room shown only to those groups | Access |
 | MPH needs a 2-hour cleaning gap | Gap added to the hold automatically | Calculated |
 | Food only in the MPH, Room 240 and school rooms during school | Flag when food is selected for another room | Flag |
-| Community MPH events: $200 fee and $100 refundable deposit | Payment task added; refund task opens after the room check | Task |
-| After-hours security: 2-hour minimum, charged to the event | Fee estimated from event times and added to the card | Calculated |
+| Community MPH events: $200 fee and $100 refundable deposit | Payment task added; refund marked at close-out | Task |
+| After-hours security: 2-hour minimum | Warning on the request; the requester arranges it with Safety & Security (the portal doesn't book it) | Warning |
 | No advertising or signage until approved | Marketing task locked until approval | Lock |
 | Confirmation within one week | Office deadline; overdue cards move up to the office lead | Deadline |
-| Security records room condition before and after | Check-in and check-out task on the run sheet, result saved to the card | Task |
 | Submitting means accepting the rules and liability statement | Required checkbox with a link to the current policy version | Required field |
 
 ## Policy gaps for the Shura
@@ -238,7 +236,7 @@ Phase 1 replaces the two forms that hurt the most. Each later phase waits on a s
 | --- | --- | --- |
 | 0 · Groundwork | Repo and hosting, service account, access groups, room list with calendar IDs, rules list drafted with the office | Office signs off the rules list and approvers |
 | 1 · Shell, Purchase Requests, Event cards | Sign-in, My Requests, PO module, event cards with calendar holds and rule flags. Phase 1 also brought in phase 2's queues, run sheet, close-out and marketing requests, and IT & Maintenance; piloted with a small group of testers, now live for everyone. Purchase requests live for everyone too | Live; old Program Request form retired, Requisition form ready to retire |
-| 2 · Team queues, run sheet, close-out, Library | Marketing, AV, facilities, security queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
+| 2 · Team queues, run sheet, close-out, Library | Marketing and AV queues; daily printable run sheet; close-out with actual spend; Marketing form retired; Library with the Shura and Policies drives | Shura approves the refreshed room policy, including rental terms |
 | 3 · Gym rentals, public calendar | Public front door for outside renters; approved events fed to the website and Salam Y'all | A full Ramadan run on the portal |
 | 4 · More modules, other masjids | Maintenance, onboarding/offboarding, budget vs. actual, keys and assets; second org on the same settings model | — |
 
@@ -326,7 +324,7 @@ Budget and financial reporting are not part of the initial launch, so this list 
   - They can submit for those committees.
   - They never act on Social & Welfare's restricted requests, their own requests, or finance, payment or executive steps.
 - **Role groups** (`portal-role-<job>@`): office, finance, admin and beta (the testers, "Portal: Testers"). The executive group holds whoever has an executive office (Head Imam, Shura chair, CEO). One person can hold several, and nothing about the offices is in code.
-- **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Safety & Security, Social & Welfare or Shura gives that team's queue or module.
+- **Queues come from teams.** Being on Marketing, IT Services (which includes A/V), Facility Maintenance, Social & Welfare or Shura gives that team's queue or module. Safety & Security is a committee like any other: Security doesn't use the portal, so there are no Security tasks, room checks or Security queue.
 - **Funds.** Members charge their own teams' funds; the office and finance can charge any fund. Each team's fund is set in Portal Settings, which suggests one when the names match.
 
 ## Marketing questions

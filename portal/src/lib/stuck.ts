@@ -117,7 +117,6 @@ const ROLE_WHO: Partial<Record<Role, string>> = {
   av: "IT Services",
   facilities: "Facility Maintenance",
   office: "the IAR office",
-  security: "Safety & Security",
   sw: "Social & Welfare",
   admins: "the portal admins",
 };

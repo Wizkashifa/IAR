@@ -8,16 +8,15 @@ import type { Notice } from "@/lib/notices";
 import { requireViewer } from "@/lib/viewer";
 import { closeOutNotices, linkedPurchases, spendOf, submitCloseOut } from "@/lib/events/closeout";
 import { eventActor, eventContext } from "@/lib/events/context";
-import { recordRoomCheck, roomCheckNotices } from "@/lib/events/roomchecks";
 import { TASK_TEAMS, TaskError, type TaskAction, actOnTask, assignTask, taskNotices } from "@/lib/events/tasks";
 import { queueTeamMembers } from "@/lib/groups";
 import * as wf from "@/lib/events/workflow";
 import { WorkflowError } from "@/lib/workflow-core";
 
 /**
- * Team tasks, room checks and close-out: the server actions behind Team
- * Queues, the run sheet and the event page. The rules are in lib/events
- * (tasks.ts, roomchecks.ts, closeout.ts); these load the card, apply one,
+ * Team tasks and close-out: the server actions behind Team Queues and the
+ * event page. The rules are in lib/events (tasks.ts, closeout.ts); these
+ * load the card, apply one,
  * save it only if nobody else saved it first, and send the notices.
  */
 
@@ -78,23 +77,6 @@ export async function workOnTask(form: FormData): Promise<void> {
   revalidatePath("/queues");
   revalidatePath(`/events/${id}`);
   redirect(withResult(back, error ? "error" : "ok", error ?? `task-${OK_TEXT[action]}`));
-}
-
-/** Security's room check before or after the event, on one date. */
-export async function saveRoomCheck(form: FormData): Promise<void> {
-  const viewer = await requireViewer();
-  const actor = eventActor(viewer);
-  const id = String(form.get("id") ?? "");
-  const back = internalPath(String(form.get("back") ?? "")) ?? `/events/${id}`;
-  const result = String(form.get("result") ?? "");
-  const input = { date: String(form.get("date") ?? ""), when: String(form.get("when") ?? "") as "before" | "after", ok: result === "ok", note: String(form.get("note") ?? "") };
-  const error =
-    result !== "ok" && result !== "problem"
-      ? "Choose OK or problem."
-      : await change(id, actor.email, (card) => ({ next: recordRoomCheck(card, actor, nowIso(), input), notices: roomCheckNotices(card, actor, input) }));
-  revalidatePath("/run-sheet");
-  revalidatePath(`/events/${id}`);
-  redirect(withResult(back, error ? "error" : "ok", error ?? (input.ok ? "check-ok" : "check-problem")));
 }
 
 /** The requester (or the office) closes out the event: attendance, how it went, and the final costs. */
