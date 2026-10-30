@@ -472,7 +472,9 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
       </Panel>
 
       <FormActions>
-        <Button href={cancelHref}>Cancel</Button>
+        <Button href={cancelHref} variant="quiet">
+          Cancel
+        </Button>
         <Submit label={submitLabel} waiting={uploading > 0} />
       </FormActions>
     </form>

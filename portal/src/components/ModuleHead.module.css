@@ -10,6 +10,8 @@
     background: var(--pattern) right top / 56px 56px; opacity: var(--pattern-opacity);
     -webkit-mask-image: linear-gradient(to left, black, transparent 65%); mask-image: linear-gradient(to left, black, transparent 65%);
   }
+  /* The same space under every page's heading: 24px. A plain .stack's gap is 12px, so add the rest; a .stack.loose already has 24px. */
+  :global(.stack:not(.loose)) > .head { margin-bottom: var(--s-3); }
   .tile { align-self: center; }
   .text { min-width: 0; flex: 1 1 280px; }
   .text :global(.lead) { margin-bottom: 0; }

@@ -327,7 +327,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />
-                      <Button type="submit">Remove</Button>
+                      <Button type="submit" variant="quiet" size="small">
+                        Remove
+                      </Button>
                     </form>
                   </td>
                 </tr>

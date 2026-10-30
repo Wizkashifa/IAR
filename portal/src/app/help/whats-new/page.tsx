@@ -19,10 +19,12 @@ export default async function WhatsNewPage() {
   const ordered = [...days.entries()].sort(([a], [b]) => (a < b ? 1 : -1));
 
   return (
-    <>
-      <Crumb trail={[{ href: "/help", label: "Help" }]} here="What's new" />
-      <ModuleHead title="What's new" lead="Changes to the portal you'll notice, newest first." />
-      <div className={styles.stack}>
+    <div className="stack loose">
+      <div className="stack tight">
+        <Crumb trail={[{ href: "/help", label: "Help" }]} here="What's new" />
+        <ModuleHead title="What's new" lead="Changes to the portal you'll notice, newest first." />
+      </div>
+      <div className={styles.sections}>
         {ordered.map(([date, items]) => (
           <Panel key={date} title={fmtDay(date)}>
             <ul className={styles.news}>
@@ -44,6 +46,6 @@ export default async function WhatsNewPage() {
           </Panel>
         ))}
       </div>
-    </>
+    </div>
   );
 }

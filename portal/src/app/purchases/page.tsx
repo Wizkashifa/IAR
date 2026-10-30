@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Button, buttonClass } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ItemList, rowsFor, sectionsOf } from "@/components/ItemList";
+import { Rows } from "@/components/ItemRow";
 import { HelpBox } from "@/components/HelpBox";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel, PanelFoot, PanelNote } from "@/components/Panel";
@@ -106,8 +107,14 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
         lead="Pay a vendor, get reimbursed, or send in IAR credit card receipts, split across sub-accounts."
         actions={
           <>
-            {desk && <Button href="/purchases/statement">{works ? "Upload card statement" : "Card statements"}</Button>}
-            <Button href="/purchases/vendors">Saved vendors</Button>
+            {desk && (
+              <Button href="/purchases/statement" variant="quiet">
+                {works ? "Upload card statement" : "Card statements"}
+              </Button>
+            )}
+            <Button href="/purchases/vendors" variant="quiet">
+              Saved vendors
+            </Button>
             <Button href="/purchases/new" variant="primary" icon="plus">
               New payment request
             </Button>
@@ -169,9 +176,9 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
             <div className={styles.filterRow}>
               <PaymentFilters view={filter.id} views={views} fund={deskList?.fund ?? ""} month={deskList?.month ?? ""} funds={deskList?.funds} months={deskList?.months} />
               {deskList?.filtered && (
-                <Link href={`/purchases?view=${filter.id}`} className={styles.clear}>
+                <Button href={`/purchases?view=${filter.id}`} variant="quiet">
                   Clear filters
-                </Link>
+                </Button>
               )}
               {deskList && (
                 // A plain link: the CSV is a download, not a page.
@@ -183,8 +190,16 @@ export default async function PurchasesPage({ searchParams }: { searchParams: Pr
             </div>
             {deskTab && deskList ? (
               <>
-                <DeskBatch key={deskList.back} tab={deskTab} rows={deskList.rows} back={deskList.back} action={deskAction} title={deskList.filtered ? `${filter.label} · filtered` : filter.label} readOnly={!works} />
-                <p className="hint">The CSV has one row per line item for what&apos;s shown here: date, request, payee, fund, sub-account, memo and amount.</p>
+                <DeskBatch
+                  key={deskList.back}
+                  tab={deskTab}
+                  rows={deskList.rows}
+                  back={deskList.back}
+                  action={deskAction}
+                  title={deskList.filtered ? `${filter.label} · filtered` : filter.label}
+                  readOnly={!works}
+                  foot="The CSV has one row per line item for what's shown here: date, request, payee, fund, sub-account, memo and amount."
+                />
               </>
             ) : (
               <PurchaseList
@@ -277,11 +292,11 @@ function PurchaseList({ title, right, cards, rows, redact, empty, note }: { titl
       {cards.length === 0 ? (
         <EmptyState>{empty ?? "Nothing here."}</EmptyState>
       ) : (
-        <ul className={styles.list}>
+        <Rows>
           {cards.map((c, i) => (
             <PurchaseRow key={c.id} card={c} row={rows[i]} redacted={redact(c)} days />
           ))}
-        </ul>
+        </Rows>
       )}
     </Panel>
   );

@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
 import { DateField } from "@/components/DateField";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, FormActions } from "@/components/Field";
-import { ItemRow } from "@/components/ItemRow";
+import { ItemRow, Rows } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
 import { PeoplePicker } from "@/components/PeoplePicker";
@@ -78,7 +78,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
           {list.length === 0 ? (
             <EmptyState>No schedules yet.</EmptyState>
           ) : (
-            <ul className={styles.rowList}>
+            <Rows>
               {list.map((s) => (
                 <ItemRow
                   key={s.id}
@@ -107,19 +107,21 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
                           {s.next <= today ? "Opens next run" : `Next ${fmtDay(s.next)}`}
                         </Pill>
                       )}
-                      <Link href={`/it-maintenance/schedules?edit=${s.id}`}>Edit</Link>
+                      <Button href={`/it-maintenance/schedules?edit=${s.id}`} variant="quiet" size="small">
+                        Edit
+                      </Button>
                       <form action={pauseSchedule}>
                         <input type="hidden" name="id" value={s.id} />
                         <input type="hidden" name="paused" value={s.paused ? "0" : "1"} />
-                        <button className={styles.linkBtn} type="submit">
+                        <Button type="submit" variant="quiet" size="small">
                           {s.paused ? "Resume" : "Pause"}
-                        </button>
+                        </Button>
                       </form>
                     </span>
                   }
                 />
               ))}
-            </ul>
+            </Rows>
           )}
         </Panel>
       </div>
@@ -180,11 +182,11 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
             <textarea name="description" rows={3} defaultValue={s?.description} maxLength={3000} placeholder="Inspect and replace the filters on both rooftop units." />
           </Field>
           <FormActions sticky={false}>
-            <Button variant="primary" type="submit">
-              {s ? "Save" : "Add schedule"}
-            </Button>
             <Button href="/it-maintenance/schedules" variant="quiet">
               Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              {s ? "Save" : "Add schedule"}
             </Button>
           </FormActions>
         </form>

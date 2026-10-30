@@ -46,7 +46,7 @@ export default async function HelpPage() {
         ))}
       </LinkCards>
 
-      <div className={styles.stack}>
+      <div className={styles.sections}>
         <Panel title="What's new" right={<Link href="/help/whats-new">See all</Link>}>
           <ul className={styles.news}>
             {recent.map((e) => (

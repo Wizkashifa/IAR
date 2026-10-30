@@ -133,7 +133,9 @@ export default function MarketingForm({ action, kind, committees, initial, quest
       )}
 
       <FormActions>
-        <Button href={cancelHref}>Cancel</Button>
+        <Button href={cancelHref} variant="quiet">
+          Cancel
+        </Button>
         <Submit label={submitLabel} />
       </FormActions>
     </form>

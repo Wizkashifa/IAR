@@ -51,6 +51,8 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
       </span>
     ) : undefined;
   const editing = mayEditTeam(viewer, team);
+  // While the description form is open, its Save is the page's one main button.
+  const formOpen = editing && Boolean(edit || !team.description);
   const routes = requestRoutes(team.slug);
 
   return (
@@ -67,7 +69,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               </Button>
             )}
             {routes.map((r, i) => (
-              <Button key={r.href} href={r.href} variant={i === 0 ? "primary" : "default"} icon="plus">
+              <Button key={r.href} href={r.href} variant={i === 0 && !formOpen ? "primary" : "default"} icon="plus">
                 {r.label}
               </Button>
             ))}
@@ -133,14 +135,14 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
                     <input id="team-chat" type="url" name="chatUrl" defaultValue={team.chatUrl ?? ""} placeholder="https://chat.google.com/room/…" maxLength={500} />
                   </Field>
                   <FormActions sticky={false}>
-                    <Button type="submit" variant="primary">
-                      Save
-                    </Button>
                     {edit && (
                       <Button href={`/teams/${team.slug}`} variant="quiet">
                         Cancel
                       </Button>
                     )}
+                    <Button type="submit" variant="primary">
+                      Save
+                    </Button>
                   </FormActions>
                 </form>
               </Panel>

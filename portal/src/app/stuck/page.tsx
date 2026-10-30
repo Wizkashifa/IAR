@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ConfirmButton } from "@/components/Confirm";
 import { EmptyState } from "@/components/EmptyState";
+import { Band } from "@/components/ItemList";
 import { ItemRow } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Panel } from "@/components/Panel";
@@ -135,12 +136,9 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
           (Object.keys(AGE_LABEL) as AgeGroup[])
             .filter((g) => groups[g].length > 0)
             .map((g) => (
-              <section key={g} aria-label={AGE_LABEL[g]}>
-                <h3 className={styles.band}>
-                  {AGE_LABEL[g]} <span>{groups[g].length}</span>
-                </h3>
-                <ul className={styles.list}>{groups[g].map(row)}</ul>
-              </section>
+              <Band key={g} label={AGE_LABEL[g]} count={groups[g].length}>
+                {groups[g].map(row)}
+              </Band>
             ))
         )}
       </Panel>

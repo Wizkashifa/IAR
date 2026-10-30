@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
+import { Crumb } from "@/components/Crumb";
 import { FormActions } from "@/components/Field";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
@@ -24,14 +25,10 @@ export default async function NotificationSettingsPage({ searchParams }: { searc
   return (
     <div className="stack">
       <ToastOnLoad message={saved ? "Notification settings saved." : undefined} />
+      <Crumb trail={[{ href: "/notifications", label: "Notifications" }]} here="Settings" />
       <ModuleHead
         title="Notification settings"
         lead="Choose how the portal tells you about your requests. Everything is always on the bell and your home page too."
-        actions={
-          <Button href="/notifications" icon="bell">
-            Back to notifications
-          </Button>
-        }
       />
       {!chatEnabled() && <Note tone="warn">Google Chat messages aren&apos;t switched on for the portal yet. Your choices are saved and take effect once they are.</Note>}
 

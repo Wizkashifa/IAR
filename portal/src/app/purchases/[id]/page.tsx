@@ -387,7 +387,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </Button>
       </div>
     );
-    if (!approve && !pay && !books && !cancel && !sendBack) {
+    // Sent back to the requester: changing it and sending it again is their main step, as on an event.
+    const resubmit = own && can("resubmit");
+    if (!approve && !pay && !books && !cancel && !sendBack && !resubmit) {
       if (again) return { panel: again };
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
       return { panel: why && !why.ok ? <p className="hint">{why.reason}</p> : null };
@@ -418,6 +420,10 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           Mark entered in QuickBooks
         </Button>
       </form>
+    ) : resubmit ? (
+      <Button href={`/purchases/${pc.id}/edit`} variant="primary">
+        Make the changes and send it again
+      </Button>
     ) : undefined;
     const approveForm = approve && (
       <form id="act-approve" action={actOnPurchase} className="stack">

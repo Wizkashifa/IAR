@@ -379,9 +379,9 @@ export default async function TicketDetail({ params, searchParams }: { params: P
                   <form action={linkTicket}>
                     <input type="hidden" name="id" value={card.id} />
                     <input type="hidden" name="unlink" value={l.id} />
-                    <button type="submit" className={styles.linkBtn} aria-label={`Remove the link to ${l.id}`}>
+                    <Button type="submit" variant="quiet" size="small" aria-label={`Remove the link to ${l.id}`}>
                       Remove
-                    </button>
+                    </Button>
                   </form>
                 )}
               </li>

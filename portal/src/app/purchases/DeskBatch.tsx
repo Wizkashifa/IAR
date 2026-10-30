@@ -4,8 +4,9 @@ import { useState } from "react";
 import { ConfirmButton } from "@/components/Confirm";
 import { EmptyState } from "@/components/EmptyState";
 import { Field } from "@/components/Field";
-import { ItemRow } from "@/components/ItemRow";
-import { Panel } from "@/components/Panel";
+import { ItemRow, Rows } from "@/components/ItemRow";
+import { Panel, PanelFoot } from "@/components/Panel";
+import { fmtMoney } from "@/lib/format";
 import type { DeskTab } from "@/lib/purchases/finance-desk";
 import styles from "./purchases.module.css";
 import { Checkbox } from "@/components/Choices";
@@ -27,7 +28,6 @@ export type DeskRow = {
   method?: string;
 };
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const ACTION: Record<DeskTab, { value: string; label: string; title: (n: number) => string; message: string }> = {
   pay: { value: "pay", label: "Mark paid", title: (n) => `Mark ${n} paid?`, message: "Each requester is told it's paid, and each request moves on to QuickBooks." },
   books: { value: "books", label: "Mark entered in QuickBooks", title: (n) => `Mark ${n} entered in QuickBooks?`, message: "Each request is then complete." },
@@ -39,8 +39,8 @@ const ACTION: Record<DeskTab, { value: string; label: string; title: (n: number)
  * ticked ones. The form posts to desk-actions.ts, which runs each
  * request through the workflow on its own.
  */
-/** `readOnly`: the list alone, without tick boxes or actions, for executives (and admins) who can see these lists but not work them. */
-export function DeskBatch({ tab, rows, back, action, title, readOnly }: { tab: DeskTab; rows: DeskRow[]; back: string; action: (form: FormData) => Promise<void>; title: string; readOnly?: boolean }) {
+/** `readOnly`: the list alone, without tick boxes or actions, for executives (and admins) who can see these lists but not work them. `foot`: a line under the list. */
+export function DeskBatch({ tab, rows, back, action, title, readOnly, foot }: { tab: DeskTab; rows: DeskRow[]; back: string; action: (form: FormData) => Promise<void>; title: string; readOnly?: boolean; foot?: React.ReactNode }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const on = rows.filter((r) => picked.has(r.key));
   const all = rows.length > 0 && on.length === rows.length;
@@ -66,7 +66,7 @@ export function DeskBatch({ tab, rows, back, action, title, readOnly }: { tab: D
         {rows.length === 0 ? (
           <EmptyState>Nothing here with these filters.</EmptyState>
         ) : (
-          <ul className={styles.list}>
+          <Rows>
             {rows.map((r) => (
               <ItemRow
                 key={r.key}
@@ -80,12 +80,13 @@ export function DeskBatch({ tab, rows, back, action, title, readOnly }: { tab: D
                 lead={readOnly ? undefined : <label className={styles.pick}><input type="checkbox" name="pick" value={r.key} checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Select ${r.id}, ${r.title}`} /></label>}
               />
             ))}
-          </ul>
+          </Rows>
         )}
+        {foot && <PanelFoot>{foot}</PanelFoot>}
       </Panel>
 
       {rows.length > 0 && !readOnly && (
-        <Panel title={on.length ? `${on.length} selected · ${money(total)}` : "Nothing selected yet"} level={3}>
+        <Panel title={on.length ? `${on.length} selected · ${fmtMoney(total)}` : "Nothing selected yet"} level={3}>
           {on.length === 0 ? (
             <p className="hint">Tick the requests above, or Select all, then choose what to do with them.</p>
           ) : (

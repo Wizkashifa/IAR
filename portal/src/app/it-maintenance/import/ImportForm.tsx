@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/Button";
+import { Button, buttonClass } from "@/components/Button";
 import { FileDrop } from "@/components/FileDrop";
 import { FormActions } from "@/components/Field";
 import { Note } from "@/components/Note";
@@ -62,7 +62,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
             Go to the board
           </Button>
           {/* A full reload starts the form over. */}
-          <a href="/it-maintenance/import" className={styles.linkBtn}>
+          <a href="/it-maintenance/import" className={buttonClass({ variant: "quiet" })}>
             Import another file
           </a>
         </FormActions>
@@ -162,7 +162,7 @@ export default function ImportForm({ action }: { action: (prev: ImportState, for
           <textarea name="csv" defaultValue={state.csv} hidden readOnly />
           <FormActions sticky={false}>
             {p.ready.length > 0 && <Submit label={`Import ${p.ready.length} ticket${p.ready.length === 1 ? "" : "s"}`} busy="Importing…" />}
-            <a href="/it-maintenance/import" className={styles.linkBtn}>
+            <a href="/it-maintenance/import" className={buttonClass({ variant: "quiet" })}>
               Start over
             </a>
           </FormActions>

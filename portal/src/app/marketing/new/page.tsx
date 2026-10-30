@@ -74,16 +74,9 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
   return (
     <div className="stack loose">
       <div className="stack tight">
-        {crumb}
-        <ModuleHead accent="mkt"
-          title={t.label}
-          lead={t.blurb}
-          actions={
-            <Button href="/marketing/new" icon="chevL">
-              Change type
-            </Button>
-          }
-        />
+        {/* The middle step goes back to the list of types. */}
+        <Crumb trail={[{ href: "/marketing", label: "Marketing Requests" }, { href: "/marketing/new", label: "New request" }]} here={t.label} />
+        <ModuleHead accent="mkt" title={t.label} lead={t.blurb} />
       </div>
       {t.note && <Note>{t.note}</Note>}
       {committees.length === 0 && (
