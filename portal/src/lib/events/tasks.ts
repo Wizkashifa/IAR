@@ -1,9 +1,10 @@
 /**
  * Team tasks on an event card (docs/plan.md, "The event card"). When an
  * event is approved it gets a task for each team it needs:
- * - Marketing, for a public event: flyer, announcement and website listing,
- *   due by the event's first date. The team sees it as soon as it's approved.
  * - A/V, when A/V support was asked for: the kinds asked for, due on the day.
+ * Marketing no longer gets a task: each piece of marketing is a marketing
+ * request linked to the event (lib/marketing/linked.ts). Older events keep
+ * their Marketing task until the team finishes it.
  * A series gets one task per team for the whole series. Tasks for teams that
  * no longer get them (Security's, on older events) are left on the card but
  * never shown or counted.
@@ -41,14 +42,6 @@ export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTa
   const first = e.dates[0] ?? e.date;
   const out: EventTask[] = [];
   const add = (t: Omit<EventTask, "status" | "history">) => out.push({ ...t, status, history: [] });
-  if (e.isPublic) {
-    add({
-      id: "marketing",
-      team: "marketing",
-      title: `Flyer, announcement and website listing${e.brief?.subtitle ? `: “${e.brief.subtitle}”` : ""}`,
-      dueDate: first,
-    });
-  }
   if (e.av) {
     const kinds = (e.avNeeds?.kinds ?? []).map((k) => (AV_KINDS[k] ?? k).toLowerCase());
     add({ id: "av", team: "av", title: `A/V: ${kinds.length ? kinds.join(", ") : "support requested"}`, dueDate: first });
@@ -59,15 +52,21 @@ export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTa
 /**
  * The card's tasks after approval: tasks it already had keep their status,
  * assignee and history; new ones are added as "to do"; ones it no longer
- * needs (a date given up, A/V no longer asked for) are dropped.
+ * needs (a date given up, A/V no longer asked for) are dropped. An older
+ * event's Marketing task stays until the team finishes it, though no event
+ * gets a new one.
  */
 export function syncTasks(existing: EventTask[] | undefined, planned: EventTask[], now: string): EventTask[] {
   const have = new Map((existing ?? []).map((t) => [t.id, t]));
-  return planned.map((p) => {
-    const t = have.get(p.id);
-    if (t) return { ...t, title: p.title, dueDate: p.dueDate, status: t.status === "locked" ? "todo" : t.status };
-    return { ...p, status: "todo", history: [historyEntry("portal", now, "Unlocked when the event was approved")] };
-  });
+  const kept = (existing ?? []).filter((t) => t.team === "marketing" && !planned.some((p) => p.id === t.id)).map((t) => ({ ...t, status: t.status === "locked" ? ("todo" as const) : t.status }));
+  return [
+    ...kept,
+    ...planned.map((p) => {
+      const t = have.get(p.id);
+      if (t) return { ...t, title: p.title, dueDate: p.dueDate, status: t.status === "locked" ? ("todo" as const) : t.status };
+      return { ...p, status: "todo" as const, history: [historyEntry("portal", now, "Unlocked when the event was approved")] };
+    }),
+  ];
 }
 
 /** Teams with tasks now that had none before: they hear about the event once. */

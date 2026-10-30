@@ -12,6 +12,7 @@ export const TYPE_ICON: Record<MarketingKind, IconName> = {
   redirect: "repeat",
   badge: "book",
   custom: "message",
+  event: "calendar",
 };
 
 /** What a `?ok=` from a server action says, as a short confirmation. */

@@ -28,7 +28,7 @@
 import type { Card, CardStatus } from "../cards";
 import { ORG } from "../org";
 import type { Actor } from "../purchases/workflow";
-import { LEAD_DAYS, MARKETING_TYPES, neededBy, titleFor, type ParsedMarketing } from "./forms";
+import { LEAD_DAYS, MARKETING_TYPES, eventPartOf, neededBy, pieceTitle, titleFor, type ParsedMarketing } from "./forms";
 import { MAX_PER_REQUEST, filesOf } from "./files";
 import { CHANNELS, CHANNEL_LABEL, type Channel, type MarketingDetails, type MarketingFile, type MarketingKind, type MarketingStage } from "./types";
 import { same } from "../text";
@@ -340,7 +340,8 @@ function applyEdit(card: MarketingCard, edited: MarketingEdit | undefined): { ca
     changed,
     card: {
       ...card,
-      title: titleFor(m.kind, edited.answers),
+      // A piece for an event keeps the event's name in its title ("Flyer: Community Fall Dinner").
+      title: m.kind === "event" ? pieceTitle(edited.answers.piece, eventPartOf(card.title)) : titleFor(m.kind, edited.answers),
       committee: edited.committee,
       marketing: { ...m, answers: edited.answers, driveLink: edited.driveLink, notes: edited.notes },
     },
@@ -507,6 +508,16 @@ export function addFiles(card: MarketingCard, actor: Actor, now: string, files: 
 export function cancel(card: MarketingCard, actor: Actor, now: string): MarketingCard {
   mustDo(card, actor, "cancel");
   const m: MarketingDetails = { ...moved(card.marketing, "cancelled", now), question: undefined, history: [...card.marketing.history, historyEntry(actor.email, now, "Cancelled by requester")] };
+  return withStage(card, m, now);
+}
+
+/**
+ * The portal cancels an open piece of marketing because its event was
+ * cancelled or declined (lib/marketing/linked.ts). `why` goes in the history.
+ */
+export function cancelWithEvent(card: MarketingCard, now: string, why: string): MarketingCard {
+  if (!OPEN_STAGES.includes(card.marketing.stage)) return card;
+  const m: MarketingDetails = { ...moved(card.marketing, "cancelled", now), question: undefined, history: [...card.marketing.history, historyEntry("Portal", now, "Cancelled", why)] };
   return withStage(card, m, now);
 }
 

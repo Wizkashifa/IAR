@@ -15,9 +15,14 @@ import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
 import { MARKETING_TYPES, answerText, driveLinkOf, neededBy } from "@/lib/marketing/forms";
 import { canViewMarketing } from "@/lib/marketing/access";
-import { approvalDue, channelText, daysUntilNeeded, isMarketingCard, isTight, latestProof, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
+import { OPEN_STAGES, approvalDue, channelText, daysUntilNeeded, isMarketingCard, isTight, latestProof, permission, suggestedDoneBy, type Action, type MarketingCard } from "@/lib/marketing/workflow";
 import { CHANNELS, CHANNEL_LABEL } from "@/lib/marketing/types";
 import { Choice, Choices } from "@/components/Choices";
+import { EVENT_NOT_APPROVED, waitsOnEvent } from "@/lib/marketing/linked";
+import { isEventCard } from "@/lib/events/workflow";
+import { dayText, recurText, timeText } from "@/lib/events/series";
+import { canOpenCard } from "@/lib/access";
+import { LinkCard, LinkCards } from "@/components/LinkCard";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/Confirm";
 import { DateField } from "@/components/DateField";
@@ -64,6 +69,10 @@ export default async function MarketingDetail({
 
   const mc: MarketingCard = card;
   const m = mc.marketing;
+  // A piece for an event reads the event's title, dates, brief and images from the event itself.
+  const linked = m.eventCardId ? await (await cardStore()).get(m.eventCardId) : null;
+  const event = isEventCard(linked) && canOpenCard(linked, { ...actor, seeAll: viewer.roles.includes("admins") }) ? linked : null;
+  const eventImages = event?.event.isPublic ? event.event.images ?? [] : [];
   const t = MARKETING_TYPES[m.kind];
   const today = todayLocal();
   const can = (a: Action) => permission(mc, actor, a).ok;
@@ -72,7 +81,7 @@ export default async function MarketingDetail({
   const days = daysUntilNeeded(mc, today);
   // Who on the marketing team the work can be handed to.
   const team = permission(mc, actor, "assign").ok ? await queueTeamMembers("marketing") : [];
-  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by)]);
+  const names = await nameResolver([mc.ownerEmail, ...(m.assignee ? [m.assignee] : []), ...team, ...m.history.map((h) => h.by), ...(mc.comments ?? []).map((c) => c.by), ...filesOf(m).map((f) => f.by), ...eventImages.map((f) => f.by)]);
   const requester = own ? "you" : names(mc.ownerEmail);
   const state = rowState(mc, actor, { today });
   const tone = ROW_TONE[state];
@@ -126,11 +135,17 @@ export default async function MarketingDetail({
         </Note>
       )}
       {whyNot && <Note>{whyNot}</Note>}
+      {waitsOnEvent(event) && OPEN_STAGES.includes(m.stage) && (
+        <Note>
+          <strong>{EVENT_NOT_APPROVED}.</strong> Marketing can schedule and start this piece now. If the event is cancelled or declined, this piece is cancelled too.
+        </Note>
+      )}
     </>
   );
 
   const main = (
     <>
+      {event ? <EventPanels /> : m.eventCardId ? <p className="hint">For event {m.eventCardId}.</p> : null}
       <Panel title="The request">
         <div className="stack">
           <KeyValue
@@ -230,6 +245,44 @@ export default async function MarketingDetail({
       />
     </>
   );
+
+  /** The event this piece is for, read live from the event: a link to it, its marketing brief and its images. */
+  function EventPanels() {
+    if (!event) return null;
+    const e = event.event;
+    const b = e.isPublic ? e.brief : undefined;
+    const when = e.recur ? `${recurText(e.date, e.recur)}, from ${dayText(e.dates[0] ?? e.date)}` : dayText(e.dates[0] ?? e.date);
+    return (
+      <>
+        <LinkCards label="The event" compact>
+          <LinkCard href={`/events/${event.id}`} icon="calendar" accent="events" title={`For event: ${event.title} · ${dayText(e.dates[0] ?? e.date)}`}>
+            {[e.committeeName, when, `${timeText(e.start)}–${timeText(e.end)}`].join(" · ")}
+          </LinkCard>
+        </LinkCards>
+        {(b || eventImages.length > 0) && (
+          <Panel title="From the event">
+            <div className="stack">
+              {b && (
+                <KeyValue
+                  stacked
+                  items={[
+                    { label: "Subtitle", value: b.subtitle },
+                    { label: "Announcement", value: b.text && <span className="pre">{b.text}</span> },
+                    { label: "On the flyer", value: b.flyer && <span className="pre">{b.flyer}</span> },
+                    { label: "Registration", value: b.regLink },
+                    { label: "Payment", value: b.payment && <span className="pre">{b.payment}</span> },
+                    { label: "Files", value: b.files && <a href={b.files} target="_blank" rel="noreferrer">Drive folder</a> },
+                  ]}
+                />
+              )}
+              {eventImages.length > 0 && <FileList files={eventImages.map((f) => ({ ...f, by: same(f.by, viewer.email) ? "you" : names(f.by) }))} empty="No images yet." />}
+              <p className="hint">Changes on the event show here too. Images are added on the event&apos;s page.</p>
+            </div>
+          </Panel>
+        )}
+      </>
+    );
+  }
 
   /** Files on the request, and a way for the requester and the marketing team to add more. */
   function FilesPanel() {

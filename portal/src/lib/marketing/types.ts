@@ -2,12 +2,13 @@
  * Marketing Requests: the fields a marketing card carries on top of the
  * shared Card (see lib/cards.ts). Marketing work that isn't an event:
  * graphics, signs, announcements, highlights, webpages, redirects, badges.
- * Event marketing is part of the event request.
+ * Marketing for an event is one request per piece (kind "event"), linked to
+ * its event (eventCardId; see lib/marketing/linked.ts).
  */
 import type { HistoryEntry } from "../workflow-core";
 
 /** The request types, as on today's Marketing/AV Google Form (see forms.ts for their questions). */
-export const MARKETING_KINDS = ["graphic", "signage", "announce", "highlight", "webpage", "webedit", "redirect", "badge", "custom"] as const;
+export const MARKETING_KINDS = ["graphic", "signage", "announce", "highlight", "webpage", "webedit", "redirect", "badge", "custom", "event"] as const;
 export type MarketingKind = (typeof MARKETING_KINDS)[number];
 
 /**
@@ -97,4 +98,6 @@ export type MarketingDetails = {
   /** The done-by date a "due soon" reminder was already sent for (so it goes once). */
   remindedFor?: string;
   history: HistoryEntry[];
+  /** The event this piece is for (kind "event"): its title, dates, brief and images are read from the event, never copied. */
+  eventCardId?: string;
 };

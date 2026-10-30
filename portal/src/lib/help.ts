@@ -35,7 +35,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Click New event request and fill in one form: the event, the room, and marketing's and A/V's questions if you need them.",
       "The checks beside the form compare your times with the IAR room calendars as you type, so you see a clash before you send.",
       "Your committee's director reviews it, then an executive gives final approval. The room is held on the calendar while you wait.",
-      "Once it's approved, marketing and A/V each get their task. After the event, you add the attendance and final costs.",
+      "Once it's approved, A/V gets its task and a public event gets a flyer and announcement from marketing. Add more marketing from the event's page. After the event, you add the attendance and final costs.",
     ],
     sections: [
       {
@@ -65,8 +65,18 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
           "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
-          "Once it's approved, the room is confirmed on the IAR calendar, and marketing and A/V see their tasks in Team Queues.",
+          "Once it's approved, the room is confirmed on the IAR calendar, A/V sees its task in Team Queues, and a public event gets a flyer and announcement from marketing.",
           "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
+        ],
+      },
+      {
+        heading: "Marketing for your event",
+        steps: [
+          "Open your event and find Marketing. Click Add a marketing piece for each thing you need: a flyer, social media posts, a video, a banner, a newsletter item.",
+          "You can add pieces once the event is sent, before it's approved, so pieces that take longer can start early. Your committee's chair and the marketing team can add them too.",
+          "Each piece is its own marketing request, with a due date and someone on the team working on it. Marketing sees the event's details, brief and images, so you don't type them again.",
+          "When a public event is approved, the portal adds a flyer and announcement piece for you.",
+          "If the event is cancelled or declined, its pieces are cancelled. If its date, time or room changes, marketing is told.",
         ],
       },
       {
@@ -165,7 +175,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     href: "/marketing",
     module: "marketing-requests",
     short: [
-      "Marketing for an event? Put it on the event request instead: it asks marketing's questions there.",
+      "Marketing for an event? Open the event and click Add a marketing piece, once for each thing you need.",
       "For anything else, click New marketing request and pick what you need. Each kind asks only its own questions.",
       "Someone on the marketing team picks up new requests as they come in. They schedule it with a done-by date, ask you a question, or decline it.",
       "If they ask a question, answer it right on the request page.",
@@ -184,9 +194,9 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Marketing for an event",
         steps: [
-          "Put marketing for an event on the event request itself. Tick Open to the public and answer marketing's questions there.",
-          "Add images for the flyer (logos, photos, artwork) right on the form, or later on the request page. Image files only, no PDFs or Word documents.",
-          "Marketing sees it as soon as the event is approved. Nothing is advertised before then.",
+          "Open the event from Events & Rooms and click Add a marketing piece in its Marketing section. Add one piece for each thing you need.",
+          "For a public event, answer marketing's questions on the event request, and add images for the flyer (logos, photos, artwork) there or on its page. Image files only, no PDFs or Word documents.",
+          "Marketing can start before the event is approved. Until it is, the piece says Event not approved yet, and nothing is advertised.",
         ],
       },
       {
@@ -204,12 +214,12 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "For the marketing team",
         steps: [
-          "Open Marketing Requests and click Team work. It lists every open request and the marketing for every approved event, newest first.",
-          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, Waiting on approval, or Waiting on the requester.",
+          "Open Marketing Requests and click Team work. It lists every open request, each event's marketing pieces among them, newest first.",
+          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, Waiting on approval, Waiting on the requester, or By event to see each event's pieces together.",
           "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
           "When the draft is ready, click Send for approval and add the files. The requester has until the same time on the next business day to answer.",
           "Once they approve it (or don't answer in time), click Mark as marketed and tick where it went out.",
-          "For an event, take its task, start it and mark it done with a note for the requester.",
+          "Older events may still have a Marketing task: take it, start it and mark it done with a note for the requester.",
         ],
       },
     ],

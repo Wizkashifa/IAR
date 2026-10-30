@@ -70,15 +70,27 @@ Every event gets mission review in two steps: the director of the committee's pi
 - Event start and end, plus a room reservation window that covers setup and teardown
 - Room or rooms, expected attendance, whether food is served, public or internal, whether registration is needed
 - Optional budget estimate
-- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, images for marketing (uploaded to the marketing Shared Drive under "Event Requests / <date · event name>", images only), and a "details are final" confirmation. Marketing sees it as soon as it's approved.
+- For public events, the marketing brief: one-line subtitle, announcement text, flyer content, other details to publish, registration and payment instructions, images for marketing (uploaded to the marketing Shared Drive under "Event Requests / <date · event name>", images only), and a "details are final" confirmation. Each marketing piece reads it from the event.
 - If A/V support is needed: the kinds of support, what the event includes, and an acknowledgement that A/V isn't guaranteed
 
 **Tasks added to the card**, each prefilled from the card:
 
-- Marketing: flyer, announcement, webpage, highlight. Locked until approval, per policy
+- Marketing pieces (see "Marketing for an event" below), not a task
 - AV support (committees do their own setup and cleanup)
 - Purchase requests: linked POs, coded to the event
 - Payments: fee and deposit for community MPH use, deposit refund at close-out
+
+**Marketing for an event**
+
+Each piece of marketing an event needs (a flyer, social media posts, a video, a banner or sign, an announcement, a website listing, a newsletter item) is its own marketing request, linked to the event like a payment request is. The event is the parent; there's no separate "campaign" for now.
+
+- The event's requester, their committee's chair, vice chair or director, and the marketing team add pieces from the event's page, once it's submitted: in review (long lead times) or approved.
+- A piece belongs to the event's requester, so whatever comes back to the requester goes to them; its history says who added it. Its needed-by date defaults to 10 days before the event.
+- It shows the event's title, dates, brief and images, read from the event, never copied.
+- When a public event gets its final approval and has no pieces yet, the portal adds one: "Flyer and announcement".
+- Cancelled or declined event: its open pieces are cancelled. Date, time, room or details changed: whoever has each open piece is told. A series has one set of pieces.
+- While the event isn't approved, a piece says "Event not approved yet"; marketing can still schedule and start it.
+- Older events keep their Marketing task until the team finishes it, in Marketing Requests → Team work.
 
 **Asking for a booked time**
 
@@ -108,7 +120,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card. Card receipts come from the monthly card statement finance uploads (PDF): each cardholder's charges are filled in, they add the sub-account and why it was bought, and charges at one store (Amazon) can be lumped under one receipt | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
 | Team queues | Marketing, AV, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
-| Marketing requests | Everyone submits; anyone on the marketing team picks up new requests as they come in, from one Team work list with event marketing | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. New → scheduled with a done-by date → in progress → a draft sent for the requester's approval (they approve or ask for changes by the same time the next business day, or marketing can go ahead without them; short links and small website updates skip this) → marketed, with where it went out (newsletter, website, lobby screens, social media). Or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
+| Marketing requests | Everyone submits; anyone on the marketing team picks up new requests as they come in, from one Team work list with event marketing | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. New → scheduled with a done-by date → in progress → a draft sent for the requester's approval (they approve or ask for changes by the same time the next business day, or marketing can go ahead without them; short links and small website updates skip this) → marketed, with where it went out (newsletter, website, lobby screens, social media). Or a question back to the requester, or declined. Marketing for an event is one request per piece, linked to the event and added from its page, and goes through the same steps; event A/V stays on the event card | 2 |
 | Daily run sheet | Front desk, facilities, office | One printable page per day and campus: time, room, event, contact, setup, notes (food, large crowd), after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
@@ -178,7 +190,7 @@ Most of the [2021 Room Reservation Policy](https://raleighmasjid.org/wp-content/
 | Food only in the MPH, Room 240 and school rooms during school | Flag when food is selected for another room | Flag |
 | Community MPH events: $200 fee and $100 refundable deposit | Payment task added; refund marked at close-out | Task |
 | After-hours security: 2-hour minimum | Warning on the request; the requester arranges it with Safety & Security (the portal doesn't book it) | Warning |
-| No advertising or signage until approved | Marketing task locked until approval | Lock |
+| No advertising or signage until approved | Marketing pieces can be prepared before approval but say "Event not approved yet" until it's approved | Label |
 | Confirmation within one week | Office deadline; overdue cards move up to the office lead | Deadline |
 | Submitting means accepting the rules and liability statement | Required checkbox with a link to the current policy version | Required field |
 
@@ -329,12 +341,12 @@ Budget and financial reporting are not part of the initial launch, so this list 
 
 ## Marketing questions
 
-Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26) is asked somewhere in the portal, or answered by it. Event marketing and event A/V go on the event request; everything else is a Marketing Request. The demo (`demo/index.html`, `briefSection`, `avSection` and `MK_TYPES`) uses the form's wording.
+Every question on the Marketing/Multimedia/AV Request Form (last updated 9/10/26) is asked somewhere in the portal, or answered by it. The event's marketing brief and event A/V go on the event request, and each piece of marketing for an event is a Marketing Request linked to it; everything else is a Marketing Request. The demo (`demo/index.html`, `briefSection`, `avSection` and `MK_TYPES`) uses the form's wording.
 
 | Form questions | In the portal |
 | --- | --- |
 | Email, name, committee/team (Q1, 67–72) | From sign-in. Everyone belongs to at least one committee or team (a Google Group). The requester picks from their own committees and teams, plus any committee they direct |
-| Approved through the Program Request form? (Q41, 53) | Dropped. Marketing unlocks when the event is approved |
+| Approved through the Program Request form? (Q41, 53) | Dropped. Marketing pieces say "Event not approved yet" until the event is approved |
 | Committee + event name, date(s), time(s), room, public, recurring (Q31–36, 42, 45, 54, 56–58) | Already on the event card |
 | One-liner subtitle, detailed description, announcement text, flyer content, other info, must-include on flyer, registration, payment, start marketing, details final, comments (Q43–52, 55, 59–66) | Event card, "For marketing" section (public events) |
 | A/V support type, event includes, A/V not guaranteed, comments (Q37–40) | Event card, "For A/V" section |

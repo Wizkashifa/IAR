@@ -26,6 +26,7 @@ import { filesFrom } from "@/lib/drive";
 import { checkFiles } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveEventImages } from "@/lib/marketing/drive";
 import { addImages, imagesOf, imagesPermission } from "@/lib/events/images";
+import { syncPieces } from "@/lib/marketing/pieces";
 import type { FormState } from "@/components/FormErrors";
 
 
@@ -220,7 +221,9 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
       console.error("linking a renewal failed", err);
     }
   }
-  await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices], actor.email);
+  // Its marketing pieces follow a resubmitted event (a new date, or approved straight away after a move).
+  const pieces = before ? await syncPieces(before, trouble.card, actor) : [];
+  await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices, ...pieces], actor.email);
   revalidatePath("/events");
   if (images.length) {
     try {
@@ -312,7 +315,8 @@ export async function actOnEvent(form: FormData): Promise<void> {
       return {
         next: trouble.card,
         notices: [...eventNotices(card, trouble.card, actor, directors), ...taskUnlockNotices(card, trouble.card), ...trouble.notices],
-        after: action === "cancel" ? () => withdrawOpenAsks(card.id, actor, now) : undefined,
+        // Once saved: a cancelled request withdraws its asks; its marketing pieces follow the event either way.
+        after: async () => [...(action === "cancel" ? await withdrawOpenAsks(card.id, actor, now) : []), ...(await syncPieces(card, trouble.card, actor))],
       };
     },
   });
@@ -369,7 +373,7 @@ export async function decideAsk(form: FormData): Promise<void> {
           const synced = await syncHolds(changed, ctx);
           const trouble = calendarTrouble(synced.card, synced.error);
           await store.save(trouble.card, holder.updatedAt);
-          notices.push(...trouble.notices, ...(o.action === "edit" ? [] : eventNotices(holder, trouble.card, actor, hd)));
+          notices.push(...trouble.notices, ...(o.action === "edit" ? [] : eventNotices(holder, trouble.card, actor, hd)), ...(await syncPieces(holder, trouble.card, actor)));
         }
       }
     } else if (req.hold.calendarId) {

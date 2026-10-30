@@ -82,6 +82,7 @@ test("forms: a valid request per type passes; unknown answers are dropped", () =
     redirect: { from: "raleighmasjid.org/pantry", to: "https://forms.gle/abc" },
     badge: { first: "New", last: "Hire", title: "Technician", photo: "onsite" },
     custom: { desc: "A short video for the fundraiser" },
+    event: { piece: "flyer", due: "2026-11-20" },
   };
   for (const k of MARKETING_KINDS) {
     const r = parseMarketingInput({ kind: k, committee: "Youth", answers: { ...ok[k], sneaky: "x" } }, ctx);
@@ -469,7 +470,7 @@ test("daily: done-by reminders for tomorrow, today or past, once per date", () =
 const MB = 1024 * 1024;
 
 test("files: the types that start from the requester's material ask for them", () => {
-  assert.deepEqual([...FILE_KINDS].sort(), ["badge", "custom", "graphic", "highlight", "signage", "webpage"]);
+  assert.deepEqual([...FILE_KINDS].sort(), ["badge", "custom", "event", "graphic", "highlight", "signage", "webpage"]);
   assert.equal(asksForFiles("graphic"), true);
   assert.equal(asksForFiles("redirect"), false);
   assert.equal(asksForFiles("announce"), false);

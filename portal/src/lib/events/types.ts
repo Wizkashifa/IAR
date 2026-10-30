@@ -85,7 +85,8 @@ export type EventInput = {
 /**
  * The teams that get tasks on an approved event (lib/events/tasks.ts). Each is
  * a queue role. Committees set up and clean up their own events, so there is
- * no facilities task.
+ * no facilities task. "marketing": older events only; new events get marketing
+ * pieces instead (lib/marketing/linked.ts).
  */
 export type TaskTeam = "marketing" | "av";
 

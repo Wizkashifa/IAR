@@ -10,6 +10,7 @@ import { FileDrop } from "@/components/FileDrop";
 import { DRIVE_NOTE, FILE_ACCEPT, FILE_HINT, MAX_FILE_MB, MAX_PER_UPLOAD, asksForFiles } from "@/lib/marketing/files";
 import { Field, FormActions, RequiredKey } from "@/components/Field";
 import { Panel } from "@/components/Panel";
+import { KeyValue } from "@/components/KeyValue";
 import type { MarketingFormState } from "./actions";
 import styles from "./marketing.module.css";
 import { FormErrors } from "@/components/FormErrors";
@@ -33,10 +34,12 @@ export type MarketingFormProps = {
    * the request page instead.
    */
   uploads?: boolean;
+  /** A piece of marketing for this event (kind "event"): shown at the top, and its committee is the event's. */
+  event?: { id: string; title: string; when: string; committee: string };
 };
 
 /** The committee and one request type's questions, then files or a Drive link for the types that use them. */
-export default function MarketingForm({ action, kind, committees, initial, question, today, cancelHref, submitLabel, uploads }: MarketingFormProps) {
+export default function MarketingForm({ action, kind, committees, initial, question, today, cancelHref, submitLabel, uploads, event }: MarketingFormProps) {
   const [state, formAction] = useActionState(action, { errors: [], n: 0 });
   const v = state.values ?? initial;
   const t = MARKETING_TYPES[kind];
@@ -53,6 +56,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
     // Keyed on each answer from the server, so the fields keep what was typed when something needs fixing.
     <form key={state.n} action={formAction} className={`stack loose ${styles.form}`}>
       <input type="hidden" name="kind" value={kind} />
+      {event && <input type="hidden" name="event" value={event.id} />}
       <FormStarted form="marketing" />
       <FormErrors errors={state.errors} />
       <RequiredKey />
@@ -68,16 +72,32 @@ export default function MarketingForm({ action, kind, committees, initial, quest
         </Panel>
       )}
 
-      <Panel title="The request">
+      {event && (
+        <Panel title="For event">
+          <KeyValue
+            items={[
+              { label: "Event", value: event.title },
+              { label: "When", value: event.when },
+              { label: "Committee", value: event.committee },
+            ]}
+          />
+        </Panel>
+      )}
+
+      <Panel title={event ? "The piece" : "The request"}>
         <div className="grid">
-          <Field label="Requesting committee or team" required>
-            <select name="committee" defaultValue={v?.committee ?? choices[0] ?? ""} required>
-              {choices.length === 0 && <option value="">You&apos;re not on a committee or team yet</option>}
-              {choices.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </Field>
+          {event ? (
+            <input type="hidden" name="committee" value={event.committee} />
+          ) : (
+            <Field label="Requesting committee or team" required>
+              <select name="committee" defaultValue={v?.committee ?? choices[0] ?? ""} required>
+                {choices.length === 0 && <option value="">You&apos;re not on a committee or team yet</option>}
+                {choices.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+          )}
           {t.fields.map((f) => (
             <Question key={f.key} f={f} value={v?.answers[f.key]} today={today} />
           ))}
