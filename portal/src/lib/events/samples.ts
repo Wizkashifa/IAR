@@ -10,14 +10,15 @@ import * as pw from "../purchases/workflow";
 import { startCloseOut } from "./closeout";
 import type { EventContext } from "./context";
 import { syncHolds } from "./holds";
-import { mergeRooms } from "./rooms";
+import { mergeRooms, roomById } from "./rooms";
 import { dayOfWeek } from "./series";
-import { actOnTask } from "./tasks";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
 import { addDays, todayLocal } from "../dates";
 import { autoPiece, newPiece } from "../marketing/linked";
 import * as mw from "../marketing/workflow";
+import { avTicket } from "../tickets/event-av";
+import * as tw from "../tickets/workflow";
 
 /**
  * Sample event requests for local development, built by running the real
@@ -80,7 +81,7 @@ export async function sampleEvents(): Promise<Card[]> {
     make("EV-1102", input({
       title: "Youth Weekly Halaqa",
       description: "A weekly halaqa for high-school boys: Quran reflection, a short talk and Q&A with a youth mentor. The same small group each week.",
-      date: next(3, 2), start: "19:00", end: "20:30", setup: 15, teardown: 15, recur: { freq: "weekly", until: addDays(next(3, 2), 21) }, rooms: ["dev-r280"], attendance: 15,
+      date: next(3, 2), start: "19:00", end: "20:30", setup: 15, teardown: 15, recur: { freq: "weekly", until: addDays(next(3, 2), 21) }, rooms: ["dev-r280"], attendance: 15, av: true, avNeeds: { kinds: ["sound"], includes: ["mics"], ack: true },
     }), volunteer, 30),
     volunteer, DIRECTORS, at(30),
   );
@@ -121,8 +122,6 @@ export async function sampleEvents(): Promise<Card[]> {
     chair, DIRECTORS, at(30),
   );
   let movie = wf.approve(wf.approve(movie0, director, DIRECTORS, at(28)), exec, DIRECTORS, at(27));
-  const it: wf.EventActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
-  movie = actOnTask(movie, "av", it, "done", at(6), "Projector and two speakers set up; returned to the A/V closet.");
   movie = startCloseOut(movie, at(5));
 
   // Yesterday, still approved: the daily job moves it to close-out.
@@ -167,7 +166,30 @@ export async function sampleEvents(): Promise<Card[]> {
   for (const c of [gameNight, halaqa, arabic, family, movie, parents, dinner, tonight]) out.push((await syncHolds(c, ctx)).card);
   out.push(await linkedPurchase("EV-1105", at));
   out.push(...samplePieces(dinner, gameNight, at));
+  out.push(...sampleAvTickets({ movie, halaqa, dinner }, ctx, at));
   return out;
+}
+
+/**
+ * A/V tickets for the events that asked for A/V, made the way approval makes
+ * them (one per date): the movie night's, done; the weekly halaqa's, the
+ * first one taken by IT; the Fall Dinner's, new.
+ */
+function sampleAvTickets(events: { movie: wf.EventCard; halaqa: wf.EventCard; dinner: wf.EventCard }, ctx: EventContext, at: (daysAgo: number) => string): Card[] {
+  const it: tw.TicketActor = { email: "it@dev.local", name: "Sample IT", roles: ["member", "it", "av"] };
+  const team = { it: [it.email], facilities: [] };
+  const roomName = (id: string) => roomById(ctx.rooms, id)?.name ?? id;
+  let n = 1050;
+  const tickets = (event: wf.EventCard, daysAgo: number) =>
+    event.event.dates.map((d) => {
+      const t = avTicket(event, d, roomName, at(daysAgo));
+      t.id = `TK-${n++}`;
+      return t;
+    });
+  const [movie] = tickets(events.movie, 27);
+  const movieDone = tw.resolve(tw.assign(movie, it, at(8), it.email, team), it, at(6), "Projector and two speakers set up; returned to the A/V closet.");
+  const [first, ...rest] = tickets(events.halaqa, 27);
+  return [movieDone, tw.assign(first, it, at(2), it.email, team), ...rest, ...tickets(events.dinner, 3)];
 }
 
 /**

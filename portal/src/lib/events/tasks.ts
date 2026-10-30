@@ -1,24 +1,21 @@
 /**
- * Team tasks on an event card (docs/plan.md, "The event card"). When an
- * event is approved it gets a task for each team it needs:
- * - A/V, when A/V support was asked for: the kinds asked for, due on the day.
- * Marketing no longer gets a task: each piece of marketing is a marketing
- * request linked to the event (lib/marketing/linked.ts). Older events keep
- * their Marketing task until the team finishes it.
- * A series gets one task per team for the whole series. Tasks for teams that
- * no longer get them (Security's, on older events) are never shown, counted
- * or worked, and drop off the card the next time its tasks are synced.
- * Before approval the tasks are shown as locked ("Unlocks on approval").
- * Cancelling the event drops them. Plain functions so they can be tested.
+ * Team tasks on older event cards (docs/plan.md, "The event card"). Events
+ * no longer get tasks: marketing for an event is a marketing request linked
+ * to it (lib/marketing/linked.ts), and its A/V is a ticket per date for IT
+ * (lib/tickets/event-av.ts). Events approved before that keep their
+ * Marketing and A/V tasks until the team finishes them: the team takes,
+ * starts, finishes or hands them over here. A/V no longer asked for drops
+ * the A/V task; cancelling the event drops them all. Tasks for teams that
+ * no longer get them (Security's) are never shown, counted or worked.
+ * Plain functions so they can be tested.
  */
 import { withComment } from "../comments";
 import type { Role } from "../org";
 import type { Notice } from "../notices";
-import { AV_KINDS } from "./input";
 import { dayText } from "./series";
 import type { EventDetails, EventTask, TaskStatus, TaskTeam } from "./types";
 import type { EventActor, EventCard } from "./workflow";
-import { andList, lc } from "../text";
+import { lc } from "../text";
 import { historyEntry } from "../workflow-core";
 
 export const TASK_TEAMS: TaskTeam[] = ["marketing", "av"];
@@ -40,69 +37,18 @@ const short = (s: string, max = 70) => {
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
 
-/** The tasks this event needs, all with the given status. */
-export function planTasks(e: EventDetails, status: TaskStatus = "todo"): EventTask[] {
-  const first = e.dates[0] ?? e.date;
-  const out: EventTask[] = [];
-  const add = (t: Omit<EventTask, "status" | "history">) => out.push({ ...t, status, history: [] });
-  if (e.av) {
-    const kinds = (e.avNeeds?.kinds ?? []).map((k) => (AV_KINDS[k] ?? k).toLowerCase());
-    add({ id: "av", team: "av", title: `A/V: ${kinds.length ? kinds.join(", ") : "support requested"}`, dueDate: first });
-  }
-  return out;
-}
-
 /**
- * The card's tasks after approval: tasks it already had keep their status,
- * assignee and history; new ones are added as "to do"; ones it no longer
- * needs (a date given up, A/V no longer asked for) are dropped. An older
- * event's Marketing task stays until the team finishes it, though no event
- * gets a new one.
+ * The card's tasks after an approval: the older tasks it still has keep
+ * their status, assignee and history; the A/V task goes once A/V isn't asked
+ * for, and tasks for teams that no longer get them go.
  */
-export function syncTasks(existing: EventTask[] | undefined, planned: EventTask[], now: string): EventTask[] {
-  const have = new Map((existing ?? []).map((t) => [t.id, t]));
-  const kept = (existing ?? []).filter((t) => t.team === "marketing" && !planned.some((p) => p.id === t.id)).map((t) => ({ ...t, status: t.status === "locked" ? ("todo" as const) : t.status }));
-  return [
-    ...kept,
-    ...planned.map((p) => {
-      const t = have.get(p.id);
-      if (t) return { ...t, title: p.title, dueDate: p.dueDate, status: t.status === "locked" ? ("todo" as const) : t.status };
-      return { ...p, status: "todo" as const, history: [historyEntry("portal", now, "Unlocked when the event was approved")] };
-    }),
-  ];
+export function keptTasks(e: EventDetails): EventTask[] {
+  return (e.tasks ?? []).filter((t) => isTeamTask(t) && (t.team !== "av" || e.av)).map((t) => ({ ...t, status: t.status === "locked" ? ("todo" as const) : t.status }));
 }
 
-/** Teams with tasks now that had none before: they hear about the event once. */
-export function newlyUnlockedTeams(before: EventTask[] | undefined, after: EventTask[] | undefined): TaskTeam[] {
-  const had = new Set((before ?? []).filter((t) => t.status !== "locked").map((t) => t.team));
-  return TASK_TEAMS.filter((team) => !had.has(team) && (after ?? []).some((t) => t.team === team && t.status !== "locked"));
-}
-
-/** What the card shows: its tasks once approved, or the tasks it will get (locked) while in review. */
+/** What the card shows: its tasks, if it's an older event that has some. */
 export function tasksFor(card: EventCard): EventTask[] {
-  if (card.event.tasks?.length) return card.event.tasks.filter(isTeamTask);
-  if (card.status === "submitted" || card.status === "in_review" || card.status === "changes_requested") return planTasks(card.event, "locked");
-  return [];
-}
-
-/** "Marketing and A/V". */
-export const teamList = (teams: TaskTeam[]) => andList(teams.map((t) => TEAM_NAME[t]));
-
-/** Each team whose tasks just unlocked gets one alert in its Chat space, for the whole event. */
-export function taskUnlockNotices(before: EventCard | null, after: EventCard): Notice[] {
-  const out: Notice[] = [];
-  for (const team of newlyUnlockedTeams(before?.event.tasks, after.event.tasks)) {
-    const task = (after.event.tasks ?? []).find((t) => t.team === team)!;
-    out.push({
-      to: { role: team },
-      cardId: after.id,
-      href: TEAM_WORK_HREF[team],
-      text: `${after.id} “${after.title}” is approved. New ${TEAM_NAME[team]} task: ${task.title}. Due ${dayText(task.dueDate)}.`,
-      alert: true,
-      delegable: false,
-    });
-  }
-  return out;
+  return (card.event.tasks ?? []).filter(isTeamTask);
 }
 
 // ---- Working on a task -----------------------------------------------------

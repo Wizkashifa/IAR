@@ -111,6 +111,8 @@ export interface CardStore {
   listPurchasesForEvent(eventId: string): Promise<Card[]>;
   /** Marketing pieces linked to an event card (marketing.eventCardId), any status. */
   listMarketingForEvent(eventId: string): Promise<Card[]>;
+  /** An event's A/V tickets (ticket.eventCardId), any status. */
+  listTicketsForEvent(eventId: string): Promise<Card[]>;
   /** Card receipts (purchase.kind "card"), any status. About 8 a month. */
   listCardReceipts(): Promise<Card[]>;
   /** The most recently updated cards of any type (for search). */
@@ -193,6 +195,10 @@ const memoryStore: CardStore = {
   async listMarketingForEvent(eventId) {
     await ensureSeeded();
     return [...mem.cards.values()].filter((c) => c.type === "marketing" && c.marketing?.eventCardId === eventId).map(clone);
+  },
+  async listTicketsForEvent(eventId) {
+    await ensureSeeded();
+    return [...mem.cards.values()].filter((c) => c.type === "ticket" && c.ticket?.eventCardId === eventId).map(clone);
   },
   async listCardReceipts() {
     await ensureSeeded();
@@ -287,6 +293,11 @@ async function getFirestoreStore(): Promise<CardStore> {
     async listMarketingForEvent(eventId) {
       // Equality on two fields, like payments for an event: no composite index.
       const snap = await cards.where("type", "==", "marketing").where("marketing.eventCardId", "==", eventId).limit(200).get();
+      return snap.docs.map(toCard);
+    },
+    async listTicketsForEvent(eventId) {
+      // Equality on two fields, like payments for an event: no composite index.
+      const snap = await cards.where("type", "==", "ticket").where("ticket.eventCardId", "==", eventId).limit(200).get();
       return snap.docs.map(toCard);
     },
     async listCardReceipts() {

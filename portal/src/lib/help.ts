@@ -35,7 +35,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Click New event request and fill in one form: the event, the room, and marketing's and A/V's questions if you need them.",
       "The checks beside the form compare your times with the IAR room calendars as you type, so you see a clash before you send.",
       "Your committee's director reviews it, then an executive gives final approval. The room is held on the calendar while you wait.",
-      "Once it's approved, A/V gets its task and a public event gets a flyer and announcement from marketing. Add more marketing from the event's page. After the event, you add the attendance and final costs.",
+      "Once it's approved, IT Services gets an A/V ticket for each date and a public event gets a flyer and announcement from marketing. Add more marketing from the event's page. After the event, you add the attendance and final costs.",
     ],
     sections: [
       {
@@ -65,7 +65,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
           "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
-          "Once it's approved, the room is confirmed on the IAR calendar, A/V sees its task in IT & Maintenance, and a public event gets a flyer and announcement from marketing.",
+          "Once it's approved, the room is confirmed on the IAR calendar, IT Services gets an A/V ticket for each date (you can follow them from the event's page), and a public event gets a flyer and announcement from marketing.",
           "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
         ],
       },
@@ -274,10 +274,11 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "A/V for events",
         steps: [
-          "A/V's tasks from approved events are at the top of Team tickets, soonest due first. My work today lists the ones due today.",
-          "Open a task to see everything the requester gave: the A/V needs, the room and the times.",
-          "Take it, click Start when you begin and Mark done when you finish. The requester can see where it stands.",
-          "Tasks unlock when the event is approved. Events still in review are counted below the list, so you can plan ahead.",
+          "When an event that asked for A/V is approved, IT gets an A/V ticket for each of its dates, due that day, on Team tickets like any other ticket.",
+          "Open one to see what's needed: the A/V asked for, the room, the times, and a link to the event.",
+          "Pick it up, start it, and click Mark done when it's set up. It closes, and the requester is told.",
+          "If the event changes, the ticket is updated and whoever has it is told. A date given up, or a cancelled event, cancels its ticket.",
+          "My work today lists the ones this week. Older events may still have an A/V task at the top of Team tickets: work it the same way.",
         ],
       },
     ],

@@ -10,10 +10,10 @@ import { parsePurchaseInput, type PurchaseInput } from "../purchases/input";
 import { campusesOf, runSheetRows } from "../runsheet";
 import { closeOutNotices, closeOutPermission, dueForCloseOut, linkedPurchases, markNudged, needsNudge, spendOf, startCloseOut, submitCloseOut } from "./closeout";
 import { linkableEvents } from "./link";
-import { lockedCount, queueItems, recentlyDone, retiredQueueHref } from "./queues";
+import { queueItems, recentlyDone, retiredQueueHref } from "./queues";
 import { type GoogleRoom, mergeRooms } from "./rooms";
 import type { BusyItem } from "./rules";
-import { TEAM_WORK_HREF, TaskError, actOnTask, assignTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
+import { TEAM_WORK_HREF, TaskError, actOnTask, assignTask, taskNotices, taskPermission, tasksFor } from "./tasks";
 import { addImages, imagesPermission } from "./images";
 import type { EventInput, EventTask } from "./types";
 import * as wf from "./workflow";
@@ -73,53 +73,43 @@ const oldMk = (c: wf.EventCard): wf.EventCard => ({
   event: { ...c.event, tasks: [{ id: "marketing", team: "marketing", title: "Flyer, announcement and website listing", status: "todo", dueDate: c.event.dates[0], history: [] }, ...(c.event.tasks ?? [])] },
 });
 
-// ---- Tasks ------------------------------------------------------------------
-
-test("tasks: each team the event needs, with due dates; never a Security or Marketing task; nothing for a private event without A/V", () => {
-  const t = planTasks(wf.newEvent(full(), owner, NOW, []).event);
-  assert.deepEqual(t.map((x) => [x.id, x.team, x.dueDate]), [["av", "av", "2026-11-14"]], "marketing gets marketing pieces instead (lib/marketing/linked.ts)");
-  assert.match(t[0].title, /projector/i);
-  const late = planTasks(wf.newEvent(full({ end: "22:00" }), owner, NOW, []).event);
-  assert.ok(!late.some((x) => (x.team as string) === "security"), "after hours doesn't add a task either");
-  assert.deepEqual(planTasks(wf.newEvent(base(), owner, NOW, []).event), []);
+/** An event approved before A/V tickets, still carrying its A/V task. */
+const oldAv = (c: wf.EventCard): wf.EventCard => ({
+  ...c,
+  event: { ...c.event, tasks: [...(c.event.tasks ?? []), { id: "av", team: "av", title: "A/V: projectors on projector screens, sound system support", status: "todo", dueDate: c.event.dates[0], history: [] }] },
 });
 
-test("tasks: a series gets one task per team", () => {
-  const series = full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" } });
-  const t = planTasks(wf.newEvent(series, owner, NOW, []).event);
-  assert.deepEqual(t.map((x) => [x.team, x.dueDate]), [["av", "2026-11-03"]]);
+// ---- Tasks ------------------------------------------------------------------
+
+test("tasks: new events get none: marketing pieces and A/V tickets instead", () => {
+  const sub = submitted(full({ end: "22:00" }));
+  assert.deepEqual(tasksFor(sub), [], "nothing locked while in review either");
+  const ok = wf.approve(sub, exec, [], NOW);
+  assert.equal(ok.event.tasks, undefined);
+  assert.ok(!ok.event.history.some((h) => /Team tasks/.test(h.action)));
 });
 
 test("tasks: a Security task left on an older event isn't shown or worked", () => {
-  const ok = approved(full());
+  const ok = oldAv(approved(full()));
   const old = { id: "security-2026-11-14", team: "security", title: "Room check before and after", status: "todo", dueDate: "2026-11-14", history: [] } as unknown as EventTask;
   const withOld = { ...ok, event: { ...ok.event, tasks: [...ok.event.tasks!, old] } };
   assert.deepEqual(tasksFor(withOld).map((t) => t.team), ["av"]);
   assert.equal(taskPermission(withOld, old.id, office, "done").ok, false);
 });
 
-test("tasks: locked until approval, added as to-do on approval, dropped on cancel", () => {
-  const sub = submitted(full());
-  assert.equal(sub.event.tasks, undefined);
-  assert.ok(tasksFor(sub).every((t) => t.status === "locked"));
-  assert.equal(tasksFor(sub).length, 1);
-  const ok = wf.approve(sub, exec, [], NOW);
-  assert.equal(ok.event.tasks?.length, 1);
-  assert.ok(ok.event.tasks!.every((t) => t.status === "todo"));
-  assert.ok(ok.event.history.some((h) => /Team tasks unlocked: A\/V/.test(h.action)));
+test("tasks: an older event keeps its tasks when it's approved again; A/V no longer asked for drops the A/V task; cancelling drops them all", () => {
+  const ok = oldMk(oldAv(approved(full())));
+  const done = actOnTask(ok, "av", av, "done", NOW, "Projector tested");
+  const moved = wf.releaseToMove(done, [], NOW, "SR-1002", done.event.dates);
+  const back = wf.resubmit(moved, { ...moved.event, date: "2026-11-21" }, owner, [], NOW, []);
+  assert.equal(back.status, "approved");
+  assert.equal(back.event.tasks!.find((t) => t.id === "av")!.status, "done", "work already done stays");
+  assert.equal(back.event.tasks!.find((t) => t.id === "marketing")?.status, "todo", "an older Marketing task stays until it's finished");
+  const noAv = wf.resubmit(wf.releaseToMove(ok, [], NOW, "SR-1003", ok.event.dates), { ...ok.event, av: false, avNeeds: undefined }, owner, [], NOW, []);
+  assert.deepEqual(noAv.event.tasks!.map((t) => t.id), ["marketing"]);
   const gone = wf.cancel(ok, owner, [], NOW);
   assert.equal(gone.event.tasks, undefined);
   assert.deepEqual(tasksFor(gone), []);
-});
-
-test("tasks: approval tells each team once, in its Chat space; giving up a date doesn't tell them again", () => {
-  const sub = submitted(full({ date: "2026-11-03", recur: { freq: "weekly", until: "2026-11-24" } }));
-  const ok = wf.approve(sub, exec, [], NOW);
-  const n = taskUnlockNotices(sub, ok);
-  assert.deepEqual(n.map((x) => ["role" in x.to ? x.to.role : x.to.email, x.alert]), [["av", true]]);
-  assert.match(n[0].text, /Due Tue, Nov 3|Due .*Nov 3/);
-  const dropped = wf.dropDates(ok, [], NOW, "SR-1001", ["2026-11-24"]);
-  assert.deepEqual(taskUnlockNotices(ok, dropped), []);
 });
 
 test("tasks: anyone on the team hands a task to a teammate; they get an alert", () => {
@@ -160,19 +150,8 @@ test("images: the requester and marketing add images to a public event; its stag
   assert.equal(wf.resubmit(sentBack, full(), owner, [], NOW, []).event.brief?.files, "https://drive.google.com/old");
 });
 
-test("tasks: re-approval after a move keeps work already done, and an older event's Marketing task", () => {
-  const ok = oldMk(approved(full()));
-  const done = actOnTask(ok, "av", av, "done", NOW, "Projector tested");
-  const moved = wf.releaseToMove(done, [], NOW, "SR-1002", done.event.dates);
-  const back = wf.resubmit(moved, { ...moved.event, date: "2026-11-21" }, owner, [], NOW, []);
-  assert.equal(back.status, "approved");
-  assert.equal(back.event.tasks!.find((t) => t.id === "av")!.status, "done");
-  assert.equal(back.event.tasks!.find((t) => t.id === "av")!.dueDate, "2026-11-21", "due dates follow the new date");
-  assert.equal(back.event.tasks!.find((t) => t.id === "marketing")?.status, "todo", "an older Marketing task stays until it's finished");
-});
-
 test("tasks: only the team (or the office) works them; take, start, done, and a question for the requester", () => {
-  const ok = oldMk(approved(full()));
+  const ok = oldMk(oldAv(approved(full())));
   assert.equal(taskPermission(ok, "av", marketer, "take").ok, false);
   assert.equal(taskPermission(submitted(full()), "av", av, "take").ok, false, "locked before approval");
   assert.throws(() => actOnTask(ok, "av", marketer, "start", NOW), TaskError);
@@ -186,7 +165,7 @@ test("tasks: only the team (or the office) works them; take, start, done, and a 
   const t = done.event.tasks!.find((x) => x.id === "av")!;
   assert.equal(t.status, "done");
   assert.equal(t.note, "Two mics set up");
-  assert.equal(t.history.length, 4);
+  assert.equal(t.history.length, 3, "taken, started, done");
   assert.ok(done.event.history.some((h) => /A\/V task: done/.test(h.action)));
   assert.throws(() => actOnTask(done, "av", av, "start", NOW), /already done/);
   assert.deepEqual(taskNotices(done, "av", av2, "done", "Two mics set up").map((n) => ["email" in n.to ? n.to.email : "", n.alert]), [[owner.email, false]]);
@@ -197,7 +176,6 @@ test("tasks: only the team (or the office) works them; take, start, done, and a 
   assert.match(asked.comments![0].text, /Can you send the logo/);
   assert.deepEqual(taskNotices(asked, "marketing", marketer, "ask", "Can you send the logo?").map((n) => n.alert), [true]);
   assert.equal(actOnTask(ok, "marketing", office, "done", NOW).event.tasks!.find((x) => x.id === "marketing")!.status, "done", "the office can work any task");
-  assert.ok(!planTasks(ok.event).some((x) => (x.team as string) === "facilities"), "committees set up themselves: no facilities task");
 });
 
 // ---- Queues -------------------------------------------------------------------
@@ -211,13 +189,10 @@ test("queues: old Team Queues links go to each team's page; open tasks soonest f
   assert.equal(retiredQueueHref("security", ["member", "office", "marketing"]), "/it-maintenance?view=team", "the office, and old team names, go to IT & Maintenance");
   assert.equal(retiredQueueHref(undefined, ["member"]), "/it-maintenance?view=team");
   assert.equal(TEAM_WORK_HREF.av, "/it-maintenance?view=team");
-  const sub = submitted(full());
-  const avAlert = taskUnlockNotices(sub, wf.approve(sub, exec, [], NOW)).find((x) => "role" in x.to && x.to.role === "av");
-  assert.equal(avAlert?.href, "/it-maintenance?view=team", "A/V alerts open IT & Maintenance");
 
-  const later = oldMk(approved(full({ date: "2026-12-05" })));
-  const sooner = oldMk(approved(full({ date: "2026-11-07" })));
-  const finished = actOnTask(approved(full()), "av", av, "done", NOW);
+  const later = oldMk(oldAv(approved(full({ date: "2026-12-05" }))));
+  const sooner = oldMk(oldAv(approved(full({ date: "2026-11-07" }))));
+  const finished = actOnTask(oldAv(approved(full())), "av", av, "done", NOW);
   const pending = submitted(full());
   const cards = [later, sooner, finished, pending];
   const avq = queueItems(cards, "av", "2026-10-23");
@@ -225,7 +200,6 @@ test("queues: old Team Queues links go to each team's page; open tasks soonest f
   const mk = queueItems(cards, "marketing", "2026-10-23");
   assert.equal(mk[0].card.id, sooner.id);
   assert.equal(mk[0].overdue, false, "marketing is due by the event, Nov 7");
-  assert.equal(lockedCount(cards, "av"), 1);
   assert.deepEqual(recentlyDone(cards, "av").map((x) => x.card.id), [finished.id]);
 });
 

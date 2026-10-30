@@ -28,6 +28,8 @@ import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
 import { nameResolver, peopleOptions } from "@/lib/names";
 import { piecesFor } from "@/lib/marketing/pieces";
+import { ticketsFor } from "@/lib/events/linked-sync";
+import { isOpen as isTicketOpen } from "@/lib/tickets/workflow";
 import { nextStepText, stepsFor } from "@/lib/next-step";
 import { rowStatusText, statusText } from "@/lib/status-text";
 import { requireViewer } from "@/lib/viewer";
@@ -104,7 +106,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
   const tasks = tasksFor(card);
   const isLive = card.status === "approved" || card.status === "close_out" || card.status === "closed";
-  const [purchases, allPieces] = await Promise.all([store.listPurchasesForEvent(card.id), piecesFor(card.id)]);
+  const [purchases, allPieces, allTickets] = await Promise.all([store.listPurchasesForEvent(card.id), piecesFor(card.id), ticketsFor(card.id)]);
   const linked = linkedPurchases(purchases, card.id);
   const linkedVisible = linked.filter((p) => canOpenCard(p, { ...actor, seeAll: viewer.roles.includes("admins") }));
   const spent = spendOf(linked);
@@ -112,6 +114,9 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const pieces = allPieces.sort((a, b) => (a.createdAt ?? a.updatedAt).localeCompare(b.createdAt ?? b.updatedAt));
   const viewing = { ...actor, seeAll: viewer.roles.includes("admins") };
   const piecesVisible = pieces.filter((p) => canViewMarketing(p, viewing));
+  // Its A/V: one ticket per date for IT, once it's approved.
+  const avTickets = allTickets.sort((a, b) => (a.ticket.eventDate ?? "").localeCompare(b.ticket.eventDate ?? "") || a.id.localeCompare(b.id));
+  const avVisible = avTickets.filter((t) => canOpenCard(t, viewing));
   const addPiece = mayAddPiece(card, actor).ok;
   const office = ev.roles.includes("office");
   const images = imagesOf(card);
@@ -123,7 +128,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const teamMembers = new Map(await Promise.all(myTeams.map(async (t) => [t, await queueTeamMembers(t)] as const)));
 
   // Everyone this page shows, by name.
-  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...emailsIn(piecesVisible), ...piecesVisible.map((p) => p.marketing.assignee ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
+  const emails = [...[...teamMembers.values()].flat(), card.ownerEmail, ...directors, ...e.history.map((h) => h.by), ...tasks.map((t) => t.assignee ?? ""), ...images.map((f) => f.by), ...emailsIn(piecesVisible), ...piecesVisible.map((p) => p.marketing.assignee ?? ""), ...avVisible.map((t) => t.ticket.assigneeEmail ?? ""), ...(card.waitingOn?.match(/[^\s:,()]+@[^\s:,()]+/g) ?? [])].filter((x) => x.includes("@"));
   const names = await nameResolver(emails);
   const opts = { today: ctx.today, directors };
   const steps = stepsFor(card, opts);
@@ -230,6 +235,8 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
           {(pieces.length > 0 || addPiece) && <MarketingPanel />}
 
+          {(e.av || avTickets.length > 0) && <AvPanel />}
+
           {e.av && e.avNeeds && (
             <Panel title="A/V needs">
               <KeyValue
@@ -253,13 +260,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
 
 
           {tasks.length > 0 && (
-            <Panel title="Team tasks" right={tasks.every((t) => t.status === "locked") ? "Unlocks on approval" : `${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
+            <Panel title="Team tasks" right={`${tasks.filter((t) => t.status === "done").length} of ${tasks.length} done`} flush id="tasks">
               <Rows>
                 {tasks.map((t) => (
                   <TaskLine key={t.id} card={ec} task={t} roles={viewer.actingRoles} email={viewer.email} back={`/events/${card.id}#tasks`} today={ctx.today} names={names} people={peopleOptions(teamMembers.get(t.team) ?? [], viewer.email, names)} />
                 ))}
               </Rows>
-              {tasks.every((t) => t.status === "locked") && <PanelFoot>Once the event is approved, A/V gets its task in IT &amp; Maintenance.</PanelFoot>}
             </Panel>
           )}
 
@@ -401,6 +407,30 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   }
 
   /** The event's marketing pieces, each with its status and who has it, and a way to add one. */
+  /** The event's A/V tickets, one per date, as IT works them in IT & Maintenance. */
+  function AvPanel() {
+    const rows = rowsFor(avVisible, actor, { names, today: ctx.today }).map((r, i) => {
+      const t = avVisible[i];
+      return { ...r, sub: t.ticket.eventDate ? dayText(t.ticket.eventDate) : r.sub, who: t.ticket.assigneeEmail && isTicketOpen(t.ticket) ? `With ${names(t.ticket.assigneeEmail)}` : r.who };
+    });
+    const hidden = avTickets.length - avVisible.length;
+    const empty = isLive ? "No A/V tickets yet." : `Once the event is approved, IT Services gets an A/V ticket for ${e.dates.length > 1 ? `each of its ${e.dates.length} dates` : "it"}.`;
+    return (
+      <Panel title="A/V" right={avTickets.length ? `${avTickets.length}` : undefined} flush id="av">
+        {avTickets.length === 0 ? (
+          <EmptyState>{empty}</EmptyState>
+        ) : (
+          <Rows label="A/V tickets">
+            {rows.map((r) => (
+              <CardRow key={r.id} row={r} />
+            ))}
+            {hidden > 0 && <ItemRow state="plain" title={`${hidden} more you can't open`} sub="Restricted" />}
+          </Rows>
+        )}
+      </Panel>
+    );
+  }
+
   function MarketingPanel() {
     const rows = rowsFor(piecesVisible, actor, { names, today: ctx.today }).map((r, i) => {
       const p = piecesVisible[i];

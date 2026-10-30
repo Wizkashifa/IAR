@@ -11,7 +11,6 @@ import { syncHolds } from "@/lib/events/holds";
 import { type EventFormInput, draftInput, parseEventInput } from "@/lib/events/input";
 import { eventCommentNotices, eventNotices } from "@/lib/events/notices";
 import { roomById } from "@/lib/events/rooms";
-import { taskUnlockNotices } from "@/lib/events/tasks";
 import { type Clash, eventChecks } from "@/lib/events/rules";
 import { addDays } from "@/lib/dates";
 import * as sr from "@/lib/events/slot-requests";
@@ -26,7 +25,7 @@ import { filesFrom } from "@/lib/drive";
 import { checkFiles } from "@/lib/marketing/files";
 import { NOT_SET_UP, marketingFolder, saveEventImages } from "@/lib/marketing/drive";
 import { addImages, imagesOf, imagesPermission } from "@/lib/events/images";
-import { syncPieces } from "@/lib/marketing/pieces";
+import { syncLinked } from "@/lib/events/linked-sync";
 import type { FormState } from "@/components/FormErrors";
 
 
@@ -222,8 +221,8 @@ export async function submitEvent(editing: string | null, _prev: FormState, form
     }
   }
   // Its marketing pieces follow a resubmitted event (a new date, or approved straight away after a move).
-  const pieces = before ? await syncPieces(before, trouble.card, actor) : [];
-  await deliver([...eventNotices(before, trouble.card, actor, directors), ...taskUnlockNotices(before, trouble.card), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices, ...pieces], actor.email);
+  const linked = before ? await syncLinked(before, trouble.card, actor) : [];
+  await deliver([...eventNotices(before, trouble.card, actor, directors), ...(created ? sr.slotNotices(null, created, actor.email) : []), ...trouble.notices, ...linked], actor.email);
   revalidatePath("/events");
   if (images.length) {
     try {
@@ -314,9 +313,9 @@ export async function actOnEvent(form: FormData): Promise<void> {
       const trouble = calendarTrouble(synced.card, synced.error);
       return {
         next: trouble.card,
-        notices: [...eventNotices(card, trouble.card, actor, directors), ...taskUnlockNotices(card, trouble.card), ...trouble.notices],
+        notices: [...eventNotices(card, trouble.card, actor, directors), ...trouble.notices],
         // Once saved: a cancelled request withdraws its asks; its marketing pieces follow the event either way.
-        after: async () => [...(action === "cancel" ? await withdrawOpenAsks(card.id, actor, now) : []), ...(await syncPieces(card, trouble.card, actor))],
+        after: async () => [...(action === "cancel" ? await withdrawOpenAsks(card.id, actor, now) : []), ...(await syncLinked(card, trouble.card, actor))],
       };
     },
   });
@@ -373,7 +372,7 @@ export async function decideAsk(form: FormData): Promise<void> {
           const synced = await syncHolds(changed, ctx);
           const trouble = calendarTrouble(synced.card, synced.error);
           await store.save(trouble.card, holder.updatedAt);
-          notices.push(...trouble.notices, ...(o.action === "edit" ? [] : eventNotices(holder, trouble.card, actor, hd)), ...(await syncPieces(holder, trouble.card, actor)));
+          notices.push(...trouble.notices, ...(o.action === "edit" ? [] : eventNotices(holder, trouble.card, actor, hd)), ...(await syncLinked(holder, trouble.card, actor)));
         }
       }
     } else if (req.hold.calendarId) {
