@@ -4,7 +4,6 @@ import type { RowData } from "@/lib/card-row";
 import { STAGE_LABEL } from "@/lib/purchases/types";
 import { ESCALATE_DAYS, REMINDER_DAYS, daysWaiting, type PurchaseCard } from "@/lib/purchases/workflow";
 
-export { fmtDate, fmtDateTime, fmtMoney, fmtMonth } from "@/lib/format";
 
 /** A purchase's status in words, by its step: "Chair approval", "To pay", "Sent back". */
 export function purchaseStatus(card: PurchaseCard): string {
@@ -59,5 +58,4 @@ export const OK_TEXT: Record<string, string> = {
   resolve: "Recorded.",
   cancel: "Request cancelled.",
   attach: "Receipts added. Add more any time until the request is done.",
-  commented: "Comment added. The people on this request can see it.",
 };

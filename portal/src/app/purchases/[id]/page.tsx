@@ -1,3 +1,4 @@
+import { HINT, VERB } from "@/lib/glossary";
 import Link from "next/link";
 import { mayDeleteRequests } from "@/lib/card-delete";
 import { DeleteRequest } from "@/app/requests/DeleteRequest";
@@ -28,7 +29,8 @@ import { purchaseContext } from "@/lib/purchases/settings";
 import { KIND_LABEL, openExpectedReturns, paymentLabel, purchaseTotal, type Attachment } from "@/lib/purchases/types";
 import { RETURN_TARGET_LABEL, approvingAsDirector, canViewDetail, coveringApprover, isPurchaseCard, permission, returnTargets, type Action, type PurchaseCard } from "@/lib/purchases/workflow";
 import { actOnPurchase, commentOnPurchase } from "../actions";
-import { OK_TEXT, WaitingPill, fmtDate, fmtMoney, fmtMonth, purchaseStatus } from "../ui";
+import { OK_TEXT, WaitingPill, purchaseStatus } from "../ui";
+import { fmtDate, fmtMoney, fmtMonth } from "@/lib/format";
 import styles from "../purchases.module.css";
 import { todayLocal } from "@/lib/dates";
 import { Checkbox } from "@/components/Choices";
@@ -135,7 +137,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           {own && can("resubmit") && (
             <>
               {" "}
-              <Link href={`/purchases/${card.id}/edit`}>Make the changes and send it again</Link>
+              <Link href={`/purchases/${card.id}/edit`}>{VERB.makeChanges}</Link>
             </>
           )}
         </Note>
@@ -387,7 +389,9 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         </Button>
       </div>
     );
-    if (!approve && !pay && !books && !cancel && !sendBack) {
+    // Sent back to the requester: changing it and sending it again is their main step, as on an event.
+    const resubmit = own && can("resubmit");
+    if (!approve && !pay && !books && !cancel && !sendBack && !resubmit) {
       if (again) return { panel: again };
       const why = live && !own ? permission(pc, actor, p.stage === "payment" ? "pay" : p.stage === "books" ? "books" : "approve") : null;
       return { panel: why && !why.ok ? <p className="hint">{why.reason}</p> : null };
@@ -418,12 +422,16 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           Mark entered in QuickBooks
         </Button>
       </form>
+    ) : resubmit ? (
+      <Button href={`/purchases/${pc.id}/edit`} variant="primary">
+        {VERB.makeChanges}
+      </Button>
     ) : undefined;
     const approveForm = approve && (
       <form id="act-approve" action={actOnPurchase} className="stack">
         {base}
         <div className="grid">
-          <Field label="Note" hint="Optional with Approve; needed to send it back or decline it. Everyone on the request sees it.">
+          <Field label="Note" hint={HINT.reviewNote}>
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
           {returnTo}
@@ -440,7 +448,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
           <Button type="submit" name="action" value="return">
             Send back
           </Button>
-          <ConfirmButton variant="danger" danger name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
+          <ConfirmButton variant="danger" name="action" value="reject" title="Decline this request?" message="It ends here and the requester is told why. Add your reason in the note first." confirmLabel="Decline" cancelLabel="Go back">
             Decline
           </ConfirmButton>
         </div>
@@ -498,7 +506,7 @@ export default async function PurchaseDetail({ params, searchParams }: Params & 
         {cancel && (
           <form action={actOnPurchase} className="row">
             {base}
-            <ConfirmButton variant="danger" name="action" value="cancel" danger title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
+            <ConfirmButton variant="danger" name="action" value="cancel" title="Cancel this request?" message="It's withdrawn and nobody needs to act on it. You can't undo this." confirmLabel="Cancel the request" cancelLabel="Keep it">
               Cancel this request
             </ConfirmButton>
           </form>

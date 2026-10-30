@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { helpGuide, type HelpKey } from "@/lib/help";
 import { findModule } from "@/lib/modules";
+import { Button } from "./Button";
 import { Icon } from "./Icon";
 import styles from "./HelpBox.module.css";
 
@@ -47,10 +48,9 @@ export function HelpBox({ module }: { module: HelpKey }) {
   if (hidden) {
     return (
       <p className={styles.reopen} data-mod={accent}>
-        <button type="button" className={styles.reopenBtn} onClick={() => set(false)} aria-expanded="false">
-          <Icon name="help" size="sm" />
+        <Button variant="quiet" size="small" icon="help" onClick={() => set(false)} aria-expanded="false">
           How this works
-        </button>
+        </Button>
       </p>
     );
   }
@@ -63,9 +63,9 @@ export function HelpBox({ module }: { module: HelpKey }) {
         <h2 id={id} className={styles.title}>
           How this works
         </h2>
-        <button type="button" className={styles.close} onClick={() => set(true)} aria-label="Hide how this works" title="Hide">
-          <Icon name="x" />
-        </button>
+        <Button variant="quiet" size="small" icon="x" iconOnly onClick={() => set(true)} title="Hide" className={styles.close}>
+          Hide how this works
+        </Button>
       </div>
       <ol className={styles.steps}>
         {guide.short.map((s) => (
@@ -77,9 +77,9 @@ export function HelpBox({ module }: { module: HelpKey }) {
           More help: the full guide
           <Icon name="chevR" size="sm" />
         </Link>
-        <button type="button" className={styles.got} onClick={() => set(true)}>
+        <Button variant="quiet" size="small" onClick={() => set(true)}>
           Got it, hide this
-        </button>
+        </Button>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 @layer components {
-  .note { display: flex; gap: var(--s-2); align-items: flex-start; border-radius: 6px; padding: 10px 12px; font-size: var(--t-md); line-height: 1.45; }
+  .note { display: flex; gap: var(--s-2); align-items: flex-start; border-radius: var(--r-sm); padding: var(--s-3) var(--s-4); font-size: var(--t-md); line-height: var(--lh); }
   .note > svg { margin-top: 2px; }
   .note a { color: inherit; text-decoration: underline; font-weight: 600; }
   .info { background: var(--info-soft); color: var(--info); }

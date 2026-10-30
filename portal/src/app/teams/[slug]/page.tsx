@@ -1,10 +1,10 @@
+import { FlashNote } from "@/components/FlashNote";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Field, FormActions } from "@/components/Field";
 import { KeyValue } from "@/components/KeyValue";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { directory } from "@/lib/groups";
 import { nameResolver } from "@/lib/names";
@@ -24,7 +24,7 @@ async function findTeam(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { team } = await findTeam((await params).slug);
-  return { title: team ? `${team.name} · Who's who` : "Who's who" };
+  return { title: team ? `${team.name} · Who's Who` : "Who's Who" };
 }
 
 export default async function TeamPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string }> }) {
@@ -51,11 +51,13 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
       </span>
     ) : undefined;
   const editing = mayEditTeam(viewer, team);
+  // While the description form is open, its Save is the page's one main button.
+  const formOpen = editing && Boolean(edit || !team.description);
   const routes = requestRoutes(team.slug);
 
   return (
     <>
-      <Crumb trail={[{ href: "/teams", label: "Who's who" }]} here={team.pillar} />
+      <Crumb trail={[{ href: "/teams", label: "Who's Who" }]} here={team.pillar} />
       <ModuleHead
         title={team.name}
         lead={team.description ?? "What this team handles hasn't been written yet."}
@@ -67,19 +69,14 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               </Button>
             )}
             {routes.map((r, i) => (
-              <Button key={r.href} href={r.href} variant={i === 0 ? "primary" : "default"} icon="plus">
+              <Button key={r.href} href={r.href} variant={i === 0 && !formOpen ? "primary" : "default"} icon="plus">
                 {r.label}
               </Button>
             ))}
           </>
         }
       />
-      {(ok || error) && (
-        <div className={styles.notice}>
-          {ok && <Note tone="ok">Saved. Everyone sees the new description in Who&apos;s who.</Note>}
-          {error && <Note tone="bad">{error}</Note>}
-        </div>
-      )}
+      <FlashNote ok={ok ? "saved" : undefined} error={error} messages={{ saved: "Saved. Everyone sees the new description in Who's Who." }} />
 
       <div className={styles.columns}>
         <div className="stack">
@@ -110,7 +107,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
                 <p className="hint">Only the leaders so far.</p>
               )
             ) : (
-              <p className="hint">The full list is shown to the team itself and the IAR office. To ask the team for something, contact its chair or send a request.</p>
+              <p className="hint">Only the team and the IAR office see the full list.</p>
             )}
           </Panel>
         </div>
@@ -121,38 +118,37 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
               {team.slug === "marketing"
                 ? "Send a marketing request: graphics, signs, announcements, webpages and more. Someone on the team picks up new requests as they come in."
                 : team.slug === "maintenance" || team.slug === "tech"
-                  ? "Send an AV/IT/Maintenance request. It goes to the right team, and you can follow it until it's done."
+                  ? "Use Report a problem on IT & Maintenance. It goes to the right team, and you can follow it until it's done."
                   : "Most things go through an event request (a program or a room) or a payment request (paying for something). For anything else, contact the chair."}
             </p>
           </Panel>
 
           {editing &&
             (edit || !team.description ? (
-              <Panel title="What the team handles" right="You can change this">
+              <Panel title="What the team handles">
                 <form action={saveTeamInfo} className="stack">
                   <input type="hidden" name="slug" value={team.slug} />
-                  <Field label="In a sentence or two" hint="Shown in Who's who and searched when someone asks “who handles…?”. Up to 300 characters." htmlFor="team-desc">
+                  <Field label="In a sentence or two" hint="What people come to the team for. Shown in Who's Who and found by search." htmlFor="team-desc">
                     <textarea id="team-desc" name="description" rows={3} maxLength={300} defaultValue={team.description ?? ""} />
                   </Field>
                   <Field label="Google Chat space link (optional)" hint="Open the team's space in Google Chat and copy its link." htmlFor="team-chat">
                     <input id="team-chat" type="url" name="chatUrl" defaultValue={team.chatUrl ?? ""} placeholder="https://chat.google.com/room/…" maxLength={500} />
                   </Field>
                   <FormActions sticky={false}>
-                    <Button type="submit" variant="primary">
-                      Save
-                    </Button>
                     {edit && (
                       <Button href={`/teams/${team.slug}`} variant="quiet">
                         Cancel
                       </Button>
                     )}
+                    <Button type="submit" variant="primary">
+                      Save
+                    </Button>
                   </FormActions>
                 </form>
               </Panel>
             ) : (
               <Panel title="What the team handles">
-                <p className="hint">You can change what the team handles and its Chat link.</p>
-                <Button href={`/teams/${team.slug}?edit=1`} size="small">
+                                <Button href={`/teams/${team.slug}?edit=1`} size="small">
                   Change
                 </Button>
               </Panel>

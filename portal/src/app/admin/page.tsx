@@ -4,6 +4,8 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleHead } from "@/components/ModuleHead";
 import { Note } from "@/components/Note";
+import { FlashNote } from "@/components/FlashNote";
+import { ADMIN_OK } from "./sections";
 import { Panel } from "@/components/Panel";
 import { Section } from "@/components/Section";
 import { directory, portalPeople } from "@/lib/groups";
@@ -14,7 +16,7 @@ import { portalSettings } from "@/lib/portal-settings";
 import { FUNDS, shortFund } from "@/lib/purchases/accounts";
 import { QUEUE_ROLES, effectiveTeamFunds, groupSlug, membershipsOf, pillarsOf, suggestFund, teamPeople } from "@/lib/teams";
 import { requireViewer } from "@/lib/viewer";
-import { fmtDateTime } from "../purchases/ui";
+import { fmtDateTime } from "@/lib/format";
 import { addCard, removeCard, saveEventRules, savePoliciesDrive, saveRoom, saveTeamFund, startActingAs } from "./actions";
 import { auditStore } from "@/lib/audit";
 import { isDevAuth } from "@/lib/dev";
@@ -73,8 +75,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </>
         }
       />
-      {ok && <Note tone="ok">{ok}</Note>}
-      {error && <Note tone="bad">{error}</Note>}
+      <FlashNote ok={ok} error={error} messages={ADMIN_OK} />
 
       <Section open={open === "teams"} title={<>Committees and teams ({teams.length})</>}>
       <p className="hint">
@@ -326,7 +327,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <td>
                     <form action={removeCard}>
                       <input type="hidden" name="last4" value={c.last4} />
-                      <Button type="submit">Remove</Button>
+                      <Button type="submit" variant="quiet" size="small">
+                        Remove
+                      </Button>
                     </form>
                   </td>
                 </tr>
@@ -369,7 +372,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 label="Who"
                 people={signInChoices}
                 required
-                hint="Everyone who can use the portal."
               />
               <div>
                 <Button type="submit">Sign in as them</Button>

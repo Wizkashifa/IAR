@@ -31,7 +31,7 @@ import { historyOf } from "@/lib/kinds";
 import { DataTable, cell } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Portal measures" };
+export const metadata: Metadata = { title: "Portal Measures" };
 
 /** The most recent requests read; the range then keeps those sent in it. Enough for a year at IAR. */
 const RECENT = 5000;
@@ -87,7 +87,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <ModuleHead
-        title="Portal measures"
+        title="Portal Measures"
         lead="Everything moving through the portal right now, then how it's being used over time, counted from its own requests and feedback. Every number opens the requests behind it."
       />
       <RightNow cards={all} />

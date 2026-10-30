@@ -1,11 +1,12 @@
+import { FlashNote } from "@/components/FlashNote";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ConfirmButton } from "@/components/Confirm";
 import { EmptyState } from "@/components/EmptyState";
+import { Band } from "@/components/ItemList";
 import { ItemRow } from "@/components/ItemRow";
 import { ModuleHead } from "@/components/ModuleHead";
-import { Note } from "@/components/Note";
 import { Panel } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { canOpenCard } from "@/lib/access";
@@ -23,7 +24,7 @@ import styles from "./stuck.module.css";
 import { Chips } from "@/components/Chips";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "What's stuck" };
+export const metadata: Metadata = { title: "What's Stuck" };
 
 /** The edge and the days pill: red over a week, gold 3–7 days, blue under 3. */
 const AGE_STATE: Record<AgeGroup, RowState> = { week: "bad", days: "act", recent: "wait" };
@@ -118,9 +119,8 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="stack">
-      <ModuleHead title="What's stuck" lead="Every open request, longest wait first: how long it has waited at its step, and who it's waiting on. A reminder goes to them in Google Chat." />
-      {sp.error && <Note tone="bad">{sp.error}</Note>}
-      {sp.sent && !sp.error && <Note tone="ok">Reminder sent for {sp.sent}. It&apos;s in the request&apos;s history.</Note>}
+      <ModuleHead title="What's Stuck" lead="Every open request, longest wait first: how long it has waited at its step, and who it's waiting on. A reminder goes to them in Google Chat." />
+      <FlashNote ok={sp.sent ? "sent" : undefined} error={sp.error} messages={{ sent: "Reminder sent. It's in the request's history." }} />
 
       <div className={styles.filters}>
         <Chips label="Kind of request" chips={[{ label: "All", href: href({ committee }), on: !kind, count: all.length }, ...KINDS.map((k) => ({ label: k.many, href: href({ kind: k.type }), on: kind === k.type, count: all.filter((i) => i.card.type === k.type).length }))]} />
@@ -136,12 +136,9 @@ export default async function StuckPage({ searchParams }: { searchParams: Promis
           (Object.keys(AGE_LABEL) as AgeGroup[])
             .filter((g) => groups[g].length > 0)
             .map((g) => (
-              <section key={g} aria-label={AGE_LABEL[g]}>
-                <h3 className={styles.band}>
-                  {AGE_LABEL[g]} <span>{groups[g].length}</span>
-                </h3>
-                <ul className={styles.list}>{groups[g].map(row)}</ul>
-              </section>
+              <Band key={g} label={AGE_LABEL[g]} count={groups[g].length}>
+                {groups[g].map(row)}
+              </Band>
             ))
         )}
       </Panel>

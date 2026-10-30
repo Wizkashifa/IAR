@@ -1,3 +1,4 @@
+import { FlashNote } from "@/components/FlashNote";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { HelpBox } from "@/components/HelpBox";
@@ -50,8 +51,7 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
         lead={`Going away? Hand your approvals to someone so requests don't wait for you. Up to ${MAX_AWAY_DAYS} days at a time; it switches off by itself after your last day.`}
       />
       <HelpBox module="away" />
-      {ok === "saved" && <Note tone="ok">Saved. The person covering has been told.</Note>}
-      {ok === "cleared" && <Note tone="ok">Welcome back. Your approvals come to you again.</Note>}
+      <FlashNote ok={ok} messages={{ saved: "Saved. The person covering has been told.", cleared: "Welcome back. Your approvals come to you again." }} />
 
       {mine && (
         <Note>
@@ -67,10 +67,6 @@ export default async function AwayPage({ searchParams }: { searchParams: Promise
       <Panel title={mine ? "Change your time away" : "Set your time away"}>
         <AwayForm current={mine} today={today} people={choices} />
       </Panel>
-
-      <p className="hint">
-        This hands off approvals that wait on you by name, such as a committee&apos;s chair approval. Finance and executive steps already go to everyone in that group, so they don&apos;t need covering.
-      </p>
 
       {covering.length > 0 && (
         <Panel title="You're covering for" right={<span>{covering.length}</span>} flush>

@@ -37,7 +37,7 @@ function ticketNext(card: TicketCard, viewer: Viewer, names: NameOf): string {
   const who = (you: string, they: string) => (t.assigneeEmail ? s.does(t.assigneeEmail, you, they) : `${team} ${they}`);
   switch (t.status) {
     case "new":
-      return `${team} picks it up.${mine ? ` You'll get a notification when it's ${closesOnDone(t.kind) ? "done" : "fixed"}.` : ""}`;
+      return `${team} picks it up.${mine ? ` You'll be notified when it's ${closesOnDone(t.kind) ? "done" : "fixed"}.` : ""}`;
     case "assigned":
       return `${who("start", "starts")} the work.`;
     case "in_progress":

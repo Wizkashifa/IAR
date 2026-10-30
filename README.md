@@ -17,7 +17,6 @@ Modules: **My Requests**, **Purchase Requests** (payments, reimbursements, card 
 - **[ops/go-live/](ops/go-live/)** — the setup command and the blank members template (`members-template.xlsx`, no people in it).
 - **[docs/launch.md](docs/launch.md)** — launching and running the portal: what to collect, running go-live, the Shared Drives and Portal Settings to set, the smoke test, the weekly check, and turning it off.
 - **[docs/setup.md](docs/setup.md)** — every setup step by hand, as a reference and fallback.
-- **[app/index.html](app/index.html)** — the original clickable Purchase Requests prototype (sample data only, nothing saved), now superseded by the module in `portal/`. Live at https://claude.ai/artifact/RBKN5GrTWCqvFfDTqq5RzB.
 
 ## Picking this up in a new chat
 

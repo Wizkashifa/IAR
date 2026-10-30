@@ -79,7 +79,7 @@ export type RequestRoute = { href: string; label: string };
  */
 export function requestRoutes(slug: string): RequestRoute[] {
   if (slug === "marketing") return [{ href: "/marketing/new", label: "Marketing request" }];
-  if (slug === "maintenance" || slug === "tech") return [{ href: "/it-maintenance/new", label: "AV/IT/Maintenance" }];
+  if (slug === "maintenance" || slug === "tech") return [{ href: "/it-maintenance/new", label: "Report a problem" }];
   return [
     { href: "/events/new", label: "Event request" },
     { href: "/purchases/new", label: "Payment request" },
@@ -135,9 +135,9 @@ export const TOPICS: { words: string[]; text: string; href: string; label: strin
   },
   {
     words: ["broken", "repair", "wifi", "sound system", "projector", "leak", "lights"],
-    text: "For anything broken or needed in the building, IT or A/V, send an AV/IT/Maintenance request and follow it until it's fixed.",
+    text: "For anything broken or needed in the building, IT or A/V, use Report a problem on IT & Maintenance and follow it until it's fixed.",
     href: "/it-maintenance/new",
-    label: "AV/IT/Maintenance",
+    label: "Report a problem",
   },
 ];
 

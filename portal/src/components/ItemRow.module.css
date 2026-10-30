@@ -1,5 +1,5 @@
 @layer components {
-  .item { display: flex; align-items: stretch; border-top: 1px solid var(--line); list-style: none; transition: background-color 0.12s; }
+  .item { display: flex; align-items: stretch; border-top: 1px solid var(--line); list-style: none; transition: background-color 0.12s var(--ease); }
   .item:first-child { border-top: 0; }
   /* Only rows that open something light up. */
   .opens:hover { background: var(--surface-2); }
@@ -34,7 +34,7 @@
   .extra { color: var(--ink-3); font-size: var(--t-sm); overflow-wrap: anywhere; margin-top: 2px; }
   .flags { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-1); }
   .r { display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
-  .chev { color: var(--ink-3); opacity: 0; transition: opacity var(--speed-2), transform var(--speed-2) var(--ease); }
+  .chev { color: var(--ink-3); opacity: 0; transition: opacity var(--speed-2) var(--ease), transform var(--speed-2) var(--ease); }
   .link:hover .chev, .link:focus-visible .chev { opacity: 1; transform: translateX(var(--nudge)); }
   /* Phones: the status goes under the title, and there's no hover to show the chevron. */
   @media (max-width: 520px) {

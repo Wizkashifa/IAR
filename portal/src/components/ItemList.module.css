@@ -3,13 +3,13 @@
   .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); }
   .list { margin: 0; padding: 0; }
   /* Section bands, as in the demo: small capitals on the sunken surface. */
-  .band { display: flex; align-items: center; gap: 6px; margin: 0; padding: 10px 16px 6px; font-family: var(--font); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); background: var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .band { display: flex; align-items: center; gap: var(--s-1h); margin: 0; padding: 10px var(--s-4) var(--s-1h); font-family: var(--font); font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); background: var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .band span { font-weight: 500; }
   section:first-child > .band, .folded:first-child > .band { border-top: 0; }
   .folded > summary { cursor: pointer; list-style: none; }
   .folded > summary::-webkit-details-marker { display: none; }
   .folded:not([open]) > summary { border-bottom: 0; }
-  .turn { transition: transform 0.12s; }
+  .turn { transition: transform var(--speed) var(--ease); }
   .folded[open] .turn { transform: rotate(90deg); }
   .folded li { opacity: 0.85; }
 }

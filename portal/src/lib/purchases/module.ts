@@ -58,7 +58,7 @@ function purchaseNext(card: PurchaseCard, viewer: Viewer, names: NameOf): string
     case "executive":
       return acts("executive") ? "You approve it as an executive, then the finance office pays it." : `An executive approves it, then the finance office pays it.${notified}`;
     case "payment":
-      return `${finance} ${acts("finance") ? "pay" : "pays"} ${p.payee || "it"}.${mine ? " You'll get a notification when it's paid." : ""}`;
+      return `${finance} ${acts("finance") ? "pay" : "pays"} ${p.payee || "it"}.${mine ? " You'll be notified when it's paid." : ""}`;
     case "books":
       return `${finance} ${acts("finance") ? "enter" : "enters"} it in QuickBooks.`;
     case "done": {

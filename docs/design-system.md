@@ -46,11 +46,26 @@ The demo first used Source Sans 3, Outfit and Fraunces. The brand guide replaced
 - **Empty state:** a small gold lantern, an optional serif title, and one helpful sentence, centred.
 
 ### 4. Quiet controls
-- **Buttons:** 36px tall (48px on phones), a `--ctl` border, white, with a tiny shadow. Only the **primary** button is solid green with white text (gold with green text in dark mode), 44px tall, and each page has exactly one, so there is one obvious next step. A list's empty-state button, a settings form or a per-task action is secondary.
-- **Inputs:** a `--ctl` border; focus shows a `--focus` border and ring. On phones they're 48px with 16px text.
+- **Buttons:** one height for every button and field (`--control-h`: 40px with a mouse, 48px on a phone or touch screen; small buttons `--control-h-sm`: 32px, 44px on touch). The default button has a `--ctl` border, white, with a tiny shadow. The **primary** button is solid green with white text, the same height, and each page has exactly one, so there is one obvious next step. **Quiet** (no border) is for Cancel, Clear, Remove and other secondary choices; **danger** (red words) is for withdraw, cancel, decline and delete, and its "Yes" in the confirm box is filled red. A form's row is Cancel (quiet) first, then the main button. An action that changes something is a button, never a bare text link; a button that only goes back a page is a breadcrumb instead. Portal Settings uses default Save buttons on purpose: it has many small forms on one page.
+- **Breakpoints:** 520px (small phone), 640px (phone) and 1000px (the menu sits beside the page). Two-column layouts inside the page switch with `@container page (min-width: 760px)`, by the room beside the menu, not the window. Touch sizing follows `(pointer: coarse)` too, so tablets and phones on their side get 44px targets. `guard.test.ts` rejects any other media-query width.
+- **Inputs:** a `--ctl` border; focus shows a `--focus` border and ring. They're `--control-h` tall with `--field-font` text (16px on touch, so iOS doesn't zoom), Mantine's fields included (`components/theme.ts`).
 - **Chips** for filters, and a **toast** with Undo for quick confirmations.
 - **Tabs** for the requester's and the team's views of a module ("Your requests" and "Team work" or "Team tickets"), with the team's other pages as quiet links at the end.
-- **Motion:** Home's sections fade in and rise 10px, 80ms apart (`.enter`); work pages appear at once; link cards lift 3px on hover; row chevrons slide; buttons press in; the drawer slides and the account menu drops in. All of it switches off with the system's reduce-motion setting.
+- **Motion:** Home's sections fade in and rise 10px, 80ms apart (`.enter`); work pages appear at once; link cards lift 3px on hover; row chevrons slide; buttons press in; the drawer slides and the account menu drops in. Everything eases out with `--ease`: it starts quickly and settles, never easing in. Each CSS transition and animation names `var(--ease)` (the browser's default `ease` starts slowly), Mantine's pop-ups take it from `components/theme.ts`, and `guard.test.ts` fails anything else. All of it switches off with the system's reduce-motion setting.
+
+### 4b. Helper text: when to use which
+
+Captions and advice earn their place only when they tell volunteers something they can't see: a consequence, a deadline, who sees it, a rule. Don't restate a heading, a label, a button or the help box on the same screen.
+
+- **Page lead** (`ModuleHead lead`): one sentence on what the page is for. A module's landing page uses its `summary` from `lib/modules.ts`.
+- **Help box** (`HelpBox`): only on a module's landing page, in the requester's view (not on team tabs). Nothing else on the screen repeats its steps.
+- **Field hint** (`Field`/`Choices` `hint`, always below): a format, a consequence or who sees it. A consequence goes in the hint, never in brackets in the label.
+- **Say it once:** a field hint only says what the label, the control, the upload box (it already shows the size limit) or the checks panel doesn't. Hint text more than one page uses lives in lib (`lib/glossary.ts` `HINT`, or the module's types or forms), not in the page.
+- **Panel note** (`PanelNote`, above a panel's contents): what the section is or who sees it. **Panel foot** (`PanelFoot`, below): totals, where the data comes from, a link to more. Not a loose `<p className="hint">` next to the panel.
+- **Note** (`Note`): only for this request's or this page's state (sent back, away, a deadline close).
+- **Confirmations** after a save: a toast through `FlashNote`, never a note built from the address bar.
+- **Empty lists** (`EmptyState`): "You haven't … yet." for your own list, "Nothing … right now." for others.
+- **Words:** "you'll be notified" (say "a Google Chat message" only when the channel matters); name the team rather than "we"; point volunteers to their chair or the IAR office, never to Portal Settings or Google Groups. Shared verbs live in `lib/glossary.ts`.
 
 ### 5. Icons
 About 40 line icons (Lucide/Feather style, 16px, 2px stroke) mark navigation, buttons and empty states. They make scanning faster.

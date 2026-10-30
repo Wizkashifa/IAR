@@ -105,6 +105,18 @@ export function ItemList({
   );
 }
 
+/** One banded section of rows built by the page itself (What's stuck adds a reminder button to each): the same band as ItemList's. */
+export function Band({ label, count, children }: { label: string; count: number; children: ReactNode }) {
+  return (
+    <section aria-label={label}>
+      <h3 className={styles.band}>
+        {label} <span>{count}</span>
+      </h3>
+      <ul className={styles.list}>{children}</ul>
+    </section>
+  );
+}
+
 function Rows({ rows }: { rows: RowData[] }) {
   return (
     <ul className={styles.list}>

@@ -13,7 +13,7 @@ import { Rows } from "@/components/ItemRow";
 import { SearchForm } from "@/components/SearchForm";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Who's who" };
+export const metadata: Metadata = { title: "Who's Who" };
 
 export default async function WhosWhoPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
@@ -29,7 +29,7 @@ export default async function WhosWhoPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="stack">
-      <ModuleHead title="Who's who" lead="Every committee and team at IAR, who leads it, and how to ask it for something." />
+      <ModuleHead title="Who's Who" lead="Every committee and team at IAR, who leads it, and how to ask it for something." />
 
       <SearchForm action="/teams" label="Who handles…" value={query} placeholder="Who handles keys, the sound system, reimbursements…?" />
 

@@ -46,7 +46,7 @@ export function AddReceipts({ action, fields }: { action: (form: FormData) => Pr
         camera
         maxFiles={10}
         accept={RECEIPT_TYPES}
-        hint="Up to 10 files at a time. Have more? Add them in a few goes, until the request is done."
+        hint="Up to 10 at a time. You can add more later."
       />
       <div>
         <Send />

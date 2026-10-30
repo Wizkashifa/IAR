@@ -6,6 +6,7 @@
  */
 import { MARKETING_KINDS, type MarketingKind } from "./types";
 import { daysBetween, isDate } from "../dates";
+import { andList } from "../text";
 
 /** A piece for an event is due this many days before the event's first date, unless the requester picks another day. */
 export const PIECE_LEAD_DAYS = 10;
@@ -42,7 +43,7 @@ export const PIECES: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-const DUE_HINT = "Marketing takes 1–2 weeks. Give at least 2 weeks if you can.";
+const DUE_HINT = "Give Marketing at least 2 weeks.";
 
 export const ANNOUNCE_EXAMPLE =
   "Girls ages 5-13 are invited to join our Saturday Girls' Program starting on September 10th. This program offers fun activities, great company and Islamic reminders. Join us on Saturdays from 2:00 - 4:30. Registration is required!";
@@ -71,7 +72,7 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     label: "Announcement or community update",
     blurb: "A notice for the newsletter, website, social media or after prayers.",
     fields: [
-      { key: "text", label: "Suggested announcement text to publish", kind: "textarea", required: true, example: `Example: ${ANNOUNCE_EXAMPLE}`, hint: "IAR Marketing may edit it for clarity, grammar and professionalism." },
+      { key: "text", label: "Suggested announcement text to publish", kind: "textarea", required: true, example: `Example: ${ANNOUNCE_EXAMPLE}`, hint: "Marketing may edit it." },
       { key: "due", label: "When does this need to be published by?", kind: "date", required: true },
     ],
   },
@@ -101,7 +102,7 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     blurb: "A short address that sends people to a page or form, like raleighmasjid.org/po.",
     note: "For a quick short link, enter your link at iar.to/new: you'll get an email with the short link and a QR code within seconds. Use this request for a custom redirect.",
     fields: [
-      { key: "from", label: "Link to redirect from", kind: "text", required: true, placeholder: "raleighmasjid.org/post", hint: "Valid domains: raleighmasjid.org, islam1.org or iar.to", redirectFrom: true },
+      { key: "from", label: "Link to redirect from", kind: "text", required: true, placeholder: "raleighmasjid.org/post", redirectFrom: true },
       { key: "to", label: "Link to send people to", kind: "url", required: true, placeholder: "https://forms.gle/…" },
     ],
   },
@@ -136,8 +137,8 @@ export const MARKETING_TYPES: Record<MarketingKind, MarketingType> = {
     blurb: "One piece of marketing for an event: a flyer, posts, a video, a banner and so on.",
     fields: [
       { key: "piece", label: "What do you need?", kind: "radio", required: true, options: PIECES },
-      { key: "desc", label: "What it's for and any special asks", kind: "textarea", hint: "Marketing already sees the event's details, brief and images. Add only what's special about this piece: size, wording, where it goes." },
-      { key: "due", label: "When is it needed by?", kind: "date", required: true, hint: `Marketing takes 1–2 weeks. We suggest ${PIECE_LEAD_DAYS} days before the event.` },
+      { key: "desc", label: "What it's for and any special asks", kind: "textarea", hint: "Marketing already has the event's details. Add only what's special: size, wording, where it goes." },
+      { key: "due", label: "When is it needed by?", kind: "date", required: true, hint: DUE_HINT },
     ],
   },
 };
@@ -262,7 +263,7 @@ export function parseMarketingInput(raw: MarketingInput, ctx: { today: string; c
     }
     if (f.redirectFrom) {
       const src = redirectSource(v);
-      if (!src) errors.push(`The link to redirect from must be on raleighmasjid.org, islam1.org or iar.to, with something after the domain (like raleighmasjid.org/post).`);
+      if (!src) errors.push(`The link to redirect from must be on ${andList(REDIRECT_DOMAINS, "or")}, with something after the domain (like raleighmasjid.org/post).`);
       else answers[f.key] = src;
       continue;
     }

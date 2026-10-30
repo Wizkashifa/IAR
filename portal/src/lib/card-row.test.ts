@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import type { Card } from "./cards";
 import { cardRow, emailsIn, rowState, subText, whoText } from "./card-row";
 import { slotAsksFor, teamTasksFor } from "./needs-you";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import type { EventCard } from "./events/workflow";
 import type { SlotRequest } from "./events/slot-requests";
 

@@ -4,26 +4,23 @@
   .card {
     display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4);
     border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
-    box-shadow: inset 4px 0 0 var(--line); scroll-margin-top: 80px;
+    box-shadow: inset 4px 0 0 var(--line); scroll-margin-top: calc(var(--top-h, 64px) + var(--s-3));
   }
   .hot { box-shadow: inset 4px 0 0 var(--bad); }
   .card:target { border-color: var(--gold); }
   .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); }
-  .title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--ink); }
+  .title { display: inline-flex; align-items: center; min-height: max(24px, var(--tap)); font-family: var(--font-head); font-weight: 700; font-size: var(--t-h2); color: var(--ink); }
   .title:hover { text-decoration: underline; }
   .id { color: var(--ink-3); font-size: var(--t-sm); }
-  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
-  .where { display: flex; gap: 6px; align-items: flex-start; margin: 0; color: var(--ink-2); font-size: var(--t-md); }
+  .pills { display: flex; flex-wrap: wrap; gap: var(--s-1h); }
+  .where { display: flex; gap: var(--s-1h); align-items: flex-start; margin: 0; color: var(--ink-2); font-size: var(--t-md); }
   .where a { color: var(--accent-text); }
   .who { display: block; margin: 0; color: var(--ink-3); font-size: var(--t-sm); }
 
   /* Big tap targets: the buttons fill the card on a phone, sit side by side when there's room. */
   .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-2); margin-top: var(--s-1); }
-  .actions > form > button, .actions > form > a { min-height: 48px; font-size: var(--t-base); }
-  /* Folded steps span the card, with phone-sized buttons and summary. */
+  /* Folded steps span the card. */
   .tap { grid-column: 1 / -1; }
-  .tap > summary { min-height: 44px; }
-  .tap button { min-height: 48px; }
 
   .upcoming { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s-2); }
 }

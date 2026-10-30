@@ -6,10 +6,9 @@ import { TEAM_LABEL, URGENCY, type TicketStatus, type Urgency } from "@/lib/tick
 import { type TicketCard, lateText } from "@/lib/tickets/workflow";
 import styles from "./tickets.module.css";
 
-export { fmtDate, fmtDateTime, fmtDay } from "@/lib/format";
 
 export const FLASH: Record<string, string> = {
-  reported: "Thank you. The team has been told, and you'll hear from the portal as it moves.",
+  reported: "Thank you. The team has been notified, and so will you be as it moves.",
   assign: "Assigned.",
   start: "Marked as being worked on. The reporter has been told.",
   wait: "Marked as waiting on parts. The reporter has been told.",
@@ -19,9 +18,8 @@ export const FLASH: Record<string, string> = {
   reopen: "Reopened. It's back with the team.",
   cancel: "Cancelled.",
   photos: "Photos added.",
-  watch: "You're following this ticket. You'll hear when it moves.",
+  watch: "You're following this ticket. You'll be notified when it moves.",
   unwatch: "You've stopped following this ticket.",
-  commented: "Comment added. The people on this ticket can see it.",
   linked: "Linked. Both tickets show the link.",
   unlinked: "Link removed from both tickets.",
   added: "Schedule added.",
@@ -88,10 +86,10 @@ export function TicketBoard({ cards, showTeam, names }: { cards: TicketCard[]; s
           .sort((a, b) => URGENCY_ORDER.indexOf(a.ticket.urgency) - URGENCY_ORDER.indexOf(b.ticket.urgency) || a.ticket.statusSince.localeCompare(b.ticket.statusSince));
         return (
           <section key={col.title} className={styles.col} aria-label={col.title}>
-            <h3 className={styles.colHead}>
+            <h2 className={styles.colHead}>
               <span>{col.title}</span>
               <span className={styles.count}>{items.length}</span>
-            </h3>
+            </h2>
             {items.length === 0 && <p className="hint">None</p>}
             {items.map((c) => (
               <Link key={c.id} href={`/it-maintenance/${c.id}`} className={styles.card}>

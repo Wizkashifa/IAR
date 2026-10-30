@@ -9,9 +9,7 @@ const nextConfig = {
   async redirects() {
     return [
       { source: "/admin/measures", destination: "/measures", permanent: false },
-      // Team Queues is retired: old Chat alerts for a team go straight to its page (app/queues/page.tsx handles the rest).
-      { source: "/queues", has: [{ type: "query", key: "team", value: "marketing" }], destination: "/marketing?view=team", permanent: false },
-      { source: "/queues", has: [{ type: "query", key: "team", value: "av" }], destination: "/it-maintenance?view=team", permanent: false },
+      // Team Queues is retired: app/queues/page.tsx sends old Chat links to each team's page.
       // The Finance desk folded into Payments: its lists are views there, and card statements moved up a level.
       { source: "/purchases/finance/statement", destination: "/purchases/statement", permanent: false },
       { source: "/purchases/finance", has: [{ type: "query", key: "tab", value: "books" }], destination: "/purchases?view=books", permanent: false },

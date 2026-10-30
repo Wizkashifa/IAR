@@ -82,12 +82,13 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           <>
             {teamsOf(actor).length > 0 && <Button href="/it-maintenance/today" icon="sun">My work today</Button>}
             <Button variant="primary" icon="plus" href="/it-maintenance/new">
-              AV/IT/Maintenance
+              Report a problem
             </Button>
           </>
         }
       />
-      <HelpBox module="it-maintenance" />
+      {/* The requester's steps; the team's tab is their own work. */}
+      {!onTeamTab && <HelpBox module="it-maintenance" />}
       <FlashNote ok={sp.ok} error={sp.error} messages={MESSAGES} />
 
       {worker && (
@@ -130,10 +131,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           <ItemList
             title="Your requests"
             sections={sectionsOf(groupedRows(groupForViewer(myTickets, needsActor), needsActor, rowOpts))}
-            empty="Nothing yet. Use “AV/IT/Maintenance” when something breaks or you need something from IT, A/V or maintenance."
+            empty="You haven't reported anything yet."
             emptyAction={
               <Button size="small" href="/it-maintenance/new">
-                AV/IT/Maintenance
+                Report a problem
               </Button>
             }
           />

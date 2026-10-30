@@ -4,6 +4,7 @@
  * the status in words, and the colour of its edge. Plain functions, so a
  * module page builds its list in one line (components/ItemList.tsx).
  */
+import { fmtMoney } from "./format";
 import type { Card } from "./cards";
 import { hrefOf } from "./kinds";
 import { eventFlags } from "./events/rules";
@@ -44,7 +45,6 @@ export type RowOptions = {
   ctx?: NeedsContext;
 };
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 
@@ -91,7 +91,7 @@ export function subText(card: Card): string {
   else if (card.marketing) parts.push(MARKETING_TYPES[card.marketing.kind]?.label ?? "Marketing", card.committee);
   else parts.push(card.committee);
   if (card.event && card.eventDate) parts.push(day(card.eventDate));
-  if (card.purchase && typeof card.amount === "number") parts.push(money(card.amount));
+  if (card.purchase && typeof card.amount === "number") parts.push(fmtMoney(card.amount));
   if (card.marketing?.doneBy) parts.push(`done by ${day(card.marketing.doneBy)}`);
   return parts.filter(Boolean).join(" · ");
 }

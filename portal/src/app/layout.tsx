@@ -28,7 +28,8 @@ export const metadata: Metadata = {
   applicationName: `${ORG.shortName} Portal`,
 };
 
-export const viewport: Viewport = { themeColor: "#0b3a24" };
+// viewportFit "cover": the page reaches under a phone's notch and home bar, and the env(safe-area-inset-*) padding keeps content clear of them.
+export const viewport: Viewport = { themeColor: "#0b3a24", viewportFit: "cover" };
 
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {
@@ -36,12 +37,12 @@ const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admi
   "purchase-requests": { group: "request", label: "Payments", icon: MODULE_ICON.pay },
   "marketing-requests": { group: "request", label: "Marketing Requests", icon: MODULE_ICON.mkt },
   "it-maintenance": { group: "request", label: "IT & Maintenance", icon: MODULE_ICON.it },
-  "whats-stuck": { group: "team", label: "What's stuck", icon: "flag" },
+  "whats-stuck": { group: "team", label: "What's Stuck", icon: "flag" },
   calendar: { group: "iar", label: "Calendar", icon: "calendar" },
   "run-sheet": { group: "iar", label: "Daily Run Sheet", icon: "book" },
-  "whos-who": { group: "iar", label: "Who's who", icon: "building" },
+  "whos-who": { group: "iar", label: "Who's Who", icon: "building" },
   library: { group: "files", label: "Library", icon: "folder" },
-  measures: { group: "team", label: "Portal measures", icon: "pie" },
+  measures: { group: "team", label: "Portal Measures", icon: "pie" },
   admin: { group: "admin", label: "Portal Settings", icon: "sliders" },
 };
 
@@ -91,12 +92,13 @@ async function SignedIn({ viewer, children }: { viewer: NonNullable<Awaited<Retu
     { label: "IAR", links: linksIn("iar") },
     { label: "Files", links: linksIn("files") },
     { label: "Admin", links: linksIn("admin") },
-    { label: "You", links: [{ href: "/away", label: "Out of office", icon: "clock" }] },
   ];
   const groups = all.filter((g) => g.links.length > 0);
   const places: SearchPlace[] = [
     ...groups.flatMap((g) => g.links.map((l) => ({ label: l.label, href: l.href, icon: l.icon }))),
     { label: "Notifications", href: "/notifications", icon: "bell" },
+    // In the account menu rather than the side menu, but still found by search.
+    { label: "Out of office", href: "/away", icon: "clock" },
   ];
   const account = { name: viewer.name, email: viewer.email, away: Boolean(away && isActive(away, todayLocal())), dev: viewer.dev, supportAdmin: viewer.supportAdmin?.name };
   return (

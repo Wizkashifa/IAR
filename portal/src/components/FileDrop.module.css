@@ -1,5 +1,5 @@
 @layer components {
-  .zone { position: relative; border: 1px dashed var(--line); border-radius: var(--r); background: var(--surface); padding: var(--s-4); cursor: pointer; transition: border-color var(--speed), background-color var(--speed); }
+  .zone { position: relative; border: 1px dashed var(--line); border-radius: var(--r); background: var(--surface); padding: var(--s-4); cursor: pointer; transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease); }
   .zone:hover, .zone[data-accept] { border-color: var(--gold); background: var(--surface-2); }
   .zone[data-reject] { border-color: var(--bad); background: var(--bad-soft); }
   .inner { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; color: var(--ink-2); font-size: var(--t-md); pointer-events: none; }

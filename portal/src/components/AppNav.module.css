@@ -15,13 +15,14 @@
   /* "Skip to content": hidden until it gets keyboard focus. */
   .skip {
     position: absolute; left: var(--s-3); top: -100px; z-index: 50;
+    display: inline-flex; align-items: center; min-height: max(36px, var(--tap));
     padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
     background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-2);
   }
   .skip:focus { top: var(--s-3); outline: none; box-shadow: var(--ring), var(--shadow-2); text-decoration: none; }
 
   .brand {
-    display: flex; align-items: center; gap: var(--s-2); margin-right: var(--s-3);
+    display: flex; align-items: center; gap: var(--s-2); margin-right: var(--s-3); min-height: max(24px, var(--tap));
     font-family: var(--font-head); font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
     color: var(--cream); text-decoration: none; white-space: nowrap;
   }
@@ -40,7 +41,7 @@
     position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none;
     width: max(36px, var(--tap)); height: max(36px, var(--tap));
     border: 1px solid var(--gold-line); border-radius: var(--r-sm); color: var(--cream);
-    transition: border-color var(--speed), color var(--speed), background-color var(--speed);
+    transition: border-color var(--speed) var(--ease), color var(--speed) var(--ease), background-color var(--speed) var(--ease);
   }
   .iconBtn:hover, .iconBtn[aria-current="page"] { border-color: var(--gold); color: var(--gold-light); background: var(--gold-wash); text-decoration: none; }
   /* An icon button with a word beside it (Help). */
@@ -61,12 +62,15 @@
     background: linear-gradient(to right, var(--nav-bg) 220px, transparent 220px);
     min-height: calc(100vh - var(--top-h)); min-height: calc(100dvh - var(--top-h));
   }
+  /* --gutter-l/-r: the page's side padding, wider past a phone's notch. A bar that runs edge to edge (a form's Send bar) bleeds by the same. */
   .main {
+    --gutter-l: max(var(--s-4), env(safe-area-inset-left, 0px)); --gutter-r: max(var(--s-4), env(safe-area-inset-right, 0px));
     min-width: 0; padding-block: 28px 64px;
-    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-left: var(--gutter-l); padding-right: var(--gutter-r);
   }
   .main:focus { outline: none; }
-  .mainInner { max-width: 1040px; margin: 0 auto; }
+  /* Pages lay out two columns by the room they have beside the menu (@container), not by the window's width. */
+  .mainInner { max-width: 1040px; margin: 0 auto; container: page / inline-size; }
 
   /*
    * The menu: dark green with IAR's pattern, in both themes; a sidebar on wide screens. It scrolls when it's taller than
@@ -93,7 +97,7 @@
   .link {
     display: flex; align-items: center; gap: 10px; min-height: max(40px, var(--tap)); padding: 6px 8px; border-radius: var(--r-sm);
     color: var(--nav-text); font-weight: 500; text-decoration: none;
-    transition: background-color var(--speed), color var(--speed);
+    transition: background-color var(--speed) var(--ease), color var(--speed) var(--ease);
   }
   .link:hover { background: var(--cream-wash); color: var(--nav-text); text-decoration: none; }
   .link:focus-visible { outline: none; box-shadow: var(--ring-on-green); }
@@ -112,13 +116,13 @@
   @media (max-width: 999.98px) {
     .menuBtn { display: inline-flex; }
     .desk { display: none; }
-    .shell { grid-template-columns: minmax(0, 1fr); background: none; }
+    .shell { grid-template-columns: minmax(0, 1fr); background: none; --top-h: calc(66px + env(safe-area-inset-top, 0px)); }
     .rail {
       position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; height: auto; width: min(300px, 86vw);
       max-height: 100vh; max-height: 100dvh;
       padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-left: max(12px, env(safe-area-inset-left, 0px));
       box-shadow: var(--shadow-2); transform: translateX(-24px); opacity: 0; visibility: hidden;
-      transition: transform 0.28s var(--ease), opacity 0.28s var(--ease), visibility 0.28s;
+      transition: transform 0.28s var(--ease), opacity 0.28s var(--ease), visibility 0.28s var(--ease);
     }
     .rail.open { transform: none; opacity: 1; visibility: visible; }
     .mob { display: flex; }
@@ -152,7 +156,7 @@
       background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-2); border: 3px solid var(--surface);
     }
   }
-  @media (max-width: 720px) {
+  @media (max-width: 640px) {
     .mark { height: 34px; }
     .brand { font-size: 18px; margin-right: 0; }
   }

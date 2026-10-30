@@ -74,20 +74,13 @@ export default async function NewMarketing({ searchParams }: { searchParams: Pro
   return (
     <div className="stack loose">
       <div className="stack tight">
-        {crumb}
-        <ModuleHead accent="mkt"
-          title={t.label}
-          lead={t.blurb}
-          actions={
-            <Button href="/marketing/new" icon="chevL">
-              Change type
-            </Button>
-          }
-        />
+        {/* The middle step goes back to the list of types. */}
+        <Crumb trail={[{ href: "/marketing", label: "Marketing Requests" }, { href: "/marketing/new", label: "New request" }]} here={t.label} />
+        <ModuleHead accent="mkt" title={t.label} lead={t.blurb} />
       </div>
       {t.note && <Note>{t.note}</Note>}
       {committees.length === 0 && (
-        <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee chair to add you to its Google Group.</Note>
+        <Note tone="warn">You&apos;re not on a committee or team in the portal yet, so there&apos;s nothing to request for. Ask your committee's chair to add you.</Note>
       )}
       {copy && source && <Note>{copiedNote(source.id)}</Note>}
       <MarketingForm action={createMarketing} kind={type} committees={committees} initial={copy} today={today} cancelHref="/marketing" submitLabel="Send request" uploads={Boolean(await marketingFolder())} />

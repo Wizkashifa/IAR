@@ -1,3 +1,4 @@
+import { slotAsksFor } from "@/lib/needs-you";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
@@ -37,7 +38,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     actorFor(viewer),
     store.listByOwner(viewer.email),
     store.listByType("event", ["submitted", "in_review", "approved"]),
-    (await slotRequestStore()).listWaitingOn(addressesOf(viewer)),
+    // Only the asks this person can decide, as on Home, so the two counts agree.
+    (await slotRequestStore()).listWaitingOn(addressesOf(viewer)).then((a) => slotAsksFor(a, ev)),
     agendaBetween(date, date),
   ]);
   const events = open.filter(isEventCard);
@@ -64,7 +66,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     <div className="stack loose">
       <ModuleHead accent="events"
         title="Events & Rooms"
-        lead="Request a program or event and book its room. Rooms are checked against the IAR calendar as you fill in the request."
+        lead="Request a program or event and book its room."
         actions={<Button href="/events/new" variant="primary" icon="plus">New event request</Button>}
       />
       <HelpBox module="events" />
@@ -82,14 +84,14 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
       <ItemList title="Upcoming at IAR" rows={rowsFor(soon, actor, o)} right={<span>{soon.length}</span>} empty="Nothing else booked through the portal yet." />
 
-      <Panel title="Room calendar" right="Pick a room and day to see what's booked">
+      <Panel title="Room calendar">
         {room ? (
           <>
             <RoomDay options={ctx.bookable.map((r) => ({ id: r.id, name: r.name }))} value={room.id} date={date} today={ctx.today} />
             <Timeline items={items} caption={`${room.name} · ${dayText(date)}`} />
           </>
         ) : (
-          <p className="hint">No rooms are set up for booking yet. An admin turns rooms on in Portal Settings.</p>
+          <p className="hint">No rooms can be booked yet. Ask the IAR office.</p>
         )}
       </Panel>
     </div>

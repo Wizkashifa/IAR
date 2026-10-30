@@ -12,6 +12,7 @@
  * the statement's "Total cardholder new activity" must match the rows, or
  * nothing is imported.
  */
+import { fmtMoney } from "../format";
 import { findAccount } from "./accounts";
 import type { LineItem } from "./types";
 
@@ -146,10 +147,10 @@ export function parseStatement(lines: string[]): ParsedStatement {
   if (grand === null) errors.push("The statement's “Total cardholder new activity” couldn't be found.");
   if (cards.length === 0) errors.push("No cardholder activity was found on the statement.");
   for (const c of cards) {
-    if (c.cents !== c.printed) errors.push(`The card ending in ${c.last4}: its charges add up to ${fmt(c.cents)}, but the statement says ${fmt(c.printed)}.`);
+    if (c.cents !== c.printed) errors.push(`The card ending in ${c.last4}: its charges add up to ${fmtMoney(c.cents / 100)}, but the statement says ${fmtMoney(c.printed / 100)}.`);
   }
   const sum = cards.reduce((s, c) => s + c.cents, 0);
-  if (grand !== null && cards.length && sum !== grand) errors.push(`The cards add up to ${fmt(sum)}, but the statement's total is ${fmt(grand)}.`);
+  if (grand !== null && cards.length && sum !== grand) errors.push(`The cards add up to ${fmtMoney(sum / 100)}, but the statement's total is ${fmtMoney(grand / 100)}.`);
   const refs = new Set<string>();
   for (const ch of cards.flatMap((c) => c.charges)) {
     if (refs.has(ch.ref)) errors.push(`Reference ${ch.ref} appears twice on the statement.`);
@@ -170,7 +171,6 @@ export function parseStatement(lines: string[]): ParsedStatement {
   };
 }
 
-const fmt = (c: number) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 /** A piece of text on a PDF page and where it sits (pdf.js text items). */
 export type TextItem = { str: string; x: number; y: number };

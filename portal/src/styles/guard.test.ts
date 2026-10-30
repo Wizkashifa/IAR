@@ -56,7 +56,7 @@ test("the allowed raw colours match the brand tokens", () => {
 
 test("only src/components and the root layout import Mantine", () => {
   const offenders = files(SRC, [".ts", ".tsx"])
-    .filter((p) => /(?:from|import)\s+["']@mantine\//.test(readFileSync(p, "utf8")))
+    .filter((p) => /(?:from|import)\s*\(?\s*["']@mantine\/|require\(\s*["']@mantine\//.test(readFileSync(p, "utf8")))
     .map(rel)
     .filter((p) => !mantineAllowed(p));
   assert.deepEqual(offenders, [], "Pages use the wrappers in src/components (DateField, RoomPicker, FileDrop, …), never @mantine/* directly.");
@@ -92,6 +92,50 @@ test("global class names are defined in base.css", () => {
     }
   }
   assert.deepEqual(bad, [], "Use a class from src/styles/base.css, or a co-located .module.css class.");
+});
+
+/**
+ * The screen widths a layout may change at (tokens.css lists them): 520px small
+ * phone, 640px phone, 1000px menu beside the page, and the calendar's own
+ * 760px and 1100px. Layouts inside the page use @container page instead.
+ */
+const BREAKPOINTS = new Set(["520px", "640px", "760px", "999.98px", "1100px"]);
+
+test("media queries use the portal's breakpoints", () => {
+  const bad = files(SRC, [".css"]).flatMap((p) =>
+    [...readFileSync(p, "utf8").matchAll(/@media[^{]*?\((?:max|min)-width:\s*([\d.]+px)\)/g)]
+      .map((m) => m[1]!)
+      .filter((w) => !BREAKPOINTS.has(w))
+      .map((w) => `${rel(p)}: ${w}`),
+  );
+  assert.deepEqual(bad, [], "Use 520px, 640px or 999.98px (tokens.css), or an @container page query inside the page.");
+});
+
+/**
+ * Motion eases out (tokens.css --ease): it starts quickly and settles. A
+ * transition or animation without a curve gets the browser's "ease", which
+ * starts slowly, so each one names var(--ease); ease-in, ease-in-out, plain
+ * ease and linear are never used.
+ */
+test("every transition and animation eases out with var(--ease)", () => {
+  const bad: string[] = [];
+  for (const p of files(SRC, [".css"])) {
+    const css = readFileSync(p, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of css.matchAll(/(?<![-\w])(transition|animation)\s*:\s*([^;{}]+);/g)) {
+      const value = m[2]!.trim();
+      if (value === "none") continue;
+      // Each comma-separated part (one property or one animation) names the curve.
+      const parts = value.split(/,(?![^(]*\))/).map((s) => s.trim());
+      for (const part of parts) {
+        const other = /\b(?:ease|ease-in|ease-out|ease-in-out|linear|cubic-bezier|steps)\b/.test(part.replaceAll("var(--ease)", ""));
+        if (!part.includes("var(--ease)") || other) bad.push(`${rel(p)}: ${m[1]}: ${part}`);
+      }
+    }
+    for (const m of css.matchAll(/(?:transition|animation)-timing-function\s*:\s*([^;{}]+);/g)) {
+      if (!m[1]!.includes("var(--ease)")) bad.push(`${rel(p)}: timing ${m[1]}`);
+    }
+  }
+  assert.deepEqual(bad, [], "Add var(--ease) to each part (tokens.css): every motion in the portal eases out.");
 });
 
 test("the only global stylesheets are tokens.css and base.css", () => {
@@ -191,6 +235,9 @@ const PAIRS: [string, string, number][] = [
   ["--gold-light", "--nav-bg", 3],
   ["--gold-light", "--brand-green", 3],
   ["--empty-stroke", "--surface", 3],
+  // The event timeline: a booked time's label sits on its block; a requested time's outline on the card
+  ["--surface", "--hold-booking", 4.5],
+  ["--hold-request", "--surface", 3],
 ];
 
 test("token colours have enough contrast, light and dark", () => {

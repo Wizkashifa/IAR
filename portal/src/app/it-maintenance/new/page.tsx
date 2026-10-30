@@ -7,7 +7,7 @@ import TicketForm from "../TicketForm";
 import { Crumb } from "@/components/Crumb";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "AV/IT/Maintenance" };
+export const metadata = { title: "Report a problem" };
 
 export default async function NewTicket() {
   await requireViewer();
@@ -15,8 +15,8 @@ export default async function NewTicket() {
     <div className="stack">
       <Crumb trail={[{ href: "/it-maintenance", label: "IT & Maintenance" }]} />
       <ModuleHead accent="it"
-        title="AV/IT/Maintenance"
-        lead="Something broken or something you need: it goes to the maintenance or IT team. You'll hear when someone picks it up and when it's done, and you can follow it in My Requests."
+        title="Report a problem"
+        lead="Something broken or needed in the building, IT or A/V. It goes to the maintenance or IT team. You'll be notified when someone picks it up and when it's fixed."
       />
       <TicketForm action={createTicket} locations={locationChoices((await googleRooms()).map((r) => r.name))} />
     </div>

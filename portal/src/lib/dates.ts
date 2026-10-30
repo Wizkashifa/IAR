@@ -1,11 +1,14 @@
 /** Calendar days as "YYYY-MM-DD", the way every module stores them. */
 
+/** IAR's time zone: every date and time the portal shows or stores is Raleigh's. */
+export const TIME_ZONE = "America/New_York";
+
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const noon = (ymd: string) => Date.parse(`${ymd}T12:00:00Z`);
 
 /** Today's date in Raleigh. */
 export function todayLocal(now: Date = new Date()): string {
-  return now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  return now.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
 /** A real calendar day ("2026-02-30" is not). */
@@ -20,7 +23,7 @@ export const daysBetween = (a: string, b: string) => Math.round((noon(b) - noon(
 /** Minutes Raleigh's clock is from UTC at an instant (-240 in summer, -300 in winter). */
 function raleighOffset(ms: number): number {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+    new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
       .formatToParts(new Date(ms))
       .map((x) => [x.type, x.value]),
   );

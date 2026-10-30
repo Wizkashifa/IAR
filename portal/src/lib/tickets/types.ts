@@ -131,6 +131,9 @@ export const URGENCIES: Urgency[] = ["low", "normal", "high", "urgent"];
  * in (calendar hours). The daily job reminds the team once about high and
  * urgent tickets nobody has picked up by then.
  */
+/** Under "What did you do?" when a ticket is marked fixed (the ticket page and My work today). */
+export const RESOLVE_HINT = "The person who reported it is asked to check.";
+
 export const URGENCY: Record<Urgency, { label: string; hint: string; responseHours: number; target: string }> = {
   low: { label: "Low", hint: "An annoyance; nobody is held up.", responseHours: 72, target: "within 3 days" },
   normal: { label: "Normal", hint: "Something doesn't work, but there's a way around it.", responseHours: 24, target: "within a day" },

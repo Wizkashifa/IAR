@@ -177,16 +177,25 @@ export async function linkTicket(form: FormData): Promise<void> {
     // A ticket this person can't open looks the same as one that doesn't exist.
     const otherTicket = wf.isTicketCard(other) && canViewTicket(other, { ...actor, seeAll: viewer.roles.includes("admins") }) ? other : null;
     const now = nowIso();
+    // Both tickets change together: if the second can't be saved, the first goes back as it was.
+    const both = async (a: wf.TicketCard, b: wf.TicketCard | null, other: wf.TicketCard | null) => {
+      await store.save(a, card.updatedAt);
+      if (!b || !other) return;
+      try {
+        await store.save(b, other.updatedAt);
+      } catch (e) {
+        await store.save({ ...card, updatedAt: nowIso() }, a.updatedAt).catch((undo) => console.error("undoing a ticket link failed", undo));
+        throw e;
+      }
+    };
     if (unlink) {
       const [a, b] = wf.unlinkTickets(card, otherTicket, otherId, actor, now);
-      await store.save(a, card.updatedAt);
-      if (b && otherTicket) await store.save(b, otherTicket.updatedAt);
+      await both(a, b, otherTicket);
     } else {
       if (!otherTicket) throw new WorkflowError(`There's no ticket ${otherId}.`);
       const kind = field(form, "kind") as Parameters<typeof wf.linkTickets>[4];
       const [a, b] = wf.linkTickets(card, otherTicket, actor, now, kind);
-      await store.save(a, card.updatedAt);
-      await store.save(b, otherTicket.updatedAt);
+      await both(a, b, otherTicket);
     }
   } catch (e) {
     if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;

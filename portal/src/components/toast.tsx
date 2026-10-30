@@ -2,13 +2,14 @@
 
 import { useEffect } from "react";
 import { notifications } from "@mantine/notifications";
+import { buttonClass } from "./Button";
 
 export type ToastTone = "ok" | "info" | "warn" | "bad";
 const COLOR: Record<ToastTone, string> = { ok: "var(--ok)", info: "var(--info)", warn: "var(--warn)", bad: "var(--bad)" };
 
 /**
  * A short message at the bottom of the screen ("Sent. The chair will review
- * it."). With `undo`, it stays longer and offers an Undo link.
+ * it."). With `undo`, it stays longer and offers an Undo button.
  */
 export function toast(message: string, opts: { tone?: ToastTone; undo?: () => void } = {}) {
   const id = notifications.show({
@@ -17,7 +18,7 @@ export function toast(message: string, opts: { tone?: ToastTone; undo?: () => vo
         {message}{" "}
         <button
           type="button"
-          className="linkbtn"
+          className={buttonClass({ variant: "quiet", size: "small" })}
           onClick={() => {
             opts.undo?.();
             notifications.hide(id);

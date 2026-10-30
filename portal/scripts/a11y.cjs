@@ -5,7 +5,9 @@
  *   - exactly one h1, and no skipped heading levels
  *   - every form control has a label; every image has alt text
  *   - every link and button has a name a screen reader can read
- *   - on phones: tap targets at least 24px, and no sideways scrolling
+ *   - on touch screens: tap targets at least 44px (24px for a link in a
+ *     sentence's line), field text at least 16px (or iOS zooms in), and no
+ *     sideways scrolling
  *   - text contrast at least 4.5:1 (3:1 for large text) against its background
  * Prints what it finds. Exits non-zero only with --strict (for CI later).
  * Needs `npm run dev` running (PORT if not 3000). Also takes --only=words and
@@ -14,7 +16,7 @@
 const { chromium } = require("playwright");
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
-const { SIZES, BASE, signedIn, selected, checkServer } = require("./screens.cjs");
+const { sizesFor, BASE, signedIn, selected, checkServer } = require("./screens.cjs");
 
 const argv = process.argv.slice(2);
 const STRICT = argv.includes("--strict");
@@ -70,7 +72,13 @@ function audit({ phone, structure }) {
         const r = el.getBoundingClientRect();
         // A small checkbox or radio is fine when its whole label is the target.
         const target = (el.type === "checkbox" || el.type === "radio") && el.closest("label") ? el.closest("label").getBoundingClientRect() : r;
-        if (target.width < 24 || target.height < 24) add("tap targets", `${describe(el)} ${Math.round(target.width)}×${Math.round(target.height)}`);
+        // 44px tall on touch (the portal's --tap); narrow is fine for a short word like "Edit" as long as it reaches 24px.
+        if (target.width < 24 || target.height < 44) add("tap targets", `${describe(el)} ${Math.round(target.width)}×${Math.round(target.height)}`);
+      }
+      for (const el of document.querySelectorAll("input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select, textarea")) {
+        if (!visible(el)) continue;
+        const px = parseFloat(getComputedStyle(el).fontSize);
+        if (px < 16) add("field text", `${describe(el)} ${px}px (iOS zooms in under 16px)`);
       }
       const extra = document.documentElement.scrollWidth - window.innerWidth;
       if (extra > 1) add("sideways scroll", `page is ${extra}px wider than the screen`);
@@ -135,7 +143,7 @@ function audit({ phone, structure }) {
   const browser = await chromium.launch();
   const results = [];
   for (const s of screens) {
-    for (const size of SIZES) {
+    for (const size of sizesFor(process.argv.slice(2))) {
       for (const scheme of ["light", "dark"]) {
         const ctx = await signedIn(browser, s.as, size, scheme);
         const page = await ctx.newPage();
@@ -144,7 +152,7 @@ function audit({ phone, structure }) {
           results.push({ screen: s.name, size: size.tag, scheme, found: { "page loads": [`${BASE + s.path} answered ${res ? res.status() : "nothing"}`] } });
         } else {
           // Structure doesn't change with the colour scheme, so check it once (light); contrast in both.
-          const found = await page.evaluate(audit, { phone: size.tag === "phone", structure: scheme === "light" });
+          const found = await page.evaluate(audit, { phone: Boolean(size.touch), structure: scheme === "light" });
           results.push({ screen: s.name, size: size.tag, scheme, found });
         }
         await ctx.close();

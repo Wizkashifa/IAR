@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { FormStarted } from "@/components/FormStarted";
 import { ACCOUNTS, SOCIAL_WELFARE_FUND, accountsForFund, findAccount, isLaborAccount, shortFund } from "@/lib/purchases/accounts";
 import { CHECK_DELIVERIES, DELIVERY_LABEL, KIND_LABEL, type DeliveryMethod, type PurchaseKind } from "@/lib/purchases/types";
-import type { VendorChoice } from "@/lib/purchases/vendors";
+import { findVendor, type VendorChoice } from "@/lib/purchases/vendors";
 import type { LineInput, PurchaseInput } from "@/lib/purchases/input";
 import type { EventChoice } from "@/lib/events/link";
 import { Button } from "@/components/Button";
@@ -18,7 +18,7 @@ import styles from "./purchases.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 import { groupCharges, type StatementChoice } from "@/lib/purchases/statement";
-import { fmtMonth } from "@/lib/format";
+import { fmtMoney, fmtMonth } from "@/lib/format";
 import { AccountOptions, CardCharges, type ChargeInput } from "./CardCharges";
 import { filesOn, type ChargeFile } from "./ChargeReceipt";
 import { RECEIPT_TYPES } from "./AddReceipts";
@@ -55,7 +55,6 @@ export type FormProps = {
   cancelHref: string;
 };
 
-const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const toNum = (v: string | number) => {
   const n = Number(String(v).replace(/[$,\s]/g, ""));
   return Number.isFinite(n) ? n : 0;
@@ -130,15 +129,14 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
   const delivery: DeliveryMethod | "" = checkTo;
   // S&W requests match only S&W payees; everything else only the shared list. The two never mix.
   const vendorList = chargeFund === SOCIAL_WELFARE_FUND ? restrictedVendors : vendors;
-  const findVendor = (name: string) => vendorList.find((v) => v.name.toLowerCase() === name.trim().toLowerCase());
-  const vendor = findVendor(payee);
+  const vendor = findVendor(vendorList, payee);
   const laborLine = lines.some((l) => isLaborAccount(findAccount(l.accountId)));
   const labor = isLabor || laborLine;
   const w9Needed = kind === "pay" && payee.trim() !== "" && labor && !vendor?.w9OnFile;
 
   const choosePayee = (name: string) => {
     setPayee(name);
-    const v = findVendor(name);
+    const v = findVendor(vendorList, name);
     if (v?.address && !mailingAddress.trim()) setMailingAddress(v.address);
   };
   const chooseKind = (k: PurchaseKind) => {
@@ -252,7 +250,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               <Field
                 label="Fund or committee"
                 required
-                hint={fundChoices.length === 0 ? "You can charge your own committees' and teams' funds. Ask a portal admin to add you to your committee in Google Groups." : undefined}
+                hint={fundChoices.length === 0 ? "You can charge only your own committees' funds. Ask your committee's chair to add you." : undefined}
               >
                 <select value={fund} onChange={(e) => setFund(e.target.value)} required>
                   <option value="">{fundChoices.length ? "Choose…" : "You're not on a committee yet"}</option>
@@ -269,7 +267,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             </Field>
           </div>
           {(eventChoices.length > 0 || eventCardId) && (
-            <Field label="Which event is it for? (optional)" hint="Linking it adds this cost to the event, so its final costs add up when it's closed out.">
+            <Field label="Which event is it for? (optional)" hint="The cost is added to the event's total.">
               <select value={eventCardId} onChange={(e) => setEventCardId(e.target.value)}>
                 <option value="">Not for an event</option>
                 {eventChoices.map((ev) => (
@@ -318,7 +316,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                   </datalist>
                 </Field>
               ) : (
-                <Field label="Pay to" hint="Reimbursement · no W-9 needed">
+                <Field label="Pay to">
                   <span className={styles.static}>{requesterName} (you)</span>
                 </Field>
               )}
@@ -339,7 +337,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                   ))}
                 </select>
               </Field>
-              <AddressField label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Start typing to pick it from Google Maps. Needed for every check, even one picked up in person." value={mailingAddress} onChange={setMailingAddress} />
+              <AddressField label={kind === "reimburse" ? "Your mailing address" : "Payee's mailing address"} required hint="Needed for every check, even one picked up in person." value={mailingAddress} onChange={setMailingAddress} />
             </div>
             {kind === "pay" && (
               <div className="stack tight">
@@ -358,7 +356,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
                 multiple={false}
                 maxFiles={1}
                 accept={W9_TYPES}
-                hint="Labor needs a W-9 on file before IAR can pay. It goes only to the finance office's restricted W-9 drive; you won't be able to open it after you send the request."
+                hint="Needed to pay for labor."
               />
             )}
           </div>
@@ -369,16 +367,12 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
         title={card ? "Charges" : "Line items"}
         right={
           <span className={styles.total}>
-            Total <strong>{money(total)}</strong>
+            Total <strong>{fmtMoney(total)}</strong>
           </span>
         }
       >
         <div className="stack">
-          <p className="hint">
-            {card
-              ? "These are the charges on the statement. For each one, choose its sub-account, say why it was bought and add its receipt (each one uploads as soon as you pick it). Charges from the same store can be lumped together, so one receipt covers them."
-              : "Split the total across as many sub-accounts as it really covers."}
-          </p>
+          {card && <p className="hint">For each charge: a sub-account, a reason and a receipt.</p>}
           {card && existingFiles.length > 0 && <Note>Already on the request for all its charges: {existingFiles.join(", ")}</Note>}
           {!card && <Checkbox checked={allFunds} onChange={(e) => setAllFunds(e.target.checked)}>Show sub-accounts from every fund</Checkbox>}
           {card ? (
@@ -439,7 +433,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
               </Button>
             )}
             <span className={styles.total}>
-              Total <strong>{money(total)}</strong>
+              Total <strong>{fmtMoney(total)}</strong>
             </span>
           </div>
         </div>
@@ -456,7 +450,7 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
             camera
             maxFiles={10}
             accept={RECEIPT_TYPES}
-            hint="Every request needs its receipt or invoice. Photos or PDFs, up to 10 files. On a phone, take a photo of each receipt. Don't attach W-9s here; they have their own upload, for labor."
+            hint="Photos or PDFs, up to 10. W-9s go in their own upload."
           />
         </div>
       </Panel>
@@ -472,7 +466,9 @@ export default function PurchaseForm({ action, initial, requesterName, cards, st
       </Panel>
 
       <FormActions>
-        <Button href={cancelHref}>Cancel</Button>
+        <Button href={cancelHref} variant="quiet">
+          Cancel
+        </Button>
         <Submit label={submitLabel} waiting={uploading > 0} />
       </FormActions>
     </form>

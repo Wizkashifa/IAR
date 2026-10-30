@@ -1,13 +1,9 @@
 /* Purchase Requests: lists, line items and the request form. Colours and sizes come from tokens.css. */
 @layer pages {
-  .list { margin: 0; padding: 0; }
+  /* Pills under a row's title. */
+  .tags { display: flex; flex-wrap: wrap; gap: var(--s-1h); align-items: center; margin-top: var(--s-1h); }
 
-  /* Tables for staff data (line items, card checklist, vendors). Under 640px each row becomes a small card, labelled from data-label. */
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
-
-  /* The action row on a request page. */
-
-  /* Comments and history. */
+  /* Text kept as written (a note, an address). */
   .said { margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* The form's lines: a row of fields per line on wide screens, stacked on phones. */
@@ -43,7 +39,7 @@
   }
   .lineFoot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-3); }
   .total { font-size: var(--t-base); }
-  .total strong { font-size: 18px; margin-left: var(--s-2); font-variant-numeric: tabular-nums; }
+  .total strong { font-size: var(--t-h2); margin-left: var(--s-2); font-variant-numeric: tabular-nums; }
   .fieldsets { display: grid; gap: var(--s-4); margin-top: var(--s-5); }
   /* Space between a page heading and what follows it. */
   .body { margin-top: var(--s-5); }
@@ -56,7 +52,6 @@
   .filterRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); }
   .csv { margin-left: auto; }
   .filters { display: grid; grid-template-columns: repeat(3, minmax(160px, 240px)); gap: var(--s-3); align-items: end; }
-  .clear { font-size: var(--t-sm); padding-bottom: 10px; }
   .amount { font-weight: 700; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .refs li { display: grid; grid-template-columns: minmax(0, 1fr) 140px 200px; gap: var(--s-2); align-items: center; padding-top: var(--s-2); border-top: 1px solid var(--line); }
@@ -64,7 +59,7 @@
   .noteHead { margin: 0 0 var(--s-1); font-weight: 700; }
   .failed { margin: 0; padding-left: var(--s-4); }
   /* The row's tick box: a 32px hit area around the 20px box, so it's easy to tap on a phone. */
-  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; margin: -6px; cursor: pointer; }
+  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: max(32px, var(--tap)); min-height: max(32px, var(--tap)); margin: calc(-1 * var(--s-1h)); cursor: pointer; }
   @media (max-width: 640px) {
     .filters { grid-template-columns: 1fr; width: 100%; }
     .refs li { grid-template-columns: 1fr 1fr; }

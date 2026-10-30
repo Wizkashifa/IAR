@@ -8,7 +8,9 @@ import type { CardStatus } from "./cards";
 /** Buttons and the history: what people do to a request. */
 export const VERB = {
   send: "Send",
-  sendAgain: "Send again",
+  sendAgain: "Send it again",
+  /** The link or button to a request's edit page after it was sent back. */
+  makeChanges: "Make the changes and send it again",
   approve: "Approve",
   sendBack: "Send back",
   decline: "Decline",
@@ -55,7 +57,13 @@ export const FLAG = {
 } as const;
 
 /** The line under a request that tells the requester they'll hear back. */
-export const NOTIFIED = "You'll get a notification when it's done.";
+/** Field hints that every module shares. */
+export const HINT = {
+  /** The note box when a reviewer decides (approve, send back, decline). */
+  reviewNote: "Needed to send it back or decline. The requester sees it.",
+} as const;
+
+export const NOTIFIED = "You'll be notified when it's done.";
 
 /** The shared statuses every request has, in words. */
 export const STATUS_LABEL: Record<CardStatus, string> = {

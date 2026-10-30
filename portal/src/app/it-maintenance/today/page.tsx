@@ -22,10 +22,11 @@ import { nameResolver, peopleOptions } from "@/lib/names";
 import { queueTeamMembers } from "@/lib/groups";
 import { Rows } from "@/components/ItemRow";
 import { EventTaskRow, TASK_FLASH } from "../../events/ops-ui";
-import { STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
+import { RESOLVE_HINT, STATUS_LABEL, TEAM_LABEL, URGENCY } from "@/lib/tickets/types";
 import { type TicketActor, type TicketCard, lateText, permission, teamsOf } from "@/lib/tickets/workflow";
 import { actFromToday } from "../actions";
-import { FLASH, fmtDay } from "../ui";
+import { FLASH } from "../ui";
+import { fmtDay } from "@/lib/format";
 import { FlashNote } from "@/components/FlashNote";
 import styles from "./today.module.css";
 import { Disclosure } from "@/components/Disclosure";
@@ -104,10 +105,10 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </form>
         )}
         {working && can("resolve") && (
-          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} open divided className={styles.tap}>
+          <Disclosure summary={preventive ? "Mark done" : "Mark fixed"} button="default" full open divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("resolve")}
-              <Field label="What did you do?" required hint={preventive ? undefined : "The person who reported it is asked to check."}>
+              <Field label="What did you do?" required hint={preventive ? undefined : RESOLVE_HINT}>
                 <textarea name="note" rows={2} maxLength={2000} required placeholder={preventive ? "Changed the filters" : "Replaced the cartridge"} />
               </Field>
               <FileDrop name="photos" label="Photo (optional)" accept={PHOTO_TYPES} multiple={false} maxFiles={1} camera />
@@ -118,7 +119,7 @@ function WorkCard({ card, ctx }: { card: TicketCard; ctx: Ctx }) {
           </Disclosure>
         )}
         {t.status !== "waiting_parts" && t.assigneeEmail && can("wait") && (
-          <Disclosure summary="Waiting on parts" divided className={styles.tap}>
+          <Disclosure summary="Waiting on parts" button="default" full divided className={styles.tap}>
             <form action={actFromToday} className="stack">
               {hidden("wait")}
               <Field label="What's on order, and when is it due?">
@@ -164,7 +165,7 @@ export default async function MyWorkToday({ searchParams }: { searchParams: Prom
       <div className="stack">
         <ModuleHead accent="it" title="My work today" />
         <EmptyState action={<Button href="/it-maintenance">Go to IT &amp; Maintenance</Button>}>
-          This page is for the IT Services and Facility Maintenance teams. To report a problem, use AV/IT/Maintenance.
+          This page is for the IT Services and Facility Maintenance teams. To report a problem, use Report a problem on IT & Maintenance.
         </EmptyState>
       </div>
     );

@@ -5,9 +5,9 @@
   /* The team board: one column per status, scrolling sideways on narrow screens. */
   .board { display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: var(--s-1); }
   .col { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; min-height: 140px; display: flex; flex-direction: column; gap: var(--s-2); }
-  .colHead { display: flex; justify-content: space-between; gap: var(--s-2); margin: 0 0 2px; font-family: var(--font-head); font-size: 13px; font-weight: 600; }
+  .colHead { display: flex; justify-content: space-between; gap: var(--s-2); margin: 0 0 2px; font-family: var(--font-head); font-size: var(--t-md); font-weight: 600; }
   .count { color: var(--ink-3); font-weight: 600; }
-  .card { display: flex; flex-direction: column; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 10px; font-size: var(--t-md); color: var(--ink); box-shadow: var(--shadow-1); transition: border-color var(--speed); }
+  .card { display: flex; flex-direction: column; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 10px; font-size: var(--t-md); color: var(--ink); box-shadow: var(--shadow-1); transition: border-color var(--speed) var(--ease); }
   .card:hover { border-color: var(--gold); text-decoration: none; }
   .card:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
   .sub { color: var(--ink-2); font-size: var(--t-sm); }
@@ -23,10 +23,6 @@
   .links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s-2); }
 
   /* Schedules and the Jira import */
-  .rowList { margin: 0; padding: 0; }
-  .scheduleActions { display: inline-flex; align-items: center; gap: var(--s-3); }
-  .scheduleActions > a { display: inline-block; padding: 4px 2px; }
-  .linkBtn { border: 0; background: none; padding: 4px 2px; min-height: max(24px, var(--tap)); font: inherit; font-size: var(--t-md); color: var(--accent-text); cursor: pointer; }
-  .linkBtn:hover { text-decoration: underline; }
+  .scheduleActions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); }
   .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 }

@@ -28,7 +28,7 @@ export const KINDS: Kind[] = [
   { type: "event", path: "/events", one: "Event", many: "Events", module: "events", newLabel: "New event request", blurb: "A program or event, and its room." },
   { type: "purchase", path: "/purchases", one: "Payment", many: "Payments", module: "purchase-requests", newLabel: "New payment request", blurb: "Pay a vendor, get reimbursed or send card receipts." },
   { type: "marketing", path: "/marketing", one: "Marketing", many: "Marketing", module: "marketing-requests", newLabel: "New marketing request", blurb: "Graphics, signs, announcements and more." },
-  { type: "ticket", path: "/it-maintenance", one: "AV/IT/Maintenance", many: "AV/IT/Maintenance", module: "it-maintenance", newLabel: "AV/IT/Maintenance", blurb: "Something broken or needed: building, IT or A/V." },
+  { type: "ticket", path: "/it-maintenance", one: "IT & Maintenance", many: "IT & Maintenance", module: "it-maintenance", newLabel: "Report a problem", blurb: "Something broken or needed: building, IT or A/V." },
 ];
 
 export const kindOf = (type: CardType): Kind | undefined => KINDS.find((k) => k.type === type);

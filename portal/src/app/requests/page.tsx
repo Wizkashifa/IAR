@@ -1,3 +1,4 @@
+import { FlashNote } from "@/components/FlashNote";
 import type { Metadata } from "next";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, sectionsOf } from "@/components/ItemList";
@@ -47,14 +48,14 @@ export default async function MyRequests({ searchParams }: { searchParams: Promi
           )
         }
       />
-      {deleted && <Note tone="ok">{deleted} was deleted.</Note>}
+      <FlashNote ok={deleted ? "deleted" : undefined} messages={{ deleted: "The request was deleted." }} />
       {problem && <Note tone="warn">{problem}</Note>}
       <HelpBox module="requests" />
       <ItemList
         title="Your requests"
         sections={sections}
         chips={chips.length > 2 ? chips : undefined}
-        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet. Start with the New request button above."}
+        empty={on ? `You haven't sent any ${on.one.toLowerCase()} requests yet.` : "You haven't asked for anything yet."}
       />
     </div>
   );

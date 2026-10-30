@@ -22,7 +22,7 @@ import { RequestPage } from "@/components/RequestPage";
 import { agendaBetween } from "@/lib/agenda";
 import { ROW_TONE, emailsIn, rowState, whoText } from "@/lib/card-row";
 import { cardStore } from "@/lib/cards";
-import { STATUS_LABEL } from "@/lib/glossary";
+import { HINT, VERB, STATUS_LABEL } from "@/lib/glossary";
 import { canOpenCard } from "@/lib/access";
 import { canRequestAgain } from "@/lib/again";
 import { mentionablePeople } from "@/lib/mentions";
@@ -70,7 +70,6 @@ const MESSAGES: Record<string, string> = {
   cancel: "Request cancelled and taken off the calendar.",
   decided: "Your answer is saved and both requests are updated.",
   withdrawn: "Ask withdrawn. Pick another time or room.",
-  commented: "Comment added. The people on this request can see it.",
   "closed-out": "Closed out. Thank you! The event is now closed.",
   images: "Images added. Marketing can open them here and in the marketing Shared Drive.",
 };
@@ -158,7 +157,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {own && can("resubmit") && (
             <>
               {" "}
-              <Link href={`/events/${card.id}/edit`}>{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Link>
+              <Link href={`/events/${card.id}/edit`}>{e.releasedFor ? "Pick a new time" : VERB.makeChanges}</Link>
             </>
           )}
         </Note>
@@ -173,7 +172,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <strong>Declined:</strong> {e.returnNote}
         </Note>
       )}
-      {e.stage === "slot" && card.status === "submitted" && <Note>This request is waiting for an answer to an ask for a booked time (below). It goes to mission review once the time is given up.</Note>}
+      {e.stage === "slot" && card.status === "submitted" && <Note>This request is waiting for an answer to an ask for a booked time (below). Director review starts once it's given up.</Note>}
       {reviewing && reasons.length > 0 && <Note>Look closely at this one: {reasons.join(", ")}.</Note>}
     </>
   );
@@ -221,7 +220,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                   (uploads ? (
                     <form action={addEventImages} className="stack">
                       <input type="hidden" name="id" value={card.id} />
-                      <FileDrop name="images" label="Add images" hint={`Photos, logos or artwork as image files (JPG, PNG, HEIC). No PDFs or Word documents. Up to ${MAX_PER_UPLOAD} at a time, ${MAX_FILE_MB} MB each.`} accept={IMAGE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
+                      <FileDrop name="images" label="Add images" hint="Images only (JPG, PNG, HEIC)." accept={IMAGE_ACCEPT} maxFiles={MAX_PER_UPLOAD} maxSizeMb={MAX_FILE_MB} camera />
                       <div>
                         <Button type="submit">Add images</Button>
                       </div>
@@ -272,7 +271,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {(linked.length > 0 || card.status === "approved" || card.status === "close_out") && (
             <Panel title="Payments for this event" right={e.budget ? `Budget ${fmtMoney(e.budget)}` : undefined} flush id="purchases">
               {linked.length === 0 ? (
-                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is this for?”.</EmptyState>
+                <EmptyState>None linked yet. When you send a payment request for this event, pick it under “Which event is it for?”.</EmptyState>
               ) : (
                 <Rows>
                   {linkedVisible.map((p) => (
@@ -372,7 +371,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
     const main = reviewing ? (
       <Button variant="primary" icon="check" form="act-event" formAction={actOnEventWith.bind(null, "approve")} type="submit">Approve</Button>
     ) : resubmit ? (
-      <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : "Edit and resubmit"}</Button>
+      <Button href={`/events/${ec.id}/edit`} variant="primary">{e.releasedFor ? "Pick a new time" : VERB.makeChanges}</Button>
     ) : undefined;
     const others = reviewing || addPurchase || renew || again || cancel;
     if (!others) return { panel: null, main };
@@ -380,7 +379,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
       <form id="act-event" action={actOnEvent} className="stack">
         {base}
         {reviewing && (
-          <Field label={`${STAGE_LABEL[e.stage]}: note`} hint="Required to send it back or decline it. The requester sees it.">
+          <Field label={`${STAGE_LABEL[e.stage]}: note`} hint={HINT.reviewNote}>
             <textarea name="note" rows={2} maxLength={1000} />
           </Field>
         )}
@@ -391,12 +390,12 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           {again && <Button href={`/events/new?from=${ec.id}`} icon="repeat" variant="quiet">Request this again</Button>}
           {(reviewing || addPurchase || renew || again) && <span className="grow" />}
           {reviewing && (
-            <ConfirmButton name="action" value="deny" variant="danger" danger title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
+            <ConfirmButton name="action" value="deny" variant="danger" title="Decline this request?" message="The requester sees your note. The room hold comes off the calendar." confirmLabel="Decline">
               Decline
             </ConfirmButton>
           )}
           {cancel && (
-            <ConfirmButton name="action" value="cancel" variant="danger" danger title="Cancel this request?" message={e.holds.length ? "It comes off the IAR calendar and the room is freed for others." : "It's withdrawn and the teams stop working on it."} confirmLabel="Cancel the request" cancelLabel="Keep it">
+            <ConfirmButton name="action" value="cancel" variant="danger" title="Cancel this request?" message={e.holds.length ? "It comes off the IAR calendar and the room is freed for others." : "It's withdrawn and the teams stop working on it."} confirmLabel="Cancel the request" cancelLabel="Keep it">
               {own ? "Withdraw this request" : "Cancel this request"}
             </ConfirmButton>
           )}

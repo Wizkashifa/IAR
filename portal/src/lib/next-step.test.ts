@@ -111,7 +111,7 @@ test("purchase steps: sent back is flagged, declined and withdrawn skip what's l
 
 test("purchase next step: 'You' only for the person who acts; the notification line only for the requester", () => {
   const c = purchase();
-  assert.equal(nextStepText(c, vol, names), "Ali Chair approves it for Youth, then the finance office reviews it. You'll get a notification when it's done.");
+  assert.equal(nextStepText(c, vol, names), "Ali Chair approves it for Youth, then the finance office reviews it. You'll be notified when it's done.");
   assert.equal(nextStepText(c, chair, names), "You approve it for Youth, then the finance office reviews it.");
   assert.equal(nextStepText(c, fin, names), "Ali Chair approves it for Youth, then the finance office reviews it.");
 
@@ -122,7 +122,7 @@ test("purchase next step: 'You' only for the person who acts; the notification l
   assert.equal(nextStepText(back, chair, names), "Vol Unteer makes the changes asked for (“Attach the receipt”) and sends it again.");
 
   const toPay = pw.approve(pw.approve(c, chair, settings, T(1)), fin, settings, T(2));
-  assert.equal(nextStepText(toPay, vol, names), "The finance office pays Known Vendor. You'll get a notification when it's paid.");
+  assert.equal(nextStepText(toPay, vol, names), "The finance office pays Known Vendor. You'll be notified when it's paid.");
   assert.equal(nextStepText(pw.reject(c, chair, T(1), "No"), vol, names), "");
 });
 
@@ -194,7 +194,7 @@ test("event steps: no director skips the director step", () => {
 
 test("event next step: the director is named, or told it's theirs; close-out falls to the requester", () => {
   const c = event();
-  assert.equal(nextStepText(c, vol, names, { directors: DIRS }), "Dee Rector (director) reviews it against IAR's mission, then an executive gives final approval. You'll get a notification when it's done.");
+  assert.equal(nextStepText(c, vol, names, { directors: DIRS }), "Dee Rector (director) reviews it against IAR's mission, then an executive gives final approval. You'll be notified when it's done.");
   assert.equal(nextStepText(c, director, names, { directors: DIRS }), "You (director) review it against IAR's mission, then an executive gives final approval.");
   const ok = ew.approve(ew.approve(c, director, DIRS, T(1)), exec, DIRS, T(2));
   assert.equal(nextStepText(ok, vol, names), "After the event, you add the attendance and close it out.", "no Security step any more");
@@ -295,7 +295,7 @@ test("tickets: picked up, worked on, fixed, then the reporter confirms", () => {
   assert.equal(at(stepsFor(c)), "Picked up");
   assert.equal(needsViewer(c, fac), true, "anyone on the team can pick up a new ticket");
   assert.equal(needsViewer(c, office), false);
-  assert.equal(nextStepText(c, vol, names), "The Facility Maintenance team picks it up. You'll get a notification when it's fixed.");
+  assert.equal(nextStepText(c, vol, names), "The Facility Maintenance team picks it up. You'll be notified when it's fixed.");
 
   const a = tw.assign(c, fac, T(1), fac2.email, MEMBERS);
   assert.equal(needsViewer(a, fac2), true);
@@ -361,9 +361,9 @@ test("purchase next step: the finance office and executives read 'You' at their 
   const atFinance = pw.approve(c, chair, settings, T(1));
   const finViewer = { ...fin, actingRoles: ["finance"] };
   assert.equal(nextStepText(atFinance, finViewer, names), "You check the receipts and accounts, then it's paid.");
-  assert.equal(nextStepText(atFinance, vol, names), "The finance office checks the receipts and accounts, then it's paid. You'll get a notification when it's done.");
+  assert.equal(nextStepText(atFinance, vol, names), "The finance office checks the receipts and accounts, then it's paid. You'll be notified when it's done.");
   const atExec = { ...atFinance, purchase: { ...atFinance.purchase, stage: "executive" as const } };
   assert.equal(nextStepText(atExec, { email: "exec@dev.local", actingRoles: ["executive"] }, names), "You approve it as an executive, then the finance office pays it.");
   // Never "You" on your own request, whatever groups you're in.
-  assert.equal(nextStepText(atExec, { ...vol, actingRoles: ["executive"] }, names), "An executive approves it, then the finance office pays it. You'll get a notification when it's done.");
+  assert.equal(nextStepText(atExec, { ...vol, actingRoles: ["executive"] }, names), "An executive approves it, then the finance office pays it. You'll be notified when it's done.");
 });

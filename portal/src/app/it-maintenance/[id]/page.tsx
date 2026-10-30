@@ -27,13 +27,14 @@ import { requireViewer } from "@/lib/viewer";
 import { canViewTicket } from "@/lib/tickets/access";
 import { teamMembers, ticketActor } from "@/lib/tickets/context";
 import { rowStatusText, statusText } from "@/lib/status-text";
-import { KIND_LABEL, LINK_LABEL, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
+import { KIND_LABEL, LINK_LABEL, RESOLVE_HINT, TEAM_NAME, URGENCY, type TicketTeam } from "@/lib/tickets/types";
 import { type Action, type TicketCard, closesOnDone, isOpen, isTicketCard, isWatching, onTeam, permission, TICKET_TEAMS } from "@/lib/tickets/workflow";
 import { firstDate, isEventCard, whenText } from "@/lib/events/workflow";
 import { dayText, timeText } from "@/lib/events/series";
 import { LinkCard, LinkCards } from "@/components/LinkCard";
 import { actOnTicket, actOnTicketWith, addTicketPhotos, commentOnTicket, linkTicket, watchTicket } from "../actions";
-import { FLASH, REPLIES, TicketTags, fmtDate, fmtDateTime, fmtDay } from "../ui";
+import { FLASH, REPLIES, TicketTags } from "../ui";
+import { fmtDate, fmtDateTime, fmtDay } from "@/lib/format";
 import styles from "../tickets.module.css";
 import { Disclosure } from "@/components/Disclosure";
 import { FileList } from "@/components/FileList";
@@ -144,7 +145,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     link: (
       <form key="link" action={linkTicket} className={`stack grow`}>
         <input type="hidden" name="id" value={card.id} />
-        <Field label="Link another ticket" hint="Its number, like TK-1003.">
+        <Field label="Link another ticket">
           <input name="other" maxLength={20} required placeholder="TK-1003" />
         </Field>
         <Field label="How are they linked?">
@@ -224,7 +225,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <form key="resolve" id="ticket-resolve" action={actOnTicket} className={`stack grow`}>
         {base}
         <input type="hidden" name="action" value="resolve" />
-        <Field label={closes ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={closes ? undefined : "The reporter is asked to check and confirm."}>
+        <Field label={closes ? "Done? What did you do?" : "Fixed? What did you do?"} required hint={closes ? undefined : RESOLVE_HINT}>
           <textarea name="note" rows={2} maxLength={2000} required />
         </Field>
         {!inBar("resolve") && (
@@ -264,7 +265,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     <form action={actOnTicket}>
       {base}
       <input type="hidden" name="action" value="cancel" />
-      <ConfirmButton variant="quiet" danger title="Cancel this request?" message="The team stops working on it. You can send a new request any time." confirmLabel="Yes, cancel it">
+      <ConfirmButton variant="danger" title="Cancel this request?" message="The team stops working on it. You can send a new request any time." confirmLabel="Yes, cancel it">
         {own ? "Withdraw this request" : "Cancel this ticket"}
       </ConfirmButton>
     </form>
@@ -379,9 +380,9 @@ export default async function TicketDetail({ params, searchParams }: { params: P
                   <form action={linkTicket}>
                     <input type="hidden" name="id" value={card.id} />
                     <input type="hidden" name="unlink" value={l.id} />
-                    <button type="submit" className={styles.linkBtn} aria-label={`Remove the link to ${l.id}`}>
+                    <Button type="submit" variant="quiet" size="small" aria-label={`Remove the link to ${l.id}`}>
                       Remove
-                    </button>
+                    </Button>
                   </form>
                 )}
               </li>
@@ -394,7 +395,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <form action={watchTicket} className="stack">
             <input type="hidden" name="id" value={card.id} />
             <input type="hidden" name="on" value={isWatching(card, actor.email) ? "0" : "1"} />
-            <p className="hint">{isWatching(card, actor.email) ? "You'll hear when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
+            <p className="hint">{isWatching(card, actor.email) ? "You'll be notified when this ticket moves." : "Hear when this ticket moves, without being on the team."}</p>
             <div>
               <Button type="submit" icon={isWatching(card, actor.email) ? "x" : "bell"}>
                 {isWatching(card, actor.email) ? "Stop following" : "Follow this ticket"}
@@ -427,7 +428,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       notes={notes}
       actions={actions}
       bar={barMain ? { label: rowStatusText(card, state), main: barMain } : undefined}
-      decide={resolveOwn ? { title: closes ? "Mark it done" : "Mark it fixed", body: forms.resolve } : undefined}
+      decide={resolveOwn ? { title: closes ? "Mark done" : "Mark fixed", body: forms.resolve } : undefined}
       main={main}
       side={side}
     />

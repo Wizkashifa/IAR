@@ -6,7 +6,7 @@
  */
 import type { Card, CardStatus } from "./cards";
 import type { EventCard } from "./events/workflow";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import { moduleFor } from "./registry";
 import type { Role } from "./org";
 import { canDecide, type SlotActor, type SlotRequest } from "./events/slot-requests";
@@ -25,7 +25,7 @@ export type NeedsContext = {
   directorsOf?: (committeeGroup: string) => string[];
 };
 
-/** Statuses where the requester has to do something (as `NEEDS_OWNER` in cards.ts). */
+/** Statuses where the requester has to do something. */
 const OWNER_ACTS: CardStatus[] = ["draft", "changes_requested", "close_out"];
 /** Statuses with nothing left to do for the requester. */
 const FINISHED: CardStatus[] = ["paid", "closed", "denied", "cancelled"];

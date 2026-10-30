@@ -38,7 +38,8 @@ export function vendorsForFund(all: Vendor[], roles: Role[], fund: string): Vend
   return fund === SOCIAL_WELFARE_FUND ? v.restricted : v.shared;
 }
 
-export function findVendor(list: Vendor[], name: string): Vendor | undefined {
+/** The saved vendor with this name, ignoring case (works on the full record or the form's VendorChoice). */
+export function findVendor<V extends { name: string }>(list: V[], name: string): V | undefined {
   const n = name.trim().toLowerCase();
   return n ? list.find((v) => v.name.toLowerCase() === n) : undefined;
 }

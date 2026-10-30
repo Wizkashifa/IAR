@@ -61,10 +61,10 @@ export type Card = {
  * Request numbers by prefix, and where each starts. Purchases start after the
  * old Requisition Form's numbers.
  */
-export const COUNTER_START: Record<string, number> = { PO: 12001, EV: 1101, MK: 1001, TK: 1001 };
+/** How many requests of one type a list reads at most. */
+const LIST_LIMIT = 2000;
 
-/** Statuses where the owner has to do something. */
-export const NEEDS_OWNER: CardStatus[] = ["draft", "changes_requested", "close_out"];
+export const COUNTER_START: Record<string, number> = { PO: 12001, EV: 1101, MK: 1001, TK: 1001 };
 
 /** Statuses a card can still move from. */
 export const OPEN_STATUSES: CardStatus[] = ["submitted", "in_review", "changes_requested", "approved", "paid", "close_out"];
@@ -208,7 +208,7 @@ const memoryStore: CardStore = {
     await ensureSeeded();
     return [...mem.cards.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit).map(clone);
   },
-  async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+  async listByType(type, statuses = OPEN_STATUSES, limit = LIST_LIMIT) {
     await ensureSeeded();
     return [...mem.cards.values()]
       .filter((c) => c.type === type && statuses.includes(c.status))
@@ -309,8 +309,10 @@ async function getFirestoreStore(): Promise<CardStore> {
       const snap = await cards.orderBy("updatedAt", "desc").limit(limit).get();
       return snap.docs.map(toCard);
     },
-    async listByType(type, statuses = OPEN_STATUSES, limit = 500) {
+    async listByType(type, statuses = OPEN_STATUSES, limit = LIST_LIMIT) {
+      // No orderBy (that needs a composite index), so a full page means some were left out: say so in the logs.
       const snap = await cards.where("type", "==", type).where("status", "in", statuses.slice(0, 30)).limit(limit).get();
+      if (snap.size >= limit) console.warn(`listByType(${type}) hit its limit of ${limit}; some requests aren't listed.`);
       return snap.docs.map(toCard).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
     async create(card, prefix) {

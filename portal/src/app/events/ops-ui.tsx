@@ -26,8 +26,8 @@ export const TASK_FLASH: Record<string, string> = {
   "task-taken": "It's yours. It shows your name on the event.",
   "task-started": "Marked in progress.",
   "task-done": "Marked done. The requester can see it on the event.",
-  "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
-  "task-assigned": "Handed over. They get an alert, and their name shows on the event.",
+  "task-asked": "Question sent. It's a comment on the event, and the requester is notified.",
+  "task-assigned": "Handed over. They're notified, and their name shows on the event.",
 };
 
 export function TaskPill({ task, overdue }: { task: EventTask; overdue?: boolean }) {
@@ -92,7 +92,7 @@ export function TaskButtons({ card, task, roles, email, back, people = [] }: { c
         <form action={workOnTask} className="stack">
           {base}
           <input type="hidden" name="step" value="ask" />
-          <Field label="Your question (added as a comment on the event; the requester gets an alert)">
+          <Field label="Your question (added as a comment on the event; the requester is notified)">
             <textarea name="note" rows={2} maxLength={1000} required />
         </Field>
           <div><Button size="small" type="submit">Send question</Button></div>

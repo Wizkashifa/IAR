@@ -33,26 +33,8 @@ export type RoutingSettings = {
   executiveThreshold: number | null;
 };
 
-/**
- * Who is acting. `roles` must be the roles from the person's own groups, not
- * the admin "see everything" expansion: being a portal admin is a support
- * role and does not let anyone approve or pay.
- */
-export type Actor = {
-  email: string;
-  name: string;
-  roles: Role[];
-  /** People who are away and asked this person to cover their approvals today. */
-  covering?: string[];
-  /** Funds whose requests this person may open: ones they chair, vice-chair or direct (see teams.ts). */
-  oversees?: string[];
-  /** Funds this person chairs: as a co-chair they can take the chair step even when another chair is named. */
-  chairs?: string[];
-  /** Funds this person directs: they can take the chair step on them. */
-  directs?: string[];
-  /** Team groups this person chairs, vice-chairs or directs: they can open those committees' requests. */
-  leads?: string[];
-};
+import type { Actor } from "../workflow-core";
+export type { Actor };
 
 export type PurchaseCard = Card & { type: "purchase"; purchase: PurchaseDetails };
 

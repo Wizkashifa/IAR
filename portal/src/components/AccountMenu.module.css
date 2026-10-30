@@ -5,7 +5,7 @@
     height: var(--control-h); max-width: 260px; padding: 0 10px 0 4px;
     background: transparent; color: var(--cream);
     border: 1px solid var(--gold-line); border-radius: var(--r-sm);
-    font: inherit; cursor: pointer; transition: border-color var(--speed), background-color var(--speed);
+    font: inherit; cursor: pointer; transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease);
   }
   .btn:hover { border-color: var(--gold); background: var(--gold-wash); }
   .btn:focus-visible { outline: none; border-color: var(--gold-light); box-shadow: var(--ring-on-green); }
@@ -30,7 +30,7 @@
 
   .links { display: flex; flex-direction: column; gap: 2px; }
   .link {
-    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-sm);
+    display: flex; align-items: center; gap: 10px; min-height: max(36px, var(--tap)); padding: var(--s-2) 10px; border-radius: var(--r-sm);
     color: var(--ink-2); font-weight: 500; text-decoration: none;
   }
   .link:hover, .link[aria-current="page"] { background: var(--surface-2); color: var(--ink); text-decoration: none; }

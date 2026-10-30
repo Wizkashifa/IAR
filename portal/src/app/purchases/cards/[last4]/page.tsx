@@ -9,7 +9,6 @@ import { ModuleHead } from "@/components/ModuleHead";
 import { Panel, PanelNote } from "@/components/Panel";
 import { Pill } from "@/components/Pill";
 import { cardStore } from "@/lib/cards";
-import { fmtDate } from "@/lib/format";
 import { actorFor } from "@/lib/people";
 import { accountLabel, findAccount, shortFund } from "@/lib/purchases/accounts";
 import { cardHistory, cardTotals } from "@/lib/purchases/card-history";
@@ -19,7 +18,8 @@ import { statementStore } from "@/lib/purchases/statements";
 import { canViewDetail, isPurchaseCard } from "@/lib/purchases/workflow";
 import { same } from "@/lib/text";
 import { requireViewer } from "@/lib/viewer";
-import { fmtMoney, fmtMonth, purchaseStatus } from "../../ui";
+import { purchaseStatus } from "../../ui";
+import { fmtDate, fmtMoney, fmtMonth } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 

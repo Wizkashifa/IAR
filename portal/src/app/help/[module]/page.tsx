@@ -41,7 +41,7 @@ export default async function HelpGuidePage({ params }: { params: Promise<{ modu
           </>
         }
       />
-      <div className={styles.stack}>
+      <div className={styles.sections}>
         {guide.sections.map((s) => (
           <Panel key={s.heading} title={s.heading}>
             <ol className={styles.steps}>

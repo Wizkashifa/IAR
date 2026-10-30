@@ -23,6 +23,15 @@ const nowIso = () => new Date().toISOString();
 const page = (path: string, id: string, q: string) => `${path}/${id}?${q}`;
 const err = (msg: string) => `error=${encodeURIComponent(msg)}`;
 
+/** Runs what follows a save; a failure there is logged, since the save itself stands. */
+async function tell(run: () => Promise<unknown>, what: string): Promise<void> {
+  try {
+    await run();
+  } catch (e) {
+    console.error(what, e);
+  }
+}
+
 /** Whether this person may open the card: the module's own rule, with portal admins seeing everything for support. */
 export async function mayOpen(card: Card, viewer: Viewer): Promise<boolean> {
   return canOpenCard(card, { ...(await actorFor(viewer)), seeAll: viewer.roles.includes("admins") });
@@ -53,6 +62,7 @@ export async function commentOnCard<C extends Card>(
   const store = await cardStore();
   const check = checkComment(form.get("text"));
   let error: string | null = check.ok ? null : check.error;
+  let saved: C | null = null;
   if (check.ok) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const card = await store.get(id);
@@ -63,16 +73,24 @@ export async function commentOnCard<C extends Card>(
       const next = m.after ? m.after(commented, now) : commented;
       try {
         await store.save(next, card.updatedAt);
-        await deliver(await m.notices(next, check.text), by);
+        saved = next;
         error = null;
         break;
       } catch (e) {
-        if (!(e instanceof ConflictError) || attempt === 1) {
-          if (!(e instanceof ConflictError)) console.error("comment failed", e);
-          error = "Your comment couldn't be saved. Try again.";
+        // Only someone saving at the same moment is worth a second try.
+        error = "Your comment couldn't be saved. Try again.";
+        if (!(e instanceof ConflictError)) {
+          console.error("comment failed", e);
+          break;
         }
       }
     }
+  }
+  // Once saved, the comment stands: a hiccup telling people is logged, not shown as a failed save.
+  if (saved && check.ok) {
+    const card = saved;
+    const text = check.text;
+    await tell(async () => deliver(await m.notices(card, text), by), "comment alerts failed");
   }
   revalidatePath(`${m.path}/${id}`);
   redirect(`${page(m.path, id, error ? err(error) : "ok=commented")}#comments`);
@@ -104,17 +122,26 @@ export async function actOnCard<C extends Card>(
   if (!m.is(card) || !(await (m.canOpen ?? mayOpen)(card, viewer))) redirect(m.path);
   if (String(form.get("expected") ?? "") !== card.updatedAt) redirect(page(m.path, id, err(`This ${m.noun ?? "request"} changed while you were looking at it. Check it again before acting.`)));
   let error: string | null = null;
+  let done: ActionResult<C> | null = null;
   try {
     const r = await m.act(card, action, nowIso());
     await store.save(r.next, card.updatedAt);
-    const more = r.after ? await r.after() : undefined;
-    await deliver([...r.notices, ...(more ?? [])], viewer.email.toLowerCase());
+    done = r;
   } catch (e) {
     if (e instanceof WorkflowError || e instanceof ConflictError) error = e.message;
     else {
       console.error(`${m.path} action failed`, e);
       error = "Something went wrong. Nothing was changed.";
     }
+  }
+  // Saved: what follows (a vendor's record, alerts) can't undo it, so a failure there is logged, not shown.
+  if (done) {
+    const r = done;
+    let more: Notice[] = [];
+    await tell(async () => {
+      more = (r.after ? await r.after() : undefined) ?? [];
+    }, `${m.path} follow-up failed`);
+    await tell(() => deliver([...r.notices, ...more], viewer.email.toLowerCase()), `${m.path} alerts failed`);
   }
   revalidatePath(m.path);
   revalidatePath(`${m.path}/${id}`);

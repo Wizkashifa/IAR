@@ -13,6 +13,8 @@
  *   default.
  */
 
+import { TIME_ZONE } from "./dates";
+
 export type FyiChoice = "chat" | "digest" | "portal";
 
 export type NotifyPrefs = {
@@ -25,13 +27,12 @@ export type NotifyPrefs = {
 };
 
 export const FYI_CHOICES: { value: FyiChoice; label: string; hint: string }[] = [
-  { value: "chat", label: "Right away in Chat", hint: "A Google Chat message from IAR Portal each time one of your requests moves or someone comments." },
-  { value: "digest", label: "In the morning digest", hint: "One Chat message at 7 AM listing yesterday's updates." },
-  { value: "portal", label: "Only in the portal", hint: "Updates wait for you here and on the bell. Nothing is sent." },
+  { value: "chat", label: "Right away in Chat", hint: "A Chat message each time a request moves or someone comments." },
+  { value: "digest", label: "In the morning digest", hint: "One Chat message at 7 AM." },
+  { value: "portal", label: "Only in the portal", hint: "Only on the bell. Nothing is sent." },
 ];
 
 /** Raleigh time. The quiet hours are 9 PM to 7 AM there, whatever the server's clock says. */
-export const TIME_ZONE = "America/New_York";
 export const QUIET_FROM = 21;
 export const QUIET_UNTIL = 7;
 
@@ -117,3 +118,4 @@ export function digestText(items: { text: string }[]): string {
   const more = items.length > 8 ? [`…and ${items.length - 8} more in the portal.`] : [];
   return [`Good morning. ${items.length} update${items.length === 1 ? "" : "s"} on your requests since yesterday:`, ...shown, ...more].join("\n");
 }
+

@@ -14,6 +14,8 @@
  * - Jira repeats a column for each value (several "Labels", "Watchers",
  *   "Comment" columns); every value is kept.
  */
+
+import { TIME_ZONE } from "../dates";
 import { ORG } from "../org";
 import { LOCATIONS, UNKNOWN_LOCATION } from "./locations";
 import { type TicketDetails, type TicketKind, type TicketStatus, type TicketTeam, type Urgency, TEAM_NAME } from "./types";
@@ -141,7 +143,7 @@ const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "
 /** A wall-clock time in Raleigh as an ISO instant. */
 function easternIso(y: number, mo: number, d: number, h: number, mi: number): string {
   const guess = Date.UTC(y, mo - 1, d, h, mi);
-  const wall = new Date(guess).toLocaleString("en-US", { timeZone: "America/New_York", hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" });
+  const wall = new Date(guess).toLocaleString("en-US", { timeZone: TIME_ZONE, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" });
   const m = wall.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+)/);
   if (!m) return new Date(guess).toISOString();
   const shown = Date.UTC(Number(m[3]), Number(m[1]) - 1, Number(m[2]), Number(m[4]) % 24, Number(m[5]));

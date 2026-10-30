@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { latestWhatsNew, whatsNewSince, type WhatsNew } from "@/lib/whats-new";
-import { Icon } from "./Icon";
+import { Button } from "./Button";
 import styles from "./WhatsNewNote.module.css";
 
 const KEY = "iar.whatsNew.seen";
@@ -37,9 +37,9 @@ export function WhatsNewNote() {
   };
   const shown = items.slice(0, 3);
   const close = (
-    <button type="button" className={styles.close} onClick={dismiss} aria-label="Hide what's new" title="Hide">
-      <Icon name="x" />
-    </button>
+    <Button variant="quiet" size="small" icon="x" iconOnly onClick={dismiss} title="Hide" className={styles.close}>
+      Hide what&apos;s new
+    </Button>
   );
 
   return (
@@ -72,9 +72,9 @@ export function WhatsNewNote() {
         </ul>
         <div className={styles.foot}>
           <Link href="/help/whats-new">{items.length > shown.length ? `See all ${items.length} new things` : "See everything new"}</Link>
-          <button type="button" className={styles.got} onClick={dismiss}>
+          <Button variant="quiet" size="small" onClick={dismiss}>
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     </section>

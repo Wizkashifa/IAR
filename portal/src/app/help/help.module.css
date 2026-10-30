@@ -1,9 +1,10 @@
 /* The help pages: /help, /help/[module] and /help/whats-new. */
 @layer pages {
-  .stack { display: grid; gap: var(--s-4); margin-top: var(--s-4); }
-  .steps { margin: 0; padding-left: 22px; display: grid; gap: var(--s-2); max-width: 75ch; }
+  /* The page's panels, under the heading (the page's .stack spaces them from it). */
+  .sections { display: grid; gap: var(--s-4); }
+  .steps { margin: 0; padding-left: var(--s-5); display: grid; gap: var(--s-2); max-width: 75ch; }
   .steps li::marker { color: var(--accent-text); font-weight: 700; }
-  .plain { margin: 0; padding-left: 20px; display: grid; gap: var(--s-2); max-width: 75ch; }
+  .plain { margin: 0; padding-left: var(--s-5); display: grid; gap: var(--s-2); max-width: 75ch; }
 
   .news { margin: 0; padding: 0; list-style: none; display: grid; }
   .newsItem { padding: var(--s-3) 0; border-top: 1px solid var(--line); }

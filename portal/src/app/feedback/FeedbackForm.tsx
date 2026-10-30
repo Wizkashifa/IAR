@@ -20,7 +20,7 @@ export function FeedbackForm({ page }: { page: string }) {
       </Choices>
       <Field
         label="What happened, or what would help?"
-        hint={`We'll see the page you came from (${page}) and your browser. Please don't include card numbers or tax IDs.`}
+        hint="The portal team sees the page you came from. Don't include card numbers or tax IDs."
         required
       >
         <textarea name="message" rows={6} maxLength={4000} required placeholder="What you were trying to do, what you expected, and what happened instead." />

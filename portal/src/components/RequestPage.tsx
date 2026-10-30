@@ -68,7 +68,7 @@ export function RequestPage({ crumb, id, title, pills, lead, steps, next, sent, 
 
       {sent && (
         <Note tone="ok">
-          <strong>Sent.</strong> {next || "You'll get a notification when it moves."}
+          <strong>Sent.</strong> {next || "You'll be notified when it moves."}
         </Note>
       )}
 

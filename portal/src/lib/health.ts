@@ -10,6 +10,8 @@
  * loads Chat, mail and settings only when it has something to send.
  */
 
+import { TIME_ZONE } from "./dates";
+
 export type Service = "directory" | "calendar" | "chat" | "drive" | "rooms" | "mail";
 
 /** One message per service per this long. */
@@ -26,7 +28,7 @@ const WHAT: Record<Service, { name: string; meaning: string }> = {
   mail: { name: "Gmail (the portal's mailbox)", meaning: "Email alerts aren't going out." },
 };
 
-const timeOf = (ms: number) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
+const timeOf = (ms: number) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
 
 /** The admins' message: what failed, since when, and what it means for people. */
 export function healthMessage(service: Service, since: number): { subject: string; text: string } {

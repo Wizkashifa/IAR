@@ -6,7 +6,7 @@
     background: var(--header-input-bg); color: var(--header-placeholder);
     border: 1px solid var(--gold-line); border-radius: var(--r-sm);
     font: inherit; font-size: var(--t-md); text-align: left; cursor: text;
-    transition: border-color var(--speed), box-shadow var(--speed);
+    transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
   }
   .trigger span { flex: 1; }
   .trigger:hover { border-color: var(--gold); }

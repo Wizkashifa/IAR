@@ -64,7 +64,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "Approval",
         steps: [
           "Your committee's director reviews it against IAR's mission. Then any executive can give the final approval.",
-          "If a reviewer sends it back, you'll get a message saying what to change. Edit it and send it again from the request page.",
+          "If a reviewer sends it back, you'll be notified with what to change. Edit it and send it again from the request page.",
           "Once it's approved, the room is confirmed on the IAR calendar, IT Services gets an A/V ticket for each date (you can follow them from the event's page), and a public event gets a flyer and announcement from marketing.",
           "If it runs before 7 AM or past 10 PM, room policy requires security on site. Arrange it with Safety & Security yourself: the portal doesn't book it.",
         ],
@@ -111,7 +111,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Click New payment request and choose what it's for: pay a vendor or person, reimburse yourself, or IAR credit card receipts.",
       "Add a line for each sub-account it's charged to, and attach a receipt or invoice. On a phone you can take a photo.",
       "Your committee's chair approves it (the director, if you're the chair), then the finance office reviews it. Large amounts also need an executive.",
-      "You'll get a message when it's paid, or if anyone sends it back with a question.",
+      "You'll be notified when it's paid, or if anyone sends it back with a question.",
     ],
     sections: [
       {
@@ -141,7 +141,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "Sent back",
         steps: [
           "Any step can send a request back with a note, such as a missing receipt.",
-          "You'll get a message. Open the request, click Edit, fix it and send it again. Its approvals start again from the first step.",
+          "You'll be notified. Open the request, click Edit, fix it and send it again. Its approvals start again from the first step.",
         ],
       },
       {
@@ -204,11 +204,11 @@ export const HELP_GUIDES: HelpGuide[] = [
         steps: [
           "Someone on the marketing team picks it up as it comes in.",
           "They schedule it with a done-by date, ask you a question, or decline it with a reason.",
-          "If they ask a question, you'll get a message. Answer it on the request page and it goes back to the team.",
-          "When the draft is ready, you'll get a message. Open the request, look at the files at the top, then click Approve, or Ask for changes and say what to change.",
+          "If they ask a question, you'll be notified. Answer it on the request page and it goes back to the team.",
+          "When the draft is ready, you'll be notified. Open the request, look at the files at the top, then click Approve, or Ask for changes and say what to change.",
           "Answer by the same time on the next business day (Monday to Friday: a draft sent on Friday is due Monday). If you don't, marketing can go ahead without your approval.",
           "Short links and small website updates have nothing to approve, so they go straight out.",
-          "When it's out, you'll get a message saying where: the newsletter, the website, the lobby screens or social media.",
+          "When it's out, you'll be notified where it went: the newsletter, the website, the lobby screens or social media.",
         ],
       },
       {
@@ -218,7 +218,7 @@ export const HELP_GUIDES: HelpGuide[] = [
           "Filter it: New, Nobody has it, Assigned to me, Scheduled, In progress, Waiting on approval or Waiting on the requester. Pick By event to see each event's pieces together.",
           "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
           "When the draft is ready, click Send for approval and add the files. The requester has until the same time on the next business day to answer.",
-          "Once they approve it (or don't answer in time), click Mark it done and tick where it went out.",
+          "Once they approve it (or don't answer in time), click Mark done and tick where it went out.",
           "Older events may still have a Marketing task: take it, start it and mark it done with a note for the requester.",
         ],
       },
@@ -226,12 +226,12 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
   {
     key: "it-maintenance",
-    title: "AV/IT/Maintenance",
+    title: "Report a problem",
     summary: "Report anything broken or needed in the building, IT or A/V, and follow it until it's fixed.",
     href: "/it-maintenance",
     module: "it-maintenance",
     short: [
-      "Click AV/IT/Maintenance and choose the team: building and maintenance, or IT, A/V and tech.",
+      "Click Report a problem and choose the team: building and maintenance, or IT, A/V and tech.",
       "Say where it is, what's wrong and how urgent it is. A photo often saves the team a trip.",
       "The team picks it up and you can follow it here. When they mark it fixed, check it and confirm, or say it's not fixed.",
     ],
@@ -239,7 +239,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "Report something",
         steps: [
-          "Open IT & Maintenance and click AV/IT/Maintenance.",
+          "Open IT & Maintenance and click Report a problem.",
           "Choose the team: building and maintenance, or IT, A/V and tech.",
           "Say what you need in a few words, then where it is and the details: what happened, when, and anything you already tried.",
           "Add a photo if you can. On a phone you can take one straight from the form.",
@@ -250,7 +250,7 @@ export const HELP_GUIDES: HelpGuide[] = [
         heading: "Follow it",
         steps: [
           "Your requests are at the top of the page. The request page shows its steps and who has it.",
-          "You'll get a message when someone picks it up, when it's waiting on parts, and when it's fixed.",
+          "You'll be notified when someone picks it up, when it's waiting on parts, and when it's fixed.",
           "Want to hear about someone else's request? Open it and click Follow.",
         ],
       },
@@ -290,7 +290,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     href: "/requests",
     module: "my-requests",
     short: [
-      "Everything you've asked for is here: events, payments, marketing and AV/IT/Maintenance.",
+      "Everything you've asked for is here: events, payments, marketing and IT & Maintenance.",
       "Needs you is at the top: something sent back, a question, or an event to close out.",
       "Waiting on others shows who has it now. Done is folded away at the bottom.",
     ],

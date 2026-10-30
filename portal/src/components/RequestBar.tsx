@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { buttonClass } from "./Button";
 import styles from "./RequestPage.module.css";
 
 /**
  * The request page's bottom bar (RequestPage `bar`): what's needed, an "Other
- * options" link, and the main button. When the main action has its own panel
+ * options" button, and the main button. When the main action has its own panel
  * of fields (`#request-decide`), the main button is a link to it: the click
  * scrolls there and puts focus on the first field, and the bar steps aside
  * while that panel is on screen, since the panel has the real button.
@@ -39,7 +40,7 @@ export function RequestBar({ label, more, children }: { label?: ReactNode; more:
       {label && <p className={styles.barLabel}>{label}</p>}
       <div className={styles.barButtons}>
         {more && (
-          <a href="#request-actions" className={styles.barMore}>
+          <a href="#request-actions" className={buttonClass({ variant: "quiet" })}>
             Other options
           </a>
         )}

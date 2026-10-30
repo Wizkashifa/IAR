@@ -9,16 +9,17 @@
  *   --only=events,purchases   just the screens whose name or path has a word
  *   --light / --dark          one colour scheme instead of both
  *   --desktop / --phone       one width instead of both
+ *   --more                    also a 360px phone and an 820px tablet
  */
 const { chromium } = require("playwright");
 const { mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
-const { SIZES, BASE, signedIn, selected, checkServer } = require("./screens.cjs");
+const { sizesFor, BASE, signedIn, selected, checkServer } = require("./screens.cjs");
 
 const argv = process.argv.slice(2);
 const OUT = resolve(__dirname, "..", ".shots");
 const schemes = argv.includes("--light") ? ["light"] : argv.includes("--dark") ? ["dark"] : ["light", "dark"];
-const sizes = SIZES.filter((s) => !(argv.includes("--desktop") && s.tag !== "desktop") && !(argv.includes("--phone") && s.tag !== "phone"));
+const sizes = sizesFor(argv).filter((s) => !(argv.includes("--desktop") && s.tag !== "desktop") && !(argv.includes("--phone") && s.tag !== "phone"));
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 

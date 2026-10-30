@@ -1,28 +1,35 @@
 @layer components {
+  /* One height for every button and field (--control-h): the main action stands out by its colour, not its size. */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    min-height: var(--control-h); padding: 0 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s-1h);
+    min-height: var(--control-h); padding: 0 var(--s-4);
     border: 1px solid var(--ctl); border-radius: var(--r-sm);
     background: var(--surface); color: var(--ink);
-    font: inherit; font-weight: 500; line-height: 1.2; white-space: nowrap; text-decoration: none;
+    font: inherit; font-weight: 500; line-height: var(--lh-tight); white-space: nowrap; text-decoration: none;
     box-shadow: var(--shadow-1); cursor: pointer;
-    transition: border-color var(--speed), background-color var(--speed), box-shadow var(--speed), filter var(--speed), transform var(--speed);
+    transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease), filter var(--speed) var(--ease), transform var(--speed) var(--ease);
   }
-  .btn:hover { border-color: var(--ink-3); filter: brightness(1.1); text-decoration: none; }
+  .btn:hover { border-color: var(--ink-3); background-color: var(--surface-2); text-decoration: none; }
   .btn:active { transform: scale(var(--press)); box-shadow: none; }
   .btn:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--focus); }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 
-  /* The one main action on a screen: green with white text (gold with green text in dark mode), 44px tall to tap. */
+  /* The one main action on a screen: filled green with white text. */
   .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
-  .primary:not(.small) { min-height: 44px; padding: 0 18px; }
-  .primary:hover { border-color: var(--accent); }
+  .primary:hover { background-color: var(--accent); border-color: var(--accent); filter: brightness(1.1); }
+  /* Something that can't be taken back (withdraw, decline, delete): red words. */
   .danger { color: var(--bad); }
   .danger:hover { border-color: var(--bad); }
+  /* The "Yes, …" in a confirm box for something that can't be taken back: filled red. */
+  .dangerFilled { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); font-weight: 700; }
+  .dangerFilled:hover { background-color: var(--bad); border-color: var(--bad); filter: brightness(1.1); }
   /* No border or fill: for "More", "Cancel" and other quiet choices. */
   .quiet { background: none; border-color: transparent; box-shadow: none; color: var(--accent-text); }
   .quiet:hover { background: var(--surface-2); border-color: transparent; }
 
-  .small { min-height: var(--control-h-sm); padding: 0 10px; font-size: 13px; }
+  .small { min-height: var(--control-h-sm); padding: 0 10px; font-size: var(--t-md); }
+  /* Only an icon (close, ×): a square as tall as the button would be. */
+  .iconOnly { padding: 0; min-width: var(--control-h); }
+  .iconOnly.small { min-width: var(--control-h-sm); }
   .full { width: 100%; }
 }

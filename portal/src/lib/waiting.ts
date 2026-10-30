@@ -7,7 +7,7 @@ import { directory } from "./groups";
 import { needsViewer, slotAsksFor, type NeedsContext } from "./needs-you";
 import { addressesOf } from "./notifications";
 import { actorFor } from "./people";
-import type { Actor } from "./purchases/workflow";
+import type { Actor } from "./workflow-core";
 import { teamPeople } from "./teams";
 import type { Viewer } from "./viewer";
 

@@ -225,10 +225,15 @@ export async function sendAlerts(alerts: Alert[], o: SendOptions = {}): Promise<
   if (alerts.length === 0) return;
   const chat = chatEnabled();
   if (!chat && !mailEnabled()) return;
-  if (o.hold !== false) alerts = await holdOvernight(alerts, o.now ?? new Date());
-  if (alerts.length === 0) return;
   let spaces: PortalSettings["chatSpaces"] = {};
-  if (chat) spaces = (await portalSettings()).chatSpaces ?? {};
+  try {
+    if (o.hold !== false) alerts = await holdOvernight(alerts, o.now ?? new Date());
+    if (chat) spaces = (await portalSettings()).chatSpaces ?? {};
+  } catch (err) {
+    // Keeping messages overnight or reading the Chat spaces failed: send now, to people directly.
+    console.error("preparing alerts failed", err);
+  }
+  if (alerts.length === 0) return;
   const deliveries = routeAlerts(alerts, { chat, spaces, groupMailbox });
   await Promise.all(
     deliveries.map(async (d) => {

@@ -33,36 +33,45 @@ const SCREENS = [
   { name: "IT & Maintenance", path: "/it-maintenance", as: "facilities" },
   { name: "IT & Maintenance team tickets", path: "/it-maintenance?view=team", as: "facilities" },
   { name: "Event A/V ticket", path: "/it-maintenance/TK-1055", as: "it" },
-  { name: "New AV/IT/Maintenance", path: "/it-maintenance/new", as: "member" },
+  { name: "Report a problem", path: "/it-maintenance/new", as: "member" },
   { name: "Ticket", path: "/it-maintenance/TK-1003", as: "facilities" },
   { name: "My work today", path: "/it-maintenance/today", as: "facilities" },
   { name: "Preventive schedules", path: "/it-maintenance/schedules", as: "facilities" },
   { name: "IT & Maintenance A/V", path: "/it-maintenance?view=team", as: "it" },
   { name: "My work today A/V", path: "/it-maintenance/today", as: "it" },
-  { name: "Run sheet", path: "/run-sheet", as: "office" },
-  { name: "What's stuck", path: "/stuck", as: "office" },
-  { name: "Who's who", path: "/teams", as: "chair" },
+  { name: "Run Sheet", path: "/run-sheet", as: "office" },
+  { name: "What's Stuck", path: "/stuck", as: "office" },
+  { name: "Who's Who", path: "/teams", as: "chair" },
   { name: "Library", path: "/library", as: "chair" },
   { name: "Help", path: "/help", as: "member" },
+  { name: "Help guide", path: "/help/events", as: "member" },
+  { name: "What's new", path: "/help/whats-new", as: "member" },
   { name: "Search", path: "/search?q=youth", as: "chair" },
   { name: "Notifications", path: "/notifications", as: "chair" },
   { name: "Notification settings", path: "/notifications/settings", as: "chair" },
   { name: "Out of office", path: "/away", as: "chair" },
   { name: "Feedback", path: "/feedback", as: "member" },
   { name: "Portal Settings", path: "/admin", as: "admin" },
-  { name: "Portal measures", path: "/measures", as: "executive" },
+  { name: "Portal Measures", path: "/measures", as: "executive" },
 ];
 
 const BASE = `http://localhost:${process.env.PORT || 3000}`;
 const SIZES = [
   { tag: "desktop", width: 1280, height: 900 },
-  { tag: "phone", width: 390, height: 844 },
+  { tag: "phone", width: 390, height: 844, touch: true },
 ];
+/** More widths, with --more: a small Android phone, and a tablet held upright (touch, but the menu is a drawer). */
+const MORE_SIZES = [
+  { tag: "small-phone", width: 360, height: 740, touch: true },
+  { tag: "tablet", width: 820, height: 1180, touch: true },
+];
+const sizesFor = (argv) => (argv.includes("--more") ? [...SIZES, ...MORE_SIZES] : SIZES);
 
 /** A browser context signed in as a sample user (the cookie the /dev page sets). */
 async function signedIn(browser, as, size, scheme) {
   // Reduced motion, so pages are captured and measured as they settle, not mid-fade.
-  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme, reducedMotion: "reduce" });
+  // Touch sizes report a coarse pointer, as a real phone or tablet does, so the portal's touch sizing applies.
+  const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, colorScheme: scheme, reducedMotion: "reduce", hasTouch: Boolean(size.touch), isMobile: Boolean(size.touch) });
   await ctx.addCookies([{ name: "dev_persona", value: as, url: BASE }]);
   return ctx;
 }
@@ -86,4 +95,4 @@ async function checkServer() {
   }
 }
 
-module.exports = { SCREENS, BASE, SIZES, signedIn, selected, checkServer };
+module.exports = { SCREENS, BASE, SIZES, sizesFor, signedIn, selected, checkServer };
