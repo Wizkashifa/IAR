@@ -6,7 +6,7 @@
   .stacked dt { font-size: var(--t-sm); }
   .stacked dd { margin-bottom: 10px; }
   .stacked dd:last-child { margin-bottom: 0; }
-  @media (max-width: 480px) {
+  @media (max-width: 520px) {
     .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
     .kv dd { margin-bottom: 8px; }
   }

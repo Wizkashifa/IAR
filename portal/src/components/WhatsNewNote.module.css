@@ -6,24 +6,19 @@
   }
   .head, .line { display: flex; align-items: center; gap: var(--s-2); }
   .title { margin: 0; flex: 1; font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); color: inherit; }
-  .close {
-    display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -10px -14px -10px 0;
-    border: 0; border-radius: var(--r-sm); background: none; color: var(--ink-2); cursor: pointer;
-  }
-  .close:hover { color: var(--ink); background: var(--surface-2); }
-  .close:focus-visible { outline: none; box-shadow: var(--ring); }
-  .list { margin: var(--s-2) 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: var(--t-md); line-height: 1.45; color: var(--ink-2); }
+  /* The × sits in the corner, its tap area reaching past the padding. */
+  .head .close, .line .close { margin: calc(-1 * var(--s-1)) calc(-1 * var(--s-2)) calc(-1 * var(--s-1)) 0; color: var(--ink-2); }
+  .list { margin: var(--s-2) 0 0; padding-left: var(--s-5); display: grid; gap: var(--s-1h); font-size: var(--t-md); line-height: var(--lh); color: var(--ink-2); }
   .list strong { color: var(--ink); }
   .list a, .foot a, .lineLink { color: var(--accent-text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
-  .foot a { display: inline-block; padding-block: 4px; }
+  .foot a { display: inline-flex; align-items: center; min-height: max(24px, var(--tap)); }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); font-size: var(--t-md); }
-  .got { border: 0; background: none; padding: 4px 0; font: inherit; color: var(--ink-2); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-  .got:focus-visible, .foot a:focus-visible, .list a:focus-visible, .lineLink:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 4px; }
+  .foot a:focus-visible, .list a:focus-visible, .lineLink:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 4px; }
 
   /* On a phone: one line, "13 new things in the portal". */
   .line { display: none; }
   .lineLink { flex: 1; min-width: 0; display: inline-block; padding-block: 10px; }
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     .note { padding-block: 0; }
     .full { display: none; }
     .line { display: flex; }

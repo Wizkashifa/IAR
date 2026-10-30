@@ -6,13 +6,13 @@
   /* "Required", the same on every form (RequiredTag). */
   .req { display: inline-block; margin-left: var(--s-2); padding: 0 var(--s-2); border-radius: 999px; background: var(--bad-soft); color: var(--bad); font-size: var(--t-xs); font-weight: 600; line-height: 1.5; vertical-align: 1px; }
   .key { margin: 0; font-size: var(--t-sm); color: var(--ink-3); }
-  .hint { font-size: 12px; color: var(--ink-3); }
-  .error { display: flex; gap: 6px; align-items: flex-start; font-size: var(--t-sm); color: var(--bad); font-weight: 600; }
+  .hint { font-size: var(--t-sm); color: var(--ink-3); }
+  .error { display: flex; gap: var(--s-1h); align-items: flex-start; font-size: var(--t-sm); color: var(--bad); font-weight: 600; }
   .error > svg { margin-top: 2px; }
   .invalid :is(input, select, textarea) { border-color: var(--bad); }
 
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea):not([class*="mantine-"]) {
-    width: 100%; min-width: 0; min-height: var(--control-h); padding: 6px 10px;
+    width: 100%; min-width: 0; min-height: var(--control-h); padding: var(--s-1h) 10px; font-size: var(--field-font);
     background-color: var(--field-bg); color: var(--ink);
     border: 1px solid var(--ctl); border-radius: var(--r-sm);
     transition: border-color var(--speed), box-shadow var(--speed);
@@ -22,12 +22,13 @@
   .field :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select):is(select):not([class*="mantine-"], [multiple]) { padding-right: 30px; }
   .field :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
 
-  /* The Send row: on phones it stays at the bottom of the screen while a long form scrolls. */
+  /* The Send row: wherever the menu is a drawer (below 1000px, the bottom bar hides on a form) it stays at the bottom of the screen while a long form scrolls. */
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-  @media (max-width: 640px) {
+  @media (max-width: 999.98px) {
     .actions.sticky {
       position: sticky; bottom: var(--bottom-bar, 0px); z-index: 5;
-      margin: 0 calc(-1 * var(--s-4)); padding: var(--s-3) var(--s-4) max(var(--s-3), env(safe-area-inset-bottom, 0px));
+      margin: 0 calc(-1 * var(--gutter-r, var(--s-4))) 0 calc(-1 * var(--gutter-l, var(--s-4)));
+      padding: var(--s-3) var(--gutter-r, var(--s-4)) max(var(--s-3), env(safe-area-inset-bottom, 0px)) var(--gutter-l, var(--s-4));
       background: var(--bg); border-top: 1px solid var(--line);
     }
     /* The main button last and widest, the others beside it. */

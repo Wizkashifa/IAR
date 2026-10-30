@@ -76,7 +76,7 @@
     --bad-soft: #f7e0dd;
     --info: #004d4e;
     --info-soft: #dceeee;
-    --hold-booking: #a38c71;
+    --hold-booking: #7a654b;
     --hold-request: #0b3a24;
     --scrim: rgba(0, 0, 0, 0.45);
     /* Gold lines and fills on the green header and menu */
@@ -127,15 +127,27 @@
     --s-4: 16px;
     --s-5: 24px;
     --s-6: 32px;
+    /* Between --s-1 and --s-2: a chip's or a pill's padding, an icon's gap. */
+    --s-1h: 6px;
     --r: 10px;
     --r-sm: 8px;
+    /* Menus and the search panel. */
+    --r-pop: 12px;
+    /* Line heights: running text, and titles and buttons. */
+    --lh: 1.5;
+    --lh-tight: 1.2;
+    /* The side column beside a request or a team (two-column pages). */
+    --side-w: 340px;
     --shadow-1: 0 1px 2px rgba(19, 36, 27, 0.06), 0 1px 1px rgba(19, 36, 27, 0.03);
     --shadow-2: 0 12px 32px rgba(11, 58, 36, 0.16), 0 2px 6px rgba(11, 58, 36, 0.08);
     --ring: 0 0 0 3px var(--focus);
     --ring-on-green: 0 0 0 3px var(--gold-light);
-    --control-h: 36px;
-    --control-h-sm: 30px;
-    /* The smallest tap target: nothing extra on a wide screen, 44px on a phone (below). */
+    /* Every button and field is one height; the main button stands out by its colour, not its size. */
+    --control-h: 40px;
+    --control-h-sm: 32px;
+    /* Text in a field. 16px on touch screens, or iOS zooms into the field. */
+    --field-font: 14px;
+    /* The smallest tap target: nothing extra with a mouse, 44px on a touch screen (below). */
     --tap: 0px;
     --speed: 0.12s;
     /* Motion: how things settle, a card's hover, a section arriving. */
@@ -205,7 +217,7 @@
     --bad-soft: #3d2321;
     --info: #6fc6c2;
     --info-soft: #12302f;
-    --hold-booking: #6b5d4c;
+    --hold-booking: #b8a487;
     --hold-request: #c7a154;
     --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-2: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -223,8 +235,16 @@
     :root { --lift: 0px; --nudge: 0px; --press: 1; }
   }
 
-  /* Phones: taller controls (48px, so iOS doesn't zoom into a field) and 44px tap targets. */
-  @media (max-width: 600px) {
-    :root { --control-h: 48px; --control-h-sm: 44px; --tap: 44px; }
+  /*
+   * Phones and touch screens (tablets, phones on their side): 48px controls,
+   * 44px tap targets and 16px field text, so iOS doesn't zoom into a field.
+   *
+   * Breakpoints (CSS can't read a variable in a media query, so these are the
+   * only widths to use): 520px small phone, 640px phone, 1000px menu beside
+   * the page. Layouts inside the page use container queries on the main
+   * column (AppNav .mainInner) instead, at 760px.
+   */
+  @media (max-width: 640px), (pointer: coarse) {
+    :root { --control-h: 48px; --control-h-sm: 44px; --tap: 44px; --field-font: 16px; }
   }
 }

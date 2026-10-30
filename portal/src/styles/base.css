@@ -13,8 +13,10 @@
     color: var(--ink);
     font-family: var(--font);
     font-size: var(--t-base);
-    line-height: 1.5;
+    line-height: var(--lh);
     -webkit-font-smoothing: antialiased;
+    /* A long web address or email breaks rather than pushing the page sideways on a phone. */
+    overflow-wrap: anywhere;
   }
   a { color: var(--accent-text); text-decoration: none; }
   a:hover { text-decoration: underline; }
@@ -24,15 +26,16 @@
   /* The home greeting, and the title of an empty list: the italic serif. */
   .greet { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: var(--t-greet); letter-spacing: -0.01em; line-height: 1.2; }
   h2 { font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); margin: var(--s-6) 0 var(--s-3); }
+  /* In a .stack the gap already spaces things: a heading only adds a little above. */
+  .stack > h2 { margin: var(--s-3) 0 0; }
   /* A section title in the page's own flow gets a short gold line under it (decoration only). */
   .stack > h2::after { content: ""; display: block; width: 32px; height: 2px; margin-top: 6px; background: var(--gold); }
-  h3 { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin: 0; }
+  h3 { font-family: var(--font-head); font-weight: 600; font-size: var(--t-md); margin: 0; }
   .lead { color: var(--ink-2); margin: var(--s-1) 0 var(--s-2); max-width: 68ch; }
   .muted { color: var(--ink-2); }
   /* A short grey line: a hint under a field, "No files yet", what a list shows. */
   .hint { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
   .small { font-size: var(--t-sm); }
-  .mono { font-variant-numeric: tabular-nums; }
 
   /* Layout: use these instead of style={{ … }} in pages. */
   .stack { display: flex; flex-direction: column; gap: var(--s-3); }
@@ -46,7 +49,7 @@
   /* Two equal columns, or a narrow one and a wide one (a date beside a note); one column on a phone. */
   .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid.split { grid-template-columns: minmax(160px, 240px) minmax(0, 1fr); }
-  @media (max-width: 600px) { .grid.two, .grid.split { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 640px) { .grid.two, .grid.split { grid-template-columns: minmax(0, 1fr); } }
   /* A row whose fields grow and whose buttons line up with the bottom of the fields. */
   .row.bottom { align-items: flex-end; gap: var(--s-2) var(--s-3); }
   .grow { flex: 1 1 260px; min-width: 0; }
@@ -62,14 +65,15 @@
    */
   input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; margin: 2px; accent-color: var(--accent); flex: none; }
   label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 6px; min-height: max(24px, var(--tap)); }
-  nav[aria-label="Breadcrumb"] a { display: inline-block; padding-block: 4px; }
+  nav[aria-label="Breadcrumb"] a { display: inline-flex; align-items: center; min-height: max(24px, var(--tap)); padding-block: 4px; }
   summary { min-height: max(24px, var(--tap)); padding-block: 2px; cursor: pointer; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
   /* Form controls. Mantine's inputs (class mantine-…) style themselves. */
   input:not([type="checkbox"], [type="radio"], [type="file"], [class*="mantine-"]), select:not([class*="mantine-"]), textarea:not([class*="mantine-"]) {
-    font: inherit; font-size: 14px; color: var(--ink); background: var(--field-bg);
-    border: 1px solid var(--ctl); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
+    font: inherit; font-size: var(--field-font); color: var(--ink); background: var(--field-bg);
+    border: 1px solid var(--ctl); border-radius: var(--r-sm); padding: var(--s-1h) 10px; width: 100%; min-width: 0;
+    min-height: var(--control-h);
   }
   :is(input, select, textarea):not([class*="mantine-"]):focus { outline: none; border-color: var(--focus); box-shadow: var(--ring); }
   ::placeholder { color: var(--ink-3); opacity: 1; }
@@ -95,11 +99,8 @@
 
   /* Text that keeps the writer's line breaks. */
   .pre { white-space: pre-line; }
-  /* A button that reads as a link ("Undo" in a toast). */
-  .linkbtn { background: none; border: 0; padding: 0; color: var(--accent-text); font: inherit; font-size: 13px; cursor: pointer; }
-  .linkbtn:disabled { color: var(--ink-2); cursor: default; opacity: 0.5; }
   /* A short page in the middle of the screen (the error page). */
-  .center { max-width: 420px; margin: 64px auto; text-align: center; }
+  .center { max-width: 420px; margin: calc(2 * var(--s-6)) auto; text-align: center; }
 
   @media print {
     body { background: var(--surface); }

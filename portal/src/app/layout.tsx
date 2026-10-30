@@ -28,7 +28,8 @@ export const metadata: Metadata = {
   applicationName: `${ORG.shortName} Portal`,
 };
 
-export const viewport: Viewport = { themeColor: "#0b3a24" };
+// viewportFit "cover": the page reaches under a phone's notch and home bar, and the env(safe-area-inset-*) padding keeps content clear of them.
+export const viewport: Viewport = { themeColor: "#0b3a24", viewportFit: "cover" };
 
 /** Where each live module sits in the menu, its label there and its icon (the demo's). */
 const MENU: Record<string, { group: "request" | "team" | "iar" | "files" | "admin"; label: string; icon: IconName }> = {

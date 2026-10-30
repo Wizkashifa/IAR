@@ -19,15 +19,15 @@
   .tl rect { stroke-width: 0; }
   .booking rect { fill: var(--hold-booking); }
   .pending rect { fill: var(--hold-booking); opacity: 0.7; }
-  .req rect { fill: var(--surface); stroke: var(--brand-green); stroke-width: 2; }
-  .lbl { display: block; height: 100%; padding: 0 6px; font-size: 11.5px; line-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+  .req rect { fill: var(--surface); stroke: var(--hold-request); stroke-width: 2; }
+  .lbl { display: block; height: 100%; padding: 0 var(--s-1h); font-size: var(--t-xs); line-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
   .booking .lbl { color: var(--surface); }
   .req .lbl { font-weight: 700; }
   .axis { display: flex; justify-content: space-between; font-size: var(--t-xs); color: var(--ink-3); margin-top: var(--s-1); }
   .legend { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-3); font-size: var(--t-xs); color: var(--ink-2); }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
   .kBooking { background: var(--hold-booking); }
-  .kReq { border: 2px solid var(--brand-green); }
+  .kReq { border: 2px solid var(--hold-request); }
 
   /* The room calendar on the Events page */
   .pick { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) auto; gap: var(--s-3); align-items: end; margin-bottom: var(--s-4); }
@@ -37,15 +37,21 @@
   @media (max-width: 640px) { .pick { grid-template-columns: 1fr; } }
 
   /* The request form: the form, and the progress, checks and calendar beside it. */
-  .formGrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s-5); align-items: start; }
-  .aside { position: sticky; top: calc(64px + var(--s-3)); /* under the sticky header */ display: grid; gap: var(--s-3); }
-  @media (max-width: 900px) { .formGrid { grid-template-columns: 1fr; } .aside { position: static; } .aside .calendarPanel { display: none; } }
+  .formGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+  .aside { position: static; display: grid; gap: var(--s-3); }
+  @container page (min-width: 760px) {
+    .formGrid { grid-template-columns: minmax(0, 1fr) var(--side-w); }
+    .aside { position: sticky; top: calc(var(--top-h, 64px) + var(--s-3)); /* under the sticky header */ }
+  }
+  @container page (max-width: 759.98px) {
+    .aside .calendarPanel { display: none; }
+  }
   .form { display: grid; gap: var(--s-4); min-width: 0; }
   .section { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow-1); padding: 0; margin: 0; min-width: 0; }
   .section > legend { float: left; width: 100%; display: flex; align-items: center; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); font-family: var(--font-head); font-weight: 600; font-size: var(--t-h2); }
   .section > legend + * { clear: both; }
   .sectionBody { padding: var(--s-4); display: grid; gap: var(--s-4); }
-  .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--brand-green); color: var(--cream); font-size: 12px; font-weight: 700; align-items: center; justify-content: center; flex: none; }
+  .sn { display: inline-flex; width: 22px; height: 22px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: var(--t-xs); font-weight: 700; align-items: center; justify-content: center; flex: none; }
   .good { color: var(--ok); }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
   .steps a { display: flex; align-items: center; gap: var(--s-2); min-height: max(28px, var(--tap)); color: var(--ink); text-decoration: none; font-size: var(--t-md); }

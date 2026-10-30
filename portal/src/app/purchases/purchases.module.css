@@ -64,7 +64,7 @@
   .noteHead { margin: 0 0 var(--s-1); font-weight: 700; }
   .failed { margin: 0; padding-left: var(--s-4); }
   /* The row's tick box: a 32px hit area around the 20px box, so it's easy to tap on a phone. */
-  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; margin: -6px; cursor: pointer; }
+  .pick { display: inline-flex; align-items: center; justify-content: center; min-width: max(32px, var(--tap)); min-height: max(32px, var(--tap)); margin: calc(-1 * var(--s-1h)); cursor: pointer; }
   @media (max-width: 640px) {
     .filters { grid-template-columns: 1fr; width: 100%; }
     .refs li { grid-template-columns: 1fr 1fr; }

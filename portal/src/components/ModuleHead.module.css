@@ -14,7 +14,7 @@
   .text { min-width: 0; flex: 1 1 280px; }
   .text :global(.lead) { margin-bottom: 0; }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     .head { padding: var(--s-4); }
     .tile { display: none; }
     /* The page's buttons, full width under the title. */

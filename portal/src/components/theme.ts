@@ -1,4 +1,4 @@
-import { createTheme, type CSSVariablesResolver, type MantineColorsTuple } from "@mantine/core";
+import { createTheme, Input, type CSSVariablesResolver, type MantineColorsTuple } from "@mantine/core";
 
 /**
  * Mantine's theme, pointed at our tokens (src/styles/tokens.css) so its
@@ -30,6 +30,10 @@ export const theme = createTheme({
   fontSizes: { xs: "12px", sm: "13.5px", md: "15px", lg: "16px", xl: "18px" },
   cursorType: "pointer",
   focusRing: "never", // base.css draws the gold focus ring for everything
+  components: {
+    // Mantine's fields are as tall as the portal's own, and as large on a phone (16px, so iOS doesn't zoom).
+    Input: Input.extend({ vars: () => ({ wrapper: { "--input-height": "var(--control-h)", "--input-fz": "var(--field-font)" } }) }),
+  },
 });
 
 const shared = {

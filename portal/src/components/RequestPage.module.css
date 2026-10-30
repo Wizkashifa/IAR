@@ -7,7 +7,7 @@
   .title { margin: 0; overflow-wrap: anywhere; }
   .pills { display: flex; flex-wrap: wrap; gap: var(--s-2); }
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow-1); padding: var(--s-4); min-width: 0; }
-  .next { display: flex; gap: var(--s-2); align-items: flex-start; margin: 14px 0 0; padding-top: var(--s-3); border-top: 1px solid var(--line); font-size: 14px; }
+  .next { display: flex; gap: var(--s-2); align-items: flex-start; margin: var(--s-3) 0 0; padding-top: var(--s-3); border-top: 1px solid var(--line); font-size: var(--t-base); }
   .next.alone { margin-top: 0; padding-top: 0; border-top: 0; }
   .next > :first-child { color: var(--gold-text); margin-top: 2px; flex: none; }
   /* Jumping here from the bar ("Other options") leaves room for the bar below it. */
@@ -27,10 +27,12 @@
   .barLabel { flex: 1 1 auto; margin: 0; font-weight: 700; color: var(--ink); }
   .barButtons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2) var(--s-4); }
   .barMain { display: flex; }
-  .barMore { display: inline-flex; align-items: center; min-height: max(36px, var(--tap)); font-weight: 600; font-size: var(--t-md); }
-  /* Phones: what's needed on top, then the link and a full-width button; the bar sits at the very bottom. */
-  @media (max-width: 600px) {
-    .bar { bottom: 0; margin: 0 calc(-1 * var(--s-4)); border-radius: 0; border-width: 1px 0 0; padding-bottom: max(var(--s-3), env(safe-area-inset-bottom, 0px)); }
+  /* Phones: what's needed on top, then "Other options" and a full-width button; the bar sits at the very bottom. */
+  @media (max-width: 640px) {
+    .bar {
+      bottom: 0; margin: 0 calc(-1 * var(--gutter-r, var(--s-4))) 0 calc(-1 * var(--gutter-l, var(--s-4))); border-radius: 0; border-width: 1px 0 0;
+      padding: var(--s-3) var(--gutter-r, var(--s-4)) max(var(--s-3), env(safe-area-inset-bottom, 0px)) var(--gutter-l, var(--s-4));
+    }
     .barLabel { flex-basis: 100%; font-size: var(--t-md); }
     .barButtons { flex: 1 1 100%; flex-wrap: nowrap; }
     .barMain { flex: 1 1 auto; }
@@ -39,10 +41,10 @@
   @media print {
     .bar { display: none; }
   }
-  /* The main column and a 340px side column, as in the demo; one column on narrow screens, details after the request. */
-  .issue { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  /* The main column and a side column, as in the demo, once the page has room for both; one column otherwise, details after the request. */
+  .issue { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: start; }
   .main, .side { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
-  @media (max-width: 900px) {
-    .issue { grid-template-columns: minmax(0, 1fr); }
+  @container page (min-width: 760px) {
+    .issue { grid-template-columns: minmax(0, 1fr) var(--side-w); }
   }
 }

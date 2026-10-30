@@ -61,12 +61,15 @@
     background: linear-gradient(to right, var(--nav-bg) 220px, transparent 220px);
     min-height: calc(100vh - var(--top-h)); min-height: calc(100dvh - var(--top-h));
   }
+  /* --gutter-l/-r: the page's side padding, wider past a phone's notch. A bar that runs edge to edge (a form's Send bar) bleeds by the same. */
   .main {
+    --gutter-l: max(var(--s-4), env(safe-area-inset-left, 0px)); --gutter-r: max(var(--s-4), env(safe-area-inset-right, 0px));
     min-width: 0; padding-block: 28px 64px;
-    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-left: var(--gutter-l); padding-right: var(--gutter-r);
   }
   .main:focus { outline: none; }
-  .mainInner { max-width: 1040px; margin: 0 auto; }
+  /* Pages lay out two columns by the room they have beside the menu (@container), not by the window's width. */
+  .mainInner { max-width: 1040px; margin: 0 auto; container: page / inline-size; }
 
   /*
    * The menu: dark green with IAR's pattern, in both themes; a sidebar on wide screens. It scrolls when it's taller than
@@ -112,7 +115,7 @@
   @media (max-width: 999.98px) {
     .menuBtn { display: inline-flex; }
     .desk { display: none; }
-    .shell { grid-template-columns: minmax(0, 1fr); background: none; }
+    .shell { grid-template-columns: minmax(0, 1fr); background: none; --top-h: calc(66px + env(safe-area-inset-top, 0px)); }
     .rail {
       position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; height: auto; width: min(300px, 86vw);
       max-height: 100vh; max-height: 100dvh;
@@ -152,7 +155,7 @@
       background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-2); border: 3px solid var(--surface);
     }
   }
-  @media (max-width: 720px) {
+  @media (max-width: 640px) {
     .mark { height: 34px; }
     .brand { font-size: 18px; margin-right: 0; }
   }
