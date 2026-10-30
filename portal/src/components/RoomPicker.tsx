@@ -4,8 +4,7 @@ import { useId } from "react";
 import { MultiSelect } from "@mantine/core";
 import { Field, errorId } from "./Field";
 
-/** `formerly`: an old name ("Previously Library"), so a search for it still finds the room. */
-export type RoomOption = { id: string; name: string; capacity?: number; formerly?: string };
+export type RoomOption = { id: string; name: string; capacity?: number };
 
 /**
  * Pick one or more rooms, searching by name. Rooms in `usedMost` are listed
@@ -17,7 +16,6 @@ export function RoomPicker({ rooms, usedMost = [], value, defaultValue, onChange
   const item = (r: RoomOption) => ({ value: r.id, label: r.capacity ? `${r.name} (${r.capacity})` : r.name });
   const top = usedMost.map((rid) => rooms.find((r) => r.id === rid)).filter((r): r is RoomOption => Boolean(r));
   const rest = rooms.filter((r) => !usedMost.includes(r.id));
-  const formerly = new Map(rooms.filter((r) => r.formerly).map((r) => [r.id, r.formerly!]));
   const data = top.length ? [{ group: "Used most", items: top.map(item) }, { group: "All rooms", items: rest.map(item) }] : rest.map(item);
   return (
     <Field label={label} hint={hint} error={error} required={required} htmlFor={id}>
@@ -39,7 +37,6 @@ export function RoomPicker({ rooms, usedMost = [], value, defaultValue, onChange
         error={Boolean(error)}
         aria-describedby={error ? errorId(id) : undefined}
         comboboxProps={{ shadow: "md" }}
-        renderOption={({ option }) => <span title={formerly.get(option.value)}>{option.label}</span>}
       />
     </Field>
   );

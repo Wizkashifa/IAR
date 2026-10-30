@@ -1,12 +1,12 @@
 /**
- * Changing an event's date or time, fixing a small overlap yourself, short
- * room names and one name per stage. Run with `npm test`.
+ * Changing an event's date or time, fixing a small overlap yourself and one
+ * name per stage. Run with `npm test`.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { eventNotices, rescheduleNotices } from "./notices";
 import * as rs from "./reschedule";
-import { type GoogleRoom, mergeRooms, shortRoomName } from "./rooms";
+import { type GoogleRoom, mergeRooms } from "./rooms";
 import { type BusyItem, fixesText, quickFixes } from "./rules";
 import type { EventInput } from "./types";
 import * as wf from "./workflow";
@@ -14,7 +14,7 @@ import { eventModule } from "./module";
 
 const D = "x.org";
 const google: GoogleRoom[] = [
-  { id: "comm", name: "Community Room (Previously Library)", building: "Main", capacity: 40, calendarId: "comm@resource" },
+  { id: "comm", name: "Community Room", building: "Main", capacity: 40, calendarId: "comm@resource" },
   { id: "r250", name: "Room 250", building: "Main", capacity: 20, calendarId: "r250@resource" },
 ];
 const rooms = mergeRooms(google, { comm: { bookable: true }, r250: { bookable: true } });
@@ -62,15 +62,6 @@ const approved = (directors = DIRS) => {
 
 // A meeting booked straight on the IAR calendar ends at 1:15 PM, inside the 30 minutes of setup.
 const meeting: BusyItem = { roomId: "comm", date: "2026-11-17", start: "11:30", end: "13:15", label: "Team meeting", kind: "booking", eventId: "calTeam" };
-
-test("short room names: an old name in brackets comes off, and is kept apart", () => {
-  assert.deepEqual(shortRoomName("Community Room (Previously Library)"), { name: "Community Room", formerly: "Previously Library" });
-  assert.deepEqual(shortRoomName("Hall (formerly Gym)"), { name: "Hall", formerly: "Formerly Gym" });
-  assert.deepEqual(shortRoomName("MPH A (half gym)"), { name: "MPH A (half gym)" });
-  assert.equal(rooms[0].name, "Community Room");
-  assert.equal(rooms[0].fullName, "Community Room (Previously Library)");
-  assert.equal(rooms[1].formerly, undefined);
-});
 
 test("quick fixes: a short overlap from setup can be fixed by starting later or cutting setup", () => {
   const e = input();

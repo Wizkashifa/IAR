@@ -22,7 +22,7 @@ import styles from "./events.module.css";
 import { FormErrors, type FormState } from "@/components/FormErrors";
 import { Checkbox, Choice, Choices } from "@/components/Choices";
 
-export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean; formerly?: string };
+export type RoomChoice = { id: string; name: string; capacity: number; building: string; food: boolean };
 
 export type EventFormProps = {
   action: (prev: FormState, form: FormData) => Promise<FormState>;
@@ -183,7 +183,7 @@ export default function EventForm(p: EventFormProps) {
   const num = (id: string) => sections.findIndex((s) => s.id === id) + 1;
   const max = d.date ? seriesMaxEnd(d.date) : "";
   const summary = checksSummary(result.checks);
-  const roomOptions = p.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity || undefined, formerly: r.formerly }));
+  const roomOptions = p.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity || undefined }));
 
   return (
     <div className={styles.formGrid}>

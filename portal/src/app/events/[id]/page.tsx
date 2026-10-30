@@ -114,7 +114,6 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   const fixes = (editing.ok ? quickFixes(e, clashesNow, { rooms: ctx.rooms, busy: busyNow, excludeCard: card.id }) : []).filter((f) => !(editing.ok && editing.dateLocked && f.edit.date !== e.date));
 
   const roomNames = e.rooms.map((r) => roomById(ctx.rooms, r)?.name ?? r);
-  const formerNames = e.rooms.map((r) => roomById(ctx.rooms, r)?.formerly).filter((x): x is string => Boolean(x));
   const reasons = missionReasons(e);
   const renewal = e.renewedBy ? await store.get(e.renewedBy) : null;
   const renewing = e.recur ? renewalState(card, { email: viewer.email, office: viewer.actingRoles.includes("office") }, ctx.today, isEventCard(renewal) ? renewal : null) : null;
@@ -367,17 +366,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
                 },
                 { label: "Time", value: `${timeText(e.start)}–${timeText(e.end)}` },
                 { label: "Room hold", value: e.rooms.length ? `${windowText(e)} (setup ${e.setup} min, cleanup ${e.teardown} min)` : null },
-                {
-                  label: "Room",
-                  value: e.rooms.length ? (
-                    <>
-                      {roomNames.join(", ")}
-                      {formerNames.length > 0 && <div className="hint">{formerNames.join(", ")}</div>}
-                    </>
-                  ) : (
-                    "Off-site"
-                  ),
-                },
+                { label: "Room", value: roomNames.join(", ") || "Off-site" },
                 { label: "Calendar", value: e.holds.length ? (e.holds.some((h) => h.status === "tentative") ? "Held (pending approval)" : "Confirmed") : null },
                 { label: "Given up", value: (e.released ?? []).length ? (e.released ?? []).map(dayText).join(", ") : null },
                 { label: "Expected", value: `${e.attendance} people` },

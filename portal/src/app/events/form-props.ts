@@ -35,7 +35,7 @@ export async function formProps(viewer: Viewer, ctx: EventContext, extra?: { gro
   return {
     committees,
     defaultCommittee: lastUsed ?? chaired ?? committees[0]?.group,
-    rooms: ctx.bookable.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, building: r.building, food: r.food, ...(r.formerly ? { formerly: r.formerly } : {}) })),
+    rooms: ctx.bookable.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, building: r.building, food: r.food })),
     usedMost,
     // A link an admin set wins; otherwise the room policy from the Library.
     policyUrl: settings.roomPolicyUrl || fromLibrary || undefined,
