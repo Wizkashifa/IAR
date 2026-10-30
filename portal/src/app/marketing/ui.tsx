@@ -17,7 +17,7 @@ export const TYPE_ICON: Record<MarketingKind, IconName> = {
 /** What a `?ok=` from a server action says, as a short confirmation. */
 export const OK_MESSAGES: Record<string, string> = {
   edit: "Changes saved.",
-  answer: "Answer sent. The request is back in marketing's weekly review.",
+  answer: "Answer sent. The request is back with the marketing team.",
   schedule: "Scheduled. The requester is told the done-by date.",
   ask: "Question sent to the requester.",
   decline: "Declined. The requester is told why.",
@@ -28,4 +28,10 @@ export const OK_MESSAGES: Record<string, string> = {
   cancel: "Request cancelled.",
   commented: "Comment added. The people on this request can see it.",
   files: "Files added. Marketing can open them from this page.",
+  // Event marketing tasks, worked from Team work (app/events/ops-actions.ts).
+  "task-taken": "It's yours. It shows your name on the event.",
+  "task-started": "Marked in progress.",
+  "task-done": "Marked done. The requester can see it on the event.",
+  "task-asked": "Question sent. It's a comment on the event, and the requester gets an alert.",
+  "task-assigned": "Handed over. They get an alert, and their name shows on the event.",
 };

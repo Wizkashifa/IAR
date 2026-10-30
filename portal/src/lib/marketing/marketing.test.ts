@@ -7,11 +7,11 @@ import type { Card } from "../cards";
 import { canOpenCard } from "../access";
 import { hrefOf } from "../kinds";
 import { withComment } from "../comments";
-import { MARKETING_KINDS } from "./types";
+import { MARKETING_KINDS, STAGE_LABEL } from "./types";
 import { MARKETING_TYPES, type MarketingInput, asksForNotes, driveLinkOf, parseMarketingInput, redirectSource, titleFor } from "./forms";
 import { canViewMarketing } from "./access";
 import { marketingCommentNotices, marketingNotices } from "./notices";
-import { isMonday, planDaily } from "./reminders";
+import { planDaily } from "./reminders";
 import * as wf from "./workflow";
 import { FILE_KINDS, MAX_PER_REQUEST, MAX_PER_UPLOAD, asksForFiles, checkFiles, filesOf, requestFolderPath } from "./files";
 
@@ -134,12 +134,14 @@ test("forms: titles come from the answers", () => {
 
 // ---- Workflow --------------------------------------------------------------
 
-test("new request: waits for the weekly review, with history, search words and a link", () => {
+test("new request: shows as New for the team to pick up, with history, search words and a link", () => {
   const c = submitted();
   assert.equal(c.type, "marketing");
   assert.equal(c.status, "submitted");
   assert.equal(c.marketing.stage, "review");
-  assert.equal(c.waitingOn, "Marketing: weekly review");
+  assert.equal(c.waitingOn, "Marketing: new request");
+  assert.equal(STAGE_LABEL.review, "New");
+  assert.equal(STAGE_LABEL.question, "Waiting on the requester");
   assert.equal(c.committee, "Youth");
   assert.equal(c.marketing.requesterName, "Vol Unteer");
   assert.deepEqual(c.marketing.history.map((h) => h.action), ["Submitted"]);
@@ -325,7 +327,8 @@ test("notices: a new request alerts the marketing team's space", () => {
   assert.deepEqual(n[0].to, { role: "marketing" });
   assert.equal(n[0].alert, true);
   assert.equal(n[0].href, "/marketing/MK-1001");
-  assert.match(n[0].text, /MK-1001 .* is new for the weekly review/);
+  assert.match(n[0].text, /^New marketing request: MK-1001 /);
+  assert.doesNotMatch(n[0].text, /weekly/i);
 });
 
 test("notices: a question alerts the requester; their answer alerts marketing", () => {
@@ -399,20 +402,22 @@ test("comment notices: someone named with @ hears first, with an alert", () => {
 
 // ---- Daily job ---------------------------------------------------------------
 
-test("daily: Monday lists the requests waiting for the weekly review", () => {
-  assert.ok(isMonday("2026-10-26"));
-  assert.equal(isMonday(TODAY), false);
+test("daily: one nudge for new requests nobody has picked up after 2 days, once each", () => {
   const a = submitted();
   const b = { ...submitted({ answers: { desc: "Second", due: "2026-11-20" } }), id: "MK-1002" };
   const q = { ...wf.ask(submitted(), mk, T(1), "?"), id: "MK-1003" };
-  const p = planDaily([a, b, q], "2026-10-26");
+  const sched = { ...wf.schedule(submitted(), mk, T(1), "2026-11-20"), id: "MK-1004" };
+  assert.deepEqual(planDaily([a, b, q, sched], "2026-10-23").notices, [], "not yet: 1 day");
+  const p = planDaily([a, b, q, sched], "2026-10-24");
   assert.equal(p.notices.length, 1);
   assert.deepEqual(p.notices[0].to, { role: "marketing" });
   assert.equal(p.notices[0].alert, true);
-  assert.equal(p.notices[0].href, "/marketing");
-  assert.match(p.notices[0].text, /2 marketing requests are waiting: MK-1001 .*, MK-1002/);
-  assert.deepEqual(planDaily([a, b], TODAY).notices, []);
-  assert.deepEqual(planDaily([q], "2026-10-26").notices, []);
+  assert.equal(p.notices[0].href, "/marketing?view=team&f=new");
+  assert.match(p.notices[0].text, /^2 new marketing requests have waited 2 days for someone to pick them up: MK-1001 .*, MK-1002/);
+  assert.deepEqual(planDaily([a, b], "2026-10-25").notices, [], "only on the day it reaches 2 days");
+  assert.match(planDaily([a], "2026-10-24").notices[0].text, /^A new marketing request has waited 2 days for someone to pick it up/);
+  const answered = wf.answer(q, volunteer, T(3), "Yes");
+  assert.equal(planDaily([answered], "2026-10-27").notices.length, 1, "back as new after a question: nudged again");
 });
 
 test("daily: done-by reminders for tomorrow, today or past, once per date", () => {

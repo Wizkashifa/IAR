@@ -16,7 +16,7 @@ import { type MarketingCard, isMarketingCard, permission, shortDay } from "./wor
 
 function marketingSteps(card: MarketingCard): Steps {
   const m = card.marketing;
-  const labels = [STEP.submitted, STEP.weeklyReview, STEP.scheduled, STEP.inProgress, STEP.done];
+  const labels = [STEP.submitted, STEP.newRequest, STEP.scheduled, STEP.inProgress, STEP.done];
   const at = { review: 1, question: 1, scheduled: 2, doing: 3, done: 5, declined: 1, cancelled: 1 }[m.stage];
   const steps = track(labels, at);
   if (m.stage === "question") return { steps, flag: { label: FLAG.question, tone: "warn" } };
@@ -32,7 +32,7 @@ function marketingNext(card: MarketingCard, viewer: Viewer, names: NameOf): stri
   const by = m.doneBy ? `, to be done by ${shortDay(m.doneBy)}` : "";
   switch (m.stage) {
     case "review":
-      return `The marketing team looks at new requests in its weekly review.${mine ? ` ${NOTIFIED}` : ""}`;
+      return `The marketing team picks up new requests as they come in.${mine ? ` ${NOTIFIED}` : ""}`;
     case "question":
       return `${s.does(card.ownerEmail, "answer", "answers")} the marketing team's question${quoted(m.question)}.`;
     case "scheduled":
@@ -46,7 +46,7 @@ function marketingNext(card: MarketingCard, viewer: Viewer, names: NameOf): stri
 
 function marketingNeeds(card: MarketingCard, v: NeedsViewer): boolean {
   const m = card.marketing;
-  if (permission(card, v, "schedule").ok) return true; // the weekly review, for the team
+  if (permission(card, v, "schedule").ok) return true; // a new request, for anyone on the team but the requester
   return (m.stage === "scheduled" || m.stage === "doing") && same(m.assignee, v.email);
 }
 

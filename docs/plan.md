@@ -108,7 +108,7 @@ All modules sit on one request engine and one sign-in. Each module is a set of f
 | Purchase Requests | All staff and committee members; finance reviews | Pay a vendor, reimburse me, card receipts. Line items split across sub-accounts, with a W-9 registry. Can be linked to an event card. Card receipts come from the monthly card statement finance uploads (PDF): each cardholder's charges are filled in, they add the sub-account and why it was bought, and charges at one store (Amazon) can be lumped under one receipt | 1 |
 | Event cards | Committee members submit; office, teams and the CEO review | The full event lifecycle above, with room holds on IAR's Google Calendar | 1 |
 | Team queues | Marketing, AV, finance | Board and list of open tasks across all cards, filtered to the team | 2 |
-| Marketing requests | Everyone submits; the marketing team reviews weekly | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. Weekly review → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
+| Marketing requests | Everyone submits; anyone on the marketing team picks up new requests as they come in, from one Team work list with event marketing | Marketing work not tied to an event: graphic design, physical signage, announcements, highlights, new webpages, small website updates, custom short links or redirects, staff badges, and anything else. Each type asks its branch of today's form. New → scheduled with a done-by date → in progress → done, or a question back to the requester, or declined. Event marketing and event A/V stay on the event card | 2 |
 | Daily run sheet | Front desk, facilities, office | One printable page per day and campus: time, room, event, contact, setup, notes (food, large crowd), after-hours flag | 2 |
 | Event close-out | Card owner; finance | Attendance, actual spend from linked purchase requests vs. budget, deposit refund | 2 |
 | Library | Everyone signed in; each drive shows only to its group | Home for Shura documentation, policies, minutes and other files, kept in IAR-owned shared drives. Browse by team, search across everything the person can open, tag and categorize, policy owners and review dates, links from cards to the files they rely on. See the Library section | 2 |
@@ -260,7 +260,7 @@ The biggest risk is people, not code. The portal only works if every booking goe
 - [ ] Who approves events today, and does it vary by room or campus?
 - [x] Is IAR's calendar one shared calendar, or one per room? One per room: IAR already has a room resource and calendar for each
 - [ ] What happens to the raleighmasjid.org reservation page: retire it, or feed it from the calendar?
-- [ ] Who runs the marketing weekly review, and who owns AV?
+- [ ] Who owns AV?
 - [ ] Gym rental rates, deposit and insurance terms
 - [ ] Dollar limit for executive approval on purchase requests (carried over from the PO plan)
 - [ ] Which committees pilot Phase 1?

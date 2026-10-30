@@ -33,7 +33,7 @@ export function marketingNotices(before: MarketingCard | null, after: MarketingC
   const was = before?.marketing.stage;
 
   if (!before) {
-    add(TEAM, `${what} is new for the weekly review.`, true);
+    add(TEAM, `New marketing request: ${what}.`, true);
     return out;
   }
   // Handed to someone on the team: it's theirs to do now.

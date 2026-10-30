@@ -120,7 +120,7 @@ export async function addMarketingFiles(form: FormData): Promise<void> {
 
 /**
  * The requester's edit page: saves changes, and when marketing asked a
- * question, sends the answer with them (back to the weekly review).
+ * question, sends the answer with them (back to the team as new).
  */
 export async function editMarketing(id: string, expected: string, prev: MarketingFormState, form: FormData): Promise<MarketingFormState> {
   const viewer = await requireViewer();

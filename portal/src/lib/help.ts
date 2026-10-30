@@ -167,7 +167,7 @@ export const HELP_GUIDES: HelpGuide[] = [
     short: [
       "Marketing for an event? Put it on the event request instead: it asks marketing's questions there.",
       "For anything else, click New marketing request and pick what you need. Each kind asks only its own questions.",
-      "The marketing team reviews new requests each week. They schedule it with a done-by date, ask you a question, or decline it.",
+      "Someone on the marketing team picks up new requests as they come in. They schedule it with a done-by date, ask you a question, or decline it.",
       "If they ask a question, answer it right on the request page.",
     ],
     sections: [
@@ -191,10 +191,19 @@ export const HELP_GUIDES: HelpGuide[] = [
       {
         heading: "What happens next",
         steps: [
-          "The marketing team reviews new requests each week.",
+          "Someone on the marketing team picks it up as it comes in.",
           "They schedule it with a done-by date, ask you a question, or decline it with a reason.",
           "If they ask a question, you'll get a message. Answer it on the request page and it goes back to the team.",
           "When it's done, you'll get a message.",
+        ],
+      },
+      {
+        heading: "For the marketing team",
+        steps: [
+          "Open Marketing Requests and click Team work. It lists every open request and the marketing for every approved event, newest first.",
+          "Filter it: New, Nobody has it, Mine, Scheduled, In progress, or Waiting on the requester.",
+          "Pick up a new request by scheduling it. Someone else on the team picks up your own requests.",
+          "For an event, take its task, start it and mark it done with a note for the requester.",
         ],
       },
     ],

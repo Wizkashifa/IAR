@@ -12,7 +12,7 @@ export type MarketingKind = (typeof MARKETING_KINDS)[number];
 
 /**
  * Where a request is:
- * - review: waiting for the marketing team's weekly review
+ * - review ("New"): waiting for someone on the marketing team to pick it up
  * - question: marketing asked the requester something; it comes back to review when they answer
  * - scheduled: accepted, with a done-by date
  * - doing: someone on the team started it
@@ -21,8 +21,8 @@ export type MarketingKind = (typeof MARKETING_KINDS)[number];
 export type MarketingStage = "review" | "question" | "scheduled" | "doing" | "done" | "declined" | "cancelled";
 
 export const STAGE_LABEL: Record<MarketingStage, string> = {
-  review: "Weekly review",
-  question: "Question for the requester",
+  review: "New",
+  question: "Waiting on the requester",
   scheduled: "Scheduled",
   doing: "In progress",
   done: "Done",

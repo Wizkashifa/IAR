@@ -61,7 +61,7 @@ export default function MarketingForm({ action, kind, committees, initial, quest
         <Panel title="Marketing's question">
           <div className="stack">
             <p className="pre">{question}</p>
-            <Field label="Your answer" required hint="You can also change the request below. It goes back to marketing's weekly review when you send it.">
+            <Field label="Your answer" required hint="You can also change the request below. It goes back to the marketing team when you send it.">
               <textarea name="answer" rows={3} maxLength={2000} required />
             </Field>
           </div>

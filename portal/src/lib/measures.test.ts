@@ -74,7 +74,7 @@ test("step names come from the history actions; other entries don't move the clo
   assert.deepEqual(stepOf("event", "Submitted for Sat, Nov 7"), { ends: null, moves: true });
   assert.deepEqual(stepOf("event", "Approved (executive review)"), { ends: "Executive review", moves: true });
   assert.deepEqual(stepOf("ticket", "Added 2 photos"), { ends: null, moves: false });
-  assert.deepEqual(stepOf("marketing", "Scheduled, to finish by Friday, October 30"), { ends: "Weekly review", moves: true });
+  assert.deepEqual(stepOf("marketing", "Scheduled, to finish by Friday, October 30"), { ends: "New", moves: true });
 });
 
 test("time at each step: median and longest, only finished waits", () => {

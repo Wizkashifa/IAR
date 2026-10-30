@@ -75,6 +75,7 @@ export async function workOnTask(form: FormData): Promise<void> {
         return { next, notices: taskNotices(next, taskId, actor, action, note) };
       });
   revalidatePath("/queues");
+  revalidatePath("/marketing");
   revalidatePath(`/events/${id}`);
   redirect(withResult(back, error ? "error" : "ok", error ?? `task-${OK_TEXT[action]}`));
 }

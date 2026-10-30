@@ -94,7 +94,8 @@ export function taskUnlockNotices(before: EventCard | null, after: EventCard): N
     out.push({
       to: { role: team },
       cardId: after.id,
-      href: `/queues?team=${team}`,
+      // Marketing works from Marketing Requests; A/V from Team Queues.
+      href: team === "marketing" ? "/marketing?view=team" : `/queues?team=${team}`,
       text: `${after.id} “${after.title}” is approved. New ${TEAM_NAME[team]} task: ${task.title}. Due ${dayText(task.dueDate)}.`,
       alert: true,
       delegable: false,

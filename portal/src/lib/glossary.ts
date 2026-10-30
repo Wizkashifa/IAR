@@ -34,7 +34,7 @@ export const STEP = {
   eventDay: "Event day",
   closeOut: "Close-out",
   closed: "Closed",
-  weeklyReview: "Weekly review",
+  newRequest: "New",
   scheduled: "Scheduled",
   inProgress: "In progress",
   done: "Done",

@@ -133,9 +133,9 @@ const RULES: Record<MeasuredType, StepRule[]> = {
   ],
   marketing: [
     { re: /^Submitted/, start: true },
-    { re: /^Scheduled/, ends: "Weekly review" },
-    { re: /^Asked a question/, ends: "Weekly review" },
-    { re: /^Declined/, ends: "Weekly review" },
+    { re: /^Scheduled/, ends: "New" },
+    { re: /^Asked a question/, ends: "New" },
+    { re: /^Declined/, ends: "New" },
     { re: /^Answered marketing's question/, ends: "Waiting on the requester" },
     { re: /^Started/, ends: "Scheduled" },
     { re: /^Done$/, ends: "In progress" },
@@ -166,7 +166,7 @@ export function stepOf(type: MeasuredType, action: string): { ends: string | nul
 const STEP_ORDER: Record<MeasuredType, string[]> = {
   purchase: ["Chair approval", "Finance review", "Executive approval", BACK, "To pay", "QuickBooks"],
   event: ["Director review", "Executive review", BACK, "Close-out"],
-  marketing: ["Weekly review", "Waiting on the requester", "Scheduled", "In progress"],
+  marketing: ["New", "Waiting on the requester", "Scheduled", "In progress"],
   ticket: ["New, waiting to be picked up", "Picked up, not started", "Being worked on", "Waiting on parts", "Fixed, waiting for the reporter"],
 };
 

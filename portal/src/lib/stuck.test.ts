@@ -155,8 +155,8 @@ test("who it waits on: events, marketing and tickets", () => {
   assert.equal(holderOf(ew.approve(m, exec, DIRS, T(2)), ctx), null, "approved and before the day: nothing waiting");
 
   const mc = marketing();
-  assert.deepEqual(holderOf(mc), { to: [{ role: "marketing" }], step: "Weekly review" });
-  assert.deepEqual(holderOf(mw.ask(mc, mk, T(1), "Which logo?")), { to: [{ email: vol.email }], step: "Question for the requester" });
+  assert.deepEqual(holderOf(mc), { to: [{ role: "marketing" }], step: "New" });
+  assert.deepEqual(holderOf(mw.ask(mc, mk, T(1), "Which logo?")), { to: [{ email: vol.email }], step: "Waiting on the requester" });
   assert.deepEqual(holderOf(mw.start(mw.schedule(mc, mk, T(1), "2026-11-20"), mk, T(2))), { to: [{ email: mk.email }], step: "In progress" });
 
   const t = ticket();

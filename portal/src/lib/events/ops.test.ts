@@ -10,7 +10,7 @@ import { parsePurchaseInput, type PurchaseInput } from "../purchases/input";
 import { campusesOf, runSheetRows } from "../runsheet";
 import { closeOutNotices, closeOutPermission, dueForCloseOut, linkedPurchases, markNudged, needsNudge, spendOf, startCloseOut, submitCloseOut } from "./closeout";
 import { linkableEvents } from "./link";
-import { lockedCount, marketingQueue, nearTerm, queueItems, queueTeamsFor, recentlyDone } from "./queues";
+import { lockedCount, nearTerm, queueItems, queueTeamsFor, recentlyDone } from "./queues";
 import { type GoogleRoom, mergeRooms } from "./rooms";
 import type { BusyItem } from "./rules";
 import { TaskError, actOnTask, assignTask, planTasks, taskNotices, taskPermission, taskUnlockNotices, tasksFor } from "./tasks";
@@ -223,9 +223,6 @@ test("queues: each person sees their teams' queues; the office sees all; open ta
   const all = queueItems([later, sooner, farther], "av", "2026-10-23");
   const near = nearTerm(all, "2026-11-06");
   assert.deepEqual(near.map((x) => x.task.dueDate), ["2026-11-07", "2026-12-05", "2026-12-19"], "each event's next task shows, even past two weeks");
-
-  const mkCard = (id: string, stage: string, doneBy?: string) => ({ id, type: "marketing", status: "approved", marketing: { stage, doneBy } }) as unknown as Card;
-  assert.deepEqual(marketingQueue([mkCard("MK-1", "review"), mkCard("MK-2", "doing", "2026-11-02"), mkCard("MK-3", "scheduled", "2026-10-28"), mkCard("MK-4", "done")]).map((c) => c.id), ["MK-3", "MK-2"]);
 });
 
 // ---- Run sheet -----------------------------------------------------------------

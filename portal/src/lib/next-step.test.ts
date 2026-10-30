@@ -227,9 +227,10 @@ function marketing(): mw.MarketingCard {
   return c;
 }
 
-test("marketing: weekly review, a question back, scheduled, in progress and done", () => {
+test("marketing: new, a question back, scheduled, in progress and done", () => {
   const c = marketing();
-  assert.equal(at(stepsFor(c)), "Weekly review");
+  assert.equal(at(stepsFor(c)), "New");
+  assert.equal(nextStepText(c, mk, names), "The marketing team picks up new requests as they come in.");
   assert.equal(needsViewer(c, mk), true, "the team reviews it");
   assert.equal(needsViewer(c, vol), false);
 

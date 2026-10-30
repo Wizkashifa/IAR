@@ -3,9 +3,10 @@
  * tested without a server. Pages and server actions call these; they never
  * change a marketing card's stage themselves.
  *
- * The flow (docs/plan.md, Marketing requests): a new request waits for the
- * marketing team's weekly review. The team schedules it with a done-by date,
- * asks the requester a question (it comes back to review when they answer),
+ * The flow (docs/plan.md, Marketing requests): a new request waits for
+ * someone on the marketing team to pick it up, as it comes in. They schedule
+ * it with a done-by date, ask the requester a question (it comes back as new
+ * when they answer),
  * or declines it with a reason. Scheduled work is started, then marked done.
  *
  * - The marketing team is whoever is on portal-team-marketing@ (role "marketing").
@@ -74,7 +75,7 @@ export function waitingOnFor(card: MarketingCard): string | undefined {
   const m = card.marketing;
   switch (m.stage) {
     case "review":
-      return "Marketing: weekly review";
+      return "Marketing: new request";
     case "question":
       return "You: answer marketing's question";
     case "scheduled":
@@ -145,7 +146,7 @@ export function permission(card: MarketingCard, actor: Actor, action: Action): {
   switch (action) {
     case "schedule":
     case "ask":
-      return m.stage === "review" ? { ok: true } : no("This request isn't waiting for the weekly review.");
+      return m.stage === "review" ? { ok: true } : no("This request isn't new any more.");
     case "decline":
       return m.stage === "review" || m.stage === "question" || m.stage === "scheduled" ? { ok: true } : no("This request can't be declined now.");
     case "start":
@@ -164,7 +165,7 @@ function mustDo(card: MarketingCard, actor: Actor, action: Action) {
   must(permission(card, actor, action));
 }
 
-/** Requests waiting for the weekly review that `actor` can review (not their own). */
+/** New requests that `actor` can pick up (not their own). */
 export function reviewableBy(cards: MarketingCard[], actor: Actor): MarketingCard[] {
   return cards.filter((c) => permission(c, actor, "schedule").ok);
 }
@@ -198,7 +199,7 @@ function tightNote(answers: Record<string, string>, now: string): string | undef
   return `Needed in ${days} day${days === 1 ? "" : "s"}. Marketing usually takes 1–2 weeks, so this may not be ready in time.`;
 }
 
-/** A new request from checked form input, waiting for the weekly review. The store assigns the ID. */
+/** A new request from checked form input, waiting for the team to pick it up. The store assigns the ID. */
 export function newMarketing(details: ParsedMarketing, owner: Actor, now: string): MarketingCard {
   const m: MarketingDetails = {
     kind: details.kind,
@@ -227,7 +228,7 @@ export function newMarketing(details: ParsedMarketing, owner: Actor, now: string
   return withStage(card, m, now);
 }
 
-/** Accept it at the weekly review, with the date marketing aims to finish by. */
+/** Accept a new request, with the date marketing aims to finish by. */
 export function schedule(card: MarketingCard, actor: Actor, now: string, doneBy: string, note?: string): MarketingCard {
   mustDo(card, actor, "schedule");
   const d = checkDoneBy(doneBy, now);
@@ -240,7 +241,7 @@ export function schedule(card: MarketingCard, actor: Actor, now: string, doneBy:
   return withStage(card, m, now);
 }
 
-/** Ask the requester something. It comes back to the weekly review when they answer. */
+/** Ask the requester something. It comes back as new when they answer. */
 export function ask(card: MarketingCard, actor: Actor, now: string, question: string): MarketingCard {
   mustDo(card, actor, "ask");
   const q = question.trim();
@@ -273,7 +274,7 @@ function applyEdit(card: MarketingCard, edited: MarketingEdit | undefined): { ca
   };
 }
 
-/** The requester answers marketing's question (and may edit the request too); it goes back to the weekly review. */
+/** The requester answers marketing's question (and may edit the request too); it comes back to the team as new. */
 export function answer(card: MarketingCard, actor: Actor, now: string, text: string, edited?: MarketingEdit): MarketingCard {
   mustDo(card, actor, "answer");
   const a = text.trim();

@@ -3,17 +3,21 @@ import { Button } from "@/components/Button";
 import { Pill, type Tone } from "@/components/Pill";
 import type { NameOf } from "@/lib/steps";
 import type { Role } from "@/lib/org";
-import { dayText } from "@/lib/events/series";
+import type { QueueItem } from "@/lib/events/queues";
+import { type Room, roomById } from "@/lib/events/rooms";
+import { dayText, timeText } from "@/lib/events/series";
 import { TASK_STATUS_LABEL, TEAM_NAME, worksTeam } from "@/lib/events/tasks";
 import type { EventTask } from "@/lib/events/types";
 import type { EventCard } from "@/lib/events/workflow";
+import { fmtDay } from "@/lib/format";
+import { same } from "@/lib/text";
 import { workOnTask } from "./ops-actions";
 import { ItemRow } from "@/components/ItemRow";
 import { Disclosure } from "@/components/Disclosure";
 import { Field } from "@/components/Field";
 import { PeoplePicker, type PersonOption } from "@/components/PeoplePicker";
 
-/** Pieces Team Queues and the event page share. */
+/** Pieces Team Queues, Marketing Requests and the event page share. */
 
 const TASK_TONE: Record<EventTask["status"], Tone> = { locked: "neutral", todo: "info", doing: "warn", done: "ok" };
 
@@ -109,3 +113,31 @@ export function TaskLine({ card, task, roles, email, back, today, names, people 
 }
 
 export const eventLink = (card: EventCard) => <Link href={`/events/${card.id}`}>{card.title}</Link>;
+
+/**
+ * One team task as a row in a team's list: the task, its event (committee,
+ * rooms, date and time, requester), who has it, and its buttons when
+ * `withButtons`. `people`: who on the team it can be handed to.
+ */
+export function EventTaskRow({ item, withButtons, names, rooms, email, roles, back, people }: { item: QueueItem; withButtons: boolean; names: NameOf; rooms: Room[]; email: string; roles: Role[]; back: string; people: PersonOption[] }) {
+  const { card, task, overdue } = item;
+  const roomNames = card.event.rooms.map((r) => roomById(rooms, r)?.name ?? r).join(", ") || "Off-site";
+  const series = card.event.dates.length > 1 ? ` (series, ${card.event.dates.length} dates)` : "";
+  return (
+    <ItemRow
+      title={<Link href={`/events/${card.id}#tasks`}>{task.title}</Link>}
+      id={card.id}
+      sub={`${card.title} · ${card.event.committeeName} · ${roomNames} · ${dayText(card.event.dates[0] ?? card.event.date)}${series}, ${timeText(card.event.start)}–${timeText(card.event.end)} · from ${names(card.ownerEmail)}`}
+      who={task.status === "done" ? (task.note ? `“${task.note}”` : undefined) : `Due ${fmtDay(task.dueDate)} · ${task.assignee ? names(task.assignee) : "nobody yet"}`}
+      state={task.status === "done" ? "done" : overdue ? "bad" : same(task.assignee, email) || !task.assignee ? "act" : "wait"}
+      right={
+        <>
+          <Pill tone={overdue ? "bad" : TASK_TONE[task.status]} status>
+            {overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
+          </Pill>
+          {withButtons && <TaskButtons card={card} task={task} roles={roles} email={email} back={back} people={people} />}
+        </>
+      }
+    />
+  );
+}

@@ -1,10 +1,9 @@
 /**
  * Team Queues: each team's open tasks across every event card, soonest due
- * first, and for Marketing its scheduled and in-progress marketing requests
- * too. A person sees the queues of the teams they're on; the IAR office sees
+ * first (Marketing's also show in Marketing Requests → Team work, lib/marketing/feed.ts).
+ * A person sees the queues of the teams they're on; the IAR office sees
  * them all. Plain functions so they can be tested.
  */
-import type { Card } from "../cards";
 import type { Role } from "../org";
 import { TASK_TEAMS, planTasks } from "./tasks";
 import type { EventTask, TaskTeam } from "./types";
@@ -54,11 +53,4 @@ export function recentlyDone(cards: EventCard[], team: TaskTeam, limit = 10): Qu
 /** Tasks the team will get once events now in review are approved. */
 export function lockedCount(cards: EventCard[], team: TaskTeam): number {
   return cards.filter((c) => c.status === "submitted" || c.status === "in_review").reduce((n, c) => n + planTasks(c.event, "locked").filter((t) => t.team === team).length, 0);
-}
-
-/** Marketing's other work: requests that are scheduled or in progress, soonest done-by date first. */
-export function marketingQueue(cards: Card[]): Card[] {
-  return cards
-    .filter((c) => c.type === "marketing" && (c.marketing?.stage === "scheduled" || c.marketing?.stage === "doing"))
-    .sort((a, b) => (a.marketing?.doneBy ?? "9999").localeCompare(b.marketing?.doneBy ?? "9999") || a.id.localeCompare(b.id));
 }

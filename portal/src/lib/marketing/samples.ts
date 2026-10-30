@@ -71,11 +71,11 @@ export function sampleMarketing(): Card[] {
   c = wf.ask(c, marketing, t(2), "How many certificates, and should each one have the child's name printed, or a blank line?");
   out.push(c);
 
-  // New for the weekly review: a staff badge.
+  // New: a staff badge.
   c = make(facilities, { kind: "badge", committee: "Facility Maintenance", answers: { first: "New", last: "Hire", title: "Facilities Technician", photo: "onsite" }, notes: "For the facilities technician starting next week." }, 1);
   out.push(c);
 
-  // New for the weekly review, needed soon.
+  // New, needed soon.
   c = make(volunteer, { kind: "signage", committee: "Education", answers: { desc: "Room signs for the new weekend classrooms on the second floor: 2A, 2B and 2C.", due: ahead(9) } }, 0);
   out.push(c);
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Button } from "@/components/Button";
 import { ItemList, groupedRows, rowsFor, sectionsOf } from "@/components/ItemList";
 import { HelpBox } from "@/components/HelpBox";
@@ -18,6 +17,7 @@ import { FlashNote } from "@/components/FlashNote";
 import styles from "./tickets.module.css";
 import { Chips } from "@/components/Chips";
 import { Pill } from "@/components/Pill";
+import { Tabs } from "@/components/Tabs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "IT & Maintenance" };
@@ -83,26 +83,17 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
       <FlashNote ok={sp.ok} error={sp.error} messages={FLASH} />
 
       {worker && (
-        <nav className={styles.tabs} aria-label="Show">
-          <Link href="/it-maintenance" className={onTeamTab ? styles.tab : `${styles.tab} ${styles.on}`} aria-current={onTeamTab ? undefined : "page"}>
-            Your requests
-          </Link>
-          <Link href="/it-maintenance?view=team" className={onTeamTab ? `${styles.tab} ${styles.on}` : styles.tab} aria-current={onTeamTab ? "page" : undefined}>
-            {team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`}
-            {teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill>}
-          </Link>
-          <span className={styles.spacer} />
-          {(office || teamsOf(actor).length > 0) && (
-            <Link href="/it-maintenance/schedules" className={styles.quiet}>
-              Preventive schedules
-            </Link>
-          )}
-          {canImportJira(actor) && (
-            <Link href="/it-maintenance/import" className={styles.quiet}>
-              Import from Jira
-            </Link>
-          )}
-        </nav>
+        <Tabs
+          label="Show"
+          tabs={[
+            { label: "Your requests", href: "/it-maintenance", on: !onTeamTab },
+            { label: team === "all" ? "Team tickets" : `${TEAM_LABEL[team]} tickets`, href: "/it-maintenance?view=team", on: onTeamTab, extra: teamNew > 0 && <Pill tone="warn" small>{teamNew} new</Pill> },
+          ]}
+          links={[
+            ...(office || teamsOf(actor).length > 0 ? [{ label: "Preventive schedules", href: "/it-maintenance/schedules" }] : []),
+            ...(canImportJira(actor) ? [{ label: "Import from Jira", href: "/it-maintenance/import" }] : []),
+          ]}
+        />
       )}
 
       {onTeamTab ? (
